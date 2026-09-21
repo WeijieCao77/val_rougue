@@ -1,0 +1,35 @@
+/* Season-specific map and UI. Keep legacy intact. */
+.season-map .map-intro h1{font-size:38px;letter-spacing:4px;line-height:1.2}
+.season-map .map-progress b{font-size:26px}
+.season-map .map-progress span{font-size:10px}
+.season-map .map-board{height:1000px;min-height:1000px;background:radial-gradient(ellipse at 50% 40%,#eee1bc80,transparent 72%),repeating-linear-gradient(70deg,#b8a57609 0 2px,transparent 2px 12px)}
+.season-map .map-paths path.available{stroke:#334b42;opacity:.9;stroke-width:3}
+.season-itinerary{list-style:none;margin:22px 0;padding:0;display:grid;gap:14px}.season-itinerary li{display:flex;align-items:center;gap:12px;opacity:.4;font-size:12px}.season-itinerary li.active{opacity:1;color:#f1d393}.season-itinerary li.complete{opacity:.8;color:#94bb99}.season-itinerary li>b{border:1px solid currentColor;border-radius:50%;padding:4px 8px}.season-itinerary small{display:block;margin-top:3px;font-size:10px}.library-tabs{position:sticky;top:0;background:#152229;padding:8px;z-index:3}
+.season-map .map-stop{width:105px}
+.season-map .map-stop{transform:translate(-50%,-22px)}.season-map .kind-boss{transform:translate(-50%,-30px)}
+.season-map .map-stop .node-label{font-size:9px;white-space:normal;line-height:1.3}
+.season-map .map-stop.current .node-label{font-size:10px;font-weight:700}
+.season-map .map-scroll{background:#c9bb95;height:calc(100dvh - 140px)} /* scrollable tall board */
+.season-map .map-start{bottom:5px}
+.intermission-details{margin:20px auto;max-width:400px;border:1px solid #5a6b63;padding:15px;background:#1b2a2e;text-align:left}
+.intermission-details p{margin:8px 0;font-size:12px;color:#b7c6b6}
+.region-picker{width:100%;max-width:520px;margin:0 auto 22px}
+.region-tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.region-tab{flex:1 1 110px;min-width:100px;padding:9px 8px;font-size:13px;background:transparent;border:1px solid #5c6b68;color:#c9d2c6}
+.region-tab small{display:block;font-size:9px;color:#899e98;margin-top:2px;white-space:nowrap}
+.region-tab.active{background:#314740;border-color:#c6b178;color:#ffe9b1}
+.region-tab.active small{color:#d8c48f}
+.region-note{font-size:10px;color:#819189;margin-top:8px}
+.room-emblem.season-room{color:#bda87a}
+@media(max-width:720px){
+ .season-map .map-intro h1{font-size:24px;letter-spacing:1px}
+ .season-map .map-scroll{height:calc(100dvh - 130px)}
+ .season-map .map-board{min-height:1000px}
+ .season-map .map-stop{width:76px}
+ .season-map .map-stop{transform:translate(-50%,-20px)}.season-map .kind-boss{transform:translate(-50%,-25px)}
+ .season-itinerary{display:none}
+ .season-map .map-intro>button{font-size:10px;padding:5px 9px}
+ .region-tab{min-width:85px;padding:7px 4px;font-size:11px}
+ .region-tab small{font-size:8px}
+ .season-map .map-instruction{display:none}
+}

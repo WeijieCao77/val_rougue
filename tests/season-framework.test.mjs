@@ -1,0 +1,100 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {buildMap,availableNodes} from '../season-map.js';
+import {createSeason,act,instance,startBattle,preview,replay,offers,intent,drawCards} from '../engine.js';
+import {CARDS,REGIONS,compactLines,TACTICS,effects} from '../content.js';
+import {routeNodes,mapEntry,nextScreen,restoreScreen} from '../navigation.js';
+const step=(s,a)=>{const r=act(s,a);assert.equal(r.error,null);return r.state;};
+function bossFixture(actNo,skins=[]){const s=createSeason('fixture');s.act=actNo;s.map=buildMap(s.seed,actNo);s.currentNode=s.map.bossId;s.node=actNo*11;s.hp=31;s.skins=skins;startBattle(s,s.map.nodes.find(n=>n.key===s.currentNode).enemy);s.battle.enemyHp=1;s.battle.hand=[instance(s,'CN03')];return s;}
+test('300 maps have unique connected nodes, upward noncrossing branches and room variety',()=>{
+ const signatures=new Set();
+ for(let actNo=1;actNo<=3;actNo++)for(let i=0;i<100;i++){
+  const m=buildMap('route-'+i,actNo),by=new Map(m.nodes.map(n=>[n.key,n]));assert.equal(by.size,m.nodes.length);assert.equal(m.starts.length,3);
+  assert.deepEqual(m,buildMap('route-'+i,actNo));
+  const kinds=new Set(m.nodes.map(n=>n.kind));for(const k of ['battle','elite','event','shop','rest','boss'])assert.ok(kinds.has(k),`${actNo}/${i}/${k}`);
+  const reachable=new Set(m.starts);for(const n of m.nodes)if(reachable.has(n.key))for(const e of m.edges)if(e.from===n.key)reachable.add(e.to);assert.equal(reachable.size,m.nodes.length);
+  for(const n of m.nodes){assert.ok(n.x>=8&&n.x<=92&&n.y>=5&&n.y<=95);if(n.kind!=='boss')assert.ok(m.edges.some(e=>e.from===n.key));if(n.step===10)assert.equal(n.kind,'rest');}
+  for(const e of m.edges){const a=by.get(e.from),b=by.get(e.to);assert.equal(b.step,a.step+1);assert.ok(b.y<a.y);assert.ok(!(a.kind==='elite'&&b.kind==='elite'));
+   for(const f of m.edges){const c=by.get(f.from),d=by.get(f.to);if(a.step===c.step)assert.ok((a.x-c.x)*(b.x-d.x)>=0,'crossing edges');}
+  }
+  assert.ok(m.nodes.filter(n=>n.step<10&&m.edges.filter(e=>e.from===n.key).length>1).length>=3);
+  assert.ok(m.nodes.some(n=>n.step<11&&m.edges.filter(e=>e.to===n.key).length>1));
+  signatures.add(JSON.stringify(m.edges));
+ }
+ assert.equal(signatures.size,300);
+});
+test('all 72 players use audited regional names/roles and playable decks',async()=>{
+ const names=new Map(Object.entries(JSON.parse(await readFile(new URL('./fixtures/roster-roles.json',import.meta.url),'utf8'))));
+ const allNames=[];
+ for(const [id,r] of Object.entries(REGIONS)){
+  assert.equal(r.pool.length,18);assert.equal(r.start.length,10);assert.equal(new Set(r.pool).size,18);assert.ok(r.start.every(c=>r.pool.includes(c)));
+  assert.deepEqual(['决斗','哨位','控场','先锋','自由人'].map(role=>r.pool.filter(c=>CARDS[c].role===role).length),[6,3,3,3,3]);
+  for(const effect of ['hit','block','draw','power'])assert.ok(r.start.some(c=>effects({id:c}).some(e=>e.type===effect)));
+  for(const cardId of r.pool){const c=CARDS[cardId];allNames.push(c.name);assert.ok(c.player);if(id!=='CN')assert.equal(names.get(r.name+'/'+c.name),c.role==='自由人'?'跨位置候选':c.role==='控场'?'控场／烟位':c.role);assert.ok(TACTICS[cardId].title);
+   for(const up of [false,true]){assert.ok(compactLines({id:cardId,up}).length<=3);for(const e of effects({id:cardId,up})){if(e.type==='hit')assert.ok(e.times>0);if(e.type!=='token')assert.ok(e.n>0);}}
+  }
+ }
+ assert.equal(new Set(allNames).size,72);
+});
+test('season navigation selects a start, resumes battle, rejects jumping, and restores views',()=>{
+ const s=createSeason('navigation');assert.equal(s.node,0);assert.equal(availableNodes(s).length,3);
+ const before=JSON.stringify(s);assert.ok(act(s,{type:'chooseNode',key:s.map.bossId}).error);assert.equal(JSON.stringify(s),before);
+ const next=step(s,mapEntry(s,s.map.starts[1]));assert.equal(next.node,1);assert.equal(nextScreen(s,next),'room');assert.deepEqual(mapEntry(next,next.currentNode),{type:'enter'});assert.equal(availableNodes(next).length,0);
+ assert.equal(routeNodes(next).filter(n=>n.status==='current').length,1);assert.equal(mapEntry(next,s.map.starts[0]),null);
+ assert.equal(restoreScreen({...next,phase:'intermission'},null),'room');assert.deepEqual(replay(next),next);
+});
+test('all early boss outcomes carry deck/resources, heal once after skin and enter next act',()=>{
+ for(const actNo of [1,2])for(const skins of [[],['SK01','SK02','SK03']]){
+  let s=bossFixture(actNo,skins);s.deck[0].up=true;s.deck.push(instance(s,'CU01'));const deck=structuredClone(s.deck),money=s.money;
+  assert.equal(preview(s,s.battle.hand[0].uid).wins,true);s=step(s,{type:'play',uid:s.battle.hand[0].uid});
+  if(!skins.length){assert.equal(s.phase,'skin');assert.equal(s.hp,31);s=step(s,{type:'skin',id:s.reward.skins[0]});}
+  assert.equal(s.phase,'intermission');assert.equal(s.hp,55);assert.equal(s.money,money+50+(skins.length?20:0));assert.equal(s.completed.filter(k=>k===s.currentNode).length,1);
+  assert.deepEqual(s.deck,deck);s=step(s,{type:'nextAct'});assert.equal(s.act,actNo+1);assert.equal(s.hp,55);assert.equal(s.currentNode,null);assert.equal(s.phase,'map');assert.deepEqual(s.deck,deck);assert.equal(availableNodes(s).length,3);
+ }
+});
+test('championship uses growth 3 and only its defeat wins the whole season',()=>{
+ let s=bossFixture(3);s.battle.cycles=2;assert.equal(intent(s)[0].n,18);s=step(s,{type:'play',uid:s.battle.hand[0].uid});assert.equal(s.outcome,'win');assert.ok(s.completed.includes(s.map.bossId));assert.equal(s.hp,31);assert.ok(act(s,{type:'nextAct'}).error);
+});
+test('battle draw is seeded permutation, not independent generation or replacement',()=>{
+ const openings=new Set();
+ for(const region of Object.keys(REGIONS))for(let i=0;i<40;i++){
+  let s=createSeason('draw-'+i,false,region);s=step(s,{type:'chooseNode',key:s.map.starts[0]});const ids=s.battle.hand.map(c=>c.uid);openings.add(region+ids.join(','));
+  assert.equal(new Set([...s.battle.hand,...s.battle.draw].map(c=>c.uid)).size,10);assert.deepEqual([...s.battle.hand,...s.battle.draw].map(c=>c.id).sort(),REGIONS[region].start.slice().sort());
+  assert.deepEqual(replay(s),s);s.battle.hand=[];const remaining=s.battle.draw.map(c=>c.uid);drawCards(s,5);assert.deepEqual(s.battle.hand.map(c=>c.uid),remaining);
+ }
+ assert.ok(openings.size>140);
+});
+test('weighted offers stay regional, unique and below the copy limit',()=>{
+ for(const region of Object.keys(REGIONS)){const s=createSeason('offers',false,region),pool=REGIONS[region].pool,zero=[0,0,0,0];
+  for(let i=0;i<1000;i++){const chosen=offers(s);assert.equal(new Set(chosen).size,chosen.length);assert.ok(chosen.every(id=>pool.includes(id)&&s.deck.filter(c=>c.id===id).length<3));zero[CARDS[chosen[0]].cost]++;}
+  assert.ok(zero[1]>zero[3]*3);assert.ok(zero[3]>0);assert.equal(offers(s,[0,0,0,1],1).every(id=>CARDS[id].cost===3),true);
+ }
+});
+test('rest is a choice and event target selection is atomic',()=>{
+ let s=createSeason('activities');const rest=s.map.nodes.find(n=>n.kind==='rest');s.map.starts=[rest.key];s.hp=40;s=step(s,{type:'chooseNode',key:rest.key});assert.equal(s.phase,'activity');assert.equal(s.hp,40);s=step(s,{type:'activity',choice:'fans'});assert.equal(s.hp,64);assert.equal(s.phase,'map');assert.equal(s.node,1);
+ s.phase='event';s.eventId='training';const uid=s.deck[0].uid,before=JSON.stringify(s.deck),money=s.money;s=step(s,{type:'seasonEvent',choice:'paid'});s=step(s,{type:'eventBack'});assert.equal(s.money,money);assert.equal(JSON.stringify(s.deck),before);
+ s=step(s,{type:'seasonEvent',choice:'risky'});const invalid=act(s,{type:'eventUpgrade',uid:'not-here'});assert.ok(invalid.error);assert.equal(invalid.state,s);s=step(s,{type:'eventUpgrade',uid});assert.equal(s.deck.find(c=>c.uid===uid).up,true);assert.ok(s.deck.some(c=>c.id==='CU01'));
+});
+test('all four regions complete the 33-room state machine (combat victories are fixtures, not balance evidence)',()=>{
+ for(const region of Object.keys(REGIONS)){
+  let s=createSeason('structure',false,region);
+  for(let steps=0;steps<180&&s.phase!=='result';steps++){
+   if(s.phase==='map')s=step(s,{type:'chooseNode',key:availableNodes(s)[0].key});
+   else if(s.phase==='combat'){s.battle.enemyHp=1;s.battle.energy=3;s.battle.hand=[instance(s,REGIONS[region].pool[2])];s=step(s,{type:'play',uid:s.battle.hand[0].uid});}
+   else if(s.phase==='reward')s=step(s,{type:'recruit',id:s.reward.offers[0]??null});
+   else if(s.phase==='skin')s=step(s,{type:'skin',id:s.reward.skins[0]});
+   else if(s.phase==='event')s=step(s,{type:'seasonEvent',choice:'skip'});
+   else if(s.phase==='shop')s=step(s,{type:'leaveShop'});
+   else if(s.phase==='activity')s=step(s,{type:'activity',choice:'upgrade'});
+   else if(s.phase==='upgrade')s=step(s,{type:'upgrade',uid:s.deck.find(c=>CARDS[c.id].player&&!c.up).uid});
+   else if(s.phase==='intermission')s=step(s,{type:'nextAct'});
+   else assert.fail(s.phase);
+   s=JSON.parse(JSON.stringify(s));
+  }
+  assert.equal(s.outcome,'win');assert.equal(s.act,3);assert.equal(s.node,33);assert.equal(s.completed.length,33);assert.equal(new Set(s.completed).size,33);assert.ok(s.deck.some(c=>c.up));
+ }
+});
+test('real DeepSeek full-season decisions replay exactly for all regions',async()=>{
+ for(const region of Object.keys(REGIONS)){const state=JSON.parse(await readFile(new URL(`./fixtures/season-${region}.json`,import.meta.url),'utf8'));assert.equal(state.outcome,'loss');assert.ok(state.actions.length>20);assert.deepEqual(replay(state),state);}
+});

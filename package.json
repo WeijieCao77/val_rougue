@@ -1,0 +1,12 @@
+{
+  "name": "peak-season",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "24.x" },
+  "scripts": {
+    "build": "node tools/build-browser.mjs",
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs"
+  }
+}

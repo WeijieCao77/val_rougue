@@ -1,0 +1,4028 @@
+{
+  "version": "D0.2.0",
+  "mode": "season",
+  "region": "EMEA",
+  "seed": "deepseek-regional-opening-02",
+  "tutorial": false,
+  "rng": 1901603985,
+  "rev": 139,
+  "nextId": 20,
+  "act": 1,
+  "map": {
+    "act": 1,
+    "nodes": [
+      {
+        "key": "a1-r1-c0",
+        "step": 1,
+        "lane": 0,
+        "x": 19.36030198680237,
+        "y": 94,
+        "kind": "battle",
+        "name": "基础进攻",
+        "enemy": "E01"
+      },
+      {
+        "key": "a1-r1-c1",
+        "step": 1,
+        "lane": 1,
+        "x": 49.484752133255824,
+        "y": 94,
+        "kind": "battle",
+        "name": "基础进攻",
+        "enemy": "E01"
+      },
+      {
+        "key": "a1-r1-c2",
+        "step": 1,
+        "lane": 2,
+        "x": 81.31110158539377,
+        "y": 94,
+        "kind": "battle",
+        "name": "基础进攻",
+        "enemy": "E01"
+      },
+      {
+        "key": "a1-r2-c0",
+        "step": 2,
+        "lane": 0,
+        "x": 18.364029932767153,
+        "y": 85.2,
+        "kind": "shop",
+        "name": "转会市场"
+      },
+      {
+        "key": "a1-r2-c1",
+        "step": 2,
+        "lane": 1,
+        "x": 48.977815345395356,
+        "y": 85.2,
+        "kind": "shop",
+        "name": "转会市场"
+      },
+      {
+        "key": "a1-r2-c2",
+        "step": 2,
+        "lane": 2,
+        "x": 80.93059835257009,
+        "y": 85.2,
+        "kind": "event",
+        "name": "未知事件"
+      },
+      {
+        "key": "a1-r3-c0",
+        "step": 3,
+        "lane": 0,
+        "x": 12.503676657099277,
+        "y": 76.4,
+        "kind": "battle",
+        "name": "信息压制",
+        "enemy": "E02"
+      },
+      {
+        "key": "a1-r3-c1",
+        "step": 3,
+        "lane": 1,
+        "x": 38.03923590884854,
+        "y": 76.4,
+        "kind": "battle",
+        "name": "基础进攻",
+        "enemy": "E01"
+      },
+      {
+        "key": "a1-r3-c2",
+        "step": 3,
+        "lane": 2,
+        "x": 61.695376272235684,
+        "y": 76.4,
+        "kind": "battle",
+        "name": "信息压制",
+        "enemy": "E02"
+      },
+      {
+        "key": "a1-r3-c3",
+        "step": 3,
+        "lane": 3,
+        "x": 87.68156042741612,
+        "y": 76.4,
+        "kind": "battle",
+        "name": "信息压制",
+        "enemy": "E02"
+      },
+      {
+        "key": "a1-r4-c0",
+        "step": 4,
+        "lane": 0,
+        "x": 17.88546920916997,
+        "y": 67.6,
+        "kind": "shop",
+        "name": "转会市场"
+      },
+      {
+        "key": "a1-r4-c1",
+        "step": 4,
+        "lane": 1,
+        "x": 49.16325431782752,
+        "y": 67.6,
+        "kind": "battle",
+        "name": "防守反击",
+        "enemy": "E04"
+      },
+      {
+        "key": "a1-r4-c2",
+        "step": 4,
+        "lane": 2,
+        "x": 82.89546436653472,
+        "y": 67.6,
+        "kind": "shop",
+        "name": "转会市场"
+      },
+      {
+        "key": "a1-r5-c0",
+        "step": 5,
+        "lane": 0,
+        "x": 13.349183378973976,
+        "y": 58.8,
+        "kind": "battle",
+        "name": "基础进攻",
+        "enemy": "E01"
+      },
+      {
+        "key": "a1-r5-c1",
+        "step": 5,
+        "lane": 1,
+        "x": 37.76120311378811,
+        "y": 58.8,
+        "kind": "battle",
+        "name": "信息压制",
+        "enemy": "E02"
+      },
+      {
+        "key": "a1-r5-c2",
+        "step": 5,
+        "lane": 2,
+        "x": 62.459886347564556,
+        "y": 58.8,
+        "kind": "battle",
+        "name": "纪律控制",
+        "enemy": "E05"
+      },
+      {
+        "key": "a1-r5-c3",
+        "step": 5,
+        "lane": 3,
+        "x": 89.20143097639084,
+        "y": 58.8,
+        "kind": "elite",
+        "name": "高压强敌",
+        "enemy": "EL01"
+      },
+      {
+        "key": "a1-r6-c0",
+        "step": 6,
+        "lane": 0,
+        "x": 11.713557473151013,
+        "y": 50,
+        "kind": "elite",
+        "name": "高压强敌",
+        "enemy": "EL01"
+      },
+      {
+        "key": "a1-r6-c1",
+        "step": 6,
+        "lane": 1,
+        "x": 37.59238826258418,
+        "y": 50,
+        "kind": "elite",
+        "name": "高压强敌",
+        "enemy": "EL01"
+      },
+      {
+        "key": "a1-r6-c2",
+        "step": 6,
+        "lane": 2,
+        "x": 62.82653445230486,
+        "y": 50,
+        "kind": "shop",
+        "name": "转会市场"
+      },
+      {
+        "key": "a1-r6-c3",
+        "step": 6,
+        "lane": 3,
+        "x": 86.99428001279011,
+        "y": 50,
+        "kind": "event",
+        "name": "未知事件"
+      },
+      {
+        "key": "a1-r7-c0",
+        "step": 7,
+        "lane": 0,
+        "x": 13.458217879291624,
+        "y": 41.199999999999996,
+        "kind": "battle",
+        "name": "基础进攻",
+        "enemy": "E01"
+      },
+      {
+        "key": "a1-r7-c1",
+        "step": 7,
+        "lane": 1,
+        "x": 37.8127588283581,
+        "y": 41.199999999999996,
+        "kind": "battle",
+        "name": "防守反击",
+        "enemy": "E04"
+      },
+      {
+        "key": "a1-r7-c2",
+        "step": 7,
+        "lane": 2,
+        "x": 62.3996967258087,
+        "y": 41.199999999999996,
+        "kind": "battle",
+        "name": "信息压制",
+        "enemy": "E02"
+      },
+      {
+        "key": "a1-r7-c3",
+        "step": 7,
+        "lane": 3,
+        "x": 88.96268787817098,
+        "y": 41.199999999999996,
+        "kind": "battle",
+        "name": "多段突击",
+        "enemy": "E03"
+      },
+      {
+        "key": "a1-r8-c0",
+        "step": 8,
+        "lane": 0,
+        "x": 11.989906596718356,
+        "y": 32.39999999999999,
+        "kind": "elite",
+        "name": "高压强敌",
+        "enemy": "EL01"
+      },
+      {
+        "key": "a1-r8-c1",
+        "step": 8,
+        "lane": 1,
+        "x": 37.1333824666993,
+        "y": 32.39999999999999,
+        "kind": "shop",
+        "name": "转会市场"
+      },
+      {
+        "key": "a1-r8-c2",
+        "step": 8,
+        "lane": 2,
+        "x": 61.9608254788133,
+        "y": 32.39999999999999,
+        "kind": "elite",
+        "name": "高压强敌",
+        "enemy": "EL01"
+      },
+      {
+        "key": "a1-r8-c3",
+        "step": 8,
+        "lane": 3,
+        "x": 88.87521104468033,
+        "y": 32.39999999999999,
+        "kind": "shop",
+        "name": "转会市场"
+      },
+      {
+        "key": "a1-r9-c0",
+        "step": 9,
+        "lane": 0,
+        "x": 16.745793360751122,
+        "y": 23.599999999999994,
+        "kind": "battle",
+        "name": "防守反击",
+        "enemy": "E04"
+      },
+      {
+        "key": "a1-r9-c1",
+        "step": 9,
+        "lane": 1,
+        "x": 49.26675739209168,
+        "y": 23.599999999999994,
+        "kind": "event",
+        "name": "未知事件"
+      },
+      {
+        "key": "a1-r9-c2",
+        "step": 9,
+        "lane": 2,
+        "x": 82.75777218327858,
+        "y": 23.599999999999994,
+        "kind": "battle",
+        "name": "基础进攻",
+        "enemy": "E01"
+      },
+      {
+        "key": "a1-r10-c0",
+        "step": 10,
+        "lane": 0,
+        "x": 19.11107097635977,
+        "y": 14.799999999999997,
+        "kind": "rest",
+        "name": "俱乐部活动"
+      },
+      {
+        "key": "a1-r10-c1",
+        "step": 10,
+        "lane": 1,
+        "x": 49.31332728592679,
+        "y": 14.799999999999997,
+        "kind": "rest",
+        "name": "俱乐部活动"
+      },
+      {
+        "key": "a1-r10-c2",
+        "step": 10,
+        "lane": 2,
+        "x": 80.81714802188799,
+        "y": 14.799999999999997,
+        "kind": "rest",
+        "name": "俱乐部活动"
+      },
+      {
+        "key": "a1-r11-c0",
+        "step": 11,
+        "lane": 0,
+        "x": 50,
+        "y": 6,
+        "kind": "boss",
+        "name": "第一次大师赛",
+        "enemy": "B01"
+      }
+    ],
+    "edges": [
+      {
+        "from": "a1-r1-c0",
+        "to": "a1-r2-c0"
+      },
+      {
+        "from": "a1-r1-c1",
+        "to": "a1-r2-c1"
+      },
+      {
+        "from": "a1-r1-c2",
+        "to": "a1-r2-c2"
+      },
+      {
+        "from": "a1-r1-c1",
+        "to": "a1-r2-c0"
+      },
+      {
+        "from": "a1-r2-c0",
+        "to": "a1-r3-c0"
+      },
+      {
+        "from": "a1-r2-c1",
+        "to": "a1-r3-c1"
+      },
+      {
+        "from": "a1-r2-c2",
+        "to": "a1-r3-c3"
+      },
+      {
+        "from": "a1-r2-c1",
+        "to": "a1-r3-c2"
+      },
+      {
+        "from": "a1-r2-c2",
+        "to": "a1-r3-c2"
+      },
+      {
+        "from": "a1-r2-c0",
+        "to": "a1-r3-c1"
+      },
+      {
+        "from": "a1-r3-c0",
+        "to": "a1-r4-c0"
+      },
+      {
+        "from": "a1-r3-c1",
+        "to": "a1-r4-c1"
+      },
+      {
+        "from": "a1-r3-c2",
+        "to": "a1-r4-c1"
+      },
+      {
+        "from": "a1-r3-c3",
+        "to": "a1-r4-c2"
+      },
+      {
+        "from": "a1-r3-c2",
+        "to": "a1-r4-c2"
+      },
+      {
+        "from": "a1-r4-c0",
+        "to": "a1-r5-c0"
+      },
+      {
+        "from": "a1-r4-c1",
+        "to": "a1-r5-c1"
+      },
+      {
+        "from": "a1-r4-c2",
+        "to": "a1-r5-c3"
+      },
+      {
+        "from": "a1-r4-c1",
+        "to": "a1-r5-c2"
+      },
+      {
+        "from": "a1-r4-c0",
+        "to": "a1-r5-c1"
+      },
+      {
+        "from": "a1-r5-c0",
+        "to": "a1-r6-c0"
+      },
+      {
+        "from": "a1-r5-c1",
+        "to": "a1-r6-c1"
+      },
+      {
+        "from": "a1-r5-c2",
+        "to": "a1-r6-c2"
+      },
+      {
+        "from": "a1-r5-c3",
+        "to": "a1-r6-c3"
+      },
+      {
+        "from": "a1-r5-c2",
+        "to": "a1-r6-c3"
+      },
+      {
+        "from": "a1-r5-c0",
+        "to": "a1-r6-c1"
+      },
+      {
+        "from": "a1-r6-c0",
+        "to": "a1-r7-c0"
+      },
+      {
+        "from": "a1-r6-c1",
+        "to": "a1-r7-c1"
+      },
+      {
+        "from": "a1-r6-c2",
+        "to": "a1-r7-c2"
+      },
+      {
+        "from": "a1-r6-c3",
+        "to": "a1-r7-c3"
+      },
+      {
+        "from": "a1-r6-c1",
+        "to": "a1-r7-c2"
+      },
+      {
+        "from": "a1-r7-c0",
+        "to": "a1-r8-c0"
+      },
+      {
+        "from": "a1-r7-c1",
+        "to": "a1-r8-c1"
+      },
+      {
+        "from": "a1-r7-c2",
+        "to": "a1-r8-c2"
+      },
+      {
+        "from": "a1-r7-c3",
+        "to": "a1-r8-c3"
+      },
+      {
+        "from": "a1-r7-c3",
+        "to": "a1-r8-c2"
+      },
+      {
+        "from": "a1-r7-c1",
+        "to": "a1-r8-c2"
+      },
+      {
+        "from": "a1-r8-c0",
+        "to": "a1-r9-c0"
+      },
+      {
+        "from": "a1-r8-c1",
+        "to": "a1-r9-c1"
+      },
+      {
+        "from": "a1-r8-c2",
+        "to": "a1-r9-c1"
+      },
+      {
+        "from": "a1-r8-c3",
+        "to": "a1-r9-c2"
+      },
+      {
+        "from": "a1-r8-c1",
+        "to": "a1-r9-c0"
+      },
+      {
+        "from": "a1-r8-c2",
+        "to": "a1-r9-c2"
+      },
+      {
+        "from": "a1-r9-c0",
+        "to": "a1-r10-c0"
+      },
+      {
+        "from": "a1-r9-c1",
+        "to": "a1-r10-c1"
+      },
+      {
+        "from": "a1-r9-c2",
+        "to": "a1-r10-c2"
+      },
+      {
+        "from": "a1-r9-c0",
+        "to": "a1-r10-c1"
+      },
+      {
+        "from": "a1-r10-c0",
+        "to": "a1-r11-c0"
+      },
+      {
+        "from": "a1-r10-c1",
+        "to": "a1-r11-c0"
+      },
+      {
+        "from": "a1-r10-c2",
+        "to": "a1-r11-c0"
+      }
+    ],
+    "starts": [
+      "a1-r1-c0",
+      "a1-r1-c1",
+      "a1-r1-c2"
+    ],
+    "bossId": "a1-r11-c0"
+  },
+  "currentNode": "a1-r11-c0",
+  "completed": [
+    "a1-r1-c0",
+    "a1-r2-c0",
+    "a1-r3-c1",
+    "a1-r4-c1",
+    "a1-r5-c2",
+    "a1-r6-c3",
+    "a1-r7-c3",
+    "a1-r8-c2",
+    "a1-r9-c2",
+    "a1-r10-c2"
+  ],
+  "node": 11,
+  "phase": "result",
+  "hp": 0,
+  "maxHp": 80,
+  "money": 155,
+  "deck": [
+    {
+      "uid": "c1",
+      "id": "EU03",
+      "up": false
+    },
+    {
+      "uid": "c2",
+      "id": "EU07",
+      "up": false
+    },
+    {
+      "uid": "c3",
+      "id": "EU11",
+      "up": false
+    },
+    {
+      "uid": "c4",
+      "id": "EU14",
+      "up": false
+    },
+    {
+      "uid": "c5",
+      "id": "EU16",
+      "up": false
+    },
+    {
+      "uid": "c6",
+      "id": "EU03",
+      "up": false
+    },
+    {
+      "uid": "c7",
+      "id": "EU07",
+      "up": false
+    },
+    {
+      "uid": "c8",
+      "id": "EU03",
+      "up": false
+    },
+    {
+      "uid": "c9",
+      "id": "EU07",
+      "up": false
+    },
+    {
+      "uid": "c10",
+      "id": "EU14",
+      "up": false
+    },
+    {
+      "uid": "c11",
+      "id": "EU13",
+      "up": false
+    },
+    {
+      "uid": "c12",
+      "id": "EU01",
+      "up": false
+    },
+    {
+      "uid": "c14",
+      "id": "EU16",
+      "up": false
+    },
+    {
+      "uid": "c18",
+      "id": "EU09",
+      "up": false
+    }
+  ],
+  "skins": [
+    "SK03"
+  ],
+  "logs": [
+    {
+      "node": 0,
+      "turn": 0,
+      "text": "新赛季开始：EMEA赛区 · 第1幕。"
+    },
+    {
+      "node": 1,
+      "turn": 0,
+      "text": "比赛开始：基础试训队，对手防线 28。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "第 1 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 21。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 14。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "对手行动：攻击 6。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "对手攻击 6：格挡抵消 0，失去 6 声望（剩余 74）。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "第 2 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "打出 Chronicle，支付 1 行动点。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "Chronicle 能力生效，离开普通循环。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "打出 Alfajer，支付 1 行动点。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "获得 4 格挡（现有 4）。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 4。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "对手行动：攻击 6。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "对手攻击 6：格挡抵消 4，失去 2 声望（剩余 72）。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "第 3 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 0。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "战胜 基础试训队！"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "资金 +20。招募候选：SUYGETSU、kaajak、benjyfishy。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "跳过招募，保留现有牌组。"
+    },
+    {
+      "node": 2,
+      "turn": 0,
+      "text": "进入转会市场：crashies、Crewen、Lar0k。"
+    },
+    {
+      "node": 2,
+      "turn": 0,
+      "text": "招募 crashies，赛季牌组共 11 张。"
+    },
+    {
+      "node": 2,
+      "turn": 0,
+      "text": "转会支出 40 资金。"
+    },
+    {
+      "node": 3,
+      "turn": 0,
+      "text": "比赛开始：基础试训队，对手防线 28。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "第 1 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "打出 Alfajer，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "获得 4 格挡（现有 4）。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "打出 RieNs，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "获得 3 格挡（现有 7）。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 21。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "对手行动：攻击 4。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "对手攻击 4：格挡抵消 4，失去 0 声望（剩余 72）。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "第 2 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "抽到 crashies。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 14。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "对手行动：攻击 8。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "对手攻击 8：格挡抵消 0，失去 8 声望（剩余 64）。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "第 3 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 7。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "打出 Alfajer，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "获得 4 格挡（现有 4）。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "对手行动：获得 4 格挡；攻击 3。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "对手获得 4 格挡。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "对手攻击 3：格挡抵消 3，失去 0 声望（剩余 64）。"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "第 4 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "抽到 crashies。"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "打出 Chronicle，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "Chronicle 能力生效，离开普通循环。"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "攻击 10：对手格挡抵消 4，防线减少 6，剩余 1。"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 0。"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "战胜 基础试训队！"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "资金 +20。招募候选：Derke、crashies、RieNs。"
+    },
+    {
+      "node": 3,
+      "turn": 4,
+      "text": "招募 Derke，赛季牌组共 12 张。"
+    },
+    {
+      "node": 4,
+      "turn": 0,
+      "text": "比赛开始：防守反击队，对手防线 38。"
+    },
+    {
+      "node": 4,
+      "turn": 1,
+      "text": "第 1 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 4,
+      "turn": 1,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 4,
+      "turn": 1,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 4,
+      "turn": 1,
+      "text": "抽到 Derke。"
+    },
+    {
+      "node": 4,
+      "turn": 1,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 4,
+      "turn": 1,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 4,
+      "turn": 1,
+      "text": "打出 Derke，支付 0 行动点。"
+    },
+    {
+      "node": 4,
+      "turn": 1,
+      "text": "攻击 3：对手格挡抵消 0，防线减少 3，剩余 35。"
+    },
+    {
+      "node": 4,
+      "turn": 1,
+      "text": "对手行动：获得 8 格挡；攻击 3。"
+    },
+    {
+      "node": 4,
+      "turn": 1,
+      "text": "对手获得 8 格挡。"
+    },
+    {
+      "node": 4,
+      "turn": 1,
+      "text": "对手攻击 3：格挡抵消 0，失去 3 声望（剩余 61）。"
+    },
+    {
+      "node": 4,
+      "turn": 2,
+      "text": "第 2 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 4,
+      "turn": 2,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 4,
+      "turn": 2,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 4,
+      "turn": 2,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 4,
+      "turn": 2,
+      "text": "抽到 crashies。"
+    },
+    {
+      "node": 4,
+      "turn": 2,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 4,
+      "turn": 2,
+      "text": "打出 Chronicle，支付 1 行动点。"
+    },
+    {
+      "node": 4,
+      "turn": 2,
+      "text": "Chronicle 能力生效，离开普通循环。"
+    },
+    {
+      "node": 4,
+      "turn": 2,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 4,
+      "turn": 2,
+      "text": "攻击 10：对手格挡抵消 8，防线减少 2，剩余 33。"
+    },
+    {
+      "node": 4,
+      "turn": 2,
+      "text": "对手行动：攻击 12。"
+    },
+    {
+      "node": 4,
+      "turn": 2,
+      "text": "对手攻击 12：格挡抵消 0，失去 12 声望（剩余 49）。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "第 3 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "抽到 Derke。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "打出 Derke，支付 0 行动点。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "攻击 6：对手格挡抵消 0，防线减少 6，剩余 27。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 20。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 13。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 6。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "对手行动：将 1 张疲劳放入弃牌堆；攻击 6。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "疲劳 加入弃牌堆。"
+    },
+    {
+      "node": 4,
+      "turn": 3,
+      "text": "对手攻击 6：格挡抵消 0，失去 6 声望（剩余 43）。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "第 4 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "抽到 crashies。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "打出 crashies，支付 0 行动点。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "crashies 消耗，本场不再抽到。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "打出 RieNs，支付 1 行动点。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "获得 3 格挡（现有 3）。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "打出 RieNs，支付 1 行动点。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "抽到 疲劳。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "获得 3 格挡（现有 6）。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "对手行动：获得 8 格挡；攻击 3。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "对手获得 8 格挡。"
+    },
+    {
+      "node": 4,
+      "turn": 4,
+      "text": "对手攻击 3：格挡抵消 3，失去 0 声望（剩余 43）。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "第 5 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "抽到 Derke。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "打出 Derke，支付 0 行动点。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "攻击 6：对手格挡抵消 6，防线减少 0，剩余 6。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "攻击 7：对手格挡抵消 2，防线减少 5，剩余 1。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 0。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "战胜 防守反击队！"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "资金 +20。招募候选：Ruxic、kaajak、crashies。"
+    },
+    {
+      "node": 4,
+      "turn": 5,
+      "text": "跳过招募，保留现有牌组。"
+    },
+    {
+      "node": 5,
+      "turn": 0,
+      "text": "比赛开始：纪律控制队，对手防线 44。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "第 1 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "抽到 crashies。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "抽到 Derke。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "打出 Chronicle，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "Chronicle 能力生效，离开普通循环。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "打出 Derke，支付 0 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "攻击 6：对手格挡抵消 0，防线减少 6，剩余 38。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "打出 RieNs，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "获得 3 格挡（现有 3）。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "打出 crashies，支付 0 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "crashies 消耗，本场不再抽到。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "对手行动：使你虚弱 1 回合。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "我方虚弱 +1 回合。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "第 2 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "打出 Alfajer，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "获得 4 格挡（现有 4）。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "打出 Ruxic，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "获得 5 格挡（现有 9）。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "打出 Alfajer，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "获得 4 格挡（现有 13）。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "对手行动：攻击 7。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "对手攻击 7：格挡抵消 7，失去 0 声望（剩余 43）。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "第 3 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 28。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "打出 Alfajer，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "获得 4 格挡（现有 4）。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "对手行动：获得 6 格挡；攻击 4。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "对手获得 6 格挡。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "对手攻击 4：格挡抵消 4，失去 0 声望（剩余 43）。"
+    },
+    {
+      "node": 5,
+      "turn": 4,
+      "text": "第 4 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 5,
+      "turn": 4,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 5,
+      "turn": 4,
+      "text": "抽到 Derke。"
+    },
+    {
+      "node": 5,
+      "turn": 4,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 5,
+      "turn": 4,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 5,
+      "turn": 4,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 5,
+      "turn": 4,
+      "text": "打出 Derke，支付 0 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 4,
+      "text": "攻击 6：对手格挡抵消 6，防线减少 0，剩余 28。"
+    },
+    {
+      "node": 5,
+      "turn": 4,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 4,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 21。"
+    },
+    {
+      "node": 5,
+      "turn": 4,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 4,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 14。"
+    },
+    {
+      "node": 5,
+      "turn": 4,
+      "text": "对手行动：使你虚弱 1 回合。"
+    },
+    {
+      "node": 5,
+      "turn": 4,
+      "text": "我方虚弱 +1 回合。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "第 5 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "打出 RieNs，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "获得 3 格挡（现有 3）。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 7。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "攻击 5：对手格挡抵消 0，防线减少 5，剩余 2。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "对手行动：攻击 7。"
+    },
+    {
+      "node": 5,
+      "turn": 5,
+      "text": "对手攻击 7：格挡抵消 3，失去 4 声望（剩余 39）。"
+    },
+    {
+      "node": 5,
+      "turn": 6,
+      "text": "第 6 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 5,
+      "turn": 6,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 5,
+      "turn": 6,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 5,
+      "turn": 6,
+      "text": "抽到 Derke。"
+    },
+    {
+      "node": 5,
+      "turn": 6,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 5,
+      "turn": 6,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 5,
+      "turn": 6,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 5,
+      "turn": 6,
+      "text": "打出 Derke，支付 0 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 6,
+      "text": "攻击 6：对手格挡抵消 0，防线减少 6，剩余 0。"
+    },
+    {
+      "node": 5,
+      "turn": 6,
+      "text": "战胜 纪律控制队！"
+    },
+    {
+      "node": 5,
+      "turn": 6,
+      "text": "资金 +20。招募候选：Derke、kaajak、Chronicle。"
+    },
+    {
+      "node": 5,
+      "turn": 6,
+      "text": "招募 Chronicle，赛季牌组共 13 张。"
+    },
+    {
+      "node": 6,
+      "turn": 0,
+      "text": "事件：训练赛"
+    },
+    {
+      "node": 6,
+      "turn": 0,
+      "text": "训练赛：支付20资金，回复 12 声望。"
+    },
+    {
+      "node": 7,
+      "turn": 0,
+      "text": "比赛开始：双核突击队，对手防线 40。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "第 1 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "抽到 Derke。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "打出 Derke，支付 0 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "攻击 3：对手格挡抵消 0，防线减少 3，剩余 37。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "打出 Alfajer，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "获得 4 格挡（现有 4）。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "打出 Alfajer，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "获得 4 格挡（现有 8）。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "对手行动：攻击 2 × 3 = 6。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "对手攻击 2：格挡抵消 2，失去 0 声望（剩余 51）。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "对手攻击 2：格挡抵消 2，失去 0 声望（剩余 51）。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "对手攻击 2：格挡抵消 2，失去 0 声望（剩余 51）。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "第 2 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 30。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 23。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "打出 Alfajer，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "获得 4 格挡（现有 4）。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "对手行动：攻击 5。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "对手攻击 5：格挡抵消 4，失去 1 声望（剩余 50）。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "第 3 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "抽到 crashies。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "打出 Chronicle，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "Chronicle 能力生效，离开普通循环。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 13。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "打出 crashies，支付 0 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "crashies 消耗，本场不再抽到。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "对手行动：获得 5 格挡；攻击 3。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "对手获得 5 格挡。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "对手攻击 3：格挡抵消 0，失去 3 声望（剩余 47）。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "第 4 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "打出 Ruxic，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "获得 5 格挡（现有 5）。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "攻击 10：对手格挡抵消 5，防线减少 5，剩余 8。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "打出 Alfajer，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "获得 4 格挡（现有 9）。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "对手行动：攻击 2 × 3 = 6。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "对手攻击 2：格挡抵消 2，失去 0 声望（剩余 47）。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "对手攻击 2：格挡抵消 2，失去 0 声望（剩余 47）。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "对手攻击 2：格挡抵消 2，失去 0 声望（剩余 47）。"
+    },
+    {
+      "node": 7,
+      "turn": 5,
+      "text": "第 5 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 7,
+      "turn": 5,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 7,
+      "turn": 5,
+      "text": "抽到 Derke。"
+    },
+    {
+      "node": 7,
+      "turn": 5,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 7,
+      "turn": 5,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 7,
+      "turn": 5,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 7,
+      "turn": 5,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 7,
+      "turn": 5,
+      "text": "打出 Chronicle，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 5,
+      "text": "Chronicle 能力生效，离开普通循环。"
+    },
+    {
+      "node": 7,
+      "turn": 5,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 5,
+      "text": "攻击 13：对手格挡抵消 0，防线减少 13，剩余 0。"
+    },
+    {
+      "node": 7,
+      "turn": 5,
+      "text": "战胜 双核突击队！"
+    },
+    {
+      "node": 7,
+      "turn": 5,
+      "text": "资金 +20。招募候选：trexx、Crewen、marteen。"
+    },
+    {
+      "node": 7,
+      "turn": 5,
+      "text": "跳过招募，保留现有牌组。"
+    },
+    {
+      "node": 8,
+      "turn": 0,
+      "text": "比赛开始：高压强敌队，对手防线 54。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "第 1 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "打出 Chronicle，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "Chronicle 能力生效，离开普通循环。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 44。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "对手行动：攻击 8；将 1 张疲劳放入弃牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "对手攻击 8：格挡抵消 0，失去 8 声望（剩余 39）。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "疲劳 加入弃牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "第 2 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "打出 Chronicle，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "Chronicle 能力生效，离开普通循环。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "打出 Alfajer，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "获得 4 格挡（现有 4）。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "打出 Ruxic，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "获得 5 格挡（现有 9）。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "对手行动：攻击 3 × 3 = 9。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "对手攻击 3：格挡抵消 3，失去 0 声望（剩余 39）。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "对手攻击 3：格挡抵消 3，失去 0 声望（剩余 39）。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "对手攻击 3：格挡抵消 3，失去 0 声望（剩余 39）。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "第 3 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽到 Derke。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽到 crashies。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "攻击 13：对手格挡抵消 0，防线减少 13，剩余 31。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "打出 Derke，支付 0 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "攻击 3：对手格挡抵消 0，防线减少 3，剩余 28。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "对手行动：获得 10 格挡；将 1 张节奏受阻放入弃牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "对手获得 10 格挡。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "节奏受阻 加入弃牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "第 4 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "攻击 13：对手格挡抵消 10，防线减少 3，剩余 25。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 18。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "打出 RieNs，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "获得 3 格挡（现有 3）。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "对手行动：攻击 8；将 1 张疲劳放入弃牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "对手攻击 8：格挡抵消 3，失去 5 声望（剩余 34）。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "疲劳 加入弃牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "第 5 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽到 疲劳。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽到 crashies。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "攻击 13：对手格挡抵消 0，防线减少 13，剩余 5。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "对手行动：攻击 4 × 3 = 12。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "对手攻击 4：格挡抵消 0，失去 4 声望（剩余 30）。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "对手攻击 4：格挡抵消 0，失去 4 声望（剩余 26）。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "对手攻击 4：格挡抵消 0，失去 4 声望（剩余 22）。"
+    },
+    {
+      "node": 8,
+      "turn": 6,
+      "text": "第 6 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 8,
+      "turn": 6,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 8,
+      "turn": 6,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 8,
+      "turn": 6,
+      "text": "抽到 Derke。"
+    },
+    {
+      "node": 8,
+      "turn": 6,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 8,
+      "turn": 6,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 8,
+      "turn": 6,
+      "text": "打出 Derke，支付 0 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 6,
+      "text": "攻击 9：对手格挡抵消 0，防线减少 9，剩余 0。"
+    },
+    {
+      "node": 8,
+      "turn": 6,
+      "text": "战胜 高压强敌队！"
+    },
+    {
+      "node": 8,
+      "turn": 6,
+      "text": "资金 +35。招募候选：Lar0k、kaajak、SUYGETSU。"
+    },
+    {
+      "node": 8,
+      "turn": 6,
+      "text": "跳过招募，保留现有牌组。"
+    },
+    {
+      "node": 8,
+      "turn": 6,
+      "text": "获得皮肤：守望涂层。"
+    },
+    {
+      "node": 9,
+      "turn": 0,
+      "text": "比赛开始：基础试训队，对手防线 28。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "第 1 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "抽到 crashies。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "打出 crashies，支付 0 行动点。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "crashies 消耗，本场不再抽到。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "打出 RieNs，支付 1 行动点。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "抽到 Derke。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "获得 3 格挡（现有 3）。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "打出 Alfajer，支付 1 行动点。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "获得 4 格挡（现有 7）。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "守望涂层：获得 2 格挡。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "打出 Chronicle，支付 1 行动点。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "Chronicle 能力生效，离开普通循环。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "打出 Derke，支付 0 行动点。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "攻击 6：对手格挡抵消 0，防线减少 6，剩余 22。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "对手行动：攻击 4。"
+    },
+    {
+      "node": 9,
+      "turn": 1,
+      "text": "对手攻击 4：格挡抵消 4，失去 0 声望（剩余 22）。"
+    },
+    {
+      "node": 9,
+      "turn": 2,
+      "text": "第 2 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 9,
+      "turn": 2,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 9,
+      "turn": 2,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 9,
+      "turn": 2,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 9,
+      "turn": 2,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 9,
+      "turn": 2,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 9,
+      "turn": 2,
+      "text": "打出 Chronicle，支付 1 行动点。"
+    },
+    {
+      "node": 9,
+      "turn": 2,
+      "text": "Chronicle 能力生效，离开普通循环。"
+    },
+    {
+      "node": 9,
+      "turn": 2,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 9,
+      "turn": 2,
+      "text": "攻击 13：对手格挡抵消 0，防线减少 13，剩余 9。"
+    },
+    {
+      "node": 9,
+      "turn": 2,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 9,
+      "turn": 2,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 2。"
+    },
+    {
+      "node": 9,
+      "turn": 2,
+      "text": "对手行动：攻击 8。"
+    },
+    {
+      "node": 9,
+      "turn": 2,
+      "text": "对手攻击 8：格挡抵消 0，失去 8 声望（剩余 14）。"
+    },
+    {
+      "node": 9,
+      "turn": 3,
+      "text": "第 3 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 9,
+      "turn": 3,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 9,
+      "turn": 3,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 9,
+      "turn": 3,
+      "text": "抽到 Derke。"
+    },
+    {
+      "node": 9,
+      "turn": 3,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 9,
+      "turn": 3,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 9,
+      "turn": 3,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 9,
+      "turn": 3,
+      "text": "打出 Derke，支付 0 行动点。"
+    },
+    {
+      "node": 9,
+      "turn": 3,
+      "text": "攻击 9：对手格挡抵消 0，防线减少 9，剩余 0。"
+    },
+    {
+      "node": 9,
+      "turn": 3,
+      "text": "战胜 基础试训队！"
+    },
+    {
+      "node": 9,
+      "turn": 3,
+      "text": "资金 +20。招募候选：Chronicle、Derke、Crewen。"
+    },
+    {
+      "node": 9,
+      "turn": 3,
+      "text": "招募 Crewen，赛季牌组共 14 张。"
+    },
+    {
+      "node": 10,
+      "turn": 0,
+      "text": "跳过俱乐部活动。"
+    },
+    {
+      "node": 11,
+      "turn": 0,
+      "text": "比赛开始：大师赛种子队，对手防线 80。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "第 1 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "抽到 Derke。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "打出 Chronicle，支付 1 行动点。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "Chronicle 能力生效，离开普通循环。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "打出 Alfajer，支付 1 行动点。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "获得 4 格挡（现有 4）。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "守望涂层：获得 2 格挡。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "打出 Derke，支付 0 行动点。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "攻击 6：对手格挡抵消 0，防线减少 6，剩余 74。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 67。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "对手行动：攻击 6；将 1 张信息干扰放入弃牌堆。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "对手攻击 6：格挡抵消 6，失去 0 声望（剩余 14）。"
+    },
+    {
+      "node": 11,
+      "turn": 1,
+      "text": "信息干扰 加入弃牌堆。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "第 2 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "抽到 Ruxic。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "抽到 Chronicle。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "抽到 Wo0t。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "打出 Chronicle，支付 1 行动点。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "Chronicle 能力生效，离开普通循环。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "攻击 13：对手格挡抵消 0，防线减少 13，剩余 54。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "打出 Wo0t，支付 1 行动点。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 47。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "对手行动：攻击 4 × 3 = 12。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "对手攻击 4：格挡抵消 0，失去 4 声望（剩余 10）。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "对手攻击 4：格挡抵消 0，失去 4 声望（剩余 6）。"
+    },
+    {
+      "node": 11,
+      "turn": 2,
+      "text": "对手攻击 4：格挡抵消 0，失去 4 声望（剩余 2）。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "第 3 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "抽到 crashies。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "抽到 Crewen。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "抽到 Alfajer。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "抽到 Derke。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "打出 crashies，支付 0 行动点。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "抽到 RieNs。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "crashies 消耗，本场不再抽到。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "打出 Derke，支付 0 行动点。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "攻击 9：对手格挡抵消 0，防线减少 9，剩余 38。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "对手行动：使你虚弱 1 回合；攻击 6。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "我方虚弱 +1 回合。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "对手攻击 6：格挡抵消 0，失去 6 声望（剩余 0）。"
+    },
+    {
+      "node": 11,
+      "turn": 3,
+      "text": "比赛失利。声望归零，俱乐部解散。"
+    }
+  ],
+  "actions": [
+    {
+      "type": "chooseNode",
+      "key": "a1-r1-c0"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c5"
+    },
+    {
+      "type": "play",
+      "uid": "c9"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "recruit",
+      "id": null
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r2-c0"
+    },
+    {
+      "type": "buy",
+      "slot": 0
+    },
+    {
+      "type": "leaveShop"
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r3-c1"
+    },
+    {
+      "type": "play",
+      "uid": "c2"
+    },
+    {
+      "type": "play",
+      "uid": "c4"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "play",
+      "uid": "c7"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c5"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "recruit",
+      "id": "EU01"
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r4-c1"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c5"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c11"
+    },
+    {
+      "type": "play",
+      "uid": "c10"
+    },
+    {
+      "type": "play",
+      "uid": "c4"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "recruit",
+      "id": null
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r5-c2"
+    },
+    {
+      "type": "play",
+      "uid": "c5"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "play",
+      "uid": "c10"
+    },
+    {
+      "type": "play",
+      "uid": "c11"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c7"
+    },
+    {
+      "type": "play",
+      "uid": "c3"
+    },
+    {
+      "type": "play",
+      "uid": "c2"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "play",
+      "uid": "c7"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c10"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "recruit",
+      "id": "EU16"
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r6-c3"
+    },
+    {
+      "type": "seasonEvent",
+      "choice": "safe"
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r7-c3"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "play",
+      "uid": "c2"
+    },
+    {
+      "type": "play",
+      "uid": "c9"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "play",
+      "uid": "c7"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c14"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "play",
+      "uid": "c11"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c3"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "play",
+      "uid": "c9"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c5"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "recruit",
+      "id": null
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r8-c2"
+    },
+    {
+      "type": "play",
+      "uid": "c14"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c5"
+    },
+    {
+      "type": "play",
+      "uid": "c7"
+    },
+    {
+      "type": "play",
+      "uid": "c3"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "play",
+      "uid": "c10"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "recruit",
+      "id": null
+    },
+    {
+      "type": "skin",
+      "id": "SK03"
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r9-c2"
+    },
+    {
+      "type": "play",
+      "uid": "c11"
+    },
+    {
+      "type": "play",
+      "uid": "c10"
+    },
+    {
+      "type": "play",
+      "uid": "c2"
+    },
+    {
+      "type": "play",
+      "uid": "c5"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c14"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "recruit",
+      "id": "EU09"
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r10-c2"
+    },
+    {
+      "type": "activity",
+      "choice": "skip"
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r11-c0"
+    },
+    {
+      "type": "play",
+      "uid": "c5"
+    },
+    {
+      "type": "play",
+      "uid": "c9"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c14"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c11"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "end"
+    }
+  ],
+  "wins": 7,
+  "battle": {
+    "enemy": "B01",
+    "enemyHp": 38,
+    "enemyBlock": 0,
+    "enemyWeak": 0,
+    "enemyVulnerable": 0,
+    "weak": 1,
+    "block": 0,
+    "energy": 3,
+    "turn": 3,
+    "intent": 2,
+    "cycles": 0,
+    "draw": [
+      {
+        "uid": "c3",
+        "id": "EU11",
+        "up": false
+      },
+      {
+        "uid": "c6",
+        "id": "EU03",
+        "up": false
+      },
+      {
+        "uid": "c10",
+        "id": "EU14",
+        "up": false
+      },
+      {
+        "uid": "c19",
+        "id": "ST01",
+        "up": false
+      },
+      {
+        "uid": "c9",
+        "id": "EU07",
+        "up": false
+      },
+      {
+        "uid": "c8",
+        "id": "EU03",
+        "up": false
+      },
+      {
+        "uid": "c1",
+        "id": "EU03",
+        "up": false
+      }
+    ],
+    "hand": [],
+    "discard": [
+      {
+        "uid": "c12",
+        "id": "EU01",
+        "up": false
+      },
+      {
+        "uid": "c7",
+        "id": "EU07",
+        "up": false
+      },
+      {
+        "uid": "c18",
+        "id": "EU09",
+        "up": false
+      },
+      {
+        "uid": "c2",
+        "id": "EU07",
+        "up": false
+      },
+      {
+        "uid": "c4",
+        "id": "EU14",
+        "up": false
+      }
+    ],
+    "exhaust": [
+      {
+        "uid": "c11",
+        "id": "EU13",
+        "up": false
+      }
+    ],
+    "powers": [
+      {
+        "uid": "c5",
+        "id": "EU16",
+        "up": false
+      },
+      {
+        "uid": "c14",
+        "id": "EU16",
+        "up": false
+      }
+    ],
+    "resolving": null,
+    "roleCounts": {
+      "先锋": 1,
+      "决斗": 1
+    },
+    "skinZero": false
+  },
+  "seenEvents": [
+    "scrim"
+  ],
+  "outcome": "loss"
+}

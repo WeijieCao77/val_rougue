@@ -1,0 +1,2805 @@
+{
+  "version": "D0.2.0",
+  "mode": "season",
+  "region": "CN",
+  "seed": "deepseek-regional-opening-02",
+  "tutorial": false,
+  "rng": 2330184198,
+  "rev": 86,
+  "nextId": 21,
+  "act": 1,
+  "map": {
+    "act": 1,
+    "nodes": [
+      {
+        "key": "a1-r1-c0",
+        "step": 1,
+        "lane": 0,
+        "x": 19.36030198680237,
+        "y": 94,
+        "kind": "battle",
+        "name": "基础进攻",
+        "enemy": "E01"
+      },
+      {
+        "key": "a1-r1-c1",
+        "step": 1,
+        "lane": 1,
+        "x": 49.484752133255824,
+        "y": 94,
+        "kind": "battle",
+        "name": "基础进攻",
+        "enemy": "E01"
+      },
+      {
+        "key": "a1-r1-c2",
+        "step": 1,
+        "lane": 2,
+        "x": 81.31110158539377,
+        "y": 94,
+        "kind": "battle",
+        "name": "基础进攻",
+        "enemy": "E01"
+      },
+      {
+        "key": "a1-r2-c0",
+        "step": 2,
+        "lane": 0,
+        "x": 18.364029932767153,
+        "y": 85.2,
+        "kind": "shop",
+        "name": "转会市场"
+      },
+      {
+        "key": "a1-r2-c1",
+        "step": 2,
+        "lane": 1,
+        "x": 48.977815345395356,
+        "y": 85.2,
+        "kind": "shop",
+        "name": "转会市场"
+      },
+      {
+        "key": "a1-r2-c2",
+        "step": 2,
+        "lane": 2,
+        "x": 80.93059835257009,
+        "y": 85.2,
+        "kind": "event",
+        "name": "未知事件"
+      },
+      {
+        "key": "a1-r3-c0",
+        "step": 3,
+        "lane": 0,
+        "x": 12.503676657099277,
+        "y": 76.4,
+        "kind": "battle",
+        "name": "信息压制",
+        "enemy": "E02"
+      },
+      {
+        "key": "a1-r3-c1",
+        "step": 3,
+        "lane": 1,
+        "x": 38.03923590884854,
+        "y": 76.4,
+        "kind": "battle",
+        "name": "基础进攻",
+        "enemy": "E01"
+      },
+      {
+        "key": "a1-r3-c2",
+        "step": 3,
+        "lane": 2,
+        "x": 61.695376272235684,
+        "y": 76.4,
+        "kind": "battle",
+        "name": "信息压制",
+        "enemy": "E02"
+      },
+      {
+        "key": "a1-r3-c3",
+        "step": 3,
+        "lane": 3,
+        "x": 87.68156042741612,
+        "y": 76.4,
+        "kind": "battle",
+        "name": "信息压制",
+        "enemy": "E02"
+      },
+      {
+        "key": "a1-r4-c0",
+        "step": 4,
+        "lane": 0,
+        "x": 17.88546920916997,
+        "y": 67.6,
+        "kind": "shop",
+        "name": "转会市场"
+      },
+      {
+        "key": "a1-r4-c1",
+        "step": 4,
+        "lane": 1,
+        "x": 49.16325431782752,
+        "y": 67.6,
+        "kind": "battle",
+        "name": "防守反击",
+        "enemy": "E04"
+      },
+      {
+        "key": "a1-r4-c2",
+        "step": 4,
+        "lane": 2,
+        "x": 82.89546436653472,
+        "y": 67.6,
+        "kind": "shop",
+        "name": "转会市场"
+      },
+      {
+        "key": "a1-r5-c0",
+        "step": 5,
+        "lane": 0,
+        "x": 13.349183378973976,
+        "y": 58.8,
+        "kind": "battle",
+        "name": "基础进攻",
+        "enemy": "E01"
+      },
+      {
+        "key": "a1-r5-c1",
+        "step": 5,
+        "lane": 1,
+        "x": 37.76120311378811,
+        "y": 58.8,
+        "kind": "battle",
+        "name": "信息压制",
+        "enemy": "E02"
+      },
+      {
+        "key": "a1-r5-c2",
+        "step": 5,
+        "lane": 2,
+        "x": 62.459886347564556,
+        "y": 58.8,
+        "kind": "battle",
+        "name": "纪律控制",
+        "enemy": "E05"
+      },
+      {
+        "key": "a1-r5-c3",
+        "step": 5,
+        "lane": 3,
+        "x": 89.20143097639084,
+        "y": 58.8,
+        "kind": "elite",
+        "name": "高压强敌",
+        "enemy": "EL01"
+      },
+      {
+        "key": "a1-r6-c0",
+        "step": 6,
+        "lane": 0,
+        "x": 11.713557473151013,
+        "y": 50,
+        "kind": "elite",
+        "name": "高压强敌",
+        "enemy": "EL01"
+      },
+      {
+        "key": "a1-r6-c1",
+        "step": 6,
+        "lane": 1,
+        "x": 37.59238826258418,
+        "y": 50,
+        "kind": "elite",
+        "name": "高压强敌",
+        "enemy": "EL01"
+      },
+      {
+        "key": "a1-r6-c2",
+        "step": 6,
+        "lane": 2,
+        "x": 62.82653445230486,
+        "y": 50,
+        "kind": "shop",
+        "name": "转会市场"
+      },
+      {
+        "key": "a1-r6-c3",
+        "step": 6,
+        "lane": 3,
+        "x": 86.99428001279011,
+        "y": 50,
+        "kind": "event",
+        "name": "未知事件"
+      },
+      {
+        "key": "a1-r7-c0",
+        "step": 7,
+        "lane": 0,
+        "x": 13.458217879291624,
+        "y": 41.199999999999996,
+        "kind": "battle",
+        "name": "基础进攻",
+        "enemy": "E01"
+      },
+      {
+        "key": "a1-r7-c1",
+        "step": 7,
+        "lane": 1,
+        "x": 37.8127588283581,
+        "y": 41.199999999999996,
+        "kind": "battle",
+        "name": "防守反击",
+        "enemy": "E04"
+      },
+      {
+        "key": "a1-r7-c2",
+        "step": 7,
+        "lane": 2,
+        "x": 62.3996967258087,
+        "y": 41.199999999999996,
+        "kind": "battle",
+        "name": "信息压制",
+        "enemy": "E02"
+      },
+      {
+        "key": "a1-r7-c3",
+        "step": 7,
+        "lane": 3,
+        "x": 88.96268787817098,
+        "y": 41.199999999999996,
+        "kind": "battle",
+        "name": "多段突击",
+        "enemy": "E03"
+      },
+      {
+        "key": "a1-r8-c0",
+        "step": 8,
+        "lane": 0,
+        "x": 11.989906596718356,
+        "y": 32.39999999999999,
+        "kind": "elite",
+        "name": "高压强敌",
+        "enemy": "EL01"
+      },
+      {
+        "key": "a1-r8-c1",
+        "step": 8,
+        "lane": 1,
+        "x": 37.1333824666993,
+        "y": 32.39999999999999,
+        "kind": "shop",
+        "name": "转会市场"
+      },
+      {
+        "key": "a1-r8-c2",
+        "step": 8,
+        "lane": 2,
+        "x": 61.9608254788133,
+        "y": 32.39999999999999,
+        "kind": "elite",
+        "name": "高压强敌",
+        "enemy": "EL01"
+      },
+      {
+        "key": "a1-r8-c3",
+        "step": 8,
+        "lane": 3,
+        "x": 88.87521104468033,
+        "y": 32.39999999999999,
+        "kind": "shop",
+        "name": "转会市场"
+      },
+      {
+        "key": "a1-r9-c0",
+        "step": 9,
+        "lane": 0,
+        "x": 16.745793360751122,
+        "y": 23.599999999999994,
+        "kind": "battle",
+        "name": "防守反击",
+        "enemy": "E04"
+      },
+      {
+        "key": "a1-r9-c1",
+        "step": 9,
+        "lane": 1,
+        "x": 49.26675739209168,
+        "y": 23.599999999999994,
+        "kind": "event",
+        "name": "未知事件"
+      },
+      {
+        "key": "a1-r9-c2",
+        "step": 9,
+        "lane": 2,
+        "x": 82.75777218327858,
+        "y": 23.599999999999994,
+        "kind": "battle",
+        "name": "基础进攻",
+        "enemy": "E01"
+      },
+      {
+        "key": "a1-r10-c0",
+        "step": 10,
+        "lane": 0,
+        "x": 19.11107097635977,
+        "y": 14.799999999999997,
+        "kind": "rest",
+        "name": "俱乐部活动"
+      },
+      {
+        "key": "a1-r10-c1",
+        "step": 10,
+        "lane": 1,
+        "x": 49.31332728592679,
+        "y": 14.799999999999997,
+        "kind": "rest",
+        "name": "俱乐部活动"
+      },
+      {
+        "key": "a1-r10-c2",
+        "step": 10,
+        "lane": 2,
+        "x": 80.81714802188799,
+        "y": 14.799999999999997,
+        "kind": "rest",
+        "name": "俱乐部活动"
+      },
+      {
+        "key": "a1-r11-c0",
+        "step": 11,
+        "lane": 0,
+        "x": 50,
+        "y": 6,
+        "kind": "boss",
+        "name": "第一次大师赛",
+        "enemy": "B01"
+      }
+    ],
+    "edges": [
+      {
+        "from": "a1-r1-c0",
+        "to": "a1-r2-c0"
+      },
+      {
+        "from": "a1-r1-c1",
+        "to": "a1-r2-c1"
+      },
+      {
+        "from": "a1-r1-c2",
+        "to": "a1-r2-c2"
+      },
+      {
+        "from": "a1-r1-c1",
+        "to": "a1-r2-c0"
+      },
+      {
+        "from": "a1-r2-c0",
+        "to": "a1-r3-c0"
+      },
+      {
+        "from": "a1-r2-c1",
+        "to": "a1-r3-c1"
+      },
+      {
+        "from": "a1-r2-c2",
+        "to": "a1-r3-c3"
+      },
+      {
+        "from": "a1-r2-c1",
+        "to": "a1-r3-c2"
+      },
+      {
+        "from": "a1-r2-c2",
+        "to": "a1-r3-c2"
+      },
+      {
+        "from": "a1-r2-c0",
+        "to": "a1-r3-c1"
+      },
+      {
+        "from": "a1-r3-c0",
+        "to": "a1-r4-c0"
+      },
+      {
+        "from": "a1-r3-c1",
+        "to": "a1-r4-c1"
+      },
+      {
+        "from": "a1-r3-c2",
+        "to": "a1-r4-c1"
+      },
+      {
+        "from": "a1-r3-c3",
+        "to": "a1-r4-c2"
+      },
+      {
+        "from": "a1-r3-c2",
+        "to": "a1-r4-c2"
+      },
+      {
+        "from": "a1-r4-c0",
+        "to": "a1-r5-c0"
+      },
+      {
+        "from": "a1-r4-c1",
+        "to": "a1-r5-c1"
+      },
+      {
+        "from": "a1-r4-c2",
+        "to": "a1-r5-c3"
+      },
+      {
+        "from": "a1-r4-c1",
+        "to": "a1-r5-c2"
+      },
+      {
+        "from": "a1-r4-c0",
+        "to": "a1-r5-c1"
+      },
+      {
+        "from": "a1-r5-c0",
+        "to": "a1-r6-c0"
+      },
+      {
+        "from": "a1-r5-c1",
+        "to": "a1-r6-c1"
+      },
+      {
+        "from": "a1-r5-c2",
+        "to": "a1-r6-c2"
+      },
+      {
+        "from": "a1-r5-c3",
+        "to": "a1-r6-c3"
+      },
+      {
+        "from": "a1-r5-c2",
+        "to": "a1-r6-c3"
+      },
+      {
+        "from": "a1-r5-c0",
+        "to": "a1-r6-c1"
+      },
+      {
+        "from": "a1-r6-c0",
+        "to": "a1-r7-c0"
+      },
+      {
+        "from": "a1-r6-c1",
+        "to": "a1-r7-c1"
+      },
+      {
+        "from": "a1-r6-c2",
+        "to": "a1-r7-c2"
+      },
+      {
+        "from": "a1-r6-c3",
+        "to": "a1-r7-c3"
+      },
+      {
+        "from": "a1-r6-c1",
+        "to": "a1-r7-c2"
+      },
+      {
+        "from": "a1-r7-c0",
+        "to": "a1-r8-c0"
+      },
+      {
+        "from": "a1-r7-c1",
+        "to": "a1-r8-c1"
+      },
+      {
+        "from": "a1-r7-c2",
+        "to": "a1-r8-c2"
+      },
+      {
+        "from": "a1-r7-c3",
+        "to": "a1-r8-c3"
+      },
+      {
+        "from": "a1-r7-c3",
+        "to": "a1-r8-c2"
+      },
+      {
+        "from": "a1-r7-c1",
+        "to": "a1-r8-c2"
+      },
+      {
+        "from": "a1-r8-c0",
+        "to": "a1-r9-c0"
+      },
+      {
+        "from": "a1-r8-c1",
+        "to": "a1-r9-c1"
+      },
+      {
+        "from": "a1-r8-c2",
+        "to": "a1-r9-c1"
+      },
+      {
+        "from": "a1-r8-c3",
+        "to": "a1-r9-c2"
+      },
+      {
+        "from": "a1-r8-c1",
+        "to": "a1-r9-c0"
+      },
+      {
+        "from": "a1-r8-c2",
+        "to": "a1-r9-c2"
+      },
+      {
+        "from": "a1-r9-c0",
+        "to": "a1-r10-c0"
+      },
+      {
+        "from": "a1-r9-c1",
+        "to": "a1-r10-c1"
+      },
+      {
+        "from": "a1-r9-c2",
+        "to": "a1-r10-c2"
+      },
+      {
+        "from": "a1-r9-c0",
+        "to": "a1-r10-c1"
+      },
+      {
+        "from": "a1-r10-c0",
+        "to": "a1-r11-c0"
+      },
+      {
+        "from": "a1-r10-c1",
+        "to": "a1-r11-c0"
+      },
+      {
+        "from": "a1-r10-c2",
+        "to": "a1-r11-c0"
+      }
+    ],
+    "starts": [
+      "a1-r1-c0",
+      "a1-r1-c1",
+      "a1-r1-c2"
+    ],
+    "bossId": "a1-r11-c0"
+  },
+  "currentNode": "a1-r8-c2",
+  "completed": [
+    "a1-r1-c0",
+    "a1-r2-c0",
+    "a1-r3-c0",
+    "a1-r4-c0",
+    "a1-r5-c1",
+    "a1-r6-c1",
+    "a1-r7-c1"
+  ],
+  "node": 8,
+  "phase": "result",
+  "hp": 0,
+  "maxHp": 80,
+  "money": 175,
+  "deck": [
+    {
+      "uid": "c1",
+      "id": "CN03",
+      "up": false
+    },
+    {
+      "uid": "c2",
+      "id": "CN07",
+      "up": false
+    },
+    {
+      "uid": "c3",
+      "id": "CN11",
+      "up": false
+    },
+    {
+      "uid": "c4",
+      "id": "CN14",
+      "up": false
+    },
+    {
+      "uid": "c5",
+      "id": "CN16",
+      "up": false
+    },
+    {
+      "uid": "c6",
+      "id": "CN03",
+      "up": false
+    },
+    {
+      "uid": "c7",
+      "id": "CN07",
+      "up": false
+    },
+    {
+      "uid": "c8",
+      "id": "CN03",
+      "up": false
+    },
+    {
+      "uid": "c9",
+      "id": "CN07",
+      "up": false
+    },
+    {
+      "uid": "c10",
+      "id": "CN14",
+      "up": false
+    },
+    {
+      "uid": "c12",
+      "id": "CN13",
+      "up": false
+    }
+  ],
+  "skins": [
+    "SK03"
+  ],
+  "logs": [
+    {
+      "node": 0,
+      "turn": 0,
+      "text": "新赛季开始：中国赛区 · 第1幕。"
+    },
+    {
+      "node": 1,
+      "turn": 0,
+      "text": "比赛开始：基础试训队，对手防线 28。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "第 1 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "抽到 LuoK1ng。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "打出 LuoK1ng，支付 1 行动点。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "获得 3 格挡（现有 3）。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 21。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 14。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "对手行动：攻击 4。"
+    },
+    {
+      "node": 1,
+      "turn": 1,
+      "text": "对手攻击 4：格挡抵消 3，失去 1 声望（剩余 79）。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "第 2 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "抽到 CHICHOO。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "打出 CHICHOO，支付 1 行动点。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "CHICHOO 能力生效，离开普通循环。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 4。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "对手行动：攻击 8。"
+    },
+    {
+      "node": 1,
+      "turn": 2,
+      "text": "对手攻击 8：格挡抵消 0，失去 8 声望（剩余 71）。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "第 3 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 0。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "战胜 基础试训队！"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "资金 +20。招募候选：AAAAY、SpiritZ1、Yuicaw。"
+    },
+    {
+      "node": 1,
+      "turn": 3,
+      "text": "跳过招募，保留现有牌组。"
+    },
+    {
+      "node": 2,
+      "turn": 0,
+      "text": "进入转会市场：BerLIN、vo0kashu、ZmjjKK。"
+    },
+    {
+      "node": 3,
+      "turn": 0,
+      "text": "比赛开始：信息压制队，对手防线 34。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "第 1 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "抽到 CHICHOO。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "打出 CHICHOO，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "CHICHOO 能力生效，离开普通循环。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 24。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "对手行动：攻击 7。"
+    },
+    {
+      "node": 3,
+      "turn": 1,
+      "text": "对手攻击 7：格挡抵消 0，失去 7 声望（剩余 64）。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "第 2 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "抽到 LuoK1ng。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "打出 LuoK1ng，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "获得 3 格挡（现有 3）。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 14。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 7。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "对手行动：将 1 张信息干扰放入弃牌堆；攻击 3。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "信息干扰 加入弃牌堆。"
+    },
+    {
+      "node": 3,
+      "turn": 2,
+      "text": "对手攻击 3：格挡抵消 3，失去 0 声望（剩余 64）。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "第 3 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "抽到 信息干扰。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 0。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "战胜 信息压制队！"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "资金 +20。招募候选：LuoK1ng、glacier、BerLIN。"
+    },
+    {
+      "node": 3,
+      "turn": 3,
+      "text": "招募 BerLIN，赛季牌组共 11 张。"
+    },
+    {
+      "node": 4,
+      "turn": 0,
+      "text": "进入转会市场：nobody、Rarga、ZmjjKK。"
+    },
+    {
+      "node": 5,
+      "turn": 0,
+      "text": "比赛开始：信息压制队，对手防线 34。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "第 1 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "抽到 BerLIN。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "抽到 LuoK1ng。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "抽到 CHICHOO。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "打出 CHICHOO，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "CHICHOO 能力生效，离开普通循环。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 24。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "对手行动：攻击 7。"
+    },
+    {
+      "node": 5,
+      "turn": 1,
+      "text": "对手攻击 7：格挡抵消 0，失去 7 声望（剩余 57）。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "第 2 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 14。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 7。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "对手行动：将 1 张信息干扰放入弃牌堆；攻击 5。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "信息干扰 加入弃牌堆。"
+    },
+    {
+      "node": 5,
+      "turn": 2,
+      "text": "对手攻击 5：格挡抵消 0，失去 5 声望（剩余 52）。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "第 3 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 0。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "战胜 信息压制队！"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "资金 +20。招募候选：nobody、ZmjjKK、CHICHOO。"
+    },
+    {
+      "node": 5,
+      "turn": 3,
+      "text": "跳过招募，保留现有牌组。"
+    },
+    {
+      "node": 6,
+      "turn": 0,
+      "text": "比赛开始：高压强敌队，对手防线 54。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "第 1 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "抽到 LuoK1ng。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "打出 LuoK1ng，支付 1 行动点。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "获得 3 格挡（现有 3）。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 47。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 40。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "对手行动：攻击 6；将 1 张疲劳放入弃牌堆。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "对手攻击 6：格挡抵消 3，失去 3 声望（剩余 49）。"
+    },
+    {
+      "node": 6,
+      "turn": 1,
+      "text": "疲劳 加入弃牌堆。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "第 2 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "抽到 BerLIN。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "抽到 CHICHOO。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "打出 CHICHOO，支付 1 行动点。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "CHICHOO 能力生效，离开普通循环。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 30。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "打出 BerLIN，支付 0 行动点。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "BerLIN 消耗，本场不再抽到。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "对手行动：攻击 4 × 3 = 12。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "对手攻击 4：格挡抵消 0，失去 4 声望（剩余 45）。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "对手攻击 4：格挡抵消 0，失去 4 声望（剩余 41）。"
+    },
+    {
+      "node": 6,
+      "turn": 2,
+      "text": "对手攻击 4：格挡抵消 0，失去 4 声望（剩余 37）。"
+    },
+    {
+      "node": 6,
+      "turn": 3,
+      "text": "第 3 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 6,
+      "turn": 3,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 6,
+      "turn": 3,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 6,
+      "turn": 3,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 6,
+      "turn": 3,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 6,
+      "turn": 3,
+      "text": "抽到 疲劳。"
+    },
+    {
+      "node": 6,
+      "turn": 3,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 6,
+      "turn": 3,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 6,
+      "turn": 3,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 20。"
+    },
+    {
+      "node": 6,
+      "turn": 3,
+      "text": "对手行动：获得 10 格挡；将 1 张节奏受阻放入弃牌堆。"
+    },
+    {
+      "node": 6,
+      "turn": 3,
+      "text": "对手获得 10 格挡。"
+    },
+    {
+      "node": 6,
+      "turn": 3,
+      "text": "节奏受阻 加入弃牌堆。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "第 4 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "抽到 LuoK1ng。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "打出 LuoK1ng，支付 1 行动点。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "获得 3 格挡（现有 3）。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "攻击 10：对手格挡抵消 10，防线减少 0，剩余 20。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 13。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "对手行动：攻击 6；将 1 张疲劳放入弃牌堆。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "对手攻击 6：格挡抵消 3，失去 3 声望（剩余 34）。"
+    },
+    {
+      "node": 6,
+      "turn": 4,
+      "text": "疲劳 加入弃牌堆。"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "第 5 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "抽到 疲劳。"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "抽到 节奏受阻。"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 3。"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 0。"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "战胜 高压强敌队！"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "资金 +35。招募候选：Haodong、Smoggy、SiuFatBB。"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "跳过招募，保留现有牌组。"
+    },
+    {
+      "node": 6,
+      "turn": 5,
+      "text": "获得皮肤：守望涂层。"
+    },
+    {
+      "node": 7,
+      "turn": 0,
+      "text": "比赛开始：防守反击队，对手防线 38。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "第 1 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "抽到 CHICHOO。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "抽到 BerLIN。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "打出 CHICHOO，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "CHICHOO 能力生效，离开普通循环。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 28。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "对手行动：获得 8 格挡；攻击 3。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "对手获得 8 格挡。"
+    },
+    {
+      "node": 7,
+      "turn": 1,
+      "text": "对手攻击 3：格挡抵消 0，失去 3 声望（剩余 31）。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "第 2 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "抽到 LuoK1ng。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "打出 LuoK1ng，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "获得 3 格挡（现有 3）。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "攻击 10：对手格挡抵消 8，防线减少 2，剩余 26。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 19。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "对手行动：攻击 9。"
+    },
+    {
+      "node": 7,
+      "turn": 2,
+      "text": "对手攻击 9：格挡抵消 3，失去 6 声望（剩余 25）。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "第 3 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "抽到 BerLIN。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "抽到 LuoK1ng。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "打出 LuoK1ng，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "获得 3 格挡（现有 3）。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 9。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "对手行动：将 1 张疲劳放入弃牌堆；攻击 4。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "疲劳 加入弃牌堆。"
+    },
+    {
+      "node": 7,
+      "turn": 3,
+      "text": "对手攻击 4：格挡抵消 3，失去 1 声望（剩余 24）。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "第 4 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 0。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "战胜 防守反击队！"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "资金 +20。招募候选：SiuFatBB、Haodong、glacier。"
+    },
+    {
+      "node": 7,
+      "turn": 4,
+      "text": "跳过招募，保留现有牌组。"
+    },
+    {
+      "node": 8,
+      "turn": 0,
+      "text": "比赛开始：高压强敌队，对手防线 54。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "第 1 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "抽到 LuoK1ng。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 47。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "攻击 7：对手格挡抵消 0，防线减少 7，剩余 40。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "对手行动：攻击 8；将 1 张疲劳放入弃牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "对手攻击 8：格挡抵消 0，失去 8 声望（剩余 16）。"
+    },
+    {
+      "node": 8,
+      "turn": 1,
+      "text": "疲劳 加入弃牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "第 2 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "抽到 CHICHOO。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "打出 CHICHOO，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "CHICHOO 能力生效，离开普通循环。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "打出 nobody，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "抽到 BerLIN。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "打出 BerLIN，支付 0 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "BerLIN 消耗，本场不再抽到。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 30。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "对手行动：攻击 4 × 3 = 12。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "对手攻击 4：格挡抵消 0，失去 4 声望（剩余 12）。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "对手攻击 4：格挡抵消 0，失去 4 声望（剩余 8）。"
+    },
+    {
+      "node": 8,
+      "turn": 2,
+      "text": "对手攻击 4：格挡抵消 0，失去 4 声望（剩余 4）。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "第 3 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽到 疲劳。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽到 LuoK1ng。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "打出 nobody，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "打出 nobody，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "攻击 10：对手格挡抵消 0，防线减少 10，剩余 20。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "对手行动：获得 10 格挡；将 1 张节奏受阻放入弃牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "对手获得 10 格挡。"
+    },
+    {
+      "node": 8,
+      "turn": 3,
+      "text": "节奏受阻 加入弃牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "第 4 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "抽到 节奏受阻。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "抽到 LuoK1ng。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "抽到 疲劳。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "打出 LuoK1ng，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "获得 3 格挡（现有 3）。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "对手虚弱 +1 回合。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "打出 Kai，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "攻击 10：对手格挡抵消 10，防线减少 0，剩余 20。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "打出 yosemite，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "获得 6 格挡（现有 9）。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "守望涂层：获得 2 格挡。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "对手行动：攻击 6；将 1 张疲劳放入弃牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "对手攻击 6：格挡抵消 6，失去 0 声望（剩余 4）。"
+    },
+    {
+      "node": 8,
+      "turn": 4,
+      "text": "疲劳 加入弃牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "第 5 回合：行动点 3，旧格挡清空。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽到 nobody。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "打出 nobody，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽到 Kai。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽牌堆耗尽：弃牌堆洗回抽牌堆。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽到 yosemite。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "打出 nobody，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽到 节奏受阻。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "抽到 疲劳。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "打出 yosemite，支付 1 行动点。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "获得 6 格挡（现有 6）。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "守望涂层：获得 2 格挡。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "对手行动：攻击 4 × 3 = 12。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "对手攻击 4：格挡抵消 4，失去 0 声望（剩余 4）。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "对手攻击 4：格挡抵消 4，失去 0 声望（剩余 4）。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "对手攻击 4：格挡抵消 0，失去 4 声望（剩余 0）。"
+    },
+    {
+      "node": 8,
+      "turn": 5,
+      "text": "比赛失利。声望归零，俱乐部解散。"
+    }
+  ],
+  "actions": [
+    {
+      "type": "chooseNode",
+      "key": "a1-r1-c0"
+    },
+    {
+      "type": "play",
+      "uid": "c3"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c5"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "recruit",
+      "id": null
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r2-c0"
+    },
+    {
+      "type": "leaveShop"
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r3-c0"
+    },
+    {
+      "type": "play",
+      "uid": "c5"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c3"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "recruit",
+      "id": "CN13"
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r4-c0"
+    },
+    {
+      "type": "leaveShop"
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r5-c1"
+    },
+    {
+      "type": "play",
+      "uid": "c5"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "recruit",
+      "id": null
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r6-c1"
+    },
+    {
+      "type": "play",
+      "uid": "c3"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c5"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c3"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "recruit",
+      "id": null
+    },
+    {
+      "type": "skin",
+      "id": "SK03"
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r7-c1"
+    },
+    {
+      "type": "play",
+      "uid": "c5"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c3"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c3"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "recruit",
+      "id": null
+    },
+    {
+      "type": "chooseNode",
+      "key": "a1-r8-c2"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c5"
+    },
+    {
+      "type": "play",
+      "uid": "c10"
+    },
+    {
+      "type": "play",
+      "uid": "c12"
+    },
+    {
+      "type": "play",
+      "uid": "c8"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c10"
+    },
+    {
+      "type": "play",
+      "uid": "c4"
+    },
+    {
+      "type": "play",
+      "uid": "c6"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c3"
+    },
+    {
+      "type": "play",
+      "uid": "c1"
+    },
+    {
+      "type": "play",
+      "uid": "c7"
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "play",
+      "uid": "c4"
+    },
+    {
+      "type": "play",
+      "uid": "c10"
+    },
+    {
+      "type": "play",
+      "uid": "c2"
+    },
+    {
+      "type": "end"
+    }
+  ],
+  "wins": 5,
+  "battle": {
+    "enemy": "EL01",
+    "enemyHp": 20,
+    "enemyBlock": 0,
+    "enemyWeak": 0,
+    "enemyVulnerable": 0,
+    "weak": 0,
+    "block": 0,
+    "energy": 0,
+    "turn": 5,
+    "intent": 1,
+    "cycles": 1,
+    "draw": [
+      {
+        "uid": "c18",
+        "id": "ST03",
+        "up": false
+      },
+      {
+        "uid": "c1",
+        "id": "CN03",
+        "up": false
+      },
+      {
+        "uid": "c3",
+        "id": "CN11",
+        "up": false
+      }
+    ],
+    "hand": [],
+    "discard": [
+      {
+        "uid": "c4",
+        "id": "CN14",
+        "up": false
+      },
+      {
+        "uid": "c10",
+        "id": "CN14",
+        "up": false
+      },
+      {
+        "uid": "c2",
+        "id": "CN07",
+        "up": false
+      },
+      {
+        "uid": "c9",
+        "id": "CN07",
+        "up": false
+      },
+      {
+        "uid": "c8",
+        "id": "CN03",
+        "up": false
+      },
+      {
+        "uid": "c6",
+        "id": "CN03",
+        "up": false
+      },
+      {
+        "uid": "c7",
+        "id": "CN07",
+        "up": false
+      },
+      {
+        "uid": "c19",
+        "id": "ST02",
+        "up": false
+      },
+      {
+        "uid": "c20",
+        "id": "ST03",
+        "up": false
+      }
+    ],
+    "exhaust": [
+      {
+        "uid": "c12",
+        "id": "CN13",
+        "up": false
+      }
+    ],
+    "powers": [
+      {
+        "uid": "c5",
+        "id": "CN16",
+        "up": false
+      }
+    ],
+    "resolving": null,
+    "roleCounts": {
+      "先锋": 2,
+      "哨位": 1
+    },
+    "skinZero": false
+  },
+  "seenEvents": [],
+  "outcome": "loss"
+}
