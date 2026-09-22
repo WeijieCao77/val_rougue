@@ -20,13 +20,13 @@ test('Railway server uses PORT and serves only public build assets', async t => 
     child.once('exit', code => { clearTimeout(timer); reject(Error(`Early server exit ${code}`)); });
   });
   const request = (path, options) => fetch(`http://127.0.0.1:${port}${path}`, options);
-  for (const [path, type] of [['/', 'text/html'], ['/app.js', 'text/javascript'], ['/style.css', 'text/css'], ['/healthz?probe=1', 'application/json']]) {
+  for (const [path, type] of [['/', 'text/html'], ['/app.js', 'text/javascript'], ['/style.css', 'text/css'], ['/art-gallery.html','text/html'], ['/assets/players/CN06.png','image/png'], ['/assets/special/CU01.svg','image/svg+xml'], ['/healthz?probe=1', 'application/json']]) {
     const response = await request(path); assert.equal(response.status, 200);
     assert.ok(response.headers.get('content-type').startsWith(type));
     assert.ok((await response.text()).length > 0);
     const head = await request(path, {method: 'HEAD'}); assert.equal(head.status, 200); assert.equal(await head.text(), '');
   }
-  for (const path of ['/engine.js', '/ui-source.js', '/package.json', '/.git/config', '/.env', '/tests/fixtures/legacy.json', '/tools/build-browser.mjs', '/reports/test.json', '/missing']) {
+  for (const path of ['/engine.js', '/ui-source.js', '/package.json', '/.git/config', '/.env', '/tests/fixtures/legacy.json', '/tools/build-browser.mjs', '/reports/test.json', '/missing', '/assets/players/missing.png', '/assets/players/../../reports/test.json', '/assets/player-sources.json', '/assets/players/test.html']) {
     assert.equal((await request(path)).status, 404, path);
   }
   assert.equal((await request('/%ZZ')).status, 400);

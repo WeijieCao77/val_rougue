@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#0b1026"/>
+<stop offset="100%" stop-color="#1b2340"/>
+</linearGradient>
+<radialGradient id="glow" cx="50%" cy="50%" r="50%">
+<stop offset="0%" stop-color="#ff5e5b" stop-opacity="0.5"/>
+<stop offset="100%" stop-color="#ff5e5b" stop-opacity="0"/>
+</radialGradient>
+</defs>
+<rect width="480" height="300" fill="url(#bg)"/>
+<circle cx="240" cy="130" r="50" fill="url(#glow)"/>
+<circle cx="240" cy="130" r="30" fill="#2a3556" stroke="#ff5e5b" stroke-width="2"/>
+<path d="M220 130 L260 130 M240 110 L240 150" stroke="#ff5e5b" stroke-width="2" opacity="0.7"/>
+<circle cx="220" cy="130" r="3" fill="#ff5e5b"/>
+<circle cx="260" cy="130" r="3" fill="#ff5e5b"/>
+<circle cx="240" cy="110" r="3" fill="#ff5e5b"/>
+<circle cx="240" cy="150" r="3" fill="#ff5e5b"/>
+<path d="M100 200 Q240 170 380 200" stroke="#2a3556" stroke-width="3" fill="none"/>
+<path d="M120 230 L150 200 L180 230 L210 200 L240 230 L270 200 L300 230 L330 200 L360 230" stroke="#c2a878" stroke-width="2" fill="none" opacity="0.5"/>
+<rect x="120" y="250" width="240" height="15" rx="5" fill="#1b2340" stroke="#ff5e5b" stroke-width="1"/>
+<text x="240" y="262" font-family="Arial" font-size="10" fill="#c2a878" text-anchor="middle" opacity="0.8">LONG GAME</text>
+<path d="M80 180 L60 160 L70 140" stroke="#00b4d8" stroke-width="1.5" fill="none" opacity="0.4"/>
+<path d="M400 180 L420 160 L410 140" stroke="#00b4d8" stroke-width="1.5" fill="none" opacity="0.4"/>
+<rect x="0" y="280" width="480" height="20" fill="#0b1026" opacity="0.8"/>
+</svg>

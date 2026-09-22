@@ -1,0 +1,247 @@
+/* 基础框架样式 */
+.weapon-frame {
+  position: relative;
+  display: inline-block;
+  width: 240px;
+  height: 168px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #1a1a2e;
+  box-shadow: 0 0 12px rgba(0,0,0,0.5);
+  transition: transform 0.2s;
+}
+.weapon-frame:hover {
+  transform: scale(1.02);
+}
+/* 渲染图片 */
+.weapon-render {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scaleX(1) rotate(0deg);
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 3;
+  filter: drop-shadow(0 0 6px var(--weapon-accent));
+  pointer-events: none;
+}
+/* 地面阴影 */
+.weapon-ground {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 6px;
+  background: radial-gradient(ellipse at center, var(--weapon-accent) 0%, transparent 70%);
+  opacity: 0.6;
+  z-index: 1;
+}
+/* 光环效果 */
+.weapon-aura {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 40%, color-mix(in srgb, var(--weapon-accent) 40%, transparent) 70%, transparent 100%);
+  opacity: 0.5;
+  z-index: 2;
+  pointer-events: none;
+}
+/* 光环动画 */
+@keyframes auraPulse {
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.05); }
+}
+/* 扫描环 - 默认 */
+.weapon-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  height: 90%;
+  border: 2px solid color-mix(in srgb, var(--weapon-accent) 70%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--weapon-accent) inset, 0 0 10px var(--weapon-accent);
+  z-index: 4;
+  pointer-events: none;
+}
+/* 转动动画 */
+@keyframes ringSpin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+/* 能量线 ::before (横向) */
+.weapon-frame::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 10%;
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--weapon-accent), transparent);
+  z-index: 5;
+  pointer-events: none;
+}
+/* 能量线 ::after (竖向) */
+.weapon-frame::after {
+  content: '';
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 1px;
+  height: 30%;
+  background: linear-gradient(180deg, transparent, var(--weapon-accent), transparent);
+  z-index: 5;
+  pointer-events: none;
+}
+/* 特定 ID 样式 */
+.weapon-rush .weapon-ring {
+  border-style: dashed;
+  animation: ringSpin 4s linear infinite;
+}
+.weapon-rush .weapon-render {
+  transform: translate(-50%, -50%) scaleX(1) rotate(-5deg);
+}
+.weapon-intel .weapon-ring {
+  border-radius: 0;
+  width: 70%;
+  height: 70%;
+  border: 1px solid var(--weapon-accent);
+  box-shadow: 0 0 15px var(--weapon-accent), inset 0 0 15px var(--weapon-accent);
+}
+.weapon-intel .weapon-aura {
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--weapon-accent) 20%, transparent) 0deg 10deg, transparent 10deg 20deg);
+  border-radius: 0;
+  animation: auraPulse 3s ease-in-out infinite;
+}
+.weapon-intel .weapon-render::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--weapon-accent) 20%, transparent), transparent);
+  pointer-events: none;
+}
+.weapon-twin .weapon-render {
+  clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+  transform: translate(-50%, -50%) scaleX(1) rotate(2deg);
+}
+.weapon-twin .weapon-ring {
+  border: 1px solid var(--weapon-accent);
+  border-radius: 0;
+  width: 40%;
+  height: 80%;
+  left: 25%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  animation: ringSpin 6s linear infinite reverse;
+}
+.weapon-wall .weapon-ring {
+  border: 2px solid var(--weapon-accent);
+  border-radius: 0;
+  width: 80%;
+  height: 80%;
+  box-shadow: 0 0 20px var(--weapon-accent), inset 0 0 20px var(--weapon-accent);
+  animation: auraPulse 2s ease-in-out infinite;
+}
+.weapon-wall .weapon-aura {
+  background: linear-gradient(45deg, transparent 40%, color-mix(in srgb, var(--weapon-accent) 30%, transparent) 60%, transparent);
+}
+.weapon-control .weapon-ring {
+  border: 1px solid var(--weapon-accent);
+  border-radius: 50%;
+  width: 60%;
+  height: 60%;
+  box-shadow: 0 0 25px var(--weapon-accent);
+  animation: ringSpin 8s linear infinite;
+}
+.weapon-control .weapon-aura {
+  background: radial-gradient(circle, color-mix(in srgb, var(--weapon-accent) 40%, transparent) 20%, transparent 70%);
+}
+.weapon-elite .weapon-ring {
+  border: 2px solid var(--weapon-accent);
+  border-radius: 50%;
+  width: 80%;
+  height: 80%;
+  box-shadow: 0 0 30px var(--weapon-accent), 0 0 60px color-mix(in srgb, var(--weapon-accent) 40%, transparent);
+  animation: ringSpin 3s linear infinite;
+}
+.weapon-elite .weapon-aura {
+  background: radial-gradient(circle, color-mix(in srgb, var(--weapon-accent) 50%, transparent) 0%, transparent 70%);
+  animation: auraPulse 1.5s ease-in-out infinite;
+}
+.weapon-master1 .weapon-ring {
+  border: 2px solid var(--weapon-accent);
+  border-radius: 0;
+  width: 70%;
+  height: 70%;
+  box-shadow: 0 0 25px color-mix(in srgb, var(--weapon-accent) 80%, #FFFFFF), inset 0 0 25px color-mix(in srgb, var(--weapon-accent) 60%, #FFFFFF);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.weapon-master1 .weapon-aura {
+  background: conic-gradient(from 0deg, transparent, color-mix(in srgb, var(--weapon-accent) 40%, transparent), transparent);
+  animation: ringSpin 5s linear infinite;
+}
+.weapon-master2 .weapon-ring {
+  border: 1px solid var(--weapon-accent);
+  border-radius: 50%;
+  width: 60%;
+  height: 60%;
+  box-shadow: 0 0 30px var(--weapon-accent), inset 0 0 30px var(--weapon-accent);
+  animation: ringSpin 7s linear infinite reverse;
+}
+.weapon-master2 .weapon-aura {
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--weapon-accent) 60%, transparent) 0%, transparent 80%);
+}
+.weapon-champion .weapon-ring {
+  border: 2px solid var(--weapon-accent);
+  border-radius: 50%;
+  width: 90%;
+  height: 90%;
+  box-shadow: 0 0 35px var(--weapon-accent), 0 0 70px color-mix(in srgb, var(--weapon-accent) 50%, #FF0000), inset 0 0 25px var(--weapon-accent);
+  animation: ringSpin 2s linear infinite, auraPulse 1.5s ease-in-out infinite;
+}
+.weapon-champion .weapon-aura {
+  background: radial-gradient(circle, #FF4500 0%, #FF8C00 30%, transparent 70%);
+  animation: auraPulse 1s ease-in-out infinite;
+}
+.weapon-champion .weapon-render {
+  transform: translate(-50%, -50%) scaleX(1) rotate(-8deg);
+  animation: float 2s ease-in-out infinite;
+}
+/* 悬浮动画 */
+@keyframes float {
+  0%, 100% { transform: translate(-50%, -50%) scaleX(1) rotate(-8deg) translateY(0); }
+  50% { transform: translate(-50%, -50%) scaleX(1) rotate(-8deg) translateY(-6px); }
+}
+/* 减少动态效果 */
+@media (prefers-reduced-motion: reduce) {
+  .weapon-aura, .weapon-ring, .weapon-champion .weapon-render {
+    animation: none;
+  }
+  .weapon-aura, .weapon-ring {
+    transition: none;
+  }
+}
+/* 小屏幕适配 */
+@media (max-width: 768px) {
+  .weapon-frame {
+    width: 170px;
+    height: 120px;
+  }
+  .weapon-render {
+    transform: translate(-50%, -50%) scaleX(1) rotate(0deg);
+  }
+}
+/* 图鉴覆盖宽高 */
+.wrapper .weapon-frame {
+  width: 100%;
+  height: 100%;
+}

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#0b1026"/>
+<stop offset="100%" stop-color="#1b2340"/>
+</linearGradient>
+<linearGradient id="laser1" x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" stop-color="#ff5e5b" stop-opacity="0"/>
+<stop offset="100%" stop-color="#ff5e5b" stop-opacity="0.8"/>
+</linearGradient>
+<linearGradient id="laser2" x1="1" y1="0" x2="0" y2="0">
+<stop offset="0%" stop-color="#00b4d8" stop-opacity="0"/>
+<stop offset="100%" stop-color="#00b4d8" stop-opacity="0.8"/>
+</linearGradient>
+</defs>
+<rect width="480" height="300" fill="url(#bg)"/>
+<path d="M100 200 L380 120" stroke="url(#laser1)" stroke-width="3" opacity="0.8"/>
+<path d="M140 220 L420 160" stroke="url(#laser2)" stroke-width="3" opacity="0.8"/>
+<circle cx="380" cy="120" r="8" fill="#ff5e5b" opacity="0.7"/>
+<circle cx="420" cy="160" r="8" fill="#00b4d8" opacity="0.7"/>
+<path d="M100 200 A40 40 0 0 1 140 220" stroke="#ff5e5b" stroke-width="2" fill="none" opacity="0.5"/>
+<path d="M380 120 A40 40 0 0 0 420 160" stroke="#00b4d8" stroke-width="2" fill="none" opacity="0.5"/>
+<rect x="80" y="180" width="50" height="50" rx="8" fill="#2a3556" stroke="#c2a878" stroke-width="2"/>
+<circle cx="95" cy="195" r="5" fill="#ff5e5b"/>
+<path d="M95 205 L95 220 M85 215 L105 215" stroke="#c2a878" stroke-width="2"/>
+<circle cx="130" cy="205" r="15" fill="#1b2340" stroke="#00b4d8" stroke-width="2"/>
+<circle cx="130" cy="205" r="6" fill="#00b4d8"/>
+<rect x="340" y="100" width="60" height="30" rx="5" fill="#2a3556" stroke="#ff5e5b" stroke-width="2"/>
+<path d="M370 100 L370 80 M350 115 L350 135 M390 115 L390 135" stroke="#c2a878" stroke-width="2" opacity="0.5"/>
+<rect x="0" y="280" width="480" height="20" fill="#0b1026" opacity="0.8"/>
+</svg>

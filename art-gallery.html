@@ -1,0 +1,277 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>登峰赛季 · 配图与对手形象</title><link rel="icon" href="data:,"><style>/* 基础框架样式 */
+.weapon-frame {
+  position: relative;
+  display: inline-block;
+  width: 240px;
+  height: 168px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #1a1a2e;
+  box-shadow: 0 0 12px rgba(0,0,0,0.5);
+  transition: transform 0.2s;
+}
+.weapon-frame:hover {
+  transform: scale(1.02);
+}
+/* 渲染图片 */
+.weapon-render {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scaleX(1) rotate(0deg);
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 3;
+  filter: drop-shadow(0 0 6px var(--weapon-accent));
+  pointer-events: none;
+}
+/* 地面阴影 */
+.weapon-ground {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 6px;
+  background: radial-gradient(ellipse at center, var(--weapon-accent) 0%, transparent 70%);
+  opacity: 0.6;
+  z-index: 1;
+}
+/* 光环效果 */
+.weapon-aura {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 40%, color-mix(in srgb, var(--weapon-accent) 40%, transparent) 70%, transparent 100%);
+  opacity: 0.5;
+  z-index: 2;
+  pointer-events: none;
+}
+/* 光环动画 */
+@keyframes auraPulse {
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.05); }
+}
+/* 扫描环 - 默认 */
+.weapon-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  height: 90%;
+  border: 2px solid color-mix(in srgb, var(--weapon-accent) 70%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--weapon-accent) inset, 0 0 10px var(--weapon-accent);
+  z-index: 4;
+  pointer-events: none;
+}
+/* 转动动画 */
+@keyframes ringSpin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+/* 能量线 ::before (横向) */
+.weapon-frame::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 10%;
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--weapon-accent), transparent);
+  z-index: 5;
+  pointer-events: none;
+}
+/* 能量线 ::after (竖向) */
+.weapon-frame::after {
+  content: '';
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 1px;
+  height: 30%;
+  background: linear-gradient(180deg, transparent, var(--weapon-accent), transparent);
+  z-index: 5;
+  pointer-events: none;
+}
+/* 特定 ID 样式 */
+.weapon-rush .weapon-ring {
+  border-style: dashed;
+  animation: ringSpin 4s linear infinite;
+}
+.weapon-rush .weapon-render {
+  transform: translate(-50%, -50%) scaleX(1) rotate(-5deg);
+}
+.weapon-intel .weapon-ring {
+  border-radius: 0;
+  width: 70%;
+  height: 70%;
+  border: 1px solid var(--weapon-accent);
+  box-shadow: 0 0 15px var(--weapon-accent), inset 0 0 15px var(--weapon-accent);
+}
+.weapon-intel .weapon-aura {
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--weapon-accent) 20%, transparent) 0deg 10deg, transparent 10deg 20deg);
+  border-radius: 0;
+  animation: auraPulse 3s ease-in-out infinite;
+}
+.weapon-intel .weapon-render::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--weapon-accent) 20%, transparent), transparent);
+  pointer-events: none;
+}
+.weapon-twin .weapon-render {
+  clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+  transform: translate(-50%, -50%) scaleX(1) rotate(2deg);
+}
+.weapon-twin .weapon-ring {
+  border: 1px solid var(--weapon-accent);
+  border-radius: 0;
+  width: 40%;
+  height: 80%;
+  left: 25%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  animation: ringSpin 6s linear infinite reverse;
+}
+.weapon-wall .weapon-ring {
+  border: 2px solid var(--weapon-accent);
+  border-radius: 0;
+  width: 80%;
+  height: 80%;
+  box-shadow: 0 0 20px var(--weapon-accent), inset 0 0 20px var(--weapon-accent);
+  animation: auraPulse 2s ease-in-out infinite;
+}
+.weapon-wall .weapon-aura {
+  background: linear-gradient(45deg, transparent 40%, color-mix(in srgb, var(--weapon-accent) 30%, transparent) 60%, transparent);
+}
+.weapon-control .weapon-ring {
+  border: 1px solid var(--weapon-accent);
+  border-radius: 50%;
+  width: 60%;
+  height: 60%;
+  box-shadow: 0 0 25px var(--weapon-accent);
+  animation: ringSpin 8s linear infinite;
+}
+.weapon-control .weapon-aura {
+  background: radial-gradient(circle, color-mix(in srgb, var(--weapon-accent) 40%, transparent) 20%, transparent 70%);
+}
+.weapon-elite .weapon-ring {
+  border: 2px solid var(--weapon-accent);
+  border-radius: 50%;
+  width: 80%;
+  height: 80%;
+  box-shadow: 0 0 30px var(--weapon-accent), 0 0 60px color-mix(in srgb, var(--weapon-accent) 40%, transparent);
+  animation: ringSpin 3s linear infinite;
+}
+.weapon-elite .weapon-aura {
+  background: radial-gradient(circle, color-mix(in srgb, var(--weapon-accent) 50%, transparent) 0%, transparent 70%);
+  animation: auraPulse 1.5s ease-in-out infinite;
+}
+.weapon-master1 .weapon-ring {
+  border: 2px solid var(--weapon-accent);
+  border-radius: 0;
+  width: 70%;
+  height: 70%;
+  box-shadow: 0 0 25px color-mix(in srgb, var(--weapon-accent) 80%, #FFFFFF), inset 0 0 25px color-mix(in srgb, var(--weapon-accent) 60%, #FFFFFF);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.weapon-master1 .weapon-aura {
+  background: conic-gradient(from 0deg, transparent, color-mix(in srgb, var(--weapon-accent) 40%, transparent), transparent);
+  animation: ringSpin 5s linear infinite;
+}
+.weapon-master2 .weapon-ring {
+  border: 1px solid var(--weapon-accent);
+  border-radius: 50%;
+  width: 60%;
+  height: 60%;
+  box-shadow: 0 0 30px var(--weapon-accent), inset 0 0 30px var(--weapon-accent);
+  animation: ringSpin 7s linear infinite reverse;
+}
+.weapon-master2 .weapon-aura {
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--weapon-accent) 60%, transparent) 0%, transparent 80%);
+}
+.weapon-champion .weapon-ring {
+  border: 2px solid var(--weapon-accent);
+  border-radius: 50%;
+  width: 90%;
+  height: 90%;
+  box-shadow: 0 0 35px var(--weapon-accent), 0 0 70px color-mix(in srgb, var(--weapon-accent) 50%, #FF0000), inset 0 0 25px var(--weapon-accent);
+  animation: ringSpin 2s linear infinite, auraPulse 1.5s ease-in-out infinite;
+}
+.weapon-champion .weapon-aura {
+  background: radial-gradient(circle, #FF4500 0%, #FF8C00 30%, transparent 70%);
+  animation: auraPulse 1s ease-in-out infinite;
+}
+.weapon-champion .weapon-render {
+  transform: translate(-50%, -50%) scaleX(1) rotate(-8deg);
+  animation: float 2s ease-in-out infinite;
+}
+/* 悬浮动画 */
+@keyframes float {
+  0%, 100% { transform: translate(-50%, -50%) scaleX(1) rotate(-8deg) translateY(0); }
+  50% { transform: translate(-50%, -50%) scaleX(1) rotate(-8deg) translateY(-6px); }
+}
+/* 减少动态效果 */
+@media (prefers-reduced-motion: reduce) {
+  .weapon-aura, .weapon-ring, .weapon-champion .weapon-render {
+    animation: none;
+  }
+  .weapon-aura, .weapon-ring {
+    transition: none;
+  }
+}
+/* 小屏幕适配 */
+@media (max-width: 768px) {
+  .weapon-frame {
+    width: 170px;
+    height: 120px;
+  }
+  .weapon-render {
+    transform: translate(-50%, -50%) scaleX(1) rotate(0deg);
+  }
+}
+/* 图鉴覆盖宽高 */
+.wrapper .weapon-frame {
+  width: 100%;
+  height: 100%;
+}
+ /* Artwork is presentation only: no pointer targets or gameplay state. */
+.portrait-image{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;user-select:none;object-fit:contain;object-position:center top;filter:drop-shadow(0 4px 5px #0005)}
+.portrait-image.tactic-art{object-fit:cover;filter:none}
+.portrait-image.poster-photo{object-fit:cover;object-position:center 25%}
+.card-portrait:after{content:"";position:absolute;inset:65% 0 0;background:linear-gradient(transparent,#06131ac4);pointer-events:none}
+.portrait-role,.portrait-tier{z-index:1;background:#101a20ce}
+.art-missing{margin:auto;font-size:11px;color:#c9d2d4}
+.art-credit{font-size:12px;line-height:1.6;color:#a6b6b5}
+.enemy .combat-target{padding:0 3px;min-width:208px}
+.opponent-art{display:block;width:220px;height:168px;position:relative;pointer-events:none;user-select:none}
+.opponent-art img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;filter:drop-shadow(0 8px 7px #0005)}
+.fighter.enemy .intent-bubble{z-index:2}
+@media(max-width:760px){.opponent-art{width:160px;height:123px}.enemy .combat-target{min-width:164px}.fighter.enemy{width:170px}}
+/* Reviewed corrections to DeepSeek's effect draft: transparent battlefield,
+   complete twin weapons, quiet effects, and no animations on the hit target. */
+.weapon-frame{display:block;background:none;box-shadow:none;overflow:visible;pointer-events:none;user-select:none;width:220px;height:168px;transition:none}
+.weapon-frame:hover{transform:none}
+.weapon-frame *{pointer-events:none}
+.weapon-frame .weapon-render{width:95%;height:68%;filter:drop-shadow(0 8px 5px #0009);z-index:3}
+.weapon-frame .weapon-aura,.weapon-frame .weapon-ring{animation:none!important;z-index:1}
+.weapon-frame .weapon-ring{opacity:.5;box-shadow:none;max-height:110px}
+.weapon-frame .weapon-aura{opacity:.3}
+.weapon-frame:before,.weapon-frame:after{opacity:.25}
+.weapon-twin .weapon-render{clip-path:none;top:39%;width:84%;height:55%;transform:translate(-50%,-50%) scaleX(1) rotate(-8deg)}
+.weapon-twin .weapon-render.weapon-second{top:64%;left:56%;transform:translate(-50%,-50%) scaleX(1) rotate(7deg);z-index:2}
+.weapon-champion .weapon-render{animation:none}
+.weapon-display .weapon-render{transform:translate(-50%,-50%) scaleX(1)}
+.weapon-display:before,.weapon-display:after{display:none}
+@media(max-width:760px){.weapon-frame{width:160px;height:120px}.weapon-frame .weapon-ring{max-height:80px}}
+ *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#0b151d;color:#e2e6dd;font:15px/1.6 system-ui,sans-serif}header,section,footer{max-width:1160px;margin:auto;padding:32px}h1{font-size:36px;line-height:1.2}h2{font-size:25px}p,small{color:#a4b8b7}a{color:#bbdba5;text-decoration:none}nav{display:flex;gap:20px;flex-wrap:wrap}section{border-top:1px solid #ffffff12;scroll-margin-top:10px}figure{margin:0;background:linear-gradient(135deg,#20343b,#101c29);border:1px solid #abc09e20;border-radius:12px;overflow:hidden}figure img{display:block;width:100%;height:210px;object-fit:contain;object-position:center top;background:radial-gradient(ellipse at 50% 30%,#60878242,transparent 75%)}figcaption{padding:10px 14px}figcaption b,small{display:block}figcaption a{font-size:12px}.concepts,.special,.enemies{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.concepts img{height:240px}.portraits{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}.portraits img{height:160px}.special img{height:160px;object-fit:cover}footer{color:#718f93}@media(max-width:760px){header,section,footer{padding:22px 16px}h1{font-size:27px}.portraits{grid-template-columns:repeat(3,1fr)}.concepts,.enemies,.special{grid-template-columns:repeat(2,1fr)}.concepts img{height:150px}.portraits img{height:130px}.concepts figure:last-child{grid-column:1/-1}}.weapon-tile .weapon-frame{width:100%;height:210px}.weapon-tile .weapon-render{background:none;height:65%;object-position:center}.weapon-array{height:210px;position:relative}.weapon-array img{position:absolute;top:calc(16px + var(--i)*32px);left:calc(3% + var(--i)*8%);width:68%;height:55px;object-fit:contain;transform:scaleX(1) rotate(-8deg);background:none;filter:drop-shadow(0 4px 3px #0009)}.portraits img.poster-photo{object-fit:cover;object-position:center 25%}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}</style></head><body><header><a href="/">← 返回游戏</a><p>登峰赛季 / ART DIRECTION 06</p><h1>选手上场，枪械成为对手。</h1><p>72 张选手照片 · 7 张战术插画 · 9 类武器对手，覆盖三幕 21 场对手配置。</p><nav><a href="#concepts">对手方向</a><a href="#CN">中国</a><a href="#AM">美洲</a><a href="#EMEA">EMEA</a><a href="#PAC">太平洋</a><a href="#special">特殊牌</a><a href="#enemies">全部对手</a></nav></header><section id="concepts"><h2>三种方向，放在一起比较</h2><p>使用真实无畏契约枪械皮肤素材，叠加本作的能量与战术效果。照片与武器均随游戏本地加载。</p><div class="concepts"><figure class="weapon-tile"><span class="weapon-frame weapon-master1 weapon-display" style="--weapon-accent:#FFD700"><img class="weapon-render" src="/assets/opponents/master1.png" alt="Prime Vandal" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>A · 皮肤武器展示</b><small>枪械细节清楚，制作成本低；比较像商店展品。</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-master1" style="--weapon-accent:#FFD700"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/master1.png" alt="Prime Vandal" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>B · 枪械与皮肤能量</b><small>本轮采用。轮廓、能量和配色共同表现敌人打法。</small></figcaption></figure><figure class="weapon-tile"><div class="weapon-array"><img src="/assets/opponents/rush.png" alt="Singularity Spectre" style="--i:0"><img src="/assets/opponents/intel.png" alt="Recon Phantom" style="--i:1"><img src="/assets/opponents/control.png" alt="Glitchpop Odin" style="--i:2"><img src="/assets/opponents/elite.png" alt="Ion Operator" style="--i:3"><img src="/assets/opponents/master1.png" alt="Prime Vandal" style="--i:4"></div><figcaption><b>C · 战队武器阵列</b><small>整队主题更明显；小屏下细节容易拥挤。</small></figcaption></figure></div></section><section id="CN"><h2>中国 · 18 位选手</h2><div class="portraits"><figure><img class="poster-photo" src="/assets/players/CN01.jpg" alt="glacier" loading="lazy"><figcaption><b>glacier</b><small>CN01 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.sina.cn/news/detail/5282469844877859.html">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN02.png" alt="SpiritZ1" loading="lazy"><figcaption><b>SpiritZ1</b><small>CN02 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/31753/spiritz1">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN03.png" alt="Kai" loading="lazy"><figcaption><b>Kai</b><small>CN03 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/37494/kai">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN04.png" alt="Life" loading="lazy"><figcaption><b>Life</b><small>CN04 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/3028/life">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN05.png" alt="Rarga" loading="lazy"><figcaption><b>Rarga</b><small>CN05 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/22047/rarga">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN06.png" alt="ZmjjKK" loading="lazy"><figcaption><b>ZmjjKK</b><small>CN06 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/3520/zmjjkk">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN07.png" alt="yosemite" loading="lazy"><figcaption><b>yosemite</b><small>CN07 / 哨位</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/6022/yosemite">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN08.png" alt="Yuicaw" loading="lazy"><figcaption><b>Yuicaw</b><small>CN08 / 哨位</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/11218/yuicaw">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN09.png" alt="vo0kashu" loading="lazy"><figcaption><b>vo0kashu</b><small>CN09 / 哨位</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/3741/vo0kashu">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN10.png" alt="Coco" loading="lazy"><figcaption><b>Coco</b><small>CN10 / 控场</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/47629/coco">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN11.png" alt="LuoK1ng" loading="lazy"><figcaption><b>LuoK1ng</b><small>CN11 / 控场</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/3045/luok1ng">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN12.png" alt="Smoggy" loading="lazy"><figcaption><b>Smoggy</b><small>CN12 / 控场</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/4742/smoggy">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN13.png" alt="BerLIN" loading="lazy"><figcaption><b>BerLIN</b><small>CN13 / 先锋</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/7857/berlin">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN14.png" alt="nobody" loading="lazy"><figcaption><b>nobody</b><small>CN14 / 先锋</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/3017/nobody">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN15.png" alt="SiuFatBB" loading="lazy"><figcaption><b>SiuFatBB</b><small>CN15 / 先锋</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/7849/siufatbb">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN16.png" alt="CHICHOO" loading="lazy"><figcaption><b>CHICHOO</b><small>CN16 / 自由人</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/15559/chichoo">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN17.png" alt="Haodong" loading="lazy"><figcaption><b>Haodong</b><small>CN17 / 自由人</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/4720/haodong">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/CN18.png" alt="AAAAY" loading="lazy"><figcaption><b>AAAAY</b><small>CN18 / 自由人</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/19530/aaaay">照片来源</a></figcaption></figure></div></section><section id="AM"><h2>美洲 · 18 位选手</h2><div class="portraits"><figure><img class="" src="/assets/players/AM01.png" alt="Asuna" loading="lazy"><figcaption><b>Asuna</b><small>AM01 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/601/asuna">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM02.png" alt="OXY" loading="lazy"><figcaption><b>OXY</b><small>AM02 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/18796/oxy">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM03.png" alt="aspas" loading="lazy"><figcaption><b>aspas</b><small>AM03 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/8480/aspas">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM04.png" alt="zekken" loading="lazy"><figcaption><b>zekken</b><small>AM04 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/4004/zekken">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM05.png" alt="heat" loading="lazy"><figcaption><b>heat</b><small>AM05 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/8673/heat">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM06.png" alt="koalanoob" loading="lazy"><figcaption><b>koalanoob</b><small>AM06 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/3722/koalanoob">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM07.png" alt="Cryocells" loading="lazy"><figcaption><b>Cryocells</b><small>AM07 / 哨位</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/4147/cryocells">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM08.png" alt="tex" loading="lazy"><figcaption><b>tex</b><small>AM08 / 哨位</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/1818/tex">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM09.png" alt="BABYBAY" loading="lazy"><figcaption><b>BABYBAY</b><small>AM09 / 哨位</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/2170/babybay">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM10.png" alt="bang" loading="lazy"><figcaption><b>bang</b><small>AM10 / 控场</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/3880/bang">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM11.png" alt="v1c" loading="lazy"><figcaption><b>v1c</b><small>AM11 / 控场</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/17433/v1c">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM12.png" alt="kiNgg" loading="lazy"><figcaption><b>kiNgg</b><small>AM12 / 控场</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/8549/kingg">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM13.png" alt="vora" loading="lazy"><figcaption><b>vora</b><small>AM13 / 先锋</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/20140/vora">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM14.png" alt="DaviH" loading="lazy"><figcaption><b>DaviH</b><small>AM14 / 先锋</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/10885/davih">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM15.png" alt="mwzera" loading="lazy"><figcaption><b>mwzera</b><small>AM15 / 先锋</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/939/mwzera">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM16.png" alt="Less" loading="lazy"><figcaption><b>Less</b><small>AM16 / 自由人</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/8447/less">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM17.png" alt="Zellsis" loading="lazy"><figcaption><b>Zellsis</b><small>AM17 / 自由人</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/729/zellsis">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/AM18.png" alt="leaf" loading="lazy"><figcaption><b>leaf</b><small>AM18 / 自由人</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/7873/leaf">照片来源</a></figcaption></figure></div></section><section id="EMEA"><h2>EMEA · 18 位选手</h2><div class="portraits"><figure><img class="" src="/assets/players/EU01.png" alt="Derke" loading="lazy"><figcaption><b>Derke</b><small>EU01 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/5022/derke">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU02.png" alt="kaajak" loading="lazy"><figcaption><b>kaajak</b><small>EU02 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/9554/kaajak">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU03.png" alt="Wo0t" loading="lazy"><figcaption><b>Wo0t</b><small>EU03 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/21328/wo0t">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU04.png" alt="marteen" loading="lazy"><figcaption><b>marteen</b><small>EU04 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/10307/marteen">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU05.png" alt="LewN" loading="lazy"><figcaption><b>LewN</b><small>EU05 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/20144/lewn">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU06.png" alt="Lar0k" loading="lazy"><figcaption><b>Lar0k</b><small>EU06 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/31305/lar0k">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU07.png" alt="Alfajer" loading="lazy"><figcaption><b>Alfajer</b><small>EU07 / 哨位</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/9810/alfajer">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU08.png" alt="benjyfishy" loading="lazy"><figcaption><b>benjyfishy</b><small>EU08 / 哨位</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/29873/benjyfishy">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU09.png" alt="Crewen" loading="lazy"><figcaption><b>Crewen</b><small>EU09 / 哨位</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/12795/crewen">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU10.png" alt="Boaster" loading="lazy"><figcaption><b>Boaster</b><small>EU10 / 控场</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/438/boaster">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU11.png" alt="Ruxic" loading="lazy"><figcaption><b>Ruxic</b><small>EU11 / 控场</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/18677/ruxic">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU12.png" alt="Boo" loading="lazy"><figcaption><b>Boo</b><small>EU12 / 控场</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/1144/boo">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU13.png" alt="crashies" loading="lazy"><figcaption><b>crashies</b><small>EU13 / 先锋</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/4/crashies">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU14.png" alt="RieNs" loading="lazy"><figcaption><b>RieNs</b><small>EU14 / 先锋</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/10971/riens">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU15.png" alt="trexx" loading="lazy"><figcaption><b>trexx</b><small>EU15 / 先锋</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/2168/trexx">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU16.png" alt="Chronicle" loading="lazy"><figcaption><b>Chronicle</b><small>EU16 / 自由人</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/458/chronicle">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU17.png" alt="nAts" loading="lazy"><figcaption><b>nAts</b><small>EU17 / 自由人</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/457/nats">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/EU18.png" alt="SUYGETSU" loading="lazy"><figcaption><b>SUYGETSU</b><small>EU18 / 自由人</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/2858/suygetsu">照片来源</a></figcaption></figure></div></section><section id="PAC"><h2>太平洋 · 18 位选手</h2><div class="portraits"><figure><img class="" src="/assets/players/PA01.png" alt="Meiy" loading="lazy"><figcaption><b>Meiy</b><small>PA01 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/6672/meiy">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA02.png" alt="HYUNMIN" loading="lazy"><figcaption><b>HYUNMIN</b><small>PA02 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/28400/hyunmin">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA03.png" alt="Jemkin" loading="lazy"><figcaption><b>Jemkin</b><small>PA03 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/24895/jemkin">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA04.png" alt="Dambi" loading="lazy"><figcaption><b>Dambi</b><small>PA04 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/31827/dambi">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA05.png" alt="JitBoyS" loading="lazy"><figcaption><b>JitBoyS</b><small>PA05 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/13788/jitboys">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA06.png" alt="Zeus" loading="lazy"><figcaption><b>Zeus</b><small>PA06 / 决斗</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/46135/zeus">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA07.png" alt="t3xture" loading="lazy"><figcaption><b>t3xture</b><small>PA07 / 哨位</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/9196/t3xture">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA08.png" alt="xffero" loading="lazy"><figcaption><b>xffero</b><small>PA08 / 哨位</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/4871/xffero">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA09.png" alt="Raxcal" loading="lazy"><figcaption><b>Raxcal</b><small>PA09 / 哨位</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/48925/raxcal">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA10.png" alt="MaKo" loading="lazy"><figcaption><b>MaKo</b><small>PA10 / 控场</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/4462/mako">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA11.png" alt="Karon" loading="lazy"><figcaption><b>Karon</b><small>PA11 / 控场</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/34974/karon">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA12.png" alt="f0rsakeN" loading="lazy"><figcaption><b>f0rsakeN</b><small>PA12 / 控场</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/9801/f0rsaken">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA13.png" alt="invy" loading="lazy"><figcaption><b>invy</b><small>PA13 / 先锋</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/8504/invy">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA14.png" alt="BeYN" loading="lazy"><figcaption><b>BeYN</b><small>PA14 / 先锋</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/4678/beyn">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA15.png" alt="Munchkin" loading="lazy"><figcaption><b>Munchkin</b><small>PA15 / 先锋</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/2489/munchkin">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA16.png" alt="Jinggg" loading="lazy"><figcaption><b>Jinggg</b><small>PA16 / 自由人</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/7378/jinggg">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA17.png" alt="something" loading="lazy"><figcaption><b>something</b><small>PA17 / 自由人</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/17086/something">照片来源</a></figcaption></figure><figure><img class="" src="/assets/players/PA18.png" alt="d4v41" loading="lazy"><figcaption><b>d4v41</b><small>PA18 / 自由人</small><a target="_blank" rel="noopener noreferrer" href="https://www.vlr.gg/player/9803/d4v41">照片来源</a></figcaption></figure></div></section><section id="special"><h2>特殊牌也有各自的场景</h2><div class="special"><figure><img class="" src="/assets/special/ST01.svg" alt="信息干扰" loading="lazy"><figcaption><b>信息干扰</b><small>比赛干扰</small></figcaption></figure><figure><img class="" src="/assets/special/ST02.svg" alt="节奏受阻" loading="lazy"><figcaption><b>节奏受阻</b><small>比赛干扰</small></figcaption></figure><figure><img class="" src="/assets/special/ST03.svg" alt="疲劳" loading="lazy"><figcaption><b>疲劳</b><small>比赛干扰</small></figcaption></figure><figure><img class="" src="/assets/special/CU01.svg" alt="磨合不足" loading="lazy"><figcaption><b>磨合不足</b><small>俱乐部隐患</small></figcaption></figure><figure><img class="" src="/assets/special/CU02.svg" alt="舆论压力" loading="lazy"><figcaption><b>舆论压力</b><small>俱乐部隐患</small></figcaption></figure><figure><img class="" src="/assets/special/TK01.svg" alt="补枪" loading="lazy"><figcaption><b>补枪</b><small>临时行动</small></figcaption></figure><figure><img class="" src="/assets/special/TK02.svg" alt="临时部署" loading="lazy"><figcaption><b>临时部署</b><small>临时行动</small></figcaption></figure></div></section><section id="enemies"><h2>三幕对手图鉴</h2><p>同一战术原型跨幕共用一幅画；三个世界赛 Boss 使用独立造型。形象不改变伤害、状态或意图规则。</p><div class="enemies"><figure class="weapon-tile"><span class="weapon-frame weapon-master1" style="--weapon-accent:#FFD700"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/master1.png" alt="Prime Vandal" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>大师赛种子队</b><small>B01 / Prime Vandal</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-rush" style="--weapon-accent:#9D4EDD"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/rush.png" alt="Singularity Spectre" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>基础试训队</b><small>E01 / Singularity Spectre</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-intel" style="--weapon-accent:#00C2FF"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/intel.png" alt="Recon Phantom" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>信息压制队</b><small>E02 / Recon Phantom</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-twin" style="--weapon-accent:#00FFAA"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/twin.png" alt="Sensation Stinger" decoding="async" draggable="false"><img class="weapon-render weapon-second" src="/assets/opponents/twin.png" alt="" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>双核突击队</b><small>E03 / Sensation Stinger</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-wall" style="--weapon-accent:#FF00AA"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/wall.png" alt="Glitchpop Judge" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>防守反击队</b><small>E04 / Glitchpop Judge</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-control" style="--weapon-accent:#AA00FF"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/control.png" alt="Glitchpop Odin" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>纪律控制队</b><small>E05 / Glitchpop Odin</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-elite" style="--weapon-accent:#00D4FF"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/elite.png" alt="Ion Operator" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>高压强敌队</b><small>EL01 / Ion Operator</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-master2" style="--weapon-accent:#8B0000"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/master2.png" alt="Reaver Operator" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>第二次大师赛</b><small>A2_B01 / Reaver Operator</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-rush" style="--weapon-accent:#9D4EDD"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/rush.png" alt="Singularity Spectre" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>第二幕基础进攻</b><small>A2_E01 / Singularity Spectre</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-intel" style="--weapon-accent:#00C2FF"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/intel.png" alt="Recon Phantom" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>第二幕信息压制</b><small>A2_E02 / Recon Phantom</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-twin" style="--weapon-accent:#00FFAA"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/twin.png" alt="Sensation Stinger" decoding="async" draggable="false"><img class="weapon-render weapon-second" src="/assets/opponents/twin.png" alt="" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>第二幕多段突击</b><small>A2_E03 / Sensation Stinger</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-wall" style="--weapon-accent:#FF00AA"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/wall.png" alt="Glitchpop Judge" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>第二幕防守反击</b><small>A2_E04 / Glitchpop Judge</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-control" style="--weapon-accent:#AA00FF"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/control.png" alt="Glitchpop Odin" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>第二幕纪律控制</b><small>A2_E05 / Glitchpop Odin</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-elite" style="--weapon-accent:#00D4FF"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/elite.png" alt="Ion Operator" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>第二幕强敌</b><small>A2_EL01 / Ion Operator</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-champion" style="--weapon-accent:#FF4500"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/champion.png" alt="Elderflame Vandal" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>冠军赛</b><small>A3_B01 / Elderflame Vandal</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-rush" style="--weapon-accent:#9D4EDD"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/rush.png" alt="Singularity Spectre" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>第三幕基础进攻</b><small>A3_E01 / Singularity Spectre</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-intel" style="--weapon-accent:#00C2FF"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/intel.png" alt="Recon Phantom" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>第三幕信息压制</b><small>A3_E02 / Recon Phantom</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-twin" style="--weapon-accent:#00FFAA"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/twin.png" alt="Sensation Stinger" decoding="async" draggable="false"><img class="weapon-render weapon-second" src="/assets/opponents/twin.png" alt="" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>第三幕多段突击</b><small>A3_E03 / Sensation Stinger</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-wall" style="--weapon-accent:#FF00AA"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/wall.png" alt="Glitchpop Judge" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>第三幕防守反击</b><small>A3_E04 / Glitchpop Judge</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-control" style="--weapon-accent:#AA00FF"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/control.png" alt="Glitchpop Odin" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>第三幕纪律控制</b><small>A3_E05 / Glitchpop Odin</small></figcaption></figure><figure class="weapon-tile"><span class="weapon-frame weapon-elite" style="--weapon-accent:#00D4FF"><i class="weapon-aura"></i><i class="weapon-ring"></i><img class="weapon-render" src="/assets/opponents/elite.png" alt="Ion Operator" decoding="async" draggable="false"><span class="weapon-ground"></span></span><figcaption><b>第三幕强敌</b><small>A3_EL01 / Ion Operator</small></figcaption></figure></div></section><footer>照片来源可逐张查看；特殊牌插画与武器特效由 DeepSeek 参与制作，经过审核与接入。枪械目录来源：<a href="https://valorant-api.com/" target="_blank" rel="noopener noreferrer">Valorant-API</a>。本游戏为粉丝原型，未获 Riot Games 背书。</footer></body></html>

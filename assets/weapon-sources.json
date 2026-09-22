@@ -1,0 +1,97 @@
+{
+  "source": "https://valorant-api.com/",
+  "dataUrl": "https://valorant-api.com/v1/weapons?language=en-US",
+  "note": "Third-party catalog of Riot Games weapon skin renders; original image files retained. CSS effects are original presentation and do not add gameplay effects.",
+  "selections": [
+    {
+      "id": "rush",
+      "weapon": "Spectre",
+      "skinName": "Singularity Spectre",
+      "sourceUrl": "https://media.valorant-api.com/weaponskinchromas/da0d77b2-49b4-148d-e32e-d79aef1b3829/fullrender.png",
+      "accent": "#9D4EDD",
+      "reason": "Rush entry with energetic purple aura.",
+      "path": "assets/opponents/rush.png",
+      "sha256": "bb472bbe38ce60fb8ffb3c32f3a136030d0626d5f1a2e054049e0a158d2377c5"
+    },
+    {
+      "id": "intel",
+      "weapon": "Phantom",
+      "skinName": "Recon Phantom",
+      "sourceUrl": "https://media.valorant-api.com/weaponskinchromas/273edf84-45cf-0266-21d8-a4969bd31b6d/fullrender.png",
+      "accent": "#00C2FF",
+      "reason": "Intel gathering with scanning motifs.",
+      "path": "assets/opponents/intel.png",
+      "sha256": "2221d62fa666086913c0c3bd37643ec31f9392e9e892feeb59fa54e3660c03d4"
+    },
+    {
+      "id": "twin",
+      "weapon": "Stinger",
+      "skinName": "Sensation Stinger",
+      "sourceUrl": "https://media.valorant-api.com/weaponskinchromas/97c19875-4b44-bbc5-6578-d79c9d8b10f7/fullrender.png",
+      "accent": "#00FFAA",
+      "reason": "Twin Stinger with mirrored display and energy.",
+      "path": "assets/opponents/twin.png",
+      "sha256": "51a087302fd336ccca4226cfb5406090cbea084bb1b333995ba0fd696e5aab4c"
+    },
+    {
+      "id": "wall",
+      "weapon": "Judge",
+      "skinName": "Glitchpop Judge",
+      "sourceUrl": "https://media.valorant-api.com/weaponskinchromas/5966c88b-4662-be62-5ae6-50bc036700b5/fullrender.png",
+      "accent": "#FF00AA",
+      "reason": "Wall defense with glitch shield styling.",
+      "path": "assets/opponents/wall.png",
+      "sha256": "adfba7d19d6d3936a8b74e91f5f09f4997eb0c33b795cce68b795646f43d135a"
+    },
+    {
+      "id": "control",
+      "weapon": "Odin",
+      "skinName": "Glitchpop Odin",
+      "sourceUrl": "https://media.valorant-api.com/weaponskinchromas/9667983e-4c8c-e5b2-68d7-be84f9b3d46c/fullrender.png",
+      "accent": "#AA00FF",
+      "reason": "Control heavy weapon with cyberpunk energy.",
+      "path": "assets/opponents/control.png",
+      "sha256": "7c8dfb9b10e0c570a49bc615e2ce1cb226f60da7c48bb430f0598a25d88e0f19"
+    },
+    {
+      "id": "elite",
+      "weapon": "Operator",
+      "skinName": "Ion Operator",
+      "sourceUrl": "https://media.valorant-api.com/weaponskinchromas/54ea8ba8-4bcb-eb63-70d2-4da7520fade2/fullrender.png",
+      "accent": "#00D4FF",
+      "reason": "Elite sniper with futuristic ion glow.",
+      "path": "assets/opponents/elite.png",
+      "sha256": "2c98394c71689b0a7f1ec4aed899903d2576db9114461e014bc784cb537f5188"
+    },
+    {
+      "id": "master1",
+      "weapon": "Vandal",
+      "skinName": "Prime Vandal",
+      "sourceUrl": "https://media.valorant-api.com/weaponskinchromas/a26e0d1d-4886-7d62-6b4f-1996e706463d/fullrender.png",
+      "accent": "#FFD700",
+      "reason": "Master tier with prime gold energy.",
+      "path": "assets/opponents/master1.png",
+      "sha256": "becbab7eee11f9100db4b79b8d9744f46a5d08027858c64c4cfb8c17fa553154"
+    },
+    {
+      "id": "master2",
+      "weapon": "Operator",
+      "skinName": "Reaver Operator",
+      "sourceUrl": "https://media.valorant-api.com/weaponskinchromas/27865910-4dd4-845f-8671-92988cc1c996/fullrender.png",
+      "accent": "#8B0000",
+      "reason": "Master tier with dark reaver crimson.",
+      "path": "assets/opponents/master2.png",
+      "sha256": "03dae5c77e56dc9a99da8ef4961cc9dd6c2c59c86e990f9c06958944ee96a01e"
+    },
+    {
+      "id": "champion",
+      "weapon": "Vandal",
+      "skinName": "Elderflame Vandal",
+      "sourceUrl": "https://media.valorant-api.com/weaponskinchromas/835ad8e3-4b0e-071b-ce38-00a05032ac43/fullrender.png",
+      "accent": "#FF4500",
+      "reason": "Champion with dragon fire orange.",
+      "path": "assets/opponents/champion.png",
+      "sha256": "d94597866b1eb64b3796e019295a4b77de59d2b70872b096c76339ed1062413d"
+    }
+  ]
+}

@@ -1,0 +1,179 @@
+{
+  "creator": "DeepSeek v4 Pro; reviewed and integrated by Codex",
+  "kind": "Riot Games weapon skin PNGs from Valorant-API; original CSS battlefield effects",
+  "references": [
+    "https://playvalorant.com/en-gb/arsenal/",
+    "https://playvalorant.com/en-gb/news/dev/breathing-life-into-elderflame/",
+    "https://playvalorant.com/en-us/news/dev/artists-engineers-and-the-tech-behind-spline/"
+  ],
+  "recommendations": [
+    {
+      "name": "武器皮肤悬浮展示",
+      "description": "以精致插画展示单一武器皮肤，背景配合少量特效。成本低，视觉干净，但类似商店展示，缺乏战斗氛围。",
+      "pros": [
+        "成本低",
+        "制作快",
+        "皮肤细节突出"
+      ],
+      "cons": [
+        "像商店",
+        "缺乏战斗感",
+        "不利于表现对手特性"
+      ]
+    },
+    {
+      "name": "枪械+皮肤能量战斗形象",
+      "description": "枪械主体与皮肤特效能量融合，构成战斗姿态，如扫描环、盾片、龙焰等。战斗感最强，每件武器都有独立剪影，适合作为对手形象。",
+      "pros": [
+        "战斗感强",
+        "有独立剪影",
+        "适合表现对手特性"
+      ],
+      "cons": [
+        "制作成本中等",
+        "需要平衡细节与简洁"
+      ]
+    },
+    {
+      "name": "五人武器阵列",
+      "description": "五把武器排列成战队队形。战队主题强，但小屏下易杂乱，不推荐移动端使用。",
+      "pros": [
+        "战队感强",
+        "展示多把武器"
+      ],
+      "cons": [
+        "小屏杂乱",
+        "每把武器细节不够",
+        "识别度低"
+      ]
+    }
+  ],
+  "enemies": [
+    {
+      "id": "A2_E01",
+      "asset": "assets/opponents/rush.png",
+      "name": "第二幕基础进攻",
+      "archetype": "rush"
+    },
+    {
+      "id": "A2_E02",
+      "asset": "assets/opponents/intel.png",
+      "name": "第二幕信息压制",
+      "archetype": "intel"
+    },
+    {
+      "id": "A2_E03",
+      "asset": "assets/opponents/twin.png",
+      "name": "第二幕多段突击",
+      "archetype": "twin"
+    },
+    {
+      "id": "A2_E04",
+      "asset": "assets/opponents/wall.png",
+      "name": "第二幕防守反击",
+      "archetype": "wall"
+    },
+    {
+      "id": "A2_E05",
+      "asset": "assets/opponents/control.png",
+      "name": "第二幕纪律控制",
+      "archetype": "control"
+    },
+    {
+      "id": "A2_EL01",
+      "asset": "assets/opponents/elite.png",
+      "name": "第二幕强敌",
+      "archetype": "elite"
+    },
+    {
+      "id": "A2_B01",
+      "asset": "assets/opponents/master2.png",
+      "name": "第二次大师赛",
+      "archetype": "master2"
+    },
+    {
+      "id": "A3_E01",
+      "asset": "assets/opponents/rush.png",
+      "name": "第三幕基础进攻",
+      "archetype": "rush"
+    },
+    {
+      "id": "A3_E02",
+      "asset": "assets/opponents/intel.png",
+      "name": "第三幕信息压制",
+      "archetype": "intel"
+    },
+    {
+      "id": "A3_E03",
+      "asset": "assets/opponents/twin.png",
+      "name": "第三幕多段突击",
+      "archetype": "twin"
+    },
+    {
+      "id": "A3_E04",
+      "asset": "assets/opponents/wall.png",
+      "name": "第三幕防守反击",
+      "archetype": "wall"
+    },
+    {
+      "id": "A3_E05",
+      "asset": "assets/opponents/control.png",
+      "name": "第三幕纪律控制",
+      "archetype": "control"
+    },
+    {
+      "id": "A3_EL01",
+      "asset": "assets/opponents/elite.png",
+      "name": "第三幕强敌",
+      "archetype": "elite"
+    },
+    {
+      "id": "A3_B01",
+      "asset": "assets/opponents/champion.png",
+      "name": "冠军赛",
+      "archetype": "champion"
+    },
+    {
+      "id": "E01",
+      "asset": "assets/opponents/rush.png",
+      "name": "基础试训队",
+      "archetype": "rush"
+    },
+    {
+      "id": "E02",
+      "asset": "assets/opponents/intel.png",
+      "name": "信息压制队",
+      "archetype": "intel"
+    },
+    {
+      "id": "E03",
+      "asset": "assets/opponents/twin.png",
+      "name": "双核突击队",
+      "archetype": "twin"
+    },
+    {
+      "id": "E04",
+      "asset": "assets/opponents/wall.png",
+      "name": "防守反击队",
+      "archetype": "wall"
+    },
+    {
+      "id": "E05",
+      "asset": "assets/opponents/control.png",
+      "name": "纪律控制队",
+      "archetype": "control"
+    },
+    {
+      "id": "EL01",
+      "asset": "assets/opponents/elite.png",
+      "name": "高压强敌队",
+      "archetype": "elite"
+    },
+    {
+      "id": "B01",
+      "asset": "assets/opponents/master1.png",
+      "name": "大师赛种子队",
+      "archetype": "master1"
+    }
+  ]
+}

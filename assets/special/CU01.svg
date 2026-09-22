@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#0b1026"/>
+<stop offset="100%" stop-color="#1b2340"/>
+</linearGradient>
+</defs>
+<rect width="480" height="300" fill="url(#bg)"/>
+<path d="M240 60 L300 100 L240 140" stroke="#c2a878" stroke-width="3" fill="none" opacity="0.6"/>
+<path d="M180 80 L120 120" stroke="#c2a878" stroke-width="2" fill="none" opacity="0.4"/>
+<path d="M300 80 L360 120" stroke="#c2a878" stroke-width="2" fill="none" opacity="0.4"/>
+<circle cx="240" cy="60" r="8" fill="#ff5e5b"/>
+<circle cx="180" cy="80" r="6" fill="#00b4d8"/>
+<circle cx="300" cy="80" r="6" fill="#00b4d8"/>
+<path d="M120 180 Q160 150 200 180 Q240 210 280 180 Q320 150 360 180" stroke="#2a3556" stroke-width="4" fill="none" opacity="0.8"/>
+<path d="M120 180 L120 220 M360 180 L360 220" stroke="#2a3556" stroke-width="3" opacity="0.6"/>
+<rect x="100" y="220" width="280" height="15" rx="5" fill="#1b2340" stroke="#c2a878" stroke-width="1"/>
+<path d="M120 235 L120 250 M180 235 L180 250 M240 235 L240 250 M300 235 L300 250 M360 235 L360 250" stroke="#c2a878" stroke-width="2" opacity="0.4"/>
+<circle cx="140" cy="200" r="4" fill="#ff5e5b"/>
+<circle cx="340" cy="200" r="4" fill="#ff5e5b"/>
+<path d="M200 250 L240 280 L280 250" stroke="#c2a878" stroke-width="2" fill="none" opacity="0.5"/>
+<rect x="0" y="280" width="480" height="20" fill="#0b1026" opacity="0.8"/>
+</svg>
