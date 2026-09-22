@@ -22,7 +22,9 @@ npm start
 ## 生产部署
 - 必须提供 `DATABASE_URL` 或 `DATA_DIR`，否则启动失败。
 - 使用 `DATA_DIR` 时，必须挂载真实持久卷；服务仅支持单实例运行，不支持多进程共享文件存储。需要多实例或高可用请使用 PostgreSQL。
-- 此开发分支尚未部署到 Railway；现有线上版本保持不变。本次本地验收端口为 4180。
+- 用户已授权瓦demo与PvP发布至main及现有Railway。生产使用`val_rougue-volume`挂载`/data`、`DATA_DIR=/data`、`NODE_ENV=production`，单实例。
+- 新demo仅本地4180/new/可玩。生产强制返回404，不能用ENABLE_NEW_DEMO覆盖；本地可设ENABLE_NEW_DEMO=false关闭。
+- `/runtime-config.js`提供无敏感信息的入口开关，两个主界面不显示线上新demo入口。
 
 ## 静态文件白名单
 服务端仅允许以下精确路径（GET/HEAD）：
@@ -46,7 +48,7 @@ npm start
 - `/new/season-map.js` → `new-demo/season-map.js`
 - 图片资源：`/assets/(players|special|opponents)/<name>.(png|jpg|webp|svg)`
 
-其他路径返回 404。
+上述`/new/`路径仅非生产环境提供；生产全部返回404。其他路径返回 404。
 
 ## API 限流
 - 匿名创建账户：按 IP 限流 30 次/分钟。

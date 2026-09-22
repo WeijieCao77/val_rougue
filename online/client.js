@@ -95,7 +95,7 @@ function renderHome() {
         <button data-nav="archives">构筑库</button>
         <button data-nav="account">账号</button>
         <a href="/" class="nav-link">返回瓦demo</a>
-        <a href="/new/" class="nav-link">新demo</a>
+        ${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a href="/new/" class="nav-link">新demo</a>` : ''}
       </nav>
     </header>
     <main class="pvp-main home-main">

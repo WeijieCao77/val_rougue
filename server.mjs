@@ -25,6 +25,8 @@ const assets = new Map([
 ]);
 
 const imageTypes = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', svg: 'image/svg+xml' };
+const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT_ID || !!process.env.RAILWAY_PROJECT_ID || !!process.env.RAILWAY_SERVICE_NAME;
+const newDemoEnabled = isProduction ? false : (process.env.ENABLE_NEW_DEMO !== 'false');
 const port = Number(process.env.PORT || 4177);
 if (!Number.isInteger(port) || port < 0 || port > 65535) throw Error('Invalid PORT');
 
@@ -62,6 +64,18 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/healthz') {
     send(200, '{"status":"ok"}', 'application/json');
     return;
+  }
+
+  if (pathname === '/runtime-config.js') {
+    send(200, `globalThis.DEMO_CONFIG = { newDemoEnabled: ${newDemoEnabled} };`, 'application/javascript; charset=utf-8');
+    return;
+  }
+
+  if (pathname === '/new' || pathname.startsWith('/new/')) {
+    if (!newDemoEnabled) {
+      send(404, 'Not found');
+      return;
+    }
   }
 
   const url = new URL(req.url, 'http://localhost');
