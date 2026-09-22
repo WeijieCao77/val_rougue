@@ -1,4 +1,6 @@
 import {cardArtwork,opponentArtwork,artCredit} from './art-ui.js';
+import {combatEvents} from './combat-events.js';
+import {clearCombatFx,captureCombatStage,playCombatFx} from './combat-fx.js';
 import {VERSION,CARDS,SKINS,ENEMIES,describe,cardName,effects,TACTICS,displayText,compactLines,cardKeywords,REGIONS} from './content.js';
 import {createRun,createSeason,act,canPlay,preview,intent,intentText,healAmount,removalReason,observe,legalActions} from './engine.js';
 import {routeNodes,mapEntry,nextScreen,restoreScreen} from './navigation.js';
@@ -35,7 +37,7 @@ function card(c,options={}){const t=CARDS[c.id];return `<article tabindex="0" da
 function heading(kicker,title,text=''){return `<div class="section-heading"><div class="eyebrow">${kicker}</div><h2 tabindex="-1" id="page-title">${title}</h2>${text?`<p>${text}</p>`:''}</div>`;}
 function home(){
  const regions=Object.values(REGIONS);
- return `<main class="title-screen"><div class="title-mark">${icon('boss')}</div><div class="eyebrow">四大赛区 · 卡牌肉鸽</div><h1>登峰赛季</h1><p class="title-sub">把这支队伍，带到赛季最后一场。</p><div class="region-picker"><div class="region-tabs">${regions.map(r=>`<button class="region-tab ${region===r.id?'active':''}" data-ui="set-region-${r.id}">${esc(r.name)}<small>${esc(r.tagline)}</small></button>`).join('')}</div><p class="region-note">${esc(regions.find(r=>r.id===region).tagline)} / 18 名选手 / 三幕完整征程</p></div><div class="title-menu">${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}${ui('确认开赛','start-season','primary')}<label class="seed-label">赛季种子<input id="seed" placeholder="留空，每局随机" maxlength="80" value="${esc(seedInput)}" autocomplete="off"></label><div class="button-row">${ui('游戏规则','rules','text-button')}${ui('全部卡牌','library','text-button')}<a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a></div></div><p class="title-note">四大赛区 · 72 张选手牌 · 三幕 × 11 站</p>${saveError?`<p class="warning">${esc(saveError)}</p>`:''}<span class="build-tag">D0.2.0 / 卡牌配图 06</span></main>`;
+ return `<main class="title-screen"><div class="title-mark">${icon('boss')}</div><div class="eyebrow">四大赛区 · 卡牌肉鸽</div><h1>登峰赛季</h1><p class="title-sub">把这支队伍，带到赛季最后一场。</p><div class="region-picker"><div class="region-tabs">${regions.map(r=>`<button class="region-tab ${region===r.id?'active':''}" data-ui="set-region-${r.id}">${esc(r.name)}<small>${esc(r.tagline)}</small></button>`).join('')}</div><p class="region-note">${esc(regions.find(r=>r.id===region).tagline)} / 18 名选手 / 三幕完整征程</p></div><div class="title-menu">${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}${ui('确认开赛','start-season','primary')}<label class="seed-label">赛季种子<input id="seed" placeholder="留空，每局随机" maxlength="80" value="${esc(seedInput)}" autocomplete="off"></label><div class="button-row">${ui('游戏规则','rules','text-button')}${ui('全部卡牌','library','text-button')}<a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a></div></div><p class="title-note">四大赛区 · 72 张选手牌 · 三幕 × 11 站</p>${saveError?`<p class="warning">${esc(saveError)}</p>`:''}<span class="build-tag">D0.2.0 / 战斗动效 07</span></main>`;
 }
 function header(){
  const actInfo=state.mode==='season'?ACTS[state.act-1]:null;
@@ -114,6 +116,8 @@ function seasonEventRoom(){
  return `${heading('未知事件 · 已揭晓',title,desc)}<div class="choices">${options}</div><div class="page-footer">${skip}</div>`;
 }
 function render(){
+ clearCombatFx();
+ document.querySelectorAll('.card-flight').forEach(el=>{el.getAnimations().forEach(a=>a.cancel());el.remove();});
  hideCardTip();
  if(atHome){app.innerHTML=home();document.body.className='home-mode';return;}
  const inMap=screen==='map';
@@ -138,13 +142,15 @@ function refreshSelection(){
  if(document.querySelector('#target-hint'))document.querySelector('#target-hint').textContent=reason||`点击${target==='enemy'?'对手':'我方'}出牌，或拖动卡牌`;
 }
 function commit(action){
+ const stage=captureCombatStage();
  const cardEl=action.type==='play'?document.querySelector(`[data-select="${action.uid}"]`):null;
  const flight=cardEl?{rect:cardEl.getBoundingClientRect(),html:cardEl.innerHTML,role:cardEl.className}:null;
  const before=state,played=action.type==='play'?state.battle?.hand.find(c=>c.uid===action.uid):null,r=act(state,action);
  if(r.error){notice(r.error);return r;}
  state=r.state;screen=nextScreen(before,state);selected=null;echo=played||null;dialog.close();persist();notice(saveError||'');render();
- animateResolution(before,state,played,flight,action);
  if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);
+ animateResolution(before,state,played,flight,action);
+ playCombatFx(combatEvents(before,state,action),stage);
  return r;
 }
 function showModal(title,html){hideCardTip();modal.innerHTML=`<h2 tabindex="-1">${title}</h2>${html}`;if(!dialog.open)dialog.showModal();modal.querySelector('h2').focus({preventScroll:true});dialog.scrollTop=0;}
@@ -264,13 +270,6 @@ function updateAim(d,e){
 function animateResolution(before,after,played,flight,action){
  if(reduceMotion())return;
  const own=document.querySelector('.fighter.ally'),enemy=document.querySelector('.fighter.enemy');
- const float=(host,text,kind)=>{if(!host)return;const el=document.createElement('span');el.className='combat-float '+kind;el.setAttribute('aria-hidden','true');el.textContent=text;host.append(el);el.animate([{opacity:0,transform:'translate(-50%,12px)'},{opacity:1,offset:.2},{opacity:0,transform:'translate(-50%,-45px)'}],{duration:1000,easing:'ease-out'}).finished.then(()=>el.remove()).catch(()=>el.remove());};
- if(before.battle&&after.battle&&before.node===after.node){
-  const lost=before.battle.enemyHp-after.battle.enemyHp,blocked=after.battle.block-before.battle.block;
-  if(lost>0){float(enemy,`−${lost}`,'damage');enemy?.animate([{transform:'translateX(0)'},{transform:'translateX(7px)'},{transform:'translateX(-4px)'},{transform:'translateX(0)'}],{duration:240});}
-  if(blocked>0){float(own,`布防 +${blocked}`,'defense');own?.querySelector('.shield-value')?.animate([{boxShadow:'0 0 22px #95dddf'},{boxShadow:'0 0 0 transparent'}],{duration:450});}
-  if(after.hp<before.hp)float(own,`声望 −${before.hp-after.hp}`,'damage');
- }
  if(played&&flight){
   const destination=(targetOf(played)==='enemy'?enemy:own)?.getBoundingClientRect();
   if(destination){const el=document.createElement('div');el.className='card-flight '+flight.role;el.setAttribute('aria-hidden','true');el.innerHTML=flight.html;Object.assign(el.style,{left:flight.rect.left+'px',top:flight.rect.top+'px',width:flight.rect.width+'px',height:flight.rect.height+'px'});document.body.append(el);el.animate([{transform:'translate(0,0) scale(1)',opacity:.9},{transform:`translate(${destination.x+destination.width/2-flight.rect.x-flight.rect.width/2}px,${destination.y-flight.rect.y}px) scale(.35)`,opacity:0}],{duration:340,easing:'cubic-bezier(.2,.8,.3,1)'}).finished.then(()=>el.remove()).catch(()=>el.remove());}

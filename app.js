@@ -3348,7 +3348,437 @@ function artCredit(id){
 return {cardArtwork,opponentArtwork,artCredit};
 })();
 const module8=(()=>{
+// combat-events.js
+function combatEvents(before, after, action) {
+  if (!before || !after || !action) return [];
+  if (before.phase !== 'combat') return [];
+  if (!(action.type === 'play' || action.type === 'end')) return [];
+  if (!Array.isArray(before.logs) || !Array.isArray(after.logs)) return [];
+  const newLogs = after.logs.slice(before.logs.length);
+  if (newLogs.length === 0) return [];
+  const events = [];
+  let enemyHp = before.battle ? before.battle.enemyHp : 0;
+  let allyHp = before.hp;
+  const patterns = {
+    attackEnemy: /^攻击 (\d+)：对手格挡抵消 (\d+)，防线减少 (\d+)，剩余 (\d+)。/,
+    attackAlly: /^对手攻击 (\d+)：格挡抵消 (\d+)，失去 (\d+) 声望（剩余 (\d+)）。/,
+    allyBlock: /^获得 (\d+) 格挡（现有 (\d+)）。/,
+    enemyBlock: /^对手获得 (\d+) 格挡。$/,
+    enemyWeak: /^对手虚弱 \+(\d+) 回合。$/,
+    enemyVulnerable: /^对手易伤 \+(\d+) 回合。$/,
+    allyWeak: /^我方虚弱 \+(\d+) 回合。$/,
+    allyLoss: /^舆论压力：直接失去 (\d+) 声望。$/,
+    allyPowerBlock: /^(?:Haodong 能力|团队协同 能力|守望涂层)：获得 (\d+) 格挡。$/
+  };
+  for (const log of newLogs) {
+    const text = log.text;
+    let m;
+    m = text.match(patterns.attackAlly);
+    if (m) {
+      const absorbed = parseInt(m[2], 10);
+      const actualLoss = parseInt(m[3], 10);
+      const remainingHp = parseInt(m[4], 10);
+      const actual = Math.min(actualLoss, allyHp);
+      events.push({ kind: 'attack', source: 'enemy', target: 'ally', damage: actual, absorbed });
+      allyHp = remainingHp;
+      continue;
+    }
+    m = text.match(patterns.attackEnemy);
+    if (m) {
+      const absorbed = parseInt(m[2], 10);
+      const actualDamageLog = parseInt(m[3], 10);
+      const remainingEnemyHp = parseInt(m[4], 10);
+      const actual = Math.min(actualDamageLog, enemyHp);
+      events.push({ kind: 'attack', source: 'ally', target: 'enemy', damage: actual, absorbed });
+      enemyHp = remainingEnemyHp;
+      continue;
+    }
+    m = text.match(patterns.allyBlock);
+    if (m) {
+      events.push({ kind: 'defense', target: 'ally', amount: parseInt(m[1], 10) });
+      continue;
+    }
+    m = text.match(patterns.enemyBlock);
+    if (m) {
+      events.push({ kind: 'defense', target: 'enemy', amount: parseInt(m[1], 10) });
+      continue;
+    }
+    m = text.match(patterns.enemyWeak);
+    if (m) {
+      events.push({ kind: 'status', target: 'enemy', label: `压制 +${m[1]}` });
+      continue;
+    }
+    m = text.match(patterns.enemyVulnerable);
+    if (m) {
+      events.push({ kind: 'status', target: 'enemy', label: `易伤 +${m[1]}` });
+      continue;
+    }
+    m = text.match(patterns.allyWeak);
+    if (m) {
+      events.push({ kind: 'status', target: 'ally', label: `压制 +${m[1]}` });
+      continue;
+    }
+    m = text.match(patterns.allyLoss);
+    if (m) {
+      const amount=Math.min(Number(m[1]),allyHp);
+      allyHp-=amount;
+      events.push({ kind: 'loss', target: 'ally', amount });
+      continue;
+    }
+    m = text.match(patterns.allyPowerBlock);
+    if (m) {
+      events.push({ kind: 'defense', target: 'ally', amount: parseInt(m[1], 10) });
+      continue;
+    }
+    if(text.endsWith(' 能力生效，离开普通循环。'))events.push({kind:'power',target:'ally'});
+    if(text.endsWith(' 加入弃牌堆。'))events.push({kind:'status',target:'ally',label:'战术干扰'});
+  }
+  return events;
+}
+
+return {combatEvents};
+})();
+const module9=(()=>{
+// combat-fx.js
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let fxContainer = null;
+let fxTimeouts = [];
+let fxAnimations = [];
+function later(fn,ms){const id=setTimeout(fn,ms);fxTimeouts.push(id);return id;}
+function labelX(x){return `${Math.max(80,Math.min(window.innerWidth-80,x))}px`;}
+function ensureContainer() {
+  if (!fxContainer || !document.body.contains(fxContainer)) {
+    fxContainer = document.createElement('div');
+    fxContainer.className = 'cfx-container';
+    fxContainer.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(fxContainer);
+  }
+  return fxContainer;
+}
+function cleanupFX() {
+  if (fxContainer) {
+    fxContainer.remove();
+    fxContainer = null;
+  }
+  fxTimeouts.forEach(clearTimeout);
+  fxTimeouts = [];
+  fxAnimations.forEach(anim => {
+    if (anim && typeof anim.cancel === 'function') anim.cancel();
+  });
+  fxAnimations = [];
+}
+function clearCombatFx() { cleanupFX(); }
+function captureCombatStage() {
+  const ally = document.querySelector('.fighter.ally .combat-target');
+  const enemy = document.querySelector('.fighter.enemy .combat-target');
+  if (!ally || !enemy) return null;
+  const allyRect = ally.getBoundingClientRect();
+  const enemyRect = enemy.getBoundingClientRect();
+  return {
+    ally: { x: allyRect.left + allyRect.width / 2, y: allyRect.top + allyRect.height / 2 },
+    enemy: { x: enemyRect.left + enemyRect.width / 2, y: enemyRect.top + enemyRect.height / 2 }
+  };
+}
+function createElement(tag, className, text) {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text !== undefined) el.textContent = text;
+  return el;
+}
+function animateElement(el, keyframes, options) {
+  if (prefersReducedMotion()) {
+    if (keyframes && keyframes.length > 0) {
+      const last = keyframes[keyframes.length - 1];
+      Object.assign(el.style, last);
+    }
+    const timeout = setTimeout(() => el.remove(), options.duration || 1000);
+    fxTimeouts.push(timeout);
+    return;
+  }
+  const anim = el.animate(keyframes, options);
+  fxAnimations.push(anim);
+  anim.finished.then(() => el.remove()).catch(() => el.remove());
+  return anim;
+}
+function spawnRay(container, from, to, color, label, absorbed, lane) {
+  if (!from || !to) return;
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  const length = Math.hypot(dx, dy);
+  const ray = createElement('div', 'cfx-ray');
+  ray.style.left = `${from.x}px`;
+  ray.style.top = `${from.y}px`;
+  ray.style.width = `${length}px`;
+  ray.style.height = '3px';
+  ray.style.transform = `rotate(${angle}deg)`;
+  ray.style.background = `linear-gradient(90deg, transparent, ${color}, transparent)`;
+  ray.style.transformOrigin = '0 50%';
+  container.appendChild(ray);
+  const rayAnim = ray.animate([
+    { opacity: 0, transform: `rotate(${angle}deg) scaleX(0.4)` },
+    { opacity: 1, transform: `rotate(${angle}deg) scaleX(1)` },
+    { opacity: 0, transform: `rotate(${angle}deg) scaleX(1.2)` }
+  ], { duration: 180, easing: 'cubic-bezier(.2,.8,.3,1)' });
+  fxAnimations.push(rayAnim);
+  rayAnim.finished.then(() => ray.remove()).catch(() => ray.remove());
+  later(() => {
+    const spark = createElement('div', 'cfx-spark');
+    spark.style.left = `${to.x}px`;
+    spark.style.top = `${to.y}px`;
+    spark.style.background = color;
+    spark.style.color = color;
+    container.appendChild(spark);
+    animateElement(spark, [
+      { transform: 'translate(-50%, -50%) scale(0)', opacity: 1 },
+      { transform: 'translate(-50%, -50%) scale(2.5)', opacity: 0 }
+    ], { duration: 220, easing: 'ease-out' });
+    const targetEl = to.el;
+    if (targetEl && !prefersReducedMotion()) {
+      const recoil = targetEl.animate([
+        { transform: 'translate(0,0)' },
+        { transform: 'translate(6px, -2px)' },
+        { transform: 'translate(-3px, 1px)' },
+        { transform: 'translate(0,0)' }
+      ], { duration: 260, delay: 0 });
+      fxAnimations.push(recoil);
+    }
+    if(absorbed>0)spawnDefense(container,to,to.el,absorbed,'intercept');
+    if (label) {
+      const float = createElement('span', 'cfx-float cfx-damage', label);
+      float.style.left = labelX(to.x);
+      float.style.top = `${to.y - 20 + lane*26}px`;
+      container.appendChild(float);
+      animateElement(float, [
+        { opacity: 0, transform: 'translate(-50%, 10px)' },
+        { opacity: 1, transform: 'translate(-50%, -10px)', offset: 0.2 },
+        { opacity: 0, transform: 'translate(-50%, -35px)' }
+      ], { duration: 900, easing: 'ease-out' });
+    }
+  }, 180);
+}
+function spawnDefense(container, targetPos, targetEl, amount, side) {
+  const barrier = createElement('div', 'cfx-barrier');
+  if (targetPos) {
+    barrier.style.left = `${targetPos.x}px`;
+    barrier.style.top = `${targetPos.y}px`;
+  } else {
+    const rect = targetEl.getBoundingClientRect();
+    barrier.style.left = `${rect.left + rect.width/2}px`;
+    barrier.style.top = `${rect.top + rect.height/2}px`;
+  }
+  barrier.style.transform = 'translate(-50%, -50%)';
+  container.appendChild(barrier);
+  const barrierAnim = barrier.animate([
+    { transform: 'translate(-50%, -30%) scaleY(0.1)', opacity: 0 },
+    { transform: 'translate(-50%, -50%) scaleY(1)', opacity: 1, offset: 0.25 },
+    { transform: 'translate(-50%, -50%) scale(1)', opacity: 0.8, offset: 0.65 },
+    { transform: 'translate(-50%, -50%) scale(1.05)', opacity: 0 }
+  ], { duration: 950, easing: 'ease-out' });
+  fxAnimations.push(barrierAnim);
+  barrierAnim.finished.then(() => barrier.remove()).catch(() => barrier.remove());
+  container.querySelectorAll('.cfx-defense').forEach(el=>el.remove());
+  const label = createElement('span', 'cfx-float cfx-defense', side==='intercept'?`拦截 ${amount}`:`布防 +${amount}`);
+  label.style.left = targetEl ? (() => { const r = targetEl.getBoundingClientRect(); return `${r.left + r.width/2}px`; })() : (targetPos ? `${targetPos.x}px` : '');
+  label.style.top = targetEl ? (() => { const r = targetEl.getBoundingClientRect(); return `${r.top}px`; })() : '';
+  label.style.left=labelX(targetPos.x);
+  container.appendChild(label);
+  animateElement(label, [
+    { opacity: 0, transform: 'translate(-50%, 10px)' },
+    { opacity: 1, transform: 'translate(-50%, -8px)', offset: 0.3 },
+    { opacity: 0, transform: 'translate(-50%, -28px)' }
+  ], { duration: 1000, easing: 'ease-out' });
+}
+function spawnStatus(container, targetEl, targetPos, statusLabel, side) {
+  const ring = createElement('div', 'cfx-status-ring');
+  if (targetPos) {
+    ring.style.left = `${targetPos.x}px`;
+    ring.style.top = `${targetPos.y}px`;
+  } else {
+    const rect = targetEl.getBoundingClientRect();
+    ring.style.left = `${rect.left + rect.width/2}px`;
+    ring.style.top = `${rect.top + rect.height/2}px`;
+  }
+  container.appendChild(ring);
+  const ringAnim = ring.animate([
+    { transform: 'translate(-50%, -50%) scale(0.7)', opacity: 0 },
+    { transform: 'translate(-50%, -50%) scale(1.2)', opacity: 1, offset: 0.5 },
+    { transform: 'translate(-50%, -50%) scale(1)', opacity: 0 }
+  ], { duration: 700, easing: 'ease-out' });
+  fxAnimations.push(ringAnim);
+  ringAnim.finished.then(() => ring.remove()).catch(() => ring.remove());
+  const label = createElement('span', 'cfx-float cfx-status-label', statusLabel);
+  label.style.left = labelX(targetPos.x);
+  label.style.top = parseInt(ring.style.top) - 15 + 'px';
+  container.appendChild(label);
+  animateElement(label, [
+    { opacity: 0, transform: 'translate(-50%, 10px)' },
+    { opacity: 1, transform: 'translate(-50%, -5px)', offset: 0.3 },
+    { opacity: 0, transform: 'translate(-50%, -25px)' }
+  ], { duration: 900, easing: 'ease-out' });
+}
+function spawnPower(container, targetEl, targetPos, side) {
+  const flash = createElement('div', 'cfx-power-flash');
+  if (targetPos) {
+    flash.style.left = `${targetPos.x}px`;
+    flash.style.top = `${targetPos.y}px`;
+  } else {
+    const rect = targetEl.getBoundingClientRect();
+    flash.style.left = `${rect.left + rect.width/2}px`;
+    flash.style.top = `${rect.top + rect.height/2}px`;
+  }
+  container.appendChild(flash);
+  const flashAnim = flash.animate([
+    { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 0.8 },
+    { transform: 'translate(-50%, -50%) scale(1.5)', opacity: 0 }
+  ], { duration: 500, easing: 'ease-out' });
+  fxAnimations.push(flashAnim);
+  flashAnim.finished.then(() => flash.remove()).catch(() => flash.remove());
+}
+function spawnLoss(container, targetPos, targetEl, amount, side) {
+  const loss = createElement('span', 'cfx-float cfx-loss', `-${amount}`);
+  if (targetPos) {
+    loss.style.left = `${targetPos.x}px`;
+    loss.style.top = `${targetPos.y}px`;
+  } else {
+    const rect = targetEl.getBoundingClientRect();
+    loss.style.left = `${rect.left + rect.width/2}px`;
+    loss.style.top = `${rect.top}px`;
+  }
+  container.appendChild(loss);
+  animateElement(loss, [
+    { opacity: 0, transform: 'translate(-50%, 10px)' },
+    { opacity: 1, transform: 'translate(-50%, -8px)', offset: 0.3 },
+    { opacity: 0, transform: 'translate(-50%, -30px)' }
+  ], { duration: 800, easing: 'ease-out' });
+}
+function playCombatFx(events, snapshot) {
+  clearCombatFx();
+  if (!events || events.length === 0) return;
+  if (!document.querySelector('.arena')) {
+    if(!snapshot)return;
+    const host=ensureContainer(),loss=!!document.querySelector('.room-result')&&document.querySelector('.hud-hp b')?.textContent==='0';
+    const toast=createElement('div','cfx-reduced-marker',loss?'比赛结束':'突破防线 · 比赛胜利');
+    toast.style.left='50%';toast.style.top='80px';host.append(toast);later(cleanupFX,900);return;
+  }
+  events=events.slice(0,16);
+  const container = ensureContainer();
+  const allyEl = document.querySelector('.fighter.ally .combat-target');
+  const enemyEl = document.querySelector('.fighter.enemy .combat-target');
+  if (!allyEl || !enemyEl) {clearCombatFx();return;}
+  let positions = captureCombatStage() || snapshot;
+  if (!positions) {clearCombatFx();return;}
+  positions.ally.el = allyEl;
+  positions.enemy.el = enemyEl;
+  let delay = 0;
+  const totalEvents = events.length;
+  const eventDelay = Math.min(180,400/Math.max(1,totalEvents-1));
+  if (prefersReducedMotion()) {
+    const marker = createElement('div', 'cfx-reduced-marker', events.map(getEventDescription).join('；'));
+    marker.style.left = '50%';
+    marker.style.top = '20%';
+    container.appendChild(marker);
+    later(cleanupFX,600);
+    return;
+  }
+  events.forEach((evt, index) => {
+    const currentDelay = delay;
+    delay += eventDelay;
+    const timeout = setTimeout(() => {
+      while(container.childElementCount>50)container.firstElementChild.remove();
+      switch (evt.kind) {
+        case 'attack': {
+          const from = evt.source === 'ally' ? positions.ally : positions.enemy;
+          const to = evt.source === 'ally' ? positions.enemy : positions.ally;
+          const label = evt.damage>0?`−${evt.damage}`:'';
+          spawnRay(container, from, to, evt.source === 'ally' ? '#f5d17c' : '#ff826f', label, evt.absorbed,index%3);
+          break;
+        }
+        case 'defense':
+          if (evt.target === 'ally') spawnDefense(container, positions.ally, allyEl, evt.amount, 'ally');
+          else spawnDefense(container, positions.enemy, enemyEl, evt.amount, 'enemy');
+          break;
+        case 'status':
+          if (evt.target === 'enemy') spawnStatus(container, enemyEl, positions.enemy, evt.label, 'enemy');
+          else spawnStatus(container, allyEl, positions.ally, evt.label, 'ally');
+          break;
+        case 'loss':
+          spawnLoss(container, positions.ally, allyEl, evt.amount, 'ally');
+          break;
+        case 'power':
+          spawnPower(container, allyEl, positions.ally, 'ally');
+          break;
+      }
+      const title = getEventTitle(evt);
+      if (title) {
+        container.querySelectorAll('.cfx-title').forEach(el=>el.remove());
+        const titleEl = createElement('div', 'cfx-title', title);
+        titleEl.style.left = '50%';
+        titleEl.style.top = `${Math.max(80,Math.min(positions.ally.y,positions.enemy.y)-70)}px`;
+        container.appendChild(titleEl);
+        animateElement(titleEl, [
+          { opacity: 0, transform: 'translate(-50%, 10px)' },
+          { opacity: 1, transform: 'translate(-50%, 0)' },
+          { opacity: 0, transform: 'translate(-50%, -10px)' }
+        ], { duration: 700, easing: 'ease-out' });
+      }
+    }, currentDelay);
+    fxTimeouts.push(timeout);
+  });
+  const cleanupTimeout = setTimeout(() => {
+    cleanupFX();
+  }, 1500);
+  fxTimeouts.push(cleanupTimeout);
+}
+function getEventTitle(evt) {
+  switch (evt.kind) {
+    case 'attack':
+      if (evt.source === 'ally') {
+        if (evt.damage === 0 && evt.absorbed > 0) return '布防拦截';
+        return '命中';
+      } else {
+        if (evt.damage === 0 && evt.absorbed > 0) return '布防拦截';
+        return '对手开火';
+      }
+    case 'defense':
+      return evt.target === 'ally' ? '布防完成' : '拦截进点';
+    case 'status':
+      return '战术生效';
+    case 'loss':
+      return '舆论压力';
+    case 'power':
+      return '能力触发';
+    default:
+      return '';
+  }
+}
+function getEventDescription(evt) {
+  switch (evt.kind) {
+    case 'attack':
+      if (evt.damage === 0 && evt.absorbed > 0) return '完全抵挡';
+      return `${evt.source === 'ally' ? '我方' : '对方'}攻击 ${evt.damage}${evt.absorbed > 0 ? `（抵挡 ${evt.absorbed}）` : ''}`;
+    case 'defense':
+      return `布防 +${evt.amount}`;
+    case 'status':
+      return evt.label;
+    case 'loss':
+      return `失去 ${evt.amount}`;
+    case 'power':
+      return '能力';
+  }
+}
+function cleanupCombatFx() { cleanupFX(); }
+window.addEventListener('pagehide', cleanupCombatFx);
+window.addEventListener('beforeunload', cleanupCombatFx);
+window.addEventListener('resize', cleanupCombatFx);
+window.addEventListener('scroll', cleanupCombatFx, true);
+
+return {clearCombatFx,captureCombatStage,playCombatFx,cleanupCombatFx};
+})();
+const module10=(()=>{
 const {cardArtwork,opponentArtwork,artCredit}=module7;
+const {combatEvents}=module8;
+const {clearCombatFx,captureCombatStage,playCombatFx}=module9;
 const {VERSION,CARDS,SKINS,ENEMIES,describe,cardName,effects,TACTICS,displayText,compactLines,cardKeywords,REGIONS}=module2;
 const {createRun,createSeason,act,canPlay,preview,intent,intentText,healAmount,removalReason,observe,legalActions}=module3;
 const {routeNodes,mapEntry,nextScreen,restoreScreen}=module4;
@@ -3385,7 +3815,7 @@ function card(c,options={}){const t=CARDS[c.id];return `<article tabindex="0" da
 function heading(kicker,title,text=''){return `<div class="section-heading"><div class="eyebrow">${kicker}</div><h2 tabindex="-1" id="page-title">${title}</h2>${text?`<p>${text}</p>`:''}</div>`;}
 function home(){
  const regions=Object.values(REGIONS);
- return `<main class="title-screen"><div class="title-mark">${icon('boss')}</div><div class="eyebrow">四大赛区 · 卡牌肉鸽</div><h1>登峰赛季</h1><p class="title-sub">把这支队伍，带到赛季最后一场。</p><div class="region-picker"><div class="region-tabs">${regions.map(r=>`<button class="region-tab ${region===r.id?'active':''}" data-ui="set-region-${r.id}">${esc(r.name)}<small>${esc(r.tagline)}</small></button>`).join('')}</div><p class="region-note">${esc(regions.find(r=>r.id===region).tagline)} / 18 名选手 / 三幕完整征程</p></div><div class="title-menu">${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}${ui('确认开赛','start-season','primary')}<label class="seed-label">赛季种子<input id="seed" placeholder="留空，每局随机" maxlength="80" value="${esc(seedInput)}" autocomplete="off"></label><div class="button-row">${ui('游戏规则','rules','text-button')}${ui('全部卡牌','library','text-button')}<a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a></div></div><p class="title-note">四大赛区 · 72 张选手牌 · 三幕 × 11 站</p>${saveError?`<p class="warning">${esc(saveError)}</p>`:''}<span class="build-tag">D0.2.0 / 卡牌配图 06</span></main>`;
+ return `<main class="title-screen"><div class="title-mark">${icon('boss')}</div><div class="eyebrow">四大赛区 · 卡牌肉鸽</div><h1>登峰赛季</h1><p class="title-sub">把这支队伍，带到赛季最后一场。</p><div class="region-picker"><div class="region-tabs">${regions.map(r=>`<button class="region-tab ${region===r.id?'active':''}" data-ui="set-region-${r.id}">${esc(r.name)}<small>${esc(r.tagline)}</small></button>`).join('')}</div><p class="region-note">${esc(regions.find(r=>r.id===region).tagline)} / 18 名选手 / 三幕完整征程</p></div><div class="title-menu">${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}${ui('确认开赛','start-season','primary')}<label class="seed-label">赛季种子<input id="seed" placeholder="留空，每局随机" maxlength="80" value="${esc(seedInput)}" autocomplete="off"></label><div class="button-row">${ui('游戏规则','rules','text-button')}${ui('全部卡牌','library','text-button')}<a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a></div></div><p class="title-note">四大赛区 · 72 张选手牌 · 三幕 × 11 站</p>${saveError?`<p class="warning">${esc(saveError)}</p>`:''}<span class="build-tag">D0.2.0 / 战斗动效 07</span></main>`;
 }
 function header(){
  const actInfo=state.mode==='season'?ACTS[state.act-1]:null;
@@ -3464,6 +3894,8 @@ function seasonEventRoom(){
  return `${heading('未知事件 · 已揭晓',title,desc)}<div class="choices">${options}</div><div class="page-footer">${skip}</div>`;
 }
 function render(){
+ clearCombatFx();
+ document.querySelectorAll('.card-flight').forEach(el=>{el.getAnimations().forEach(a=>a.cancel());el.remove();});
  hideCardTip();
  if(atHome){app.innerHTML=home();document.body.className='home-mode';return;}
  const inMap=screen==='map';
@@ -3488,13 +3920,15 @@ function refreshSelection(){
  if(document.querySelector('#target-hint'))document.querySelector('#target-hint').textContent=reason||`点击${target==='enemy'?'对手':'我方'}出牌，或拖动卡牌`;
 }
 function commit(action){
+ const stage=captureCombatStage();
  const cardEl=action.type==='play'?document.querySelector(`[data-select="${action.uid}"]`):null;
  const flight=cardEl?{rect:cardEl.getBoundingClientRect(),html:cardEl.innerHTML,role:cardEl.className}:null;
  const before=state,played=action.type==='play'?state.battle?.hand.find(c=>c.uid===action.uid):null,r=act(state,action);
  if(r.error){notice(r.error);return r;}
  state=r.state;screen=nextScreen(before,state);selected=null;echo=played||null;dialog.close();persist();notice(saveError||'');render();
- animateResolution(before,state,played,flight,action);
  if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);
+ animateResolution(before,state,played,flight,action);
+ playCombatFx(combatEvents(before,state,action),stage);
  return r;
 }
 function showModal(title,html){hideCardTip();modal.innerHTML=`<h2 tabindex="-1">${title}</h2>${html}`;if(!dialog.open)dialog.showModal();modal.querySelector('h2').focus({preventScroll:true});dialog.scrollTop=0;}
@@ -3614,13 +4048,6 @@ function updateAim(d,e){
 function animateResolution(before,after,played,flight,action){
  if(reduceMotion())return;
  const own=document.querySelector('.fighter.ally'),enemy=document.querySelector('.fighter.enemy');
- const float=(host,text,kind)=>{if(!host)return;const el=document.createElement('span');el.className='combat-float '+kind;el.setAttribute('aria-hidden','true');el.textContent=text;host.append(el);el.animate([{opacity:0,transform:'translate(-50%,12px)'},{opacity:1,offset:.2},{opacity:0,transform:'translate(-50%,-45px)'}],{duration:1000,easing:'ease-out'}).finished.then(()=>el.remove()).catch(()=>el.remove());};
- if(before.battle&&after.battle&&before.node===after.node){
-  const lost=before.battle.enemyHp-after.battle.enemyHp,blocked=after.battle.block-before.battle.block;
-  if(lost>0){float(enemy,`−${lost}`,'damage');enemy?.animate([{transform:'translateX(0)'},{transform:'translateX(7px)'},{transform:'translateX(-4px)'},{transform:'translateX(0)'}],{duration:240});}
-  if(blocked>0){float(own,`布防 +${blocked}`,'defense');own?.querySelector('.shield-value')?.animate([{boxShadow:'0 0 22px #95dddf'},{boxShadow:'0 0 0 transparent'}],{duration:450});}
-  if(after.hp<before.hp)float(own,`声望 −${before.hp-after.hp}`,'damage');
- }
  if(played&&flight){
   const destination=(targetOf(played)==='enemy'?enemy:own)?.getBoundingClientRect();
   if(destination){const el=document.createElement('div');el.className='card-flight '+flight.role;el.setAttribute('aria-hidden','true');el.innerHTML=flight.html;Object.assign(el.style,{left:flight.rect.left+'px',top:flight.rect.top+'px',width:flight.rect.width+'px',height:flight.rect.height+'px'});document.body.append(el);el.animate([{transform:'translate(0,0) scale(1)',opacity:.9},{transform:`translate(${destination.x+destination.width/2-flight.rect.x-flight.rect.width/2}px,${destination.y-flight.rect.y}px) scale(.35)`,opacity:0}],{duration:340,easing:'cubic-bezier(.2,.8,.3,1)'}).finished.then(()=>el.remove()).catch(()=>el.remove());}
