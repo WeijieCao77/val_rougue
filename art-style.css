@@ -3,7 +3,7 @@
 .portrait-image.tactic-art{object-fit:cover;filter:none}
 .portrait-image.poster-photo{object-fit:cover;object-position:center 25%}
 .card-portrait:after{content:"";position:absolute;inset:65% 0 0;background:linear-gradient(transparent,#06131ac4);pointer-events:none}
-.portrait-role,.portrait-tier{z-index:1;background:#101a20ce}
+.portrait-role{z-index:1;background:#101a20ce}
 .art-missing{margin:auto;font-size:11px;color:#c9d2d4}
 .art-credit{font-size:12px;line-height:1.6;color:#a6b6b5}
 .enemy .combat-target{padding:0 3px;min-width:208px}
