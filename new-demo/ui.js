@@ -105,8 +105,8 @@ function renderHome() {
   document.getElementById('app').innerHTML = `
     <header class="app-header">
       <div class="app-title">新demo · 战术试炼</div>
-      <div class="app-buttons">
-        <button class="btn" id="btn-library">卡库</button>
+        <div class="app-buttons">
+        <button class="btn" id="btn-library">卡牌总览</button>
       </div>
     </header>
     <main class="home">
@@ -184,8 +184,8 @@ function renderGame() {
   app.innerHTML = `
     <header class="app-header">
       <div class="app-title">新demo · 战术试炼</div>
-      <div class="app-buttons">
-        <button class="btn" id="btn-library">卡库</button>
+        <div class="app-buttons">
+        <button class="btn" id="btn-library">卡牌总览</button>
         <button class="btn" id="btn-home">返回首页</button>
       </div>
     </header>
@@ -625,14 +625,134 @@ function renderResult(root) {
 
 function renderLibraryModal() {
   const modalRoot = document.getElementById('modal-root');
+  if (modalRoot.querySelector('#library-overlay')) return;
+  const previousFocus = document.activeElement;
+  let activeTab = 'tactical';
+  let filterType = '';
+  let filterTag = '';
+  let filterCost = '';
+
+  function closeLibrary() {
+    modalRoot.innerHTML = '';
+    showLibrary = false;
+    document.removeEventListener('keydown', handleKeydown);
+    if (previousFocus) previousFocus.focus();
+  }
+
+  function handleKeydown(e) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeLibrary();
+    }
+    if (e.key === 'Tab') {
+      const focusableElements = Array.from(modalRoot.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), summary')).filter(el => el.getClientRects().length > 0 && el.tabIndex >= 0);
+      const first = focusableElements[0];
+      const last = focusableElements[focusableElements.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        last.focus();
+        e.preventDefault();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        first.focus();
+        e.preventDefault();
+      }
+    }
+  }
+
+  function renderContent() {
+    const grid = document.getElementById('library-grid');
+    const matchSpan = document.getElementById('match-count');
+    if (!grid) return;
+
+    let html = '';
+    let count = 0;
+
+    if (activeTab === 'tactical') {
+      const filtered = CARD_IDS.filter(id => {
+        const c = CARDS[id];
+        if (filterType && c.type !== filterType) return false;
+        if (filterTag && c.tag !== filterTag) return false;
+        if (filterCost !== '' && c.cost !== parseInt(filterCost)) return false;
+        return true;
+      });
+      count = filtered.length;
+      if (count === 0) {
+        html = '<div class="library-empty">没有匹配的战术牌</div>';
+      } else {
+        html = filtered.map(id => {
+          const c = CARDS[id];
+          const tooltip = describeCardFull({id, uid:'', up:false});
+          const upgradeHtml = c.upgradeText ? `<details class="upgrade-details"><summary>升级文本</summary><div class="upgrade-text">${escapeHtml(c.upgradeText)}</div></details>` : '';
+          return `<div class="library-card" data-tooltip="${escapeHtml(tooltip)}" tabindex="0">
+            <div class="name">${escapeHtml(c.name)}</div>
+            <div class="meta">${c.cost}费 ${typeMap[c.type]} ${tagMap[c.tag]} ${rarityMap[c.rarity]}</div>
+            <div class="card-text">${escapeHtml(c.text)}</div>
+            ${upgradeHtml}
+          </div>`;
+        }).join('');
+      }
+    } else if (activeTab === 'status') {
+      const statusCards = Object.values(STATUS_CARDS);
+      count = statusCards.length;
+      html = statusCards.map(c => {
+        const tooltip = `${escapeHtml(c.name)} [状态]\n${escapeHtml(c.text)}`;
+        return `<div class="library-card status-card" data-tooltip="${tooltip}" tabindex="0">
+          <div class="name">${escapeHtml(c.name)}</div>
+          <div class="meta">状态 · 不可打出（不属于75张永久卡池）</div>
+          <div class="card-text">${escapeHtml(c.text)}</div>
+        </div>`;
+      }).join('');
+    } else if (activeTab === 'relic') {
+      const relics = Object.values(RELICS);
+      count = relics.length;
+      html = relics.map(r => {
+        const tooltip = `${escapeHtml(r.name)}\n${escapeHtml(r.desc)}`;
+        return `<div class="library-card relic-card" data-tooltip="${tooltip}" tabindex="0">
+          <div class="name">${escapeHtml(r.name)}</div>
+          <div class="card-text">${escapeHtml(r.desc)}</div>
+          <div class="meta">被动 · 不进入抽牌堆</div>
+        </div>`;
+      }).join('');
+    }
+
+    grid.innerHTML = html;
+    matchSpan.textContent = `匹配 ${count} ${activeTab === 'relic' ? '件' : '张'}`;
+  }
+
+  function switchTab(tab) {
+    activeTab = tab;
+    filterType = '';
+    filterTag = '';
+    filterCost = '';
+    const typeSelect = document.getElementById('filter-type');
+    const tagSelect = document.getElementById('filter-tag');
+    const costSelect = document.getElementById('filter-cost');
+    if (typeSelect) typeSelect.value = '';
+    if (tagSelect) tagSelect.value = '';
+    if (costSelect) costSelect.value = '';
+    document.querySelectorAll('.library-tab').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+      btn.setAttribute('aria-selected', btn.dataset.tab === tab ? 'true' : 'false');
+    });
+    const filterRow = document.getElementById('filter-row');
+    if (filterRow) {
+      filterRow.style.display = tab === 'tactical' ? 'flex' : 'none';
+    }
+    renderContent();
+  }
+
   modalRoot.innerHTML = `
     <div class="modal-overlay" id="library-overlay">
-      <div class="modal">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="卡牌总览">
         <div class="modal-header">
-          <h2>完整卡库（75张）</h2>
+          <h2>卡牌总览</h2>
           <button class="btn" id="close-library">关闭</button>
         </div>
-        <div class="filter-row">
+        <div class="library-tabs" role="tablist" aria-label="分类">
+          <button class="library-tab active" role="tab" aria-selected="true" data-tab="tactical">战术牌 (${CARD_IDS.length})</button>
+          <button class="library-tab" role="tab" aria-selected="false" data-tab="status">状态牌 (${Object.keys(STATUS_CARDS).length})</button>
+          <button class="library-tab" role="tab" aria-selected="false" data-tab="relic">遗物 (${Object.keys(RELICS).length})</button>
+        </div>
+        <div id="filter-row" class="filter-row">
           <select id="filter-type" class="filter-select">
             <option value="">全部类型</option>
             <option value="attack">攻击</option>
@@ -651,6 +771,7 @@ function renderLibraryModal() {
             <option value="3">3费</option>
           </select>
         </div>
+        <div class="library-meta"><span id="match-count"></span></div>
         <div class="library-grid" id="library-grid"></div>
       </div>
     </div>
@@ -662,37 +783,29 @@ function renderLibraryModal() {
   });
   document.getElementById('close-library').addEventListener('click', closeLibrary);
 
-  function applyFilters() {
-    const type = document.getElementById('filter-type').value;
-    const tag = document.getElementById('filter-tag').value;
-    const cost = document.getElementById('filter-cost').value;
-    const filtered = CARD_IDS.filter(id => {
-      const c = CARDS[id];
-      if (type && c.type !== type) return false;
-      if (tag && c.tag !== tag) return false;
-      if (cost !== '' && c.cost !== parseInt(cost)) return false;
-      return true;
-    });
-    const grid = document.getElementById('library-grid');
-    grid.innerHTML = filtered.map(id => {
-      const c = CARDS[id];
-      return `<div class="library-card" data-tooltip="${escapeHtml(describeCardFull({id, uid:'', up:false}))}">
-        <div class="name">${escapeHtml(c.name)}</div>
-        <div class="meta">${c.cost}费 ${typeMap[c.type]} ${tagMap[c.tag]} ${rarityMap[c.rarity]}</div>
-        <div>${escapeHtml(c.text)}</div>
-      </div>`;
-    }).join('');
-  }
+  document.querySelectorAll('.library-tab').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
 
-  document.getElementById('filter-type').addEventListener('change', applyFilters);
-  document.getElementById('filter-tag').addEventListener('change', applyFilters);
-  document.getElementById('filter-cost').addEventListener('change', applyFilters);
-  applyFilters();
-}
+  document.getElementById('filter-type').addEventListener('change', (e) => {
+    filterType = e.target.value;
+    renderContent();
+  });
+  document.getElementById('filter-tag').addEventListener('change', (e) => {
+    filterTag = e.target.value;
+    renderContent();
+  });
+  document.getElementById('filter-cost').addEventListener('change', (e) => {
+    filterCost = e.target.value;
+    renderContent();
+  });
 
-function closeLibrary() {
-  document.getElementById('modal-root').innerHTML = '';
-  showLibrary = false;
+  document.addEventListener('keydown', handleKeydown);
+
+  const closeButton = document.getElementById('close-library');
+  if (closeButton) closeButton.focus();
+
+  switchTab('tactical');
 }
 
 function getEnemyDef(id) {

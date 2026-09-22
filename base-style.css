@@ -103,3 +103,35 @@ dialog{color:var(--ink);border:1px solid #a99567;border-radius:8px;background:li
 .hand-card.dragging-card .card-face,.card-flight .card-face{transform:none!important;transition:none!important}
 @media(max-width:720px){.hand-card:hover:not(.selected),.hand-card:focus-visible:not(.selected){transform:translateX(calc(-50% + var(--offset)*var(--step))) translateY(min(var(--bend),10px)) rotate(var(--tilt))}}
 @media(prefers-reduced-motion:reduce){.hand-card .card-face{transition:none!important}.hand-card:hover:not(.selected) .card-face,.hand-card:focus-visible:not(.selected) .card-face{transform:none}}
+
+/* Card overview modal */
+.overview-tabs, .region-filter-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; justify-content:center; }
+.overview-tabs button, .region-filter-tabs button { font-size:11px; padding:6px 10px; white-space:nowrap; }
+.overview-info { text-align:center; font-size:12px; color:#a3b4ab; margin-bottom:18px; }
+.modal-cards.overview-cards { justify-content:flex-start; gap:24px 18px; }
+.skin-overview { display:flex; flex-wrap:wrap; gap:18px; justify-content:center; }
+.skin-entry { width:220px; border:1px solid #6a705e; background:#1c2b2faa; padding:15px; border-radius:6px; text-align:left; }
+.skin-entry h3 { color:#e0cb96; margin:0 0 8px; font-size:16px; }
+.skin-text { color:#a5b5aa; font-size:12px; line-height:1.6; margin:0 0 6px; }
+.skin-note { color:#8fa29a; font-size:10px; }
+.empty-overview { text-align:center; color:#8fa29a; padding:30px 0; }
+@media (max-width:720px) {
+  .overview-tabs, .region-filter-tabs { gap:4px; }
+  .overview-tabs button, .region-filter-tabs button { font-size:10px; padding:4px 6px; }
+  .overview-info { font-size:11px; }
+  .skin-entry { width:160px; }
+  .modal-cards.overview-cards { gap:18px 10px; }
+}
+
+.overview-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+  gap: 10px;
+}
+.overview-cards .library-entry{width:100%;justify-self:center;} .overview-cards .library-entry .card{width:100%;} .overview-cards .library-entry,
+.overview-cards .library-entry .card {
+  min-width: 0;
+  max-width: 200px;
+  margin-left: auto;
+  margin-right: auto;
+}

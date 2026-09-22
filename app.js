@@ -4206,6 +4206,7 @@ const { ACTS, availableNodes } = module1;
 const app=document.querySelector('#app'),dialog=document.querySelector('#dialog'),modal=document.querySelector('#dialog-content');
 const SAVE='bao-yi-ba-D0.1-save',SEASON_SAVE='peak-season-D0.2-save',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view',LEGACY_VIEW='bao-yi-ba-view-legacy';
 let state=null,atHome=true,hints=true,saveError='',saved=null,screen='map',selected=null,echo=null,dragging=null,pointerDrag=null,suppressClick=false,region='CN',seedInput='';
+let libraryFilter='all',libraryRegionFilter='all';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function loadSave(key,legacy=false){try{const raw=localStorage.getItem(key);if(!raw)return null;const s=JSON.parse(raw);if(!s||!Array.isArray(s.deck)||!Array.isArray(s.actions)||!Number.isInteger(s.rev)||!s.phase)return null;if(legacy){if(s.version!==VERSION)return null;return s;}if(s.version!=='D0.2.0'||s.mode!=='season'||!REGIONS[s.region]||!s.map||!Array.isArray(s.map.nodes)||!Array.isArray(s.map.edges)||!Array.isArray(s.completed)||![1,2,3].includes(s.act))return null;return s;}catch{return null;}}
 try{saved=loadSave(SEASON_SAVE)||loadSave(SAVE,true);if(!saved){const raw=localStorage.getItem(SEASON_SAVE);if(raw)saveError='新赛季存档无法读取，可重新开始。';else{const legacy=localStorage.getItem(SAVE);if(legacy)saveError='旧存档保留中，需要重开才能进入登峰赛季。';}}hints=localStorage.getItem(HINTS)!=='off';}catch{saveError='本地存档无法读取；仍可开始新赛季。';region='CN';}
@@ -4245,7 +4246,7 @@ function card(c,options={}){const t=CARDS[c.id];return `<article tabindex="0" da
 function heading(kicker,title,text=''){return `<div class="section-heading"><div class="eyebrow">${kicker}</div><h2 tabindex="-1" id="page-title">${title}</h2>${text?`<p>${text}</p>`:''}</div>`;}
 function home(){
  const regions=Object.values(REGIONS);
- return `<main class="title-screen"><div class="title-mark">${icon('boss')}</div><div class="eyebrow">四大赛区 · 卡牌肉鸽</div><h1>瓦demo · 登峰赛季</h1><p class="title-sub">把这支队伍，带到赛季最后一场。</p><div class="region-picker"><div class="region-tabs">${regions.map(r=>`<button class="region-tab ${region===r.id?'active':''}" data-ui="set-region-${r.id}">${esc(r.name)}<small>${esc(r.tagline)}</small></button>`).join('')}</div><p class="region-note">${esc(regions.find(r=>r.id===region).tagline)} / 18 名选手 / 三幕完整征程</p></div><div class="title-menu">${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}${ui('确认开赛','start-season','primary')}<label class="seed-label">赛季种子<input id="seed" placeholder="留空，每局随机" maxlength="80" value="${esc(seedInput)}" autocomplete="off"></label><div class="button-row">${ui('游戏规则','rules','text-button')}${ui('全部卡牌','library','text-button')}<a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a><a class="text-button" href="/pvp/">好友PvP</a>${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="text-button" href="/new/">新demo</a>` : ''}</div></div><p class="title-note">四大赛区 · 72 张选手牌 · 三幕 × 11 站</p>${saveError?`<p class="warning">${esc(saveError)}</p>`:''}<span class="build-tag">D0.2.0 / 战斗动效 07</span></main>`;
+ return `<main class="title-screen"><div class="title-mark">${icon('boss')}</div><div class="eyebrow">四大赛区 · 卡牌肉鸽</div><h1>瓦demo · 登峰赛季</h1><p class="title-sub">把这支队伍，带到赛季最后一场。</p><div class="region-picker"><div class="region-tabs">${regions.map(r=>`<button class="region-tab ${region===r.id?'active':''}" data-ui="set-region-${r.id}">${esc(r.name)}<small>${esc(r.tagline)}</small></button>`).join('')}</div><p class="region-note">${esc(regions.find(r=>r.id===region).tagline)} / 18 名选手 / 三幕完整征程</p></div><div class="title-menu">${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}${ui('确认开赛','start-season','primary')}<label class="seed-label">赛季种子<input id="seed" placeholder="留空，每局随机" maxlength="80" value="${esc(seedInput)}" autocomplete="off"></label><div class="button-row">${ui('游戏规则','rules','text-button')}${ui('卡牌总览','library','text-button')}<a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a><a class="text-button" href="/pvp/">好友PvP</a>${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="text-button" href="/new/">新demo</a>` : ''}</div></div><p class="title-note">四大赛区 · 72 张选手牌 · 三幕 × 11 站</p>${saveError?`<p class="warning">${esc(saveError)}</p>`:''}<span class="build-tag">D0.2.0 / 战斗动效 07</span></main>`;
 }
 function header(){
  const actInfo=state.mode==='season'?ACTS[state.act-1]:null;
@@ -4364,6 +4365,54 @@ function commit(action){
 function showModal(title,html){hideCardTip();modal.innerHTML=`<h2 tabindex="-1">${title}</h2>${html}`;if(!dialog.open)dialog.showModal();modal.querySelector('h2').focus({preventScroll:true});dialog.scrollTop=0;}
 function showCards(title,cards,note=''){showModal(title,`${note?`<p>${note}</p>`:''}<div class="cards modal-cards">${cards.map(c=>card(c,{instance:!!c.uid})).join('')}</div>`);}
 function libraryEntry(id){const f=TACTICS[id];return `<div class="library-entry">${card({id,up:false},{upgrade:CARDS[id].player})}<details><summary>战术说明与出处</summary>${artCredit(id)}<p>${esc(f.note)}</p>${f.source?`<a href="${esc(f.source)}" target="_blank" rel="noopener noreferrer">查看参考来源</a>`:'<p>原创比赛／团队场景。</p>'}</details></div>`;}
+
+function showCardOverview(){
+  const totalNonSkin=Object.keys(CARDS).length;
+  const playerIds=Object.keys(CARDS).filter(id=>CARDS[id].player);
+  const playerCount=playerIds.length;
+  const stIds=Object.keys(CARDS).filter(id=>id.startsWith('ST'));
+  const cuIds=Object.keys(CARDS).filter(id=>id.startsWith('CU'));
+  const tkIds=Object.keys(CARDS).filter(id=>id.startsWith('TK'));
+  const skinIds=Object.keys(SKINS);
+  const skinCount=skinIds.length;
+  const filterLabels={
+    all:`全部卡牌 (${totalNonSkin})`,
+    players:`选手牌 (${playerCount})`,
+    st:`比赛干扰 (${stIds.length})`,
+    cu:`俱乐部隐患 (${cuIds.length})`,
+    tk:`临时行动 (${tkIds.length})`,
+    skins:`遗物·皮肤 (${skinCount})`
+  };
+  const tabsHtml=Object.entries(filterLabels).map(([key,label])=>ui(label,`library-${key}`,libraryFilter===key?'primary':'secondary')).join('');
+  let regionTabsHtml='';
+  if(libraryFilter==='players'){
+    const regionPoolCounts = Object.values(REGIONS).map(r => {
+      const count = REGIONS[r.id].pool.filter(id => CARDS[id] && CARDS[id].player).length;
+      return `${r.name} (${count})`;
+    });
+    regionTabsHtml=`<div class="region-filter-tabs">${ui('全部赛区','library-region-all',libraryRegionFilter==='all'?'primary':'secondary')}${Object.values(REGIONS).map((r,i)=>ui(regionPoolCounts[i],`library-region-${r.id}`,libraryRegionFilter===r.id?'primary':'secondary')).join('')}</div>`;
+  }
+  let contentHtml='';
+  if(libraryFilter==='skins'){
+    contentHtml=`<div class="skin-overview">${skinIds.map(id=>{
+      const sk=SKINS[id];
+      return `<article class="skin-entry"><h3>${esc(sk.name)}</h3><p class="skin-text">${esc(sk.text)}</p><p class="skin-note">本赛季被动 · 不进入抽牌堆</p></article>`;
+    }).join('')}</div>`;
+  } else {
+    let ids=[];
+    switch(libraryFilter){
+      case 'all': ids=Object.keys(CARDS); break;
+      case 'players': ids=playerIds; if(libraryRegionFilter!=='all') ids=ids.filter(id=>REGIONS[libraryRegionFilter].pool.includes(id)); break;
+      case 'st': ids=stIds; break;
+      case 'cu': ids=cuIds; break;
+      case 'tk': ids=tkIds; break;
+      default: ids=[];
+    }
+    contentHtml=ids.length?`<div class="cards modal-cards overview-cards">${ids.map(libraryEntry).join('')}</div>`:`<p class="empty-overview">该分类暂无可展示的卡牌。</p>`;
+  }
+  const infoHtml=`<p class="overview-info">${totalNonSkin} 张卡牌 · 另含 ${skinCount} 件皮肤（不占抽牌）。当前筛选：${libraryFilter === 'players' && libraryRegionFilter !== 'all' ? REGIONS[libraryRegionFilter].name + '（' + REGIONS[libraryRegionFilter].pool.filter(id => CARDS[id]?.player).length + '）' : filterLabels[libraryFilter]}</p>`;
+  showModal('卡牌总览',`${infoHtml}<div class="overview-tabs">${tabsHtml}</div>${regionTabsHtml}${contentHtml}`);
+}
 function start(tutorial,selectedRegion){
  const seed=document.querySelector('#seed')?.value.trim()||`season-${crypto.randomUUID()}`;
  state=createSeason(seed,tutorial,selectedRegion||region);
@@ -4409,12 +4458,36 @@ function handleUI(name){
   return;
  }
  if(name==='deck'){showCards('赛季牌组',state.deck,'同名牌是不同的行动机会；实例编号用于区分升级。比赛干扰和临时行动不进入赛季牌组。');return;}
- if(name==='library'||name.startsWith('library-')){
-  const chosen=name==='library'?(atHome?region:state?.region||'CN'):name.slice(8);
-  if(!REGIONS[chosen])return;
-  const availableIds=[...REGIONS[chosen].pool,...Object.keys(CARDS).filter(id=>!CARDS[id].player)];
-  showModal('赛区卡牌图鉴',`<div class="region-tabs library-tabs">${Object.values(REGIONS).map(r=>ui(r.name,'library-'+r.id,r.id===chosen?'primary':'secondary')).join('')}</div><p>${esc(REGIONS[chosen].name)}：18 张选手牌与 7 张公共辅助牌。技能搭配为游戏设定；悬停或聚焦查看完整规则。</p><div class="cards modal-cards">${availableIds.map(libraryEntry).join('')}</div>`);return;
- }
+  if(name==='library'||name.startsWith('library-')){
+    if(name==='library'){libraryFilter='all';libraryRegionFilter='all';showCardOverview();return;}
+    const filterMap={
+      'library-all':'all',
+      'library-players':'players',
+      'library-st':'st',
+      'library-cu':'cu',
+      'library-tk':'tk',
+      'library-skins':'skins'
+    };
+    if(filterMap[name]){
+      libraryFilter=filterMap[name];
+      if(libraryFilter!=='players')libraryRegionFilter='all';
+      showCardOverview();
+      return;
+    }
+    if(name.startsWith('library-region-')){
+      const regionId=name.slice('library-region-'.length);
+      if(regionId==='all'){
+        libraryRegionFilter='all';
+        showCardOverview();
+      } else if(REGIONS[regionId]){
+        libraryRegionFilter=regionId;
+        if(libraryFilter!=='players')libraryFilter='players';
+        showCardOverview();
+      }
+      return;
+    }
+    return;
+  }
  if(name.startsWith('pile-')){
   const key=name.slice(5),list=[...state.battle[key]].sort((a,b)=>a.id.localeCompare(b.id)||a.uid.localeCompare(b.uid));
   showCards({draw:'抽牌堆',discard:'弃牌堆',exhaust:'消耗区'}[key],list,key==='draw'?'按卡牌编号展示，实际抽牌顺序隐藏。':'消耗只对本场生效，赛季牌组里的原牌下场会重新带入。');return;
