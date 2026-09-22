@@ -2,7 +2,10 @@ import {cardArtwork,opponentArtwork,artCredit} from './art-ui.js';
 import {combatEvents} from './combat-events.js';
 import {clearCombatFx,captureCombatStage,playCombatFx} from './combat-fx.js';
 import {VERSION,CARDS,SKINS,ENEMIES,describe,cardName,effects,TACTICS,displayText,compactLines,cardKeywords,REGIONS} from './content.js';
-import {createRun,createSeason,act,canPlay,preview,intent,intentText,healAmount,removalReason,observe,legalActions} from './engine.js';
+import {createRun,canPlay,preview,intent,intentText,healAmount,removalReason,observe} from './engine.js';
+import {createWaSeason,waAct as act,waLegalActions as legalActions} from './wa-season.js';
+import {syncWaCheckpoint} from './wa-online.js';
+const createSeason=(seed,tutorial,region)=>createWaSeason(seed,tutorial,region,crypto.randomUUID());
 import {routeNodes,mapEntry,nextScreen,restoreScreen} from './navigation.js';
 import {ACTS,availableNodes} from './season-map.js';
 const app=document.querySelector('#app'),dialog=document.querySelector('#dialog'),modal=document.querySelector('#dialog-content');
@@ -13,7 +16,17 @@ function loadSave(key,legacy=false){try{const raw=localStorage.getItem(key);if(!
 try{saved=loadSave(SEASON_SAVE)||loadSave(SAVE,true);if(!saved){const raw=localStorage.getItem(SEASON_SAVE);if(raw)saveError='新赛季存档无法读取，可重新开始。';else{const legacy=localStorage.getItem(SAVE);if(legacy)saveError='旧存档保留中，需要重开才能进入登峰赛季。';}}hints=localStorage.getItem(HINTS)!=='off';}catch{saveError='本地存档无法读取；仍可开始新赛季。';region='CN';}
 function notice(text){document.querySelector('#notice').textContent=text;}
 function saveView(){if(state)try{const key=state.mode==='season'?VIEW:LEGACY_VIEW;localStorage.setItem(key,JSON.stringify({seed:state.seed,rev:state.rev,screen,mode:state.mode,region:state.region,version:state.version}));}catch{notice('页面位置未能保存。');}}
-function persist(){try{const key=state.mode==='season'?SEASON_SAVE:SAVE;localStorage.setItem(key,JSON.stringify(state));saved=state;saveError='';saveView();}catch{saveError='自动保存失败，请导出对局记录留存。';notice(saveError);}}
+function persist(){
+  try{
+    const key=state.mode==='season'?SEASON_SAVE:SAVE;
+    localStorage.setItem(key,JSON.stringify(state));
+    saved=state; saveError=''; saveView();
+  }catch{
+    saveError='自动保存失败，请导出对局记录留存。';
+    notice(saveError);
+  }
+  syncWaCheckpoint(state, (msg)=>notice(msg)).catch(err=>notice('云端同步失败：'+err.message));
+}
 const button=(label,action,cls='',disabled='')=>`<button class="${cls}" ${disabled?'disabled':''} data-action="${esc(JSON.stringify({...action,rev:state?.rev}))}">${esc(label)}</button>${disabled?`<small class="disabled-reason">${esc(disabled)}</small>`:''}`;
 const ui=(label,name,cls='secondary',extra='')=>`<button class="${cls}" data-ui="${name}" ${extra}>${esc(label)}</button>`;
 const shapes={
@@ -37,12 +50,12 @@ function card(c,options={}){const t=CARDS[c.id];return `<article tabindex="0" da
 function heading(kicker,title,text=''){return `<div class="section-heading"><div class="eyebrow">${kicker}</div><h2 tabindex="-1" id="page-title">${title}</h2>${text?`<p>${text}</p>`:''}</div>`;}
 function home(){
  const regions=Object.values(REGIONS);
- return `<main class="title-screen"><div class="title-mark">${icon('boss')}</div><div class="eyebrow">四大赛区 · 卡牌肉鸽</div><h1>登峰赛季</h1><p class="title-sub">把这支队伍，带到赛季最后一场。</p><div class="region-picker"><div class="region-tabs">${regions.map(r=>`<button class="region-tab ${region===r.id?'active':''}" data-ui="set-region-${r.id}">${esc(r.name)}<small>${esc(r.tagline)}</small></button>`).join('')}</div><p class="region-note">${esc(regions.find(r=>r.id===region).tagline)} / 18 名选手 / 三幕完整征程</p></div><div class="title-menu">${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}${ui('确认开赛','start-season','primary')}<label class="seed-label">赛季种子<input id="seed" placeholder="留空，每局随机" maxlength="80" value="${esc(seedInput)}" autocomplete="off"></label><div class="button-row">${ui('游戏规则','rules','text-button')}${ui('全部卡牌','library','text-button')}<a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a></div></div><p class="title-note">四大赛区 · 72 张选手牌 · 三幕 × 11 站</p>${saveError?`<p class="warning">${esc(saveError)}</p>`:''}<span class="build-tag">D0.2.0 / 战斗动效 07</span></main>`;
+ return `<main class="title-screen"><div class="title-mark">${icon('boss')}</div><div class="eyebrow">四大赛区 · 卡牌肉鸽</div><h1>瓦demo · 登峰赛季</h1><p class="title-sub">把这支队伍，带到赛季最后一场。</p><div class="region-picker"><div class="region-tabs">${regions.map(r=>`<button class="region-tab ${region===r.id?'active':''}" data-ui="set-region-${r.id}">${esc(r.name)}<small>${esc(r.tagline)}</small></button>`).join('')}</div><p class="region-note">${esc(regions.find(r=>r.id===region).tagline)} / 18 名选手 / 三幕完整征程</p></div><div class="title-menu">${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}${ui('确认开赛','start-season','primary')}<label class="seed-label">赛季种子<input id="seed" placeholder="留空，每局随机" maxlength="80" value="${esc(seedInput)}" autocomplete="off"></label><div class="button-row">${ui('游戏规则','rules','text-button')}${ui('全部卡牌','library','text-button')}<a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a><a class="text-button" href="/pvp/">好友PvP</a><a class="text-button" href="/new/">新demo</a></div></div><p class="title-note">四大赛区 · 72 张选手牌 · 三幕 × 11 站</p>${saveError?`<p class="warning">${esc(saveError)}</p>`:''}<span class="build-tag">D0.2.0 / 战斗动效 07</span></main>`;
 }
 function header(){
  const actInfo=state.mode==='season'?ACTS[state.act-1]:null;
  const label=state.mode==='season'?`${actInfo?actInfo.name:'赛段'} · ${state.region}`:'第一幕 · 大师赛征程';
- return `<header class="game-hud"><div class="brand">登峰赛季 <span>${esc(label)}</span></div><div class="hud-resources"><span class="hud-hp">${icon('shield')} <b>${state.hp}</b> / ${state.maxHp}</span><span class="hud-money">${icon('coin')} <b>${state.money}</b></span>${ui(`牌组 ${state.deck.length}`,'deck','hud-link')}</div><div class="hud-tools">${ui(screen==='map'?'路线图':'查看路线','map','hud-link')}${ui('记录','logs','hud-link')}${ui('规则','rules','hud-link')}${ui('菜单','menu','hud-link')}</div></header>`;
+ return `<header class="game-hud"><div class="brand">登峰赛季 <span>${esc(label)}</span></div><span class="header-links"><a href="/pvp/">好友PvP</a><a href="/new/">新demo</a></span><div class="hud-resources"><span class="hud-hp">${icon('shield')} <b>${state.hp}</b> / ${state.maxHp}</span><span class="hud-money">${icon('coin')} <b>${state.money}</b></span>${ui(`牌组 ${state.deck.length}`,'deck','hud-link')}</div><div class="hud-tools">${ui(screen==='map'?'路线图':'查看路线','map','hud-link')}${ui('记录','logs','hud-link')}${ui('规则','rules','hud-link')}${ui('菜单','menu','hud-link')}</div></header>`;
 }
 function route(){
  if(state.mode==='season')return seasonRoute();
@@ -83,7 +96,7 @@ function between(){
  if(s.mode==='season'){
   if(s.phase==='intermission'){
    const nextAct=ACTS[s.act];
-   return `${heading('赛段完成','你的俱乐部晋级了。',`已完成第 ${s.act} 赛段。已举办晋级宣传：恢复最大声望的 30%，本次实际 +${s.intermissionHeal??0}。当前 ${s.hp}/${s.maxHp}。下一赛段：${nextAct?nextAct.name+' · '+nextAct.bossName:'冠军赛'}`)}<div class="intermission-details"><p>牌组与资源将保留。</p><p><strong>当前声望</strong> ${s.hp}/${s.maxHp} <strong>资金</strong> ${s.money}</p></div><div class="page-footer">${button('进入下一赛段 →',{type:'nextAct'},'primary')}</div>`;
+   return `${heading('赛段完成','你的俱乐部晋级了。',`已完成第 ${s.act} 赛段。${s.waVersion ? '已举办晋级宣传：恢复全部声望至满。当前 ' + s.hp + '/' + s.maxHp + '。下一赛段：' : '已举办晋级宣传：恢复最大声望的 30%，本次实际 +' + (s.intermissionHeal??0) + '。当前 ' + s.hp + '/' + s.maxHp + '。下一赛段：'}${nextAct?nextAct.name+' · '+nextAct.bossName:'冠军赛'}`)}<div class="intermission-details"><p>牌组与资源将保留。</p><p><strong>当前声望</strong> ${s.hp}/${s.maxHp} <strong>资金</strong> ${s.money}</p></div><div class="page-footer">${button('进入下一赛段 →',{type:'nextAct'},'primary')}</div>`;
   }
   if(s.phase==='result')return `<section class="result">${heading(s.outcome==='win'?'赛季冠军':'赛季结束',s.outcome==='win'?'你赢得了最终赛段冠军。':'赛季暂告一段落。',s.outcome==='win'?'你带领所选赛区的阵容走过三幕，赢得冠军赛。':'调整思路，再来一季。')}<div class="result-stats"><span><strong>${s.wins}</strong>场胜利</span><span><strong>${s.hp} / ${s.maxHp}</strong>剩余声望</span><span><strong>${s.deck.length}</strong>张赛季牌</span></div><div class="button-row">${ui('再开一个赛季','home','primary')}${ui('查看最终牌组','deck')}${ui('导出本局记录','export')}</div><p class="muted">种子：${esc(s.seed)} · ${s.actions.length} 次操作 · D0.2.0</p></section>`;
  }
@@ -94,7 +107,7 @@ function between(){
  if(s.phase==='branch')return `${heading('赛程选择','为下一场，做一次准备。','两条路线只能选择一条。')}<div class="choices">${choice('转会市场','三名选手可供购买；也可花 50 资金永久移除一张牌。当前资金 '+s.money+'。','前往转会市场',{type:'branch',choice:'shop'})}${choice('俱乐部活动','粉丝见面会恢复声望、训练升级一张牌，或团建移除隐患。三选一。','安排俱乐部活动',{type:'branch',choice:'activity'})}</div>`;
  if(s.phase==='opponent')return `${heading('挑战选择','稳步晋级，还是争取更多？','强敌会带来更高压力，但能奖励一件本赛季皮肤。')}<div class="choices">${choice('防守反击队 · 普通','38 防线，擅长布防与反击。胜利获得 20 资金和一次招募。','选择普通比赛',{type:'opponent',id:'E04'})}${choice('高压强敌队 · 强敌','54 防线，多段攻击，并塞入疲劳与节奏受阻。胜利获得 35 资金、招募和一件皮肤。','挑战强敌',{type:'opponent',id:'EL01'})}</div>`;
  if(s.phase==='shop')return `${heading('转会市场','用资金，调整你的牌组。','招募与移除可以组合进行；离开后不能返回。')}<div class="cards reward-cards">${s.shop.slots.map((id,slot)=>id?card({id,up:false},{label:`${[40,65,90][slot]} 资金 · 招募`,action:{type:'buy',slot},disabled:s.money<[40,65,90][slot]?'资金不足':''}):'<article class="card sold"><h3>该货位已空</h3><p>没有其他候选，不会刷新。</p></article>').join('')}</div><div class="shop-service"><div><h3>转会离队 · 永久移除一张牌</h3><p>50 资金，每个市场限一次。可移除选手或隐患；至少保留 5 张选手牌及一张直接攻击牌。</p></div>${ui(s.shop.removed?'本次服务已使用':'选择移除对象','remove-target','secondary',s.shop.removed||s.money<50?'disabled':'')}</div>${s.money<50&&!s.shop.removed?'<p class="muted">移除服务需要 50 资金。</p>':''}<div class="page-footer">${button('离开市场，继续赛程 →',{type:'leaveShop'})}</div>`;
- if(s.phase==='activity')return `${heading('俱乐部活动','比赛之外，也有取舍。','选择一项活动，然后继续赛程。')}<div class="choices">${choice('粉丝见面会',`恢复最大声望的 30%，向上取整。当前 ${s.hp}/${s.maxHp} → ${s.hp+healAmount(s)}/${s.maxHp}，实际恢复 ${healAmount(s)}。`,'举办粉丝见面会',{type:'activity',choice:'fans'},s.hp===s.maxHp?'声望已满':'')}${choice('训练','升级一张选手牌。费用不变，只改变这张牌的效果。','选择训练对象',{type:'activity',choice:'upgrade'},!s.deck.some(c=>CARDS[c.id].player&&!c.up)?'没有可升级选手':'')}${choice('团建','永久移除一张俱乐部隐患。可以处理磨合不足或舆论压力。','处理俱乐部隐患',{type:'activity',choice:'cleanse'},!s.deck.some(c=>c.id.startsWith('CU'))?'没有俱乐部隐患':'')}</div>${button('跳过活动 →',{type:'activity',choice:'skip'},'secondary')}`;
+ if(s.phase==='activity')return `${heading('俱乐部活动','比赛之外，也有取舍。','选择一项活动，然后继续赛程。')}<div class="choices">${choice('粉丝见面会',`恢复最大声望的 30%，向上取整。当前 ${s.hp}/${s.maxHp} → ${s.hp+healAmount(s)}/${s.maxHp}，实际恢复 ${healAmount(s)}。`,'举办粉丝见面会',{type:'activity',choice:'fans'},s.hp===s.maxHp?'声望已满':'')}${choice('训练','升级一张选手牌。费用不变，只改变这张牌的效果。','选择训练对象',{type:'activity',choice:'upgrade'},!s.deck.some(c=>CARDS[c.id].player&&!c.up)?'没有可升级选手':'')}${choice('团建','永久移除一张俱乐部隐患。可以处理磨合不足或舆论压力。','处理俱乐部隐患',{type:'activity',choice:'cleanse'},!s.deck.some(c=>c.id.startsWith('CU'))?'没有俱乐部隐患':'')}${s.waVersion ? choice('体能集训', `提升体能上限：最大声望与当前声望各 +6。当前 ${s.hp}/${s.maxHp} → ${s.hp+6}/${s.maxHp+6}。消耗本次休整机会。`,'开始集训',{type:'activity',choice:'toughness'}) : ''}</div>${button('跳过活动 →',{type:'activity',choice:'skip'},'secondary')}`;
  if(s.phase==='upgrade'||s.phase==='cleanse')return `${heading('俱乐部活动',s.phase==='upgrade'?'选择一张牌，进行训练。':'解决一项俱乐部隐患。',s.phase==='upgrade'?'展示升级前后效果；同名选手的其他牌不会一起升级。':'这张隐患将永久离开本次赛季牌组。')}<div class="cards">${s.deck.filter(c=>s.phase==='upgrade'?CARDS[c.id].player&&!c.up:c.id.startsWith('CU')).map(c=>card(c,{instance:true,upgrade:s.phase==='upgrade',label:s.phase==='upgrade'?'训练这张牌':'永久移除此隐患',action:{type:s.phase,uid:c.uid}})).join('')}</div><div class="page-footer">${button('返回活动选择',{type:'activityBack'},'secondary')}</div>`;
  if(s.phase==='result')return `<section class="result">${heading(s.outcome==='win'?'首幕通关':s.outcome==='loss'?'赛季结束':'本次试玩结束',s.outcome==='win'?'大师赛冠军，属于你的俱乐部。':s.outcome==='loss'?'声望耗尽，俱乐部暂别赛场。':'调整思路，再来一局。',s.outcome==='win'?'你已走完第一款 Demo 的完整流程。后两幕尚未制作，现在可以回顾牌组与记录。':'试着调整进攻、防守和招募的取舍。每次赛季都从全新的初始牌组开始。')}<div class="result-stats"><span><strong>${s.wins} / 6</strong>场比赛获胜</span><span><strong>${s.hp} / ${s.maxHp}</strong>剩余声望</span><span><strong>${s.deck.length}</strong>张赛季牌</span></div><div class="button-row">${ui('再开一个赛季','home','primary')}${ui('查看最终牌组','deck')}${ui('导出本局记录','export')}</div><p class="muted">种子：${esc(s.seed)} · ${s.actions.length} 次操作 · ${VERSION}</p></section>`;
  return '';

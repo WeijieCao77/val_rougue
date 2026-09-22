@@ -1,4 +1,6 @@
 node_modules/
+.local-data/
+*.tmp
 reports/
 .env
 .env.*
