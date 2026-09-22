@@ -832,5 +832,3 @@ document.addEventListener('DOMContentLoaded', () => {
     renderHome();
   }
 });
-
-
