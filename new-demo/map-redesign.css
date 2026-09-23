@@ -196,3 +196,26 @@
     max-height: 75vh;
   }
 }
+
+/* Show the full twelve-stop act instead of opening inside a tall scroll area. */
+.map-container .map-scroll {
+  max-width: 430px;
+  max-height: none;
+  overflow: visible;
+  padding: .55rem;
+}
+.map-container .map-svg {
+  max-width: 400px;
+  aspect-ratio: 400 / 520;
+}
+.map-container .map-node:not(.available):not(.completed):not(.current) { opacity: .62; }
+.map-container .map-edge { opacity: .7; }
+@media (min-width: 900px) {
+  .map-container { grid-template-columns: minmax(400px, 430px) minmax(240px, 300px); grid-template-rows: auto auto 1fr auto; gap: .35rem; max-width: 800px; }
+  .map-container .guide-strip { grid-column: 1 / -1; grid-row: 1; }
+  .map-container .map-stage-info { grid-column: 1 / -1; grid-row: 2; }
+  .map-container .map-quick-legend { display: none; }
+  .map-container .map-scroll { grid-column: 1; grid-row: 3 / 5; max-height: none; }
+  .map-container .map-legend { grid-column: 2; grid-row: 3; }
+  .map-container .node-details { grid-column: 2; grid-row: 4; }
+}

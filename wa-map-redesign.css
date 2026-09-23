@@ -532,3 +532,26 @@
 }
 .season-map .map-stop:hover,
 .season-map .map-stop:focus-within { z-index: 8; }
+
+/* A twelve-stop season fits as a complete itinerary: the championship stays
+   visible while the starting choices remain on screen. */
+.season-map .map-scroll {
+  height: clamp(540px, calc(100dvh - 170px), 650px);
+  overflow: hidden;
+}
+.season-map .map-board {
+  height: 100%;
+  min-height: 0;
+}
+.season-map .map-stop > button {
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+}
+.season-map .map-stop > button .icon { width: 21px; height: 21px; }
+.season-map .map-stop.kind-boss > button { width: 50px; height: 50px; padding: 8px; }
+.season-map .map-stop.kind-boss > button .icon { width: 30px; height: 30px; }
+.season-map .map-stop.locked { opacity: .55; }
+.season-map .map-stop.bypassed { opacity: .22; }
+.season-map .map-stop.current { opacity: 1; }
+body:has(.season-map) #notice { top: auto; bottom: 18px; }

@@ -9363,17 +9363,28 @@ const shuffle = (items, random) => {
 const key = (step, lane) => `r${step}c${lane}`;
 const crosses = (left, right) => left.fromLane < right.fromLane && left.toLane > right.toLane || left.fromLane > right.fromLane && left.toLane < right.toLane;
 
+const BOSS_STEP = 12;
+const NORMAL_MAX_STEP = 11;
+const REST_STEP = 11;
+const SHOP_STEP = 6;
+const BATTLE_FIXED_STEPS = [1, 2];
+const WEIGHTED_STEPS = [3, 4, 5, 7, 8, 9, 10];
+const START_LANE_COUNT = 4;
+const LANE_COUNT = 7;
+const MIN_WIDTH = 3;
+const MAX_WIDTH = 6;
+
 function topology(random) {
-  const starts = shuffle([0, 1, 2, 3, 4, 5, 6], random).slice(0, 4).sort((a, b) => a - b);
-  const walkers = shuffle([...starts, starts[Math.floor(random() * 4)], starts[Math.floor(random() * 4)]], random);
-  const rows = Array.from({ length: 16 }, () => new Set());
+  const starts = shuffle([0, 1, 2, 3, 4, 5, 6], random).slice(0, START_LANE_COUNT).sort((a, b) => a - b);
+  const walkers = shuffle([...starts, starts[Math.floor(random() * START_LANE_COUNT)], starts[Math.floor(random() * START_LANE_COUNT)]], random);
+  const rows = Array.from({ length: BOSS_STEP }, () => new Set());
   const edges = new Map();
   for (let walker = 0; walker < walkers.length; walker++) {
     let lane = walkers[walker];
     rows[1].add(lane);
-    for (let step = 1; step < 15; step++) {
+    for (let step = 1; step < NORMAL_MAX_STEP; step++) {
       const existing = [...edges.values()].filter(e => e.step === step);
-      const choices = shuffle([lane - 1, lane, lane + 1].filter(next => next >= 0 && next <= 6), random)
+      const choices = shuffle([lane - 1, lane, lane + 1].filter(next => next >= 0 && next < LANE_COUNT), random)
         .filter(next => !existing.some(e => crosses(e, { fromLane: lane, toLane: next })));
       const next = choices[0]; // Staying in the same lane is always a valid fallback.
       rows[step + 1].add(next);
@@ -9384,7 +9395,7 @@ function topology(random) {
   }
   // Add short alternative connections between existing paths. No new node is
   // introduced, so every visible node remains part of a start-to-boss walk.
-  for (let step = 1; step < 15; step++) {
+  for (let step = 1; step < NORMAL_MAX_STEP; step++) {
     const candidates = shuffle([...rows[step]].flatMap(fromLane => [...rows[step + 1]]
       .filter(toLane => Math.abs(fromLane - toLane) <= 1)
       .map(toLane => ({ from: key(step, fromLane), to: key(step + 1, toLane), step, fromLane, toLane }))), random);
@@ -9394,10 +9405,10 @@ function topology(random) {
       if (random() < 0.42) edges.set(`${candidate.from}>${candidate.to}`, candidate);
     }
   }
-  const widths = rows.slice(1).map(row => row.size);
-  if (widths.some(width => width < 3 || width > 6) || Math.max(...widths) < 5 || new Set(widths).size < 2) return null;
+  const widths = rows.slice(1, BOSS_STEP).map(row => row.size);
+  if (widths.some(width => width < MIN_WIDTH || width > MAX_WIDTH) || Math.max(...widths) < 5 || new Set(widths).size < 2) return null;
   const graphEdges = [...edges.values()].map(({ from, to }) => ({ from, to }));
-  for (const lane of rows[15]) graphEdges.push({ from: key(15, lane), to: 'boss' });
+  for (const lane of rows[NORMAL_MAX_STEP]) graphEdges.push({ from: key(NORMAL_MAX_STEP, lane), to: 'boss' });
   const outgoing = new Map(), incoming = new Map();
   for (const { from, to } of graphEdges) {
     outgoing.set(from, (outgoing.get(from) || 0) + 1);
@@ -9414,22 +9425,34 @@ function assignRooms(nodes, edges, random) {
   const inbound = new Map(nodes.map(node => [node.key, []]));
   const outbound = new Map(nodes.map(node => [node.key, []]));
   for (const edge of edges) {
+    if (edge.to === 'boss') continue;
     inbound.get(edge.to).push(byKey.get(edge.from));
     outbound.get(edge.from).push(byKey.get(edge.to));
   }
-  const weights = [['battle', 0.54], ['event', 0.17], ['shop', 0.10], ['rest', 0.09], ['elite', 0.10]];
+  // Fewer total stops would otherwise sharply reduce access to elite rewards.
+  // These are this demo's room weights, not Slay the Spire's probabilities.
+  const weights = [['battle', 0.51], ['event', 0.20], ['shop', 0.08], ['rest', 0.08], ['elite', 0.13]];
   for (const node of nodes) {
-    if (node.step <= 2) { node.kind = 'battle'; continue; }
-    if (node.step === 15) { node.kind = 'rest'; continue; }
-    if (node.step === 16) { node.kind = 'boss'; continue; }
-    const allowed = weights.filter(([kind]) => !['elite', 'shop', 'rest'].includes(kind) || !inbound.get(node.key).some(parent => parent.kind === kind));
-    const total = allowed.reduce((sum, [, weight]) => sum + weight, 0);
-    let ticket = random() * total;
-    node.kind = allowed.find(([, weight]) => (ticket -= weight) < 0)?.[0] || 'battle';
+    if (BATTLE_FIXED_STEPS.includes(node.step)) { node.kind = 'battle'; continue; }
+    if (node.step === SHOP_STEP) { node.kind = 'shop'; continue; }
+    if (node.step === REST_STEP) { node.kind = 'rest'; continue; }
+    if (node.step === BOSS_STEP) { node.kind = 'boss'; continue; }
+    if (WEIGHTED_STEPS.includes(node.step)) {
+      const allowed = weights.filter(([kind]) => {
+        if (node.step === SHOP_STEP - 1 && kind === 'shop') return false;
+        if (node.step === REST_STEP - 1 && kind === 'rest') return false;
+        return !['elite', 'shop', 'rest'].includes(kind) || !inbound.get(node.key).some(parent => parent.kind === kind);
+      });
+      const total = allowed.reduce((sum, [, weight]) => sum + weight, 0);
+      let ticket = random() * total;
+      node.kind = allowed.find(([, weight]) => (ticket -= weight) < 0)?.[0] || 'battle';
+    } else {
+      node.kind = 'battle';
+    }
   }
-  for (const kind of ['event', 'shop', 'elite']) {
-    while (nodes.filter(node => node.kind === kind).length < 2) {
-      const candidates = nodes.filter(node => node.step >= 3 && node.step <= 14 && node.kind === 'battle'
+  for (const kind of ['event', 'elite']) {
+    while (nodes.filter(node => node.kind === kind).length < 1) {
+      const candidates = nodes.filter(node => WEIGHTED_STEPS.includes(node.step) && node.kind === 'battle'
         && !inbound.get(node.key).some(parent => parent.kind === kind)
         && !outbound.get(node.key).some(child => child.kind === kind));
       if (!candidates.length) return false;
@@ -9440,15 +9463,15 @@ function assignRooms(nodes, edges, random) {
 }
 
 function generateRoute(seed, act) {
-  for (let attempt = 0; attempt < 100; attempt++) {
+  for (let attempt = 0; attempt < 150; attempt++) {
     const random = randomFrom(`${seed}|${act}|route|${attempt}`);
     const shape = topology(random);
     if (!shape) continue;
     const nodes = [];
-    for (let step = 1; step <= 15; step++) for (const lane of [...shape.rows[step]].sort((a, b) => a - b)) {
-      nodes.push({ key: key(step, lane), step, lane, x: 8 + lane * 14, y: 94 - (step - 1) * 88 / 15, kind: 'battle', name: '' });
+    for (let step = 1; step <= NORMAL_MAX_STEP; step++) for (const lane of [...shape.rows[step]].sort((a, b) => a - b)) {
+      nodes.push({ key: key(step, lane), step, lane, x: 8 + lane * 14, y: 94 - (step - 1) * 88 / (BOSS_STEP - 1), kind: 'battle', name: '' });
     }
-    nodes.push({ key: 'boss', step: 16, lane: 3, x: 50, y: 6, kind: 'boss', name: '' });
+    nodes.push({ key: 'boss', step: BOSS_STEP, lane: 3, x: 50, y: 6, kind: 'boss', name: '' });
     if (!assignRooms(nodes, shape.edges, random)) continue;
     return { nodes, edges: shape.edges, starts: shape.starts, bossId: 'boss' };
   }
@@ -13323,9 +13346,9 @@ const createSeason=(seed,tutorial,region)=>createWaSeason(seed,tutorial,region,c
 const { routeNodes, mapEntry, nextScreen, restoreScreen } = module7;
 const { ACTS, availableNodes } = module4;
 const app=document.querySelector('#app'),dialog=document.querySelector('#dialog'),modal=document.querySelector('#dialog-content');
-const SAVE='bao-yi-ba-D0.1-save-route-v2',SEASON_SAVE='peak-season-D0.2-save-route-v2',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view-route-v2',LEGACY_VIEW='bao-yi-ba-view-legacy-route-v2';
+const SAVE='bao-yi-ba-D0.1-save-route-v2',SEASON_SAVE='peak-season-D0.2-save-route-v3',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view-route-v3',LEGACY_VIEW='bao-yi-ba-view-legacy-route-v2';
 // Internal beta: old maps cannot be resumed under the new route rules.
-try{for(const key of ['bao-yi-ba-D0.1-save','peak-season-D0.2-save','bao-yi-ba-view','bao-yi-ba-view-legacy'])localStorage.removeItem(key);}catch{}
+try{for(const key of ['bao-yi-ba-D0.1-save','peak-season-D0.2-save','bao-yi-ba-view','bao-yi-ba-view-legacy','peak-season-D0.2-save-route-v2','bao-yi-ba-view-route-v2'])localStorage.removeItem(key);}catch{}
 let state=null,atHome=true,hints=true,saveError='',saved=null,screen='map',selected=null,echo=null,dragging=null,pointerDrag=null,suppressClick=false,region='CN',turnAnimating=false;
 let libraryFilter='all',libraryRegionFilter='all';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -13396,7 +13419,7 @@ function home(){
      <a class="text-button" href="/">选择版本</a>
      ${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="text-button" href="/new/">新demo</a>` : ''}
    </div>
-   <p class="title-note">四大赛区 · 300 张赛区牌 · 三幕 × 16 站</p>
+   <p class="title-note">四大赛区 · 300 张赛区牌 · 三幕 × 12 站</p>
    ${saveError?`<p class="warning">${esc(saveError)}</p>`:''}
    <footer class="cover-footer">猪之家出品</footer>
  </section>
@@ -13421,9 +13444,9 @@ function seasonRoute(){
  const s=state,nodes=routeNodes(s),lookup=new Map(nodes.map(n=>[n.key,n])),choices=nodes.filter(n=>n.status==='current'),info=ACTS[s.act-1];
  const resume=!['map','result','intermission'].includes(s.phase);
  const done=nodes.filter(n=>n.status==='visited').length;
- const lines=s.map.edges.map(e=>{const a=lookup.get(e.from),b=lookup.get(e.to),taken=a.status==='visited'&&(b.status==='visited'||resume&&b.key===s.currentNode);return `<path class="${taken?'taken':a.key===s.currentNode&&b.status==='current'?'available':''}" d="M ${a.x*7} ${a.y*10} C ${a.x*7} ${(a.y-4)*10}, ${b.x*7} ${(b.y+4)*10}, ${b.x*7} ${b.y*10}"/>`;});
+ const lines=s.map.edges.map(e=>{const a=lookup.get(e.from),b=lookup.get(e.to),taken=a.status==='visited'&&(b.status==='visited'||resume&&b.key===s.currentNode);return `<path class="${taken?'taken':a.key===s.currentNode&&b.status==='current'?'available':''}" d="M ${a.x*7} ${a.y*6.2} C ${a.x*7} ${(a.y-4)*6.2}, ${b.x*7} ${(b.y+4)*6.2}, ${b.x*7} ${b.y*6.2}"/>`;});
  const itinerary=`<ol class="season-itinerary">${ACTS.map(a=>`<li class="${a.id===s.act?'active':a.id<s.act?'complete':''}"><b>${a.id<s.act?'✓':a.id}</b><span>${a.name}<small>${a.bossName}</small></span></li>`).join('')}</ol>`;
- return `<main class="map-screen season-map"><aside class="map-intro"><div class="eyebrow">ACT ${['I','II','III'][s.act-1]} / ${esc(REGIONS[s.region].name)}</div><h1>${info.name}</h1>${itinerary}<div class="map-progress"><b>${done}</b><span> / 16 站完成</span></div><div class="map-legend">${[['battle','比赛'],['elite','强敌'],['event','未知事件'],['shop','转会市场'],['rest','俱乐部活动'],['boss','世界赛']].map(([k,t])=>`<span>${icon(k)}${t}</span>`).join('')}</div><p class="map-instruction">${resume?'比赛与奖励尚未完成，可查看后续路线，再返回当前节点。':s.currentNode===null?'四个起点任选其一。之后只能沿连线向上前进。':'沿连线选择下一站。分叉会改变接下来的比赛和补强机会。'}</p>${s.phase!=='map'?ui(s.phase==='intermission'?'查看晋级与下一幕':s.phase==='result'?'查看赛季结算':'返回当前节点','return-room','primary'):''}</aside><div class="map-scroll"><div class="map-board season-board"><div class="map-watermark">ASCEND</div><svg class="map-paths" viewBox="0 0 700 1000" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes.map(n=>`<div class="map-stop ${n.status} kind-${n.kind}" style="left:${n.x}%;top:${n.y}%"><button data-map="${n.key}" ${n.status==='current'?'':'disabled'} aria-label="${n.status==='current'?(resume?'返回':'进入'):n.status==='visited'?'已完成':n.status==='bypassed'?'未选择':'未解锁'}：第 ${n.step} 站 ${esc(n.name)}">${icon(n.kind)}${n.status==='visited'?'<span class="visited-check">✓</span>':''}</button><span class="node-label">${esc(n.name)}</span>${n.status==='current'?`<small class="here-label">${resume?'正在进行':'可选下一站'}</small>`:''}</div>`).join('')}</div></div><aside class="map-current"><span class="eyebrow">赛季已走过 ${s.node} / 48 站</span><h3>${s.phase==='intermission'?'世界赛晋级':s.phase==='result'?'赛季结束':resume?'完成当前节点':`可选 ${choices.length} 条路线`}</h3><p>本幕终点：${info.bossName}。<br>强敌提供皮肤；俱乐部活动可恢复声望或训练；市场可招募与移除牌。</p><p>节点内容与连线随赛季种子生成。已进入的节点不会因刷新而改变。</p>${s.phase!=='map'?ui('返回当前进度','return-room','secondary'):''}</aside></main>`;
+ return `<main class="map-screen season-map"><aside class="map-intro"><div class="eyebrow">ACT ${['I','II','III'][s.act-1]} / ${esc(REGIONS[s.region].name)}</div><h1>${info.name}</h1>${itinerary}<div class="map-progress"><b>${done}</b><span> / 12 站完成</span></div><div class="map-legend">${[['battle','比赛'],['elite','强敌'],['event','未知事件'],['shop','转会市场'],['rest','俱乐部活动'],['boss','世界赛']].map(([k,t])=>`<span>${icon(k)}${t}</span>`).join('')}</div><p class="map-instruction">${resume?'比赛与奖励尚未完成，可查看后续路线，再返回当前节点。':s.currentNode===null?'四个起点任选其一。之后只能沿连线向上前进。':'沿连线选择下一站。分叉会改变接下来的比赛和补强机会。'}</p>${s.phase!=='map'?ui(s.phase==='intermission'?'查看晋级与下一幕':s.phase==='result'?'查看赛季结算':'返回当前节点','return-room','primary'):''}</aside><div class="map-scroll"><div class="map-board season-board"><div class="map-watermark">ASCEND</div><svg class="map-paths" viewBox="0 0 700 620" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes.map(n=>`<div class="map-stop ${n.status} kind-${n.kind}" style="left:${n.x}%;top:${n.y}%"><button data-map="${n.key}" ${n.status==='current'?'':'disabled'} aria-label="${n.status==='current'?(resume?'返回':'进入'):n.status==='visited'?'已完成':n.status==='bypassed'?'未选择':'未解锁'}：第 ${n.step} 站 ${esc(n.name)}">${icon(n.kind)}${n.status==='visited'?'<span class="visited-check">✓</span>':''}</button><span class="node-label">${esc(n.name)}</span>${n.status==='current'?`<small class="here-label">${resume?'正在进行':'可选下一站'}</small>`:''}</div>`).join('')}</div></div><aside class="map-current"><span class="eyebrow">赛季已走过 ${s.node} / 36 站</span><h3>${s.phase==='intermission'?'世界赛晋级':s.phase==='result'?'赛季结束':resume?'完成当前节点':`可选 ${choices.length} 条路线`}</h3><p>本幕终点：${info.bossName}。<br>强敌提供皮肤；俱乐部活动可恢复声望或训练；市场可招募与移除牌。</p><p>节点内容与连线随赛季种子生成。已进入的节点不会因刷新而改变。</p>${s.phase!=='map'?ui('返回当前进度','return-room','secondary'):''}</aside></main>`;
 }
 function targetOf(c){return effects(c).some(e=>['hit','weak','vulnerable'].includes(e.type))?'enemy':'self';}
 function handCard(c,i,n){const t=CARDS[c.id],reason=canPlay(state,c.uid),offset=i-(n-1)/2;return `<button class="hand-card role-${t.player?t.role:t.id.slice(0,2)} ${reason?'unplayable':''} ${c.up?'upgraded':''}" data-card-id="${c.id}" data-card-up="${!!c.up}" data-select="${c.uid}" draggable="false" style="--offset:${offset};--tilt:${offset*(n>6?1.6:3)}deg;--bend:${Math.abs(offset)*Math.abs(offset)*1.8}px;--order:${i}" aria-label="选择 ${esc(cardName(c))} · ${esc(TACTICS[c.id].title)}，${t.role}，${t.cost===null?'不能打出':t.cost+' 行动点'}，${esc(describe(c))}"><span class="card-face">${face(c)}</span><span class="card-key">${(i+1)%10}</span>${reason?`<span class="card-unavailable">${esc(reason)}</span>`:''}</button>`;}
@@ -13491,7 +13514,7 @@ function render(){
  refreshSelection();
  if(inMap)centerCurrentMap();
 }
-function centerCurrentMap(){const scroll=app.querySelector('.map-scroll'),node=app.querySelector('.map-stop.current');if(scroll&&node)scroll.scrollTo({top:Math.max(0,node.offsetTop-scroll.clientHeight/2),behavior:'auto'});}
+function centerCurrentMap(){const scroll=app.querySelector('.map-scroll'),node=app.querySelector('.map-stop.current');if(scroll&&node&&!app.querySelector('.season-map'))scroll.scrollTo({top:Math.max(0,node.offsetTop-scroll.clientHeight/2),behavior:'auto'});}
 window.addEventListener('resize',()=>requestAnimationFrame(centerCurrentMap));
 function refreshSelection(){
  const c=state?.battle?.hand.find(c=>c.uid===selected),panel=document.querySelector('#selection-panel');

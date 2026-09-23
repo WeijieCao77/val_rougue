@@ -6,23 +6,23 @@ import {createSeason,act,instance,startBattle,preview,replay,offers,intent,drawC
 import {CARDS,REGIONS,compactLines,TACTICS,effects} from '../content.js';
 import {routeNodes,mapEntry,nextScreen,restoreScreen} from '../navigation.js';
 const step=(s,a)=>{const r=act(s,a);assert.equal(r.error,null);return r.state;};
-function bossFixture(actNo,skins=[]){const s=createSeason('fixture');s.act=actNo;s.map=buildMap(s.seed,actNo);s.currentNode=s.map.bossId;s.node=actNo*16;s.hp=31;s.skins=skins;startBattle(s,s.map.nodes.find(n=>n.key===s.currentNode).enemy);s.battle.enemyHp=1;s.battle.hand=[instance(s,'CN03')];return s;}
+function bossFixture(actNo,skins=[]){const s=createSeason('fixture');s.act=actNo;s.map=buildMap(s.seed,actNo);s.currentNode=s.map.bossId;s.node=actNo*12;s.hp=31;s.skins=skins;startBattle(s,s.map.nodes.find(n=>n.key===s.currentNode).enemy);s.battle.enemyHp=1;s.battle.hand=[instance(s,'CN03')];return s;}
 test('300 maps have unique connected nodes, upward noncrossing branches and room variety',()=>{
  const signatures=new Set();
  for(let actNo=1;actNo<=3;actNo++)for(let i=0;i<100;i++){
   const m=buildMap('route-'+i,actNo),by=new Map(m.nodes.map(n=>[n.key,n]));assert.equal(by.size,m.nodes.length);assert.equal(m.starts.length,4);
-  const widths=Array.from({length:15},(_,row)=>m.nodes.filter(n=>n.step===row+1).length);
+  const widths=Array.from({length:11},(_,row)=>m.nodes.filter(n=>n.step===row+1).length);
   assert.ok(widths.every(width=>width>=3&&width<=6));assert.ok(Math.max(...widths)>=5);assert.ok(new Set(widths).size>=2);
-  assert.ok(new Set(m.nodes.filter(n=>n.step<16).map(n=>n.lane)).size>=5);
+  assert.ok(new Set(m.nodes.filter(n=>n.step<12).map(n=>n.lane)).size>=5);
   assert.deepEqual(m,buildMap('route-'+i,actNo));
   const kinds=new Set(m.nodes.map(n=>n.kind));for(const k of ['battle','elite','event','shop','rest','boss'])assert.ok(kinds.has(k),`${actNo}/${i}/${k}`);
   const reachable=new Set(m.starts);for(const n of m.nodes)if(reachable.has(n.key))for(const e of m.edges)if(e.from===n.key)reachable.add(e.to);assert.equal(reachable.size,m.nodes.length);
-  for(const n of m.nodes){assert.ok(n.x>=8&&n.x<=92&&n.y>=5&&n.y<=95);if(n.kind!=='boss')assert.ok(m.edges.some(e=>e.from===n.key));if(n.step===15)assert.equal(n.kind,'rest');}
-  for(const e of m.edges){const a=by.get(e.from),b=by.get(e.to);assert.equal(b.step,a.step+1);assert.ok(b.y<a.y);assert.ok(!(a.kind==='elite'&&b.kind==='elite'));
+  for(const n of m.nodes){assert.ok(n.x>=8&&n.x<=92&&n.y>=5&&n.y<=95);if(n.kind!=='boss')assert.ok(m.edges.some(e=>e.from===n.key));if(n.step===6)assert.equal(n.kind,'shop');if(n.step===11)assert.equal(n.kind,'rest');if(n.step===12)assert.equal(n.kind,'boss');}
+  for(const e of m.edges){const a=by.get(e.from),b=by.get(e.to);assert.equal(b.step,a.step+1);assert.ok(b.y<a.y);assert.ok(!(['elite','shop','rest'].includes(a.kind)&&a.kind===b.kind));
    for(const f of m.edges){const c=by.get(f.from),d=by.get(f.to);if(a.step===c.step)assert.ok((a.x-c.x)*(b.x-d.x)>=0,'crossing edges');}
   }
-  assert.ok(m.nodes.filter(n=>n.step<15&&m.edges.filter(e=>e.from===n.key).length>1).length>=3);
-  assert.ok(m.nodes.some(n=>n.step<16&&m.edges.filter(e=>e.to===n.key).length>1));
+  assert.ok(m.nodes.filter(n=>n.step<11&&m.edges.filter(e=>e.from===n.key).length>1).length>=3);
+  assert.ok(m.nodes.some(n=>n.step<12&&m.edges.filter(e=>e.to===n.key).length>1));
   signatures.add(JSON.stringify(m.edges));
  }
  assert.equal(signatures.size,300);
@@ -81,7 +81,7 @@ test('rest is a choice and event target selection is atomic',()=>{
  s.phase='event';s.eventId='training';const uid=s.deck[0].uid,before=JSON.stringify(s.deck),money=s.money;s=step(s,{type:'seasonEvent',choice:'paid'});s=step(s,{type:'eventBack'});assert.equal(s.money,money);assert.equal(JSON.stringify(s.deck),before);
  s=step(s,{type:'seasonEvent',choice:'risky'});const invalid=act(s,{type:'eventUpgrade',uid:'not-here'});assert.ok(invalid.error);assert.equal(invalid.state,s);s=step(s,{type:'eventUpgrade',uid});assert.equal(s.deck.find(c=>c.uid===uid).up,true);assert.ok(s.deck.some(c=>c.id==='CU01'));
 });
-test('all four regions complete the 48-room state machine (combat victories are fixtures, not balance evidence)',()=>{
+test('all four regions complete the 36-room state machine (combat victories are fixtures, not balance evidence)',()=>{
  for(const region of Object.keys(REGIONS)){
   let s=createSeason('structure',false,region);
   for(let steps=0;steps<180&&s.phase!=='result';steps++){
@@ -97,7 +97,7 @@ test('all four regions complete the 48-room state machine (combat victories are 
    else assert.fail(s.phase);
    s=JSON.parse(JSON.stringify(s));
   }
-  assert.equal(s.outcome,'win');assert.equal(s.act,3);assert.equal(s.node,48);assert.equal(s.completed.length,48);assert.equal(new Set(s.completed).size,48);assert.ok(s.deck.some(c=>c.up));
+  assert.equal(s.outcome,'win');assert.equal(s.act,3);assert.equal(s.node,36);assert.equal(s.completed.length,36);assert.equal(new Set(s.completed).size,36);assert.ok(s.deck.some(c=>c.up));
  }
 });
 test('new route actions replay deterministically without fixture mutations',()=>{

@@ -6,10 +6,10 @@ import { captureCombatPresentation, animateCombatTransition, clearCombatPresenta
 import { attachCardGesture } from '/shared/card-gesture.js';
 import { flyCardsFromPile, flyCardsToPile } from '/shared/card-pile-motion.js';
 
-const STORAGE_KEY = 'new-demo-run-route-v2';
+const STORAGE_KEY = 'new-demo-run-route-v3';
 const GUIDE_KEY = 'new-demo-guide-v2-';
 // Internal beta: discard runs created with the previous route layout.
-try { localStorage.removeItem('new-demo-run-v1'); } catch {}
+try { for (const key of ['new-demo-run-v1', 'new-demo-run-route-v2']) localStorage.removeItem(key); } catch {}
 let state = null;
 let previousState = null;
 let selectedCardUid = null;
@@ -288,7 +288,7 @@ function renderMap(root) {
   const legal = legalActions(state).filter(a => a.type === 'enter');
   const availableKeys = new Set(legal.map(a => a.key));
 
-  const w = 400, h = 880;
+  const w = 400, h = 520;
   const scaleX = w / 100;
   const scaleY = h / 100;
   const sx = (x) => x * scaleX;
@@ -319,7 +319,7 @@ function renderMap(root) {
     <div class="map-container">
       ${guideStrip('map', '先点亮起的节点开赛。每场胜利后挑一张新牌；路线会分叉，选安全补给还是挑战强敌由你决定。')}
       <div class="map-stage-info">
-        <span>幕 ${state.act}：${act.name} · ${act.subtitle}</span>
+        <span>幕 ${state.act}：${act.name} · ${act.subtitle} · ${state.completed.filter(key => state.map.nodes.some(node => node.key === key)).length}/12 站</span>
         <span>HP ${state.hp}/${state.maxHp} · 💰 ${state.money}</span>
       </div>
       <div class="map-quick-legend" aria-label="路线图标说明">⚔ 比赛　☠ 强敌　? 事件　⇄ 补给　✚ 休整　👑 决赛</div>
