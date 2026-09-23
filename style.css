@@ -607,6 +607,8 @@ dialog{color:var(--ink);border:1px solid #a99567;border-radius:8px;background:li
 .enemy-turn-banner{position:absolute;z-index:80;left:50%;top:8%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;min-width:180px;padding:12px 24px;border:1px solid #ce9e67;border-radius:8px;background:#281d19ed;box-shadow:0 10px 35px #000a,0 0 32px #bb724655;color:#f8dbc1;pointer-events:none;animation:enemy-turn-in .25s ease-out}
 .enemy-turn-banner strong{font-size:20px;letter-spacing:4px}.enemy-turn-banner span{font-size:11px;color:#d5ad92}
 @keyframes enemy-turn-in{from{opacity:0;transform:translate(-50%,-15px)}to{opacity:1;transform:translate(-50%,0)}}
+.cfx-muzzle,.cfx-bullet{position:fixed;z-index:2002;pointer-events:none;border-radius:50%}
+.cfx-muzzle{width:26px;height:26px;filter:blur(2px)}.cfx-bullet{width:8px;height:8px}
 
 /* Cover page styles, scoped to body.home-mode */
 

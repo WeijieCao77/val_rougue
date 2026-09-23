@@ -220,6 +220,16 @@ function animateCardFlight(session, clone, from, to, options = {}) {
   session.timers.push(impactTimer);
 }
 
+// added helper to get card type
+function getCardType(card) {
+  if (!card) return 'other';
+  const def = CARDS[card.id];
+  if (!def) return 'other';
+  if (def.type && def.type.includes('attack')) return 'attack';
+  if (def.type && (def.type.includes('block') || def.type.includes('skill') || def.type.includes('power'))) return 'defense';
+  return 'other';
+}
+
 export async function animateCombatTransition(prevState, nextState, action, capture) {
   clearCombatPresentation();
   const prev = prevState;

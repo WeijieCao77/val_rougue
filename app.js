@@ -3500,7 +3500,7 @@ function animateElement(el, keyframes, options) {
   anim.finished.then(() => el.remove()).catch(() => el.remove());
   return anim;
 }
-function spawnRay(container, from, to, color, label, absorbed, lane) {
+function spawnRay(container, from, to, color, label, absorbed, lane, targetSide) {
   if (!from || !to) return;
   const dx = to.x - from.x;
   const dy = to.y - from.y;
@@ -3515,6 +3515,10 @@ function spawnRay(container, from, to, color, label, absorbed, lane) {
   ray.style.background = `linear-gradient(90deg, transparent, ${color}, transparent)`;
   ray.style.transformOrigin = '0 50%';
   container.appendChild(ray);
+  const muzzle=createElement('div','cfx-muzzle');muzzle.style.left=`${from.x}px`;muzzle.style.top=`${from.y}px`;muzzle.style.background=color;container.appendChild(muzzle);
+  animateElement(muzzle,[{opacity:1,transform:'translate(-50%,-50%) scale(.4)'},{opacity:0,transform:'translate(-50%,-50%) scale(2)'}],{duration:200,easing:'ease-out'});
+  const bullet=createElement('div','cfx-bullet');bullet.style.left=`${from.x}px`;bullet.style.top=`${from.y}px`;bullet.style.background=color;bullet.style.boxShadow=`0 0 16px 5px ${color}`;container.appendChild(bullet);
+  animateElement(bullet,[{opacity:1,transform:'translate(-50%,-50%)'},{opacity:1,transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`}],{duration:270,easing:'ease-in'});
   const rayAnim = ray.animate([
     { opacity: 0, transform: `rotate(${angle}deg) scaleX(0.4)` },
     { opacity: 1, transform: `rotate(${angle}deg) scaleX(1)` },
@@ -3523,6 +3527,7 @@ function spawnRay(container, from, to, color, label, absorbed, lane) {
   fxAnimations.push(rayAnim);
   rayAnim.finished.then(() => ray.remove()).catch(() => ray.remove());
   later(() => {
+    globalThis.characterStages?.cue?.(targetSide,label?'hit':'defend');
     const spark = createElement('div', 'cfx-spark');
     spark.style.left = `${to.x}px`;
     spark.style.top = `${to.y}px`;
@@ -3555,7 +3560,7 @@ function spawnRay(container, from, to, color, label, absorbed, lane) {
         { opacity: 0, transform: 'translate(-50%, -35px)' }
       ], { duration: 900, easing: 'ease-out' });
     }
-  }, 180);
+  }, 270);
 }
 function spawnDefense(container, targetPos, targetEl, amount, side) {
   const barrier = createElement('div', 'cfx-barrier');
@@ -3691,7 +3696,7 @@ function playCombatFx(events, snapshot) {
           const from = evt.source === 'ally' ? positions.ally : positions.enemy;
           const to = evt.source === 'ally' ? positions.enemy : positions.ally;
           const label = evt.damage>0?`−${evt.damage}`:'';
-          spawnRay(container, from, to, evt.source === 'ally' ? '#f5d17c' : '#ff826f', label, evt.absorbed,index%3);
+          spawnRay(container, from, to, evt.source === 'ally' ? '#f5d17c' : '#ff826f', label, evt.absorbed,index%3,evt.target);
           break;
         }
         case 'defense':
@@ -4394,12 +4399,15 @@ function commit(action){
  if(action.type==='end'&&before.phase==='combat'){
   turnAnimating=true;hideCardTip();
   const arena=document.querySelector('.arena');
-  const banner=document.createElement('div');banner.className='enemy-turn-banner';banner.innerHTML='<strong>对手回合</strong><span>对手正在执行战术</span>';
+  const banner=document.createElement('div');banner.className='enemy-turn-banner';banner.innerHTML='<strong>结束回合</strong><span>未用手牌进入弃牌堆</span>';
   arena?.append(banner);
   document.querySelector('.combat-screen')?.setAttribute('inert','');
+  const oldHand=[...document.querySelectorAll('.hand-fan [data-select]')],discard=document.querySelector('.discard-pile')?.getBoundingClientRect();
+  if(!reduceMotion()&&discard)oldHand.forEach((el,i)=>{const rect=el.getBoundingClientRect();el.animate([{opacity:1,translate:'0 0',scale:'1'},{opacity:0,translate:`${discard.left+discard.width/2-rect.left-rect.width/2}px ${discard.top+discard.height/2-rect.top-rect.height/2}px`,scale:'.2'}],{duration:320,delay:i*75,easing:'ease-in',fill:'forwards'});});
+  const enemyAt=reduceMotion()?220:Math.max(580,oldHand.length*75+320);
   const events=combatEvents(before,r.state,action);
-  setTimeout(()=>{banner.querySelector('span').textContent='攻击结算';playCombatFx(events,stage);globalThis.characterStages?.cueFromTransition('wa',before,r.state,action);},420);
-  setTimeout(()=>{turnAnimating=false;state=r.state;screen=nextScreen(before,state);selected=null;echo=null;dialog.close();persist();notice(saveError||'');render();if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);animateResolution(before,state,null,null,action);},1750);
+  setTimeout(()=>{banner.querySelector('strong').textContent='对手回合';banner.querySelector('span').textContent='攻击结算';playCombatFx(events,stage);globalThis.characterStages?.cueFromTransition('wa',before,r.state,action);},enemyAt);
+  setTimeout(()=>{state=r.state;screen=nextScreen(before,state);selected=null;echo=null;dialog.close();persist();notice(saveError||'');render();if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);const drawn=[...document.querySelectorAll('.hand-fan [data-select]')];if(!reduceMotion()&&drawn.length){const source=document.querySelector('.draw-pile')?.getBoundingClientRect();drawn.forEach((el,i)=>{const rect=el.getBoundingClientRect(),dx=source?source.left+source.width/2-rect.left-rect.width/2:0,dy=source?source.top+source.height/2-rect.top-rect.height/2:60;el.style.opacity='0';const animation=el.animate([{opacity:0,translate:`${dx}px ${dy}px`,scale:'.25'},{opacity:1,translate:'0 0',scale:'1'}],{duration:330,delay:i*115,easing:'cubic-bezier(.2,.8,.2,1)',fill:'forwards'});animation.finished.finally(()=>{el.style.opacity='';animation.cancel();}).catch(()=>{});});setTimeout(()=>{turnAnimating=false;},drawn.length*115+350);}else turnAnimating=false;},enemyAt+(reduceMotion()?420:1100));
   return r;
  }
  state=r.state;screen=nextScreen(before,state);selected=null;echo=played||null;dialog.close();persist();notice(saveError||'');render();
@@ -4606,11 +4614,10 @@ function updateAim(d,e){
 }
 function animateResolution(before,after,played,flight,action){
  if(reduceMotion())return;
- const own=document.querySelector('.fighter.ally'),enemy=document.querySelector('.fighter.enemy');
  if(played&&flight){
-  const destination=(targetOf(played)==='enemy'?enemy:own)?.getBoundingClientRect();
-  if(destination){const el=document.createElement('div');el.className='card-flight '+flight.role;el.setAttribute('aria-hidden','true');el.innerHTML=flight.html;Object.assign(el.style,{left:flight.rect.left+'px',top:flight.rect.top+'px',width:flight.rect.width+'px',height:flight.rect.height+'px'});document.body.append(el);el.animate([{transform:'translate(0,0) scale(1)',opacity:.9},{transform:`translate(${destination.x+destination.width/2-flight.rect.x-flight.rect.width/2}px,${destination.y-flight.rect.y}px) scale(.35)`,opacity:0}],{duration:340,easing:'cubic-bezier(.2,.8,.3,1)'}).finished.then(()=>el.remove()).catch(()=>el.remove());}
   const zone=CARDS[played.id].zone,pile=document.querySelector(zone==='power'?'.active-powers':['exhaust','temporary'].includes(zone)?'.exhaust-link':'.discard-pile');
+  const center=document.querySelector('.arena-center')?.getBoundingClientRect(),end=pile?.getBoundingClientRect();
+  if(center){const rect=flight.rect,el=document.createElement('div');el.className='card-flight '+flight.role;el.setAttribute('aria-hidden','true');el.innerHTML=flight.html;Object.assign(el.style,{left:rect.left+'px',top:rect.top+'px',width:rect.width+'px',height:rect.height+'px'});document.body.append(el);const cx=center.left+center.width/2-rect.left-rect.width/2,cy=center.top+center.height/2-rect.top-rect.height/2,px=end?end.left+end.width/2-rect.left-rect.width/2:cx,py=end?end.top+end.height/2-rect.top-rect.height/2:cy;el.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${cx}px,${cy}px) scale(.7)`,opacity:1,offset:.38},{transform:`translate(${cx}px,${cy}px) scale(.7)`,opacity:1,offset:.56},{transform:`translate(${px}px,${py}px) scale(.2)`,opacity:0}],{duration:690,easing:'ease-in-out'}).finished.finally(()=>el.remove()).catch(()=>el.remove());}
   pile?.animate([{filter:'brightness(2)',transform:'scale(1.08)'},{filter:'brightness(1)',transform:'scale(1)'}],{duration:360});
  }
  const old=new Set(before.battle?.hand.map(c=>c.uid)||[]);
@@ -4667,7 +4674,7 @@ function endDrag(e,cancel=false){
 app.addEventListener('pointerup',e=>endDrag(e));
 app.addEventListener('pointercancel',e=>endDrag(e,true));
 document.addEventListener('keydown',e=>{
- if(dialog.open||atHome||screen!=='room'||state?.phase!=='combat'||e.target.matches('input,textarea')||e.repeat)return;
+ if(turnAnimating||dialog.open||atHome||screen!=='room'||state?.phase!=='combat'||e.target.matches('input,textarea')||e.repeat)return;
  if(/^[0-9]$/.test(e.key)){const c=state.battle.hand[e.key==='0'?9:Number(e.key)-1];if(c){e.preventDefault();selected=c.uid;refreshSelection();showCardTip(document.querySelector(`[data-select="${c.uid}"]`));}}
  if(e.key==='Escape'){hideCardTip();selected=null;refreshSelection();}
  if(e.key==='Enter'&&selected&&!e.target.closest('button:not([data-select])')){e.preventDefault();commit({type:'play',uid:selected,rev:state.rev});}

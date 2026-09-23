@@ -1,12 +1,34 @@
 // shared/character-stage-source.js
-// Three.js low-poly cartoon tactical squad: shared module for both demos.
-// Exposes mountCharacterStage, playCharacterCue, clearCharacterStages.
-// Handles WebGL fallback, reduced motion, resize, frequent re-renders, and disposal.
+// Three.js character stage using Quaternius Toon Shooter GLB models.
+// Exports mountCharacterStage, playCharacterCue, clearCharacterStages.
+// Handles WebGL fallback, reduced motion, resize, loading, and disposal.
 
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 
 // -----------------------------------------------------------------------------
-// Internal state registry
+// Global model cache (shared geometry/material across instances)
+// -----------------------------------------------------------------------------
+const modelCache = new Map(); // url -> Promise<{ scene, animations }>
+const loader = new GLTFLoader();
+
+function loadModel(url) {
+  if (!modelCache.has(url)) {
+    const promise = loader.loadAsync(url).then((gltf) => {
+      const processed = {
+        scene: gltf.scene,
+        animations: gltf.animations || [],
+      };
+      return processed;
+    });
+    modelCache.set(url, promise);
+  }
+  return modelCache.get(url);
+}
+
+// -----------------------------------------------------------------------------
+// Internal state
 // -----------------------------------------------------------------------------
 const stages = new Map(); // container -> record
 let fallbackActive = false;
@@ -14,26 +36,16 @@ let fallbackActive = false;
 // -----------------------------------------------------------------------------
 // Public API
 // -----------------------------------------------------------------------------
-
-/**
- * Mount a 3D character stage into the given container.
- * @param {HTMLElement} container - DOM element to host the stage.
- * @param {Object} options
- * @param {'ally'|'enemy'} options.side - Which side the squad belongs to.
- * @param {string} options.variant - Visual variant string.
- * @param {boolean} [options.block] - If true, squad starts with armor visible.
- * @returns {() => void} Cleanup function.
- */
 export function mountCharacterStage(container, { side = 'ally', variant = 'default', block = false } = {}) {
   if (!container || typeof container.appendChild !== 'function') {
     throw new Error('mountCharacterStage requires a valid DOM container.');
   }
 
-  // Clean up any existing stage in this container and any stale stages
+  // Clean up any existing stage in this container
   if (stages.has(container)) {
     stages.get(container).cleanup();
   }
-  // Remove any stages whose container is no longer in the document
+  // Remove stale stages whose containers are no longer in the document
   for (const [existingContainer, record] of stages.entries()) {
     if (!document.contains(existingContainer)) {
       record.cleanup();
@@ -43,7 +55,7 @@ export function mountCharacterStage(container, { side = 'ally', variant = 'defau
   // Check WebGL support
   if (fallbackActive || !isWebGLAvailable()) {
     fallbackActive = true;
-    showFallback(container, side, variant);
+    showStaticFallback(container, side, variant);
     const cleanup = () => {
       container.innerHTML = '';
       stages.delete(container);
@@ -60,11 +72,10 @@ export function mountCharacterStage(container, { side = 'ally', variant = 'defau
   } catch (err) {
     console.error('Three.js character stage creation failed:', err);
     fallbackActive = true;
-    // Cleanup partial record if any
     if (stages.has(container)) {
       stages.get(container).cleanup();
     }
-    showFallback(container, side, variant);
+    showStaticFallback(container, side, variant);
     const cleanup = () => {
       container.innerHTML = '';
       stages.delete(container);
@@ -75,23 +86,14 @@ export function mountCharacterStage(container, { side = 'ally', variant = 'defau
   }
 }
 
-/**
- * Play a visual cue on the mounted stage.
- * @param {'ally'|'enemy'} side - Which side's stage to target.
- * @param {string} cue - One of 'attack', 'hit', 'defend', 'idle'.
- */
 export function playCharacterCue(side, cue) {
   for (const [container, record] of stages.entries()) {
     if (record.container === container && record.side === side && !record.fallback) {
       record.triggerCue(cue);
     }
   }
-  // Fallback: no-op
 }
 
-/**
- * Dispose all mounted stages.
- */
 export function clearCharacterStages() {
   for (const [, record] of stages.entries()) {
     try {
@@ -104,7 +106,7 @@ export function clearCharacterStages() {
 }
 
 // -----------------------------------------------------------------------------
-// Internal: WebGL detection
+// WebGL detection
 // -----------------------------------------------------------------------------
 function isWebGLAvailable() {
   try {
@@ -119,10 +121,9 @@ function isWebGLAvailable() {
 }
 
 // -----------------------------------------------------------------------------
-// Internal: Fallback SVG
+// Static SVG fallback (used when WebGL fails or during initial load)
 // -----------------------------------------------------------------------------
-function showFallback(container, side, variant) {
-  // Static low-poly SVG representing the squad. Does not replace any existing SVG content.
+function showStaticFallback(container, side, variant) {
   const color = side === 'ally' ? '#4a7a8c' : '#8c4a4a';
   const variantColor = variant === 'default' ? color : shadeColor(color, (hashString(variant) % 40) - 20);
   const svg = `
@@ -142,7 +143,6 @@ function showFallback(container, side, variant) {
       </g>
       <text x="60" y="75" font-size="8" fill="#888" text-anchor="middle">${side === 'ally' ? 'ALLY' : 'ENEMY'}</text>
     </svg>`;
-  // Instead of replacing innerHTML (which would destroy any existing SVG), append a fallback div.
   const fallbackDiv = document.createElement('div');
   fallbackDiv.className = 'character-stage-fallback';
   fallbackDiv.style.width = '100%';
@@ -170,10 +170,10 @@ function hashString(str) {
 }
 
 // -----------------------------------------------------------------------------
-// Internal: Three.js stage creation
+// Three.js stage creation
 // -----------------------------------------------------------------------------
 function createThreeStage(container, side, variant, block) {
-  // Set up renderer
+  // Renderer
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   const initialWidth = container.clientWidth || 200;
@@ -188,127 +188,290 @@ function createThreeStage(container, side, variant, block) {
   canvas.style.pointerEvents = 'none';
   container.appendChild(canvas);
 
+  // Loading overlay (SVG placeholder)
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.style.position = 'absolute';
+  loadingOverlay.style.top = '0';
+  loadingOverlay.style.left = '0';
+  loadingOverlay.style.width = '100%';
+  loadingOverlay.style.height = '100%';
+  loadingOverlay.style.pointerEvents = 'none';
+  loadingOverlay.innerHTML = `
+    <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
+      <rect x="45" y="35" width="30" height="10" fill="#ccc" rx="2">
+        <animate attributeName="opacity" values="0.5;1;0.5" dur="1.2s" repeatCount="indefinite" />
+      </rect>
+      <text x="60" y="25" font-size="8" fill="#888" text-anchor="middle">Loading...</text>
+    </svg>`;
+  container.appendChild(loadingOverlay);
+
   // Scene and camera
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, initialWidth / initialHeight || 1.3, 0.1, 100);
-  camera.position.set(0, 1.55, initialWidth / initialHeight < 1.65 ? 5.2 : 4.35);
-  camera.lookAt(0, 1.05, 0);
+  camera.position.set(0, 1.55, initialWidth / initialHeight < 1.65 ? 4.6 : 4.7);
+  camera.lookAt(0, 1.15, 0);
 
   // Lighting
-  const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.85);
   scene.add(ambient);
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
   dirLight.position.set(2, 3, 4);
   scene.add(dirLight);
+  const rimLight = new THREE.DirectionalLight(side === 'ally' ? 0x86d9f6 : 0xff8b73, 1.1);
+  rimLight.position.set(-2, 2, -2);
+  scene.add(rimLight);
 
-  // Group for squad
+  // Squad group
   const squadGroup = new THREE.Group();
-  squadGroup.scale.setScalar(1.4);
+  squadGroup.scale.setScalar(1.0);
   scene.add(squadGroup);
 
-  // Build characters and position them to avoid overlap
-  const characters = buildSquad(side, variant);
-  characters.forEach((charGroup, index) => {
-    charGroup.position.x = (index - 1) * 1.2;
-    charGroup.position.z = -0.2 * index; // slight stagger
-    squadGroup.add(charGroup);
+  // Character data holders
+  const characters = []; // each: { group, mixer, actions, baseTransform, userData }
+  const armorIndicators = []; // per character, toggled by block/defend
+
+  // Add armor indicators (transparent rings at feet to avoid covering character)
+  function createArmorIndicator(parent) {
+    const ringGeo = new THREE.TorusGeometry(0.45, 0.05, 8, 24);
+    const ringMat = new THREE.MeshStandardMaterial({ color: 0x88aacc, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 0.02;
+    parent.add(ring);
+    return ring;
+  }
+
+  // Build characters asynchronously
+  const buildPromise = buildSquadModels(side, variant).then((builtSquad) => {
+    if (disposed) {
+      builtSquad.forEach(({ group, mixer }) => {
+        mixer?.stopAllAction();
+        group.traverse((obj) => {
+          if (!obj.isMesh) return;
+          const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+          materials.forEach((mat) => { if (mat?.userData?.isClone) mat.dispose(); });
+        });
+      });
+      return;
+    }
+    builtSquad.forEach((built, index) => {
+      const charGroup = built.group;
+      charGroup.scale.multiplyScalar(index === 1 ? 1.16 : 0.88);
+      charGroup.position.x = (index - 1) * 1.16;
+      charGroup.position.z = index === 1 ? 0.25 : -0.16;
+      squadGroup.add(charGroup);
+
+      const armorRing = createArmorIndicator(charGroup);
+      armorRing.visible = block;
+      armorIndicators.push(armorRing);
+
+      const userDataObj = {
+        defaultActionName: built.defaultActionName,
+        fallbackTransform: built.fallbackTransform || false,
+        baseY: charGroup.position.y,
+        baseArmLeftRotZ: 0,
+        baseArmRightRotZ: 0,
+        leftArm: null,
+        rightArm: null,
+      };
+      characters.push({
+        group: charGroup,
+        mixer: built.mixer,
+        actions: built.actions,
+        basePosition: new THREE.Vector3(charGroup.position.x, charGroup.position.y, charGroup.position.z),
+        baseRotation: charGroup.rotation.clone(),
+        baseScale: charGroup.scale.clone(),
+        userData: userDataObj,
+      });
+
+      // Automatically play idle or idle_shoot for each character
+      if (built.mixer) {
+        const defaultAction = built.actions[built.defaultActionName];
+        if (defaultAction) {
+          defaultAction.reset().fadeIn(0.2).play();
+        }
+      }
+    });
+
+    // Remove loading overlay
+    if (loadingOverlay.parentNode === container) {
+      container.removeChild(loadingOverlay);
+    }
+  }).catch((err) => {
+    console.error('Model loading failed:', err);
+    if (disposed) return;
+    // Fallback to static SVG if models cannot load
+    if (loadingOverlay.parentNode === container) {
+      container.removeChild(loadingOverlay);
+    }
+    showStaticFallback(container, side, variant);
+    // Clean up partially created stage
+    cleanup();
   });
 
-  // Armor meshes: always build, but hide initially unless block=true
-  const armorMeshes = addArmorToSquad(squadGroup, side);
-  armorMeshes.forEach((mesh) => (mesh.visible = block));
-
-  // Idle animation data: we'll use manual bobbing via RAF, no AnimationMixer
+  // Animation state
   let rafId = null;
   let disposed = false;
+  const clock = new THREE.Clock();
   let currentCue = null;
   let cueStartTime = null;
-  const cueDuration = 500; // ms
+  const cueDuration = 500;
   let lastTime = 0;
-  let idleTime = 0;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Store base positions for animation
-  characters.forEach((charGroup) => {
-    charGroup.userData.baseY = charGroup.position.y;
-    charGroup.userData.baseScale = 1;
-    charGroup.userData.baseArmLeftRotZ = charGroup.userData.leftArm.rotation.z;
-    charGroup.userData.baseArmRightRotZ = charGroup.userData.rightArm.rotation.z;
-  });
-
-  // Pose application
-  const applyPose = (pose, progress) => {
-    characters.forEach((charGroup) => {
-      const data = charGroup.userData;
-      if (!data) return;
-      if (pose.armsUp !== undefined) {
+  // Fallback transform animation helpers (if no GLB animations available)
+  const applyFallbackPose = (pose, progress) => {
+    characters.forEach((char) => {
+      const data = char.userData;
+      if (pose.armsUp !== undefined && data.leftArm) {
         const target = pose.armsUp ? Math.PI / 2 : data.baseArmRightRotZ;
         data.rightArm.rotation.z = THREE.MathUtils.lerp(data.baseArmRightRotZ, target, progress);
       }
       if (pose.jump !== undefined) {
-        charGroup.position.y = THREE.MathUtils.lerp(0, pose.jump ? 0.3 : 0, progress);
+        char.group.position.y = THREE.MathUtils.lerp(0, pose.jump ? 0.3 : 0, progress);
       }
       if (pose.scale !== undefined) {
-        charGroup.scale.setScalar(THREE.MathUtils.lerp(1, pose.scale, progress));
+        char.group.scale.setScalar(THREE.MathUtils.lerp(1, pose.scale, progress));
       }
     });
     if (pose.armor !== undefined) {
-      armorMeshes.forEach((mesh) => (mesh.visible = pose.armor));
+      armorIndicators.forEach((ring) => (ring.visible = pose.armor));
     }
   };
 
-  const resetPose = () => {
-    characters.forEach((charGroup) => {
-      const data = charGroup.userData;
-      if (!data) return;
-      charGroup.position.y = 0;
-      charGroup.scale.setScalar(1);
-      data.rightArm.rotation.z = data.baseArmRightRotZ;
-      data.leftArm.rotation.z = data.baseArmLeftRotZ;
+  const resetFallbackPose = () => {
+    characters.forEach((char) => {
+      const data = char.userData;
+      char.group.position.y = data.baseY;
+      char.group.scale.setScalar(1);
+      if (data.leftArm) {
+        data.leftArm.rotation.z = data.baseArmLeftRotZ;
+        data.rightArm.rotation.z = data.baseArmRightRotZ;
+      }
     });
-    armorMeshes.forEach((mesh) => (mesh.visible = block)); // return to initial block state
+    armorIndicators.forEach((ring) => (ring.visible = block));
   };
 
-  // Idle animation parameters
-  const idleAmplitude = 0.05; // vertical bob
-  const idleSpeed = 2.0; // radians per second
+  const triggerCue = (cue) => {
+    if (disposed || characters.length === 0) return;
+
+    // Reset any fallback pose
+    resetFallbackPose();
+
+    if (cue === 'idle') {
+      // Stop all actions and play default idle if available
+      characters.forEach((char) => {
+        if (char.mixer) {
+          char.mixer.stopAllAction();
+          const defaultAction = char.actions[char.userData.defaultActionName];
+          if (defaultAction) {
+            defaultAction.reset().fadeIn(0.2).play();
+          }
+        }
+      });
+      currentCue = null;
+      cueStartTime = null;
+      return;
+    }
+
+    // Determine animation name and fallback pose
+    let animName = null;
+    let fallbackPose = null;
+    switch (cue) {
+      case 'attack':
+        animName = 'Idle_Shoot';
+        fallbackPose = { armsUp: true, jump: false, scale: 1, armor: false };
+        break;
+      case 'hit':
+        animName = 'HitReact';
+        fallbackPose = { armsUp: false, jump: true, scale: 1, armor: false };
+        break;
+      case 'defend':
+        // Prefer Duck animation if available, else use Idle_Shoot as placeholder
+        if (characters.some((char) => char.actions['Duck'])) {
+          animName = 'Duck';
+        } else {
+          animName = 'Idle_Shoot';
+        }
+        fallbackPose = { armsUp: false, jump: false, scale: 1.05, armor: true };
+        break;
+      default:
+        animName = 'Idle';
+        fallbackPose = { armsUp: false, jump: false, scale: 1, armor: block };
+    }
+
+    let usedAnimation = false;
+    characters.forEach((char) => {
+      const action = char.actions[animName];
+      if (char.mixer && action) {
+        // Stop all actions except the one we want to play
+        char.mixer.stopAllAction();
+        action.reset().fadeIn(0.15).play();
+        // For non-looping cues, schedule return to idle after finish
+        if (cue !== 'idle') {
+          const onFinished = () => {
+            char.mixer.removeEventListener('finished', onFinished);
+            if (!disposed) {
+              char.mixer.stopAllAction();
+              const idleAction = char.actions[char.userData.defaultActionName];
+              if (idleAction) {
+                idleAction.reset().fadeIn(0.2).play();
+              }
+            }
+          };
+          char.mixer.addEventListener('finished', onFinished);
+          // Handle looped actions (like Idle_Shoot) by setting loopOnce then back to loop
+          if (action.loop === THREE.LoopRepeat) {
+            action.loop = THREE.LoopOnce;
+            action.clampWhenFinished = true;
+            // Note: after finish event, we revert to idle; but if we need to keep looping for attack, adjust logic accordingly.
+            // For attack, we want one shot, so LoopOnce is correct.
+          }
+        }
+        usedAnimation = true;
+      }
+    });
+
+    if (!usedAnimation) {
+      // Use fallback transform animation
+      currentCue = fallbackPose;
+      cueStartTime = performance.now();
+      applyFallbackPose(currentCue, 0);
+    } else {
+      currentCue = null;
+      cueStartTime = null;
+      // For defend, also show armor indicator
+      if (cue === 'defend') {
+        armorIndicators.forEach((ring) => (ring.visible = true));
+      } else if (cue === 'attack' || cue === 'hit') {
+        armorIndicators.forEach((ring) => (ring.visible = block));
+      }
+    }
+  };
 
   // Main animation loop
   const animate = () => {
     if (disposed) return;
     rafId = requestAnimationFrame(animate);
 
+    const delta = clock.getDelta();
     const now = performance.now();
-    const delta = Math.min((now - lastTime) / 1000, 0.1); // clamp to avoid jumps
-    lastTime = now;
 
-    // Pause when document hidden or reduced motion
-    if (document.hidden || reducedMotion) {
-      // Still render updates to keep frame fresh (camera etc) but don't advance idle/cue
-      renderer.render(scene, camera);
-      return;
-    }
-
-    // Update idle bob if no cue active
-    if (!currentCue) {
-      idleTime += delta * idleSpeed;
-      characters.forEach((charGroup, index) => {
-        // Slight phase offset per character
-        const offset = Math.sin(idleTime + index * 1.5) * idleAmplitude;
-        charGroup.position.y = offset;
+    if (!document.hidden && !reducedMotion) {
+      // Update mixers
+      characters.forEach((char) => {
+        if (char.mixer) {
+          char.mixer.update(delta);
+        }
       });
-    } else {
-      // Update active cue
-      const elapsed = now - cueStartTime;
-      const progress = Math.min(1, elapsed / cueDuration);
-      applyPose(currentCue, progress);
-      if (progress >= 1) {
-        // Cue complete, reset if not defend (defend holds until next cue or idle)
-        if (currentCue.hold) {
-          // For defend, keep armor visible and scale until idle/other cue
-          // Do nothing (hold)
-        } else {
-          resetPose();
+
+      // Fallback transform animation
+      if (currentCue) {
+        const elapsed = now - cueStartTime;
+        const progress = Math.min(1, elapsed / cueDuration);
+        applyFallbackPose(currentCue, progress);
+        if (progress >= 1) {
+          resetFallbackPose();
           currentCue = null;
           cueStartTime = null;
         }
@@ -316,74 +479,69 @@ function createThreeStage(container, side, variant, block) {
     }
 
     renderer.render(scene, camera);
+    lastTime = now;
   };
 
-  // Start loop
   lastTime = performance.now();
   animate();
 
   // Resize observer
   const resizeObserver = new ResizeObserver(() => {
-    if (disposed || !container.clientWidth || !container.clientHeight) {
-      // Container zero size: delay rendering, but don't render now
-      return;
-    }
+    if (disposed || !container.clientWidth || !container.clientHeight) return;
     renderer.setSize(container.clientWidth, container.clientHeight);
     camera.aspect = container.clientWidth / container.clientHeight;
     camera.updateProjectionMatrix();
   });
   resizeObserver.observe(container);
 
-  // Cue trigger function
-  const triggerCue = (cue) => {
-    if (disposed) return;
-    if (cue === 'idle') {
-      resetPose();
-      currentCue = null;
-      cueStartTime = null;
-      armorMeshes.forEach((mesh) => (mesh.visible = block));
-      return;
-    }
-    let pose;
-    switch (cue) {
-      case 'attack':
-        pose = { armsUp: true, jump: false, scale: 1, armor: false, hold: false };
-        break;
-      case 'hit':
-        pose = { armsUp: false, jump: true, scale: 1, armor: false, hold: false };
-        break;
-      case 'defend':
-        pose = { armsUp: false, jump: false, scale: 1.05, armor: true, hold: true };
-        break;
-      default:
-        pose = { armsUp: false, jump: false, scale: 1, armor: block, hold: false };
-    }
-    currentCue = pose;
-    cueStartTime = performance.now();
-    // Immediately apply zero progress
-    applyPose(pose, 0);
-  };
-
-  // Cleanup function
+  // Cleanup
   const cleanup = () => {
     if (disposed) return;
     disposed = true;
     if (rafId) cancelAnimationFrame(rafId);
     resizeObserver.disconnect();
-    // Dispose geometries/materials
+    // Stop all mixers
+    characters.forEach((char) => {
+      if (char.mixer) {
+        char.mixer.stopAllAction();
+        char.mixer.uncacheRoot(char.group);
+      }
+    });
+    // Dispose non-shared resources: cloned materials and armor ring geometries/materials
     squadGroup.traverse((obj) => {
       if (obj.isMesh) {
-        obj.geometry.dispose();
-        if (Array.isArray(obj.material)) {
-          obj.material.forEach((m) => m.dispose());
-        } else {
-          obj.material.dispose();
+        if (obj.userData.stageOwned) obj.geometry.dispose();
+        // Dispose cloned materials from tintMaterials
+        if (obj.material) {
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach((mat) => {
+              if (mat && mat.userData && mat.userData.isClone) {
+                mat.dispose();
+              }
+            });
+          } else {
+            if (obj.userData.stageOwned || (obj.material.userData && obj.material.userData.isClone)) {
+              obj.material.dispose();
+            }
+          }
         }
       }
+    });
+    // Also dispose any cloned materials tracked in userData (safety)
+    if (squadGroup.userData.clonedMaterials) {
+      squadGroup.userData.clonedMaterials.forEach((mat) => mat.dispose());
+      squadGroup.userData.clonedMaterials.clear();
+    }
+    armorIndicators.forEach((ring) => {
+      ring.geometry.dispose();
+      ring.material.dispose();
     });
     renderer.dispose();
     if (canvas.parentNode === container) {
       container.removeChild(canvas);
+    }
+    if (loadingOverlay.parentNode === container) {
+      container.removeChild(loadingOverlay);
     }
     stages.delete(container);
   };
@@ -398,7 +556,7 @@ function createThreeStage(container, side, variant, block) {
     camera,
     squadGroup,
     characters,
-    armorMeshes,
+    armorIndicators,
     triggerCue,
     cleanup,
     fallback: false,
@@ -406,162 +564,218 @@ function createThreeStage(container, side, variant, block) {
 }
 
 // -----------------------------------------------------------------------------
-// Character building
+// Model loading and squad building
 // -----------------------------------------------------------------------------
-function buildSquad(side, variant) {
+async function buildSquadModels(side, variant) {
   const isAlly = side === 'ally';
-  const baseSkin = 0xe0b38a;
-  const uniformColor = isAlly ? 0x4a7a8c : 0x8c4a4a;
-  const helmetColor = isAlly ? 0x3b5e6e : 0x6e3b3b;
-  const vestColor = isAlly ? 0x2c4b58 : 0x582c2c;
-  const gunMetal = 0x333333;
-  const accent = isAlly ? 0x6fbf9f : 0xbf6f6f;
+  const models = [];
 
-  const shade = (hashString(variant) % 30) - 15;
-  const applyShade = (color) => {
-    const r = Math.min(255, Math.max(0, (color >> 16) + shade));
-    const g = Math.min(255, Math.max(0, ((color >> 8) & 0xff) + shade));
-    const b = Math.min(255, Math.max(0, (color & 0xff) + shade));
-    return (r << 16) | (g << 8) | b;
-  };
-  const skinColor = applyShade(baseSkin);
-  const helmCol = applyShade(helmetColor);
-  const vestCol = applyShade(vestColor);
+  if (isAlly) {
+    // Ally: three soldier models with slight variations
+    const soldierUrl = '/shared/models/soldier.glb';
+    const soldierData = await loadModel(soldierUrl);
+    for (let i = 0; i < 3; i++) {
+      const clone = cloneModel(soldierData);
+      // Slight variations: scale, rotation, and material tint
+      if (i === 1) clone.group.scale.multiplyScalar(1.05);
+      if (i === 2) clone.group.rotation.y = 0.1;
+      // Tint materials slightly per member (unique clones)
+      tintMaterials(clone.group, new THREE.Color().setHSL(0.6 + i * 0.05, 0.5, 0.6));
+      models.push(clone);
+    }
+  } else {
+    // Enemy: map ID to model URL and variations
+    const enemyId = String(variant || 'E01');
+    const selected = getEnemyModelSelection(enemyId);
+    const baseUrl = selected.url;
+    const baseData = await loadModel(baseUrl);
 
-  const characters = [];
-  for (let i = 0; i < 3; i++) {
-    const charGroup = new THREE.Group();
-
-    // Torso
-    const torsoGeo = new THREE.CylinderGeometry(0.35, 0.4, 0.9, 6);
-    const torsoMat = new THREE.MeshStandardMaterial({ color: applyShade(uniformColor), flatShading: true });
-    const torso = new THREE.Mesh(torsoGeo, torsoMat);
-    torso.position.y = 0.55;
-    torso.rotation.y = Math.PI / 6;
-    charGroup.add(torso);
-
-    // Vest
-    const vestGeo = new THREE.CylinderGeometry(0.38, 0.42, 0.4, 6);
-    const vestMat = new THREE.MeshStandardMaterial({ color: vestCol, flatShading: true });
-    const vest = new THREE.Mesh(vestGeo, vestMat);
-    vest.position.y = 0.65;
-    vest.rotation.y = Math.PI / 6;
-    charGroup.add(vest);
-
-    // Head
-    const headGeo = new THREE.SphereGeometry(0.31, 8, 6);
-    const headMat = new THREE.MeshStandardMaterial({ color: skinColor, flatShading: true });
-    const head = new THREE.Mesh(headGeo, headMat);
-    head.position.y = 1.25;
-    charGroup.add(head);
-
-    // Helmet (half sphere)
-    const helmetGeo = new THREE.SphereGeometry(0.34, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2);
-    const helmetMat = new THREE.MeshStandardMaterial({ color: helmCol, flatShading: true });
-    const helmet = new THREE.Mesh(helmetGeo, helmetMat);
-    helmet.position.y = 1.3;
-    helmet.rotation.z = 0;
-    charGroup.add(helmet);
-
-    // Visor
-    const visorGeo = new THREE.BoxGeometry(0.2, 0.08, 0.1);
-    const visorMat = new THREE.MeshStandardMaterial({ color: 0x222222, flatShading: true });
-    const visor = new THREE.Mesh(visorGeo, visorMat);
-    visor.position.set(0, 1.25, 0.22);
-    charGroup.add(visor);
-
-    // Arms
-    const armGeo = new THREE.CylinderGeometry(0.1, 0.12, 0.7, 5);
-    const armMat = new THREE.MeshStandardMaterial({ color: skinColor, flatShading: true });
-    const leftArm = new THREE.Mesh(armGeo, armMat);
-    leftArm.position.set(-0.4, 0.8, 0);
-    leftArm.rotation.z = Math.PI / 8;
-    leftArm.rotation.x = Math.PI / 12;
-    charGroup.add(leftArm);
-
-    const rightArm = new THREE.Mesh(armGeo, armMat);
-    rightArm.position.set(0.4, 0.8, 0);
-    rightArm.rotation.z = -Math.PI / 8;
-    rightArm.rotation.x = -Math.PI / 12;
-    charGroup.add(rightArm);
-
-    // Gun
-    const gunGeo = new THREE.BoxGeometry(0.6, 0.12, 0.12);
-    const gunMat = new THREE.MeshStandardMaterial({ color: gunMetal, flatShading: true });
-    const gun = new THREE.Mesh(gunGeo, gunMat);
-    gun.position.set(0.5, 0.85, 0.2);
-    gun.rotation.y = Math.PI / 4;
-    charGroup.add(gun);
-
-    // Legs
-    const legGeo = new THREE.CylinderGeometry(0.13, 0.15, 0.55, 5);
-    const legMat = new THREE.MeshStandardMaterial({ color: skinColor, flatShading: true });
-    const leftLeg = new THREE.Mesh(legGeo, legMat);
-    leftLeg.position.set(-0.15, 0.25, 0);
-    charGroup.add(leftLeg);
-    const rightLeg = new THREE.Mesh(legGeo, legMat);
-    rightLeg.position.set(0.15, 0.25, 0);
-    charGroup.add(rightLeg);
-
-    // Boots
-    const bootGeo = new THREE.BoxGeometry(0.16, 0.1, 0.22);
-    const bootMat = new THREE.MeshStandardMaterial({ color: 0x222222, flatShading: true });
-    const leftBoot = new THREE.Mesh(bootGeo, bootMat);
-    leftBoot.position.set(-0.15, 0.0, 0.05);
-    charGroup.add(leftBoot);
-    const rightBoot = new THREE.Mesh(bootGeo, bootMat);
-    rightBoot.position.set(0.15, 0.0, 0.05);
-    charGroup.add(rightBoot);
-
-    // Shoulder pads
-    const shoulderGeo = new THREE.BoxGeometry(0.15, 0.12, 0.2);
-    const shoulderMat = new THREE.MeshStandardMaterial({ color: accent, flatShading: true });
-    const leftShoulder = new THREE.Mesh(shoulderGeo, shoulderMat);
-    leftShoulder.position.set(-0.42, 1.05, 0);
-    charGroup.add(leftShoulder);
-    const rightShoulder = new THREE.Mesh(shoulderGeo, shoulderMat);
-    rightShoulder.position.set(0.42, 1.05, 0);
-    charGroup.add(rightShoulder);
-
-    // Store references for animation
-    charGroup.userData = {
-      torso,
-      head,
-      leftArm,
-      rightArm,
-      gun,
-      leftLeg,
-      rightLeg,
-    };
-
-    characters.push(charGroup);
+    // For known IDs, apply deterministic variations (size, tone, etc.)
+    for (let i = 0; i < 3; i++) {
+      const clone = cloneModel(baseData);
+      // Apply per-member slight variation
+      if (i === 0) clone.group.scale.multiplyScalar(selected.scaleVariation[0]);
+      if (i === 1) clone.group.scale.multiplyScalar(selected.scaleVariation[1]);
+      if (i === 2) clone.group.scale.multiplyScalar(selected.scaleVariation[2]);
+      clone.group.rotation.y = (i - 1) * 0.1;
+      tintMaterials(clone.group, selected.tintColor);
+      decorateEnemy(clone.group, enemyId);
+      models.push(clone);
+    }
   }
 
-  return characters;
+  return models;
 }
 
-function addArmorToSquad(squadGroup, side) {
-  const armorColor = side === 'ally' ? 0x88aacc : 0xaa8888;
-  const armorMeshes = [];
-  squadGroup.children.forEach((charGroup) => {
-    // Armor plate on torso
-    const plateGeo = new THREE.BoxGeometry(0.7, 0.4, 0.3);
-    const plateMat = new THREE.MeshStandardMaterial({ color: armorColor, flatShading: true, transparent: true, opacity: 0.8 });
-    const plate = new THREE.Mesh(plateGeo, plateMat);
-    plate.position.set(0, 0.7, 0.1);
-    plate.scale.set(1, 1, 0.8);
-    charGroup.add(plate);
-    armorMeshes.push(plate);
+function decorateEnemy(group, enemyId) {
+  const kind = enemyId.replace(/^A[23]_/, '');
+  if (kind === 'E01') return;
+  group.updateMatrixWorld(true);
+  const bounds = new THREE.Box3().setFromObject(group);
+  const height = Math.max(.1, bounds.max.y - bounds.min.y);
+  const cx = (bounds.min.x + bounds.max.x) / 2;
+  const head = bounds.min.y + height * .88;
+  const chest = bounds.min.y + height * .54;
+  const z = (bounds.min.z + bounds.max.z) / 2 + height * .12;
+  const material = (color) => new THREE.MeshStandardMaterial({ color, metalness: .12, roughness: .72, flatShading: true });
+  const part = (geometry, color, x, y, depth) => {
+    const mesh = new THREE.Mesh(geometry, material(color));
+    mesh.position.set(x, y, depth);
+    mesh.userData.stageOwned = true;
+    group.add(mesh);
+    return mesh;
+  };
+  if (kind === 'E02') {
+    for (const side of [-1, 1]) {
+      part(new THREE.CylinderGeometry(height*.018, height*.018, height*.35, 5), 0x587fbb,
+        cx + side*height*.17, head + height*.2, z - height*.12);
+      part(new THREE.SphereGeometry(height*.055, 8, 6), 0x6ae4f0,
+        cx + side*height*.17, head + height*.38, z - height*.12);
+    }
+  } else if (kind === 'E03') {
+    for (const side of [-1, 1]) {
+      const fin = part(new THREE.ConeGeometry(height*.15, height*.47, 5), 0xc66852,
+        cx + side*height*.29, chest + height*.32, z - height*.16);
+      fin.rotation.z = side * -.48;
+    }
+  } else if (kind === 'E04') {
+    const shield = part(new THREE.BoxGeometry(height*.28, height*.62, height*.07), 0x82929c,
+      cx - height*.34, chest, z + height*.1);
+    shield.rotation.z = -.12;
+    part(new THREE.BoxGeometry(height*.11, height*.15, height*.08), 0xa9e6ed,
+      cx - height*.34, chest + height*.04, z + height*.15);
+  } else if (kind === 'E05') {
+    part(new THREE.BoxGeometry(height*.62, height*.08, height*.32), 0x71828a,
+      cx, head + height*.13, z - height*.02);
+    part(new THREE.BoxGeometry(height*.1, height*.15, height*.04), 0xdbad6c,
+      cx, chest + height*.17, z + height*.15);
+  } else if (kind === 'EL01') {
+    for (const side of [-1, 1]) {
+      const shoulder = part(new THREE.BoxGeometry(height*.29, height*.28, height*.27), 0xb38b49,
+        cx + side*height*.33, chest + height*.19, z);
+      shoulder.rotation.z = side*.18;
+    }
+    part(new THREE.BoxGeometry(height*.28, height*.13, height*.06), 0xf0c55b,
+      cx, head, z + height*.11);
+  } else if (kind === 'B01') {
+    part(new THREE.ConeGeometry(height*.16, height*.4, 5), 0xe1aa48,
+      cx, head + height*.32, z - height*.04);
+    for (const side of [-1, 1]) {
+      const banner = part(new THREE.BoxGeometry(height*.12, height*.55, height*.04), 0xa7393d,
+        cx + side*height*.39, chest + height*.37, z - height*.2);
+      banner.rotation.z = side*.15;
+    }
+  }
+}
 
-    // Chest emblem
-    const emblemGeo = new THREE.BoxGeometry(0.15, 0.1, 0.05);
-    const emblemMat = new THREE.MeshStandardMaterial({ color: 0xffcc66, flatShading: true });
-    const emblem = new THREE.Mesh(emblemGeo, emblemMat);
-    emblem.position.set(0, 0.75, 0.25);
-    charGroup.add(emblem);
-    armorMeshes.push(emblem);
+function cloneModel(modelData) {
+  const clonedScene = SkeletonUtils.clone(modelData.scene);
+  const mixer = new THREE.AnimationMixer(clonedScene);
+  const actions = {};
+  // Build action map using normalized clip names
+  modelData.animations.forEach((clip) => {
+    const normalized = normalizeClipName(clip.name);
+    if (!actions[normalized]) {
+      actions[normalized] = mixer.clipAction(clip);
+    }
   });
-  return armorMeshes;
+  // Determine default idle action name
+  let defaultActionName = 'Idle';
+  if (!actions[defaultActionName]) {
+    // Try common alternatives
+    const alternatives = ['Idle_Shoot', 'Idle_Rifle', 'Idle_Pistol', 'Idle_Unarmed'];
+    for (const alt of alternatives) {
+      if (actions[alt]) {
+        defaultActionName = alt;
+        break;
+      }
+    }
+  }
+  // If no animations at all, use fallback transform
+  const fallbackTransform = Object.keys(actions).length === 0;
+  return {
+    group: clonedScene,
+    mixer,
+    actions,
+    defaultActionName,
+    fallbackTransform,
+  };
 }
 
-// Removed animation clip creation functions; we use manual RAF tweens instead.
+function normalizeClipName(name) {
+  // Remove known prefix like "CharacterArmature|"
+  const parts = name.split('|');
+  return parts.length > 1 ? parts[parts.length - 1] : name;
+}
+
+function tintMaterials(group, baseColor) {
+  const clonedMaterials = new Set(); // track materials we cloned to dispose later
+  group.userData.clonedMaterials = clonedMaterials;
+  group.traverse((obj) => {
+    if (obj.isMesh && obj.material) {
+      if (Array.isArray(obj.material)) {
+        // Process each material in the array
+        for (let i = 0; i < obj.material.length; i++) {
+          const originalMat = obj.material[i];
+          const cloneMat = cloneAndTintMaterial(originalMat, baseColor, clonedMaterials);
+          obj.material[i] = cloneMat;
+        }
+      } else {
+        // Single material
+        const originalMat = obj.material;
+        const cloneMat = cloneAndTintMaterial(originalMat, baseColor, clonedMaterials);
+        obj.material = cloneMat;
+      }
+    }
+  });
+}
+
+function cloneAndTintMaterial(originalMat, baseColor, clonedMaterialsSet) {
+  // If original material is already a clone from a previous tint, avoid re-cloning
+  if (!originalMat.userData || !originalMat.userData.isClone) {
+    const clone = originalMat.clone();
+    clone.userData.isClone = true;
+    clonedMaterialsSet.add(clone);
+    clone.color.lerp(baseColor, 0.2);
+    return clone;
+  } else {
+    // Already cloned, just re-tint
+    originalMat.color.lerp(baseColor, 0.2);
+    return originalMat;
+  }
+}
+
+function getEnemyModelSelection(enemyId) {
+  // Deterministic mapping for known enemy IDs; no hashing of known IDs.
+  const id = enemyId.replace(/^A[23]_/, ''); // strip act prefix
+  const act = enemyId.includes('A2_') ? 2 : enemyId.includes('A3_') ? 3 : 1;
+
+  // Base URL and variations per ID
+  const selections = {
+    'E01': { url: '/shared/models/enemy.glb', scaleVariation: [1.0, 0.95, 1.05], tintColor: new THREE.Color(0x8c4a4a) },
+    'E02': { url: '/shared/models/enemy.glb', scaleVariation: [0.9, 1.0, 0.85], tintColor: new THREE.Color(0x4a4a8c) },
+    'E03': { url: '/shared/models/enemy.glb', scaleVariation: [1.1, 0.9, 1.0], tintColor: new THREE.Color(0x744d59) },
+    'E04': { url: '/shared/models/hazmat.glb', scaleVariation: [1.0, 1.1, 0.95], tintColor: new THREE.Color(0x8c8c4a) },
+    'E05': { url: '/shared/models/hazmat.glb', scaleVariation: [0.85, 1.0, 0.9], tintColor: new THREE.Color(0x5a5a5a) },
+    'EL01': { url: '/shared/models/soldier.glb', scaleVariation: [1.2, 1.15, 1.25], tintColor: new THREE.Color(0x506773) },
+    'B01': { url: '/shared/models/hazmat.glb', scaleVariation: [1.3, 1.25, 1.35], tintColor: new THREE.Color(0x413c50) },
+  };
+
+  let selection = selections[id];
+  if (!selection) {
+    // Unknown ID fallback: use enemy.glb with default scale and neutral tint
+    selection = { url: '/shared/models/enemy.glb', scaleVariation: [1.0, 1.0, 1.0], tintColor: new THREE.Color(0xaaaaaa) };
+  }
+
+  // Apply act upgrades: increase scale slightly and adjust tint brightness for A2/A3
+  if (act > 1) {
+    const scaleBoost = act === 2 ? 1.08 : 1.15;
+    selection.scaleVariation = selection.scaleVariation.map((s) => s * scaleBoost);
+    const hsl = {};
+    selection.tintColor.getHSL(hsl);
+    hsl.l = Math.min(0.8, hsl.l + (act === 2 ? 0.1 : 0.15));
+    selection.tintColor.setHSL(hsl.h, hsl.s, hsl.l);
+  }
+
+  return selection;
+}

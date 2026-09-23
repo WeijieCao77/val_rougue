@@ -59,7 +59,7 @@ function animateElement(el, keyframes, options) {
   anim.finished.then(() => el.remove()).catch(() => el.remove());
   return anim;
 }
-function spawnRay(container, from, to, color, label, absorbed, lane) {
+function spawnRay(container, from, to, color, label, absorbed, lane, targetSide) {
   if (!from || !to) return;
   const dx = to.x - from.x;
   const dy = to.y - from.y;
@@ -74,6 +74,10 @@ function spawnRay(container, from, to, color, label, absorbed, lane) {
   ray.style.background = `linear-gradient(90deg, transparent, ${color}, transparent)`;
   ray.style.transformOrigin = '0 50%';
   container.appendChild(ray);
+  const muzzle=createElement('div','cfx-muzzle');muzzle.style.left=`${from.x}px`;muzzle.style.top=`${from.y}px`;muzzle.style.background=color;container.appendChild(muzzle);
+  animateElement(muzzle,[{opacity:1,transform:'translate(-50%,-50%) scale(.4)'},{opacity:0,transform:'translate(-50%,-50%) scale(2)'}],{duration:200,easing:'ease-out'});
+  const bullet=createElement('div','cfx-bullet');bullet.style.left=`${from.x}px`;bullet.style.top=`${from.y}px`;bullet.style.background=color;bullet.style.boxShadow=`0 0 16px 5px ${color}`;container.appendChild(bullet);
+  animateElement(bullet,[{opacity:1,transform:'translate(-50%,-50%)'},{opacity:1,transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`}],{duration:270,easing:'ease-in'});
   const rayAnim = ray.animate([
     { opacity: 0, transform: `rotate(${angle}deg) scaleX(0.4)` },
     { opacity: 1, transform: `rotate(${angle}deg) scaleX(1)` },
@@ -82,6 +86,7 @@ function spawnRay(container, from, to, color, label, absorbed, lane) {
   fxAnimations.push(rayAnim);
   rayAnim.finished.then(() => ray.remove()).catch(() => ray.remove());
   later(() => {
+    globalThis.characterStages?.cue?.(targetSide,label?'hit':'defend');
     const spark = createElement('div', 'cfx-spark');
     spark.style.left = `${to.x}px`;
     spark.style.top = `${to.y}px`;
@@ -114,7 +119,7 @@ function spawnRay(container, from, to, color, label, absorbed, lane) {
         { opacity: 0, transform: 'translate(-50%, -35px)' }
       ], { duration: 900, easing: 'ease-out' });
     }
-  }, 180);
+  }, 270);
 }
 function spawnDefense(container, targetPos, targetEl, amount, side) {
   const barrier = createElement('div', 'cfx-barrier');
@@ -250,7 +255,7 @@ export function playCombatFx(events, snapshot) {
           const from = evt.source === 'ally' ? positions.ally : positions.enemy;
           const to = evt.source === 'ally' ? positions.enemy : positions.ally;
           const label = evt.damage>0?`−${evt.damage}`:'';
-          spawnRay(container, from, to, evt.source === 'ally' ? '#f5d17c' : '#ff826f', label, evt.absorbed,index%3);
+          spawnRay(container, from, to, evt.source === 'ally' ? '#f5d17c' : '#ff826f', label, evt.absorbed,index%3,evt.target);
           break;
         }
         case 'defense':

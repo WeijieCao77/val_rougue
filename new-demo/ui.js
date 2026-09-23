@@ -1022,67 +1022,546 @@ function dispatch(action) {
       return false;
     }
     const prev = state;
-    if (action.type === 'end' && prev.phase === 'combat') {
-      selectedCardUid = null;
-      const battle = document.querySelector('.battle');
-      const banner = document.createElement('div');
-      banner.className = 'enemy-turn-banner';
-      banner.innerHTML = '<strong>对手回合</strong><span>对手正在执行战术</span>';
-      battle?.append(banner);
-      battle?.setAttribute('inert', '');
-      setTimeout(() => {
-        banner.querySelector('span').textContent = '攻击结算';
-        battle?.classList.add('enemy-acting');
-        globalThis.characterStages?.cueFromTransition('new', prev, result.state, action);
-        const player = document.getElementById('player-box');
-        player?.classList.add('enemy-impact');
-        const loss = Math.max(0, prev.hp - result.state.hp);
-        if (loss && player) {
-          const number = document.createElement('b');
-          number.className = 'enemy-loss'; number.textContent = `−${loss}`;
-          player.append(number);
-        }
-      }, 520);
-      setTimeout(() => {
-        state = result.state;
-        saveState();
-        renderPhase();
-        presentationBusy = false;
-        previousState = state;
-      }, 1750);
-      return true;
-    }
     state = result.state;
     saveState();
     selectedCardUid = null;
-    renderPhase();
-    globalThis.characterStages?.cueFromTransition('new',prev,state,action);
-    if (prev.phase === 'combat' && state.phase === 'combat' && capture) {
-      animateCombatTransition(prev, state, action, capture)
-        .catch(() => {})
-        .finally(() => {
-          presentationBusy = false;
-          const battleDiv = document.querySelector('.battle');
-          if (battleDiv) {
-            battleDiv.dataset.presentationBusy = 'false';
-            battleDiv.querySelectorAll('button:disabled').forEach(btn => {
-              // Optionally re-enable? Leave disabled as per state.
-            });
-          }
-        });
-    } else {
-      presentationBusy = false;
-      const battleDiv = document.querySelector('.battle');
-      if (battleDiv) {
-        battleDiv.dataset.presentationBusy = 'false';
-      }
+
+    // Determine reduced motion preference
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Handle end turn with bespoke timeline
+    if (action.type === 'end' && prev.phase === 'combat') {
+      handleEndTurnTimeline(prev, state, action, capture, reducedMotion).then(() => {
+        presentationBusy = false;
+        previousState = state;
+      }).catch(() => {
+        renderPhase();
+        presentationBusy = false;
+        previousState = state;
+      });
+      return true;
     }
+
+    // Play card action timeline only for actual card play
+    if (action.type === 'play' && prev.phase === 'combat' && state.phase === 'combat' && capture) {
+      handlePlayCardTimeline(prev, state, action, capture, reducedMotion).then(() => {
+        renderPhase();
+        presentationBusy = false;
+        previousState = state;
+      }).catch(() => {
+        renderPhase();
+        presentationBusy = false;
+        previousState = state;
+      });
+      return true;
+    }
+
+    // If battle ended due to play (victory -> reward phase), ensure play timeline then render reward
+    if (action.type === 'play' && prev.phase === 'combat' && state.phase !== 'combat' && capture) {
+      handlePlayCardTimeline(prev, state, action, capture, reducedMotion).then(() => {
+        renderPhase();
+        presentationBusy = false;
+        previousState = state;
+      }).catch(() => {
+        renderPhase();
+        presentationBusy = false;
+        previousState = state;
+      });
+      return true;
+    }
+
+    // No timeline needed
+    renderPhase();
+    globalThis.characterStages?.cueFromTransition('new', prev, state, action);
+    presentationBusy = false;
     previousState = state;
     return true;
   } catch (e) {
     presentationBusy = false;
     console.error(e);
     return false;
+  }
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function getCardType(card) {
+  if (!card) return 'other';
+  const def = CARDS[card.id];
+  if (!def) return 'other';
+  if (def.type && def.type.includes('attack')) return 'attack';
+  if (def.type && (def.type.includes('block') || def.type.includes('skill') || def.type.includes('power'))) return 'defense';
+  return 'other';
+}
+
+async function handlePlayCardTimeline(prev, next, action, capture, reducedMotion) {
+  const session = {
+    root: document.createElement('div'),
+    animations: [],
+    timers: [],
+    done: false,
+    cleanupTimer: null,
+    removeVisibilityHandler: null,
+  };
+  session.root.className = 'new-fx-layer';
+  session.root.style.position = 'fixed';
+  session.root.style.top = '0';
+  session.root.style.left = '0';
+  session.root.style.width = '100%';
+  session.root.style.height = '100%';
+  session.root.style.pointerEvents = 'none';
+  session.root.style.zIndex = '9999';
+  document.body.appendChild(session.root);
+
+  const cleanup = () => {
+    if (session.done) return;
+    session.done = true;
+    session.animations.forEach(anim => { try { anim.cancel(); } catch(e){} });
+    session.timers.forEach(timer => { try { clearTimeout(timer); } catch(e){} });
+    if (session.cleanupTimer) clearTimeout(session.cleanupTimer);
+    if (session.root.parentNode) session.root.parentNode.removeChild(session.root);
+    if (session.removeVisibilityHandler) session.removeVisibilityHandler();
+  };
+
+  const onVisibility = () => {
+    if (document.hidden) cleanup();
+  };
+  document.addEventListener('visibilitychange', onVisibility);
+  session.removeVisibilityHandler = () => document.removeEventListener('visibilitychange', onVisibility);
+
+  try {
+    if (reducedMotion) {
+      await delay(100);
+      globalThis.characterStages?.cueFromTransition('new', prev, next, action);
+      cleanup();
+      return;
+    }
+
+    const playedCard = prev.battle.hand.find(c => c.uid === action.uid);
+    const cardType = getCardType(playedCard);
+    const pb = capture.playerBox;
+    const eb = capture.enemyBox;
+    const dcp = capture.discardPile;
+    const ep = capture.exhaustPile;
+    const isExhaust = playedCard && next.battle?.exhaustPile?.some(c => c.uid === playedCard.uid);
+    const flyTarget = isExhaust ? ep : dcp;
+
+    // Hide original played card element to prevent duplicate
+    const originalPlayedEl = document.querySelector(`.hand-card[data-uid="${action.uid}"]`);
+    if (originalPlayedEl) originalPlayedEl.style.visibility = 'hidden';
+
+    let playedClone = null;
+    if (capture.playedCardClone) {
+      playedClone = capture.playedCardClone;
+      const startRect = originalPlayedEl ? originalPlayedEl.getBoundingClientRect() : null;
+      const startX = startRect ? startRect.left + startRect.width/2 : capture.playedCardStart.x;
+      const startY = startRect ? startRect.top + startRect.height/2 : capture.playedCardStart.y;
+      const cardWidth = startRect?.width || parseFloat(playedClone.style.width) || 160;
+      const cardHeight = startRect?.height || parseFloat(playedClone.style.height) || 230;
+      playedClone.style.position = 'absolute';
+      playedClone.style.left = (startX - cardWidth / 2) + 'px';
+      playedClone.style.top = (startY - cardHeight / 2) + 'px';
+      playedClone.style.width = cardWidth + 'px';
+      playedClone.style.height = cardHeight + 'px';
+      playedClone.style.pointerEvents = 'none';
+      playedClone.style.zIndex = '9999';
+      session.root.appendChild(playedClone);
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      const anim = playedClone.animate([
+        { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+        { transform: `translate(${centerX - startX}px, ${centerY - startY}px) scale(.85)`, opacity: 1 }
+      ], { duration: 500, easing: 'ease-in-out', fill: 'forwards' });
+      session.animations.push(anim);
+      await delay(500);
+      anim.cancel();
+      playedClone.style.left = (centerX - cardWidth / 2) + 'px';
+      playedClone.style.top = (centerY - cardHeight / 2) + 'px';
+      playedClone.style.transform = 'scale(.85)';
+    }
+
+    // Cue character action
+    globalThis.characterStages?.cueFromTransition('new', prev, next, action);
+
+    if (cardType === 'attack') {
+      // Ally attack: muzzle flash, bullet line, enemy hit, damage number
+      const flash = document.createElement('div');
+      flash.className = 'new-fx-node muzzle-flash';
+      flash.style.position = 'absolute';
+      flash.style.left = (pb.x - 20) + 'px';
+      flash.style.top = (pb.y - 20) + 'px';
+      flash.style.width = '40px';
+      flash.style.height = '40px';
+      flash.style.pointerEvents = 'none';
+      flash.style.zIndex = '9999';
+      session.root.appendChild(flash);
+      const flashAnim = flash.animate([
+        { transform: 'scale(0)', opacity: 1 },
+        { transform: 'scale(1.5)', opacity: 0.8, offset: 0.5 },
+        { transform: 'scale(2.5)', opacity: 0 }
+      ], { duration: 300, easing: 'ease-out', fill: 'forwards' });
+      session.animations.push(flashAnim);
+      await delay(100);
+
+      // Bullet line
+      const dx = eb.x - pb.x;
+      const dy = eb.y - pb.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      const line = document.createElement('div');
+      line.className = 'new-fx-node';
+      line.style.position = 'absolute';
+      line.style.left = pb.x + 'px';
+      line.style.top = pb.y + 'px';
+      line.style.width = dist + 'px';
+      line.style.height = '2px';
+      line.style.background = 'rgba(255,193,7,0.8)';
+      line.style.transformOrigin = '0 50%';
+      line.style.transform = `rotate(${angle}deg)`;
+      line.style.pointerEvents = 'none';
+      line.style.zIndex = '9999';
+      session.root.appendChild(line);
+      const lineAnim = line.animate([
+        { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 },
+        { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0.9, offset: 0.4 },
+        { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0.4, offset: 0.7 },
+        { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 }
+      ], { duration: 400, easing: 'ease-out', fill: 'forwards' });
+      session.animations.push(lineAnim);
+      await delay(350);
+
+      // Enemy hit effect
+      const hitRing = document.createElement('div');
+      hitRing.className = 'new-fx-node hit-ring';
+      hitRing.style.position = 'absolute';
+      hitRing.style.left = (eb.x - 30) + 'px';
+      hitRing.style.top = (eb.y - 30) + 'px';
+      hitRing.style.width = '60px';
+      hitRing.style.height = '60px';
+      hitRing.style.borderRadius = '50%';
+      hitRing.style.border = '3px solid rgba(255,255,255,0.9)';
+      hitRing.style.pointerEvents = 'none';
+      hitRing.style.zIndex = '9999';
+      session.root.appendChild(hitRing);
+      const ringAnim = hitRing.animate([
+        { transform: 'scale(0)', opacity: 1 },
+        { transform: 'scale(2)', opacity: 0 }
+      ], { duration: 300, easing: 'ease-out', fill: 'forwards' });
+      session.animations.push(ringAnim);
+
+      // Damage number
+      const damage = Math.max(0, prev.battle.enemyHp - (next.battle?.enemyHp ?? 0));
+      if (damage > 0) {
+        const dmgEl = document.createElement('div');
+        dmgEl.className = 'new-fx-node fx-damage';
+        dmgEl.textContent = `-${damage}`;
+        dmgEl.style.position = 'absolute';
+        dmgEl.style.left = (eb.x - 20) + 'px';
+        dmgEl.style.top = (eb.y - 50) + 'px';
+        dmgEl.style.pointerEvents = 'none';
+        dmgEl.style.zIndex = '9999';
+        session.root.appendChild(dmgEl);
+        const dmgAnim = dmgEl.animate([
+          { transform: 'translateY(0)', opacity: 1 },
+          { transform: 'translateY(-40px)', opacity: 0 }
+        ], { duration: 500, easing: 'ease-out', fill: 'forwards' });
+        session.animations.push(dmgAnim);
+      }
+      await delay(300);
+
+      // Move played card to discard/exhaust with a fresh clone
+      const finalClone = playedClone;
+      if (finalClone) {
+        finalClone.style.position = 'absolute';
+        finalClone.style.left = (window.innerWidth/2 - finalClone.offsetWidth/2) + 'px';
+        finalClone.style.top = (window.innerHeight/2 - finalClone.offsetHeight/2) + 'px';
+        finalClone.style.pointerEvents = 'none';
+        finalClone.style.zIndex = '9999';
+        session.root.appendChild(finalClone);
+        const anim = finalClone.animate([
+          { transform: 'translate(0,0) scale(0.7)', opacity: 0.9 },
+          { transform: `translate(${flyTarget.x - window.innerWidth/2}px, ${flyTarget.y - window.innerHeight/2}px) scale(0.2)`, opacity: 0 }
+        ], { duration: 300, easing: 'ease-in', fill: 'forwards' });
+        session.animations.push(anim);
+        await delay(300);
+        finalClone.remove();
+      }
+    } else if (cardType === 'defense') {
+      // Defense: shield visual and block text
+      const blockGain = Math.max(0, next.battle.playerBlock - prev.battle.playerBlock);
+      if (blockGain > 0) {
+        const shield = document.createElement('div');
+        shield.className = 'new-fx-node block-aura';
+        shield.style.position = 'absolute';
+        shield.style.left = (pb.x - 60) + 'px';
+        shield.style.top = (pb.y - 60) + 'px';
+        shield.style.width = '120px';
+        shield.style.height = '120px';
+        shield.style.pointerEvents = 'none';
+        shield.style.zIndex = '9999';
+        session.root.appendChild(shield);
+        const shieldAnim = shield.animate([
+          { transform: 'scale(0.5)', opacity: 0.8 },
+          { transform: 'scale(1.2)', opacity: 0 }
+        ], { duration: 400, easing: 'ease-out', fill: 'forwards' });
+        session.animations.push(shieldAnim);
+
+        const blockText = document.createElement('div');
+        blockText.className = 'new-fx-node block-text';
+        blockText.textContent = `+${blockGain} 布防`;
+        blockText.style.position = 'absolute';
+        blockText.style.left = (pb.x - 40) + 'px';
+        blockText.style.top = (pb.y - 80) + 'px';
+        blockText.style.pointerEvents = 'none';
+        blockText.style.zIndex = '9999';
+        session.root.appendChild(blockText);
+        const textAnim = blockText.animate([
+          { transform: 'translateY(0)', opacity: 1 },
+          { transform: 'translateY(-30px)', opacity: 0 }
+        ], { duration: 500, easing: 'ease-out', fill: 'forwards' });
+        session.animations.push(textAnim);
+      }
+      await delay(400);
+      // Move played card to discard/exhaust with a fresh clone
+      const finalClone = playedClone;
+      if (finalClone) {
+        finalClone.style.position = 'absolute';
+        finalClone.style.left = (window.innerWidth/2 - finalClone.offsetWidth/2) + 'px';
+        finalClone.style.top = (window.innerHeight/2 - finalClone.offsetHeight/2) + 'px';
+        finalClone.style.pointerEvents = 'none';
+        finalClone.style.zIndex = '9999';
+        session.root.appendChild(finalClone);
+        const anim = finalClone.animate([
+          { transform: 'translate(0,0) scale(0.7)', opacity: 0.9 },
+          { transform: `translate(${flyTarget.x - window.innerWidth/2}px, ${flyTarget.y - window.innerHeight/2}px) scale(0.2)`, opacity: 0 }
+        ], { duration: 300, easing: 'ease-in', fill: 'forwards' });
+        session.animations.push(anim);
+        await delay(300);
+        finalClone.remove();
+      }
+    } else {
+      // Other cards: keep readable, just discard
+      const finalClone = playedClone;
+      if (finalClone) {
+        finalClone.style.position = 'absolute';
+        finalClone.style.left = (window.innerWidth/2 - finalClone.offsetWidth/2) + 'px';
+        finalClone.style.top = (window.innerHeight/2 - finalClone.offsetHeight/2) + 'px';
+        finalClone.style.pointerEvents = 'none';
+        finalClone.style.zIndex = '9999';
+        session.root.appendChild(finalClone);
+        const anim = finalClone.animate([
+          { transform: 'translate(0,0) scale(0.7)', opacity: 0.9 },
+          { transform: `translate(${flyTarget.x - window.innerWidth/2}px, ${flyTarget.y - window.innerHeight/2}px) scale(0.2)`, opacity: 0 }
+        ], { duration: 300, easing: 'ease-in', fill: 'forwards' });
+        session.animations.push(anim);
+        await delay(300);
+        finalClone.remove();
+      }
+    }
+    cleanup();
+  } catch (e) {
+    console.error(e);
+    cleanup();
+  }
+}
+
+async function handleEndTurnTimeline(prev, next, action, capture, reducedMotion) {
+  const session = {
+    root: document.createElement('div'),
+    animations: [],
+    timers: [],
+    done: false,
+    cleanupTimer: null,
+    removeVisibilityHandler: null,
+  };
+  session.root.className = 'new-fx-layer';
+  session.root.style.position = 'fixed';
+  session.root.style.top = '0';
+  session.root.style.left = '0';
+  session.root.style.width = '100%';
+  session.root.style.height = '100%';
+  session.root.style.pointerEvents = 'none';
+  session.root.style.zIndex = '9999';
+  document.body.appendChild(session.root);
+
+  const cleanup = () => {
+    if (session.done) return;
+    session.done = true;
+    session.animations.forEach(anim => { try { anim.cancel(); } catch(e){} });
+    session.timers.forEach(timer => { try { clearTimeout(timer); } catch(e){} });
+    if (session.cleanupTimer) clearTimeout(session.cleanupTimer);
+    if (session.root.parentNode) session.root.parentNode.removeChild(session.root);
+    if (session.removeVisibilityHandler) session.removeVisibilityHandler();
+  };
+
+  const onVisibility = () => {
+    if (document.hidden) cleanup();
+  };
+  document.addEventListener('visibilitychange', onVisibility);
+  session.removeVisibilityHandler = () => document.removeEventListener('visibilitychange', onVisibility);
+
+  try {
+    if (reducedMotion) {
+      await delay(100);
+      cleanup();
+      return;
+    }
+
+    const dcp = capture.discardPile;
+    const handCardEls = document.querySelectorAll('.hand-card[data-uid]');
+    // Store original visibility of hand cards
+    const originalVisibilities = new Map();
+    for (const el of handCardEls) {
+      originalVisibilities.set(el, el.style.visibility);
+    }
+
+    // Animate each remaining hand card to discard pile sequentially and hide originals
+    for (let i = 0; i < capture.handCardClones.length; i++) {
+      const item = capture.handCardClones[i];
+      const clone = item.clone;
+      const width = parseFloat(clone.style.width) || 160;
+      const height = parseFloat(clone.style.height) || 230;
+      clone.style.position = 'absolute';
+      clone.style.left = (item.center.x - width / 2) + 'px';
+      clone.style.top = (item.center.y - height / 2) + 'px';
+      clone.style.width = width + 'px';
+      clone.style.height = height + 'px';
+      clone.style.pointerEvents = 'none';
+      clone.style.zIndex = '9999';
+      session.root.appendChild(clone);
+      // Hide corresponding original card element
+      const originalEl = document.querySelector(`.hand-card[data-uid="${item.uid}"]`);
+      if (originalEl) originalEl.style.visibility = 'hidden';
+      const anim = clone.animate([
+        { transform: 'translate(0,0) scale(1)', opacity: 1 },
+        { transform: `translate(${dcp.x - item.center.x}px, ${dcp.y - item.center.y}px) scale(0.2)`, opacity: 0 }
+      ], { duration: 300, delay: i * 100, easing: 'ease-in', fill: 'forwards' });
+      session.animations.push(anim);
+    }
+    const totalDiscardTime = capture.handCardClones.length > 0 ? (capture.handCardClones.length - 1) * 100 + 300 : 0;
+    await delay(totalDiscardTime);
+
+    // Keep discarded originals hidden until the next hand is rendered.
+
+    // Enemy turn banner
+    const battle = document.querySelector('.battle');
+    if (battle) {
+      const banner = document.createElement('div');
+      banner.className = 'enemy-turn-banner';
+      banner.innerHTML = '<strong>对手回合</strong><span>对手正在执行战术</span>';
+      battle.appendChild(banner);
+      banner.style.position = 'absolute';
+      banner.style.top = '10%';
+      banner.style.left = '50%';
+      banner.style.transform = 'translateX(-50%)';
+      banner.style.pointerEvents = 'none';
+      session.root.appendChild(banner);
+    }
+    await delay(500);
+
+    // Enemy action always happens
+    globalThis.characterStages?.cueFromTransition('new', prev, next, action);
+    const pb = capture.playerBox;
+    const eb = capture.enemyBox;
+    const playerDamage = Math.max(0, prev.hp - next.hp);
+
+    // Enemy attack line regardless of damage to show action
+    const dx = pb.x - eb.x;
+    const dy = pb.y - eb.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    const line = document.createElement('div');
+    line.className = 'new-fx-node';
+    line.style.position = 'absolute';
+    line.style.left = eb.x + 'px';
+    line.style.top = eb.y + 'px';
+    line.style.width = dist + 'px';
+    line.style.height = '2px';
+    line.style.background = 'rgba(255,87,34,0.7)';
+    line.style.transformOrigin = '0 50%';
+    line.style.transform = `rotate(${angle}deg)`;
+    line.style.pointerEvents = 'none';
+    line.style.zIndex = '9999';
+    session.root.appendChild(line);
+    const lineAnim = line.animate([
+      { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 },
+      { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0.8, offset: 0.4 },
+      { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0.2, offset: 0.7 },
+      { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 }
+    ], { duration: 500, easing: 'ease-out', fill: 'forwards' });
+    session.animations.push(lineAnim);
+
+    if (playerDamage > 0) {
+      // Player hit effect only if damage occurs
+      const hitRing = document.createElement('div');
+      hitRing.className = 'new-fx-node hit-ring';
+      hitRing.style.position = 'absolute';
+      hitRing.style.left = (pb.x - 30) + 'px';
+      hitRing.style.top = (pb.y - 30) + 'px';
+      hitRing.style.width = '60px';
+      hitRing.style.height = '60px';
+      hitRing.style.borderRadius = '50%';
+      hitRing.style.border = '3px solid rgba(255,255,255,0.9)';
+      hitRing.style.pointerEvents = 'none';
+      hitRing.style.zIndex = '9999';
+      session.root.appendChild(hitRing);
+      const ringAnim = hitRing.animate([
+        { transform: 'scale(0)', opacity: 1 },
+        { transform: 'scale(2)', opacity: 0 }
+      ], { duration: 300, easing: 'ease-out', fill: 'forwards' });
+      session.animations.push(ringAnim);
+
+      const dmgEl = document.createElement('div');
+      dmgEl.className = 'new-fx-node damage-text';
+      dmgEl.textContent = `-${playerDamage}`;
+      dmgEl.style.position = 'absolute';
+      dmgEl.style.left = (pb.x - 20) + 'px';
+      dmgEl.style.top = (pb.y - 50) + 'px';
+      dmgEl.style.pointerEvents = 'none';
+      dmgEl.style.zIndex = '9999';
+      session.root.appendChild(dmgEl);
+      const dmgAnim = dmgEl.animate([
+        { transform: 'translateY(0)', opacity: 1 },
+        { transform: 'translateY(-40px)', opacity: 0 }
+      ], { duration: 500, easing: 'ease-out', fill: 'forwards' });
+      session.animations.push(dmgAnim);
+    }
+    await delay(500);
+
+    renderPhase();
+    if (next.phase === 'combat') {
+      const drawPile = document.getElementById('pile-draw');
+      const source = drawPile?.getBoundingClientRect();
+      const sx = source ? source.left + source.width / 2 : capture.drawPile.x;
+      const sy = source ? source.top + source.height / 2 : capture.drawPile.y;
+      const cards = [...document.querySelectorAll('.hand-card[data-uid]')];
+      const flights = cards.map((el, index) => {
+        const rect = el.getBoundingClientRect();
+        const clone = el.cloneNode(true);
+        clone.style.cssText = `${el.style.cssText};position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;margin:0;transform:none;pointer-events:none;z-index:10000;`;
+        session.root.appendChild(clone);
+        el.style.visibility = 'hidden';
+        const dx = sx - rect.left - rect.width / 2;
+        const dy = sy - rect.top - rect.height / 2;
+        const animation = clone.animate([
+          { transform: `translate(${dx}px, ${dy}px) scale(.35)`, opacity: .35 },
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 }
+        ], { duration: 320, delay: index * 90, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' });
+        session.animations.push(animation);
+        return animation.finished.catch(() => {}).then(() => {
+          el.style.visibility = '';
+          clone.remove();
+        });
+      });
+      await Promise.all(flights);
+    }
+
+    cleanup();
+  } catch (e) {
+    console.error(e);
+    cleanup();
   }
 }
 

@@ -41,19 +41,19 @@ schedule();
 
 globalThis.characterStages = {
   refresh,
+  cue(side, cue) { refresh(); playCharacterCue(side, cue); },
   cueFromTransition(mode, previous, next, action) {
     refresh();
-    if (mode === 'wa') {
-      if (action.type === 'play') playCharacterCue('ally', 'attack');
-      if (next.battle?.block > (previous.battle?.block || 0)) playCharacterCue('ally', 'defend');
-      if (next.battle?.enemyBlock > (previous.battle?.enemyBlock || 0)) playCharacterCue('enemy', 'defend');
-      if (next.hp < previous.hp) playCharacterCue('ally', 'hit');
-      if (next.battle?.enemyHp < previous.battle?.enemyHp) playCharacterCue('enemy', 'hit');
-    } else {
-      if (action.type === 'play') playCharacterCue('ally', 'attack');
-      if ((next.battle?.playerBlock || 0) > (previous.battle?.playerBlock || 0)) playCharacterCue('ally', 'defend');
-      if (next.hp < previous.hp) playCharacterCue('ally', 'hit');
-      if (next.battle?.enemyHp < previous.battle?.enemyHp) playCharacterCue('enemy', 'hit');
-    }
+    if (action.type === 'end') { playCharacterCue('enemy', 'attack'); return; }
+    if (action.type !== 'play') return;
+    const enemyDamaged = (next.battle?.enemyHp ?? 0) < (previous.battle?.enemyHp ?? 0);
+    const enemyGuardBroken = mode === 'wa'
+      ? (next.battle?.enemyBlock ?? 0) < (previous.battle?.enemyBlock ?? 0)
+      : (next.battle?.statuses?.enemy?.block ?? 0) < (previous.battle?.statuses?.enemy?.block ?? 0);
+    const playerBlockGain = mode === 'wa'
+      ? (next.battle?.block ?? 0) > (previous.battle?.block ?? 0)
+      : (next.battle?.playerBlock ?? 0) > (previous.battle?.playerBlock ?? 0);
+    if (enemyDamaged || enemyGuardBroken) playCharacterCue('ally', 'attack');
+    else if (playerBlockGain) playCharacterCue('ally', 'defend');
   },
 };
