@@ -272,10 +272,10 @@ function renderMap(root) {
     const isAvailable = availableKeys.has(n.key);
     const isCompleted = completedSet.has(n.key) && n.key !== currentKey;
     const isCurrent = n.key === currentKey;
-    const cls = `map-node ${isAvailable ? 'available' : ''} ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`;
-    const glyph = { battle: '⚔', elite: '◆', event: '?', shop: '⇄', rest: '✚', boss: '★' }[n.kind] || '·';
+    const cls = `map-node kind-${n.kind} ${isAvailable ? 'available' : ''} ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`;
+    const glyph = { battle: '⚔', elite: '☠', event: '?', shop: '⇄', rest: '✚', boss: '👑' }[n.kind] || '·';
     const label = n.name || { battle: '战斗', elite: '强敌', event: '事件', shop: '转会', rest: '休整', boss: 'Boss' }[n.kind] || n.kind;
-    return `<g class="${cls}" data-key="${n.key}" tabindex="${isAvailable ? '0' : '-1'}" role="button" aria-label="${escapeHtml(n.name)}" style="cursor:pointer">
+    return `<g class="${cls}" data-key="${n.key}" tabindex="${isAvailable ? '0' : '-1'}" role="button" aria-label="${n.kind === 'boss' ? 'Boss：' : n.kind === 'elite' ? '强敌：' : ''}${escapeHtml(n.name)}" style="cursor:pointer">
       <circle cx="${sx(n.x)}" cy="${sy(n.y)}" r="18" />
       <text class="map-glyph" x="${sx(n.x)}" y="${sy(n.y) + 1}">${glyph}</text>
       ${isAvailable ? `<text class="map-choice-label" x="${sx(n.x)}" y="${sy(n.y) - 29}">${escapeHtml(label)}</text>` : ''}
@@ -296,11 +296,11 @@ function renderMap(root) {
       </div>
       <div class="map-legend">
         <div class="legend-item"><span class="legend-icon">⚔</span> 常规比赛：标准战斗，获胜得卡牌奖励。</div>
-        <div class="legend-item"><span class="legend-icon">◆</span> 强敌：更高难度，奖励更丰厚。</div>
+        <div class="legend-item"><span class="legend-icon">☠</span> 强敌：更高难度，奖励更丰厚。</div>
         <div class="legend-item"><span class="legend-icon">?</span> 未知事件：随机事件，风险与机遇并存。</div>
         <div class="legend-item"><span class="legend-icon">⇄</span> 转会补给：购买卡牌或删除卡牌。</div>
         <div class="legend-item"><span class="legend-icon">✚</span> 休整：回复生命或升级卡牌。</div>
-        <div class="legend-item"><span class="legend-icon">★</span> BOSS：幕末强敌，击败进入下一幕。</div>
+        <div class="legend-item"><span class="legend-icon">👑</span> BOSS：幕末强敌，击败进入下一幕。</div>
       </div>
       <div id="node-details" class="node-details" aria-live="polite"></div>
     </div>

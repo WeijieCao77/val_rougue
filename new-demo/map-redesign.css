@@ -73,6 +73,10 @@
 }
 .map-node .map-glyph { fill:#aeb5c9; font-size:20px; font-weight:700; text-anchor:middle; dominant-baseline:middle; pointer-events:none; }
 .map-node.available .map-glyph { fill:#17243a; }
+.map-node.kind-elite circle{stroke:#ad7373}.map-node.kind-boss circle{stroke:#c49c50}
+.map-node.kind-elite.available circle{fill:#9e5c62;stroke:#f1afb3}.map-node.kind-boss.available circle{fill:#ad813e;stroke:#f6d989}
+.map-node.kind-elite.available .map-glyph,.map-node.kind-boss.available .map-glyph{fill:#fff5e2}
+.map-node.kind-boss .map-glyph{font-size:21px}
 .map-node .map-choice-label { fill:#eff4ff; font-size:13px; font-weight:700; text-anchor:middle; paint-order:stroke; stroke:#141824; stroke-width:3px; pointer-events:none; }
 .map-node.available .map-choice-label { fill:#eff4ff; }
 
@@ -123,6 +127,7 @@
   line-height: 1.35;
 }
 .legend-icon{flex:0 0 24px;display:grid;place-items:center;width:24px;height:24px;border:1px solid #a9b7d2;border-radius:50%;color:#f4d295;font-size:15px;font-weight:800}
+.legend-item:nth-child(2) .legend-icon{border-color:#d88c8c;color:#f3a7a7}.legend-item:nth-child(6) .legend-icon{border-color:#e2c476;color:#f8de96}
 @media(max-width:500px){.map-legend{grid-template-columns:1fr 1fr}.legend-item{font-size:.66rem;padding:.35rem;gap:.3rem}.legend-icon{flex-basis:20px;width:20px;height:20px}}
 
 .legend-dot {
