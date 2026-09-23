@@ -105,42 +105,38 @@ function renderHome() {
 
   const saved = loadState();
   const continueDisabled = !saved;
-  const hasSaved = !!saved;
 
   document.getElementById('app').innerHTML = `
-    <div class="hero-cover">
+    <main class="new-home">
+    <section class="hero-cover" aria-label="战术试炼封面">
       <img class="hero-bg" src="/new/cover.webp" alt="" />
       <div class="hero-content">
+        <div class="eyebrow">原创建构 · 三幕赛程</div>
         <h1 class="hero-title">战术试炼</h1>
         <p class="hero-tagline">一支队伍，75种战术，三段赛程</p>
-        <div class="hero-actions">
-          <a class="btn hero-btn primary" href="#team-selection">选择队伍 ↓</a>
-          <button class="btn hero-btn" id="btn-continue" ${continueDisabled ? 'disabled' : ''}>继续上局</button>
-        </div>
-        <div class="hero-nav">
-          <a href="#team-selection" class="hero-link">选择队伍</a>
-          <button class="hero-link" id="btn-library">卡牌总览</button>
-        </div>
       </div>
-    </div>
-    <main class="home-section" id="team-selection">
+    </section>
+    <section class="home-section" id="team-selection">
+      <h2 class="setup-title">选择队伍</h2>
       <div class="team-select" role="radiogroup" aria-label="选择初始队伍">
         ${teamsHtml}
       </div>
       <div class="seed-control">
-        <label for="seed-input">种子：</label>
+        <label for="seed-input">赛季种子</label>
         <input type="text" id="seed-input" class="seed-input" placeholder="留空为随机" value="${escapeHtml(seedInputValue)}" />
       </div>
       <div class="home-actions">
-        <button class="btn primary" id="btn-new-secondary">开始新局${hasSaved ? '（覆盖当前存档）' : ''}</button>
-        <button class="btn" id="btn-continue-secondary" ${continueDisabled ? 'disabled' : ''}>继续上局</button>
+        <button class="btn primary" id="btn-new-secondary">确认开赛</button>
+        <button class="btn" id="btn-continue" ${continueDisabled ? 'disabled' : ''}>继续上局</button>
       </div>
-      <div class="nav-links">
+      <nav class="nav-links" aria-label="其他入口">
+        <button class="hero-link" id="btn-library">卡牌总览</button>
         <a href="/pvp/">好友PvP</a>
         <a href="/wa/">瓦demo</a>
         <a href="/">选择版本</a>
-      </div>
-      <div class="credit">猪之家出品</div>
+      </nav>
+      <footer class="credit">猪之家出品</footer>
+    </section>
     </main>
   `;
 
@@ -194,7 +190,6 @@ function renderHome() {
 
   document.getElementById('btn-new-secondary').addEventListener('click', startNewGame);
   document.getElementById('btn-continue').addEventListener('click', continueGame);
-  document.getElementById('btn-continue-secondary').addEventListener('click', continueGame);
 
   document.getElementById('btn-library').addEventListener('click', () => {
     showLibrary = true;
