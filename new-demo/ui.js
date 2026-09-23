@@ -248,15 +248,11 @@ function renderMap(root) {
   const legal = legalActions(state).filter(a => a.type === 'enter');
   const availableKeys = new Set(legal.map(a => a.key));
 
-  const w = 800, h = 500;
-  const minX = Math.min(...nodes.map(n => n.x), 0);
-  const maxX = Math.max(...nodes.map(n => n.x), 100);
-  const minY = Math.min(...nodes.map(n => n.y), 0);
-  const maxY = Math.max(...nodes.map(n => n.y), 100);
-  const scaleX = (w - 40) / (maxX - minX || 1);
-  const scaleY = (h - 40) / (maxY - minY || 1);
-  const sx = (x) => 20 + (x - minX) * scaleX;
-  const sy = (y) => 20 + (y - minY) * scaleY;
+  const w = 400, h = 880;
+  const scaleX = w / 100;
+  const scaleY = h / 100;
+  const sx = (x) => x * scaleX;
+  const sy = (y) => y * scaleY;
 
   const edgesSvg = edges.map(e => {
     const from = nodes.find(n => n.key === e.from);
@@ -270,37 +266,99 @@ function renderMap(root) {
     const isCompleted = completedSet.has(n.key) && n.key !== currentKey;
     const isCurrent = n.key === currentKey;
     const cls = `map-node ${isAvailable ? 'available' : ''} ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`;
-    const label = n.kind === 'battle' || n.kind === 'elite' || n.kind === 'boss' ? (n.enemyName || n.name) : (n.name || '');
-    return `<g class="${cls}" data-key="${n.key}" tabindex="0" role="button" aria-label="${escapeHtml(label)}" style="cursor:pointer">
-      <circle cx="${sx(n.x)}" cy="${sy(n.y)}" r="12" />
-      <text x="${sx(n.x)}" y="${sy(n.y) + 22}" class="map-label">${escapeHtml(label)}</text>
+    const glyph = { battle: '⚔', elite: '◆', event: '?', shop: '⇄', rest: '✚', boss: '★' }[n.kind] || '·';
+    const label = n.kind === 'battle' ? n.name : ({ elite: '强敌', event: '事件', shop: '转会', rest: '休整', boss: '决赛' }[n.kind] || n.name);
+    return `<g class="${cls}" data-key="${n.key}" tabindex="${isAvailable ? '0' : '-1'}" role="button" aria-label="${escapeHtml(n.name)}" style="cursor:pointer">
+      <circle cx="${sx(n.x)}" cy="${sy(n.y)}" r="18" />
+      <text class="map-glyph" x="${sx(n.x)}" y="${sy(n.y) + 1}">${glyph}</text>
+      ${isAvailable ? `<text class="map-choice-label" x="${sx(n.x)}" y="${sy(n.y) - 29}">${escapeHtml(label)}</text>` : ''}
     </g>`;
   }).join('');
 
   root.innerHTML = `
     <div class="map-container">
-      <svg class="map-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
-        ${edgesSvg}
-        ${nodesSvg}
-      </svg>
-      <div style="position:absolute;top:10px;right:20px;display:flex;gap:1rem;align-items:center;">
-        <span>幕 ${state.act}：${act.name}</span>
-        <span>HP ${state.hp}/${state.maxHp}</span>
-        <span>💰 ${state.money}</span>
+      <div class="map-stage-info">
+        <span>幕 ${state.act}：${act.name} · ${act.subtitle}</span>
+        <span>HP ${state.hp}/${state.maxHp} · 💰 ${state.money}</span>
       </div>
+      <div class="map-scroll">
+        <svg class="map-svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+          ${edgesSvg}
+          ${nodesSvg}
+        </svg>
+      </div>
+      <div class="map-legend">
+        <span class="legend-item"><span class="legend-dot current"></span> 当前</span>
+        <span class="legend-item"><span class="legend-dot available"></span> 可进入</span>
+        <span class="legend-item"><span class="legend-dot completed"></span> 已完成</span>
+      </div>
+      <div id="node-details" class="node-details" aria-live="polite"></div>
     </div>
   `;
 
-  root.querySelectorAll('.map-node.available').forEach(el => {
+  const details = root.querySelector('#node-details');
+  const showDetails = (node) => {
+    const kindNames = { battle: '常规比赛', elite: '高压强敌', event: '未知事件', shop: '战术补给', rest: '战术休整', boss: 'BOSS' };
+    const isAvailable = availableKeys.has(node.key);
+    const isCurrent = node.key === currentKey;
+    const isCompleted = completedSet.has(node.key);
+    let status = '';
+    if (isCurrent) status = '当前所在';
+    else if (isCompleted) status = '已完成';
+    else if (isAvailable) status = '可进入';
+    else status = '暂不可达';
+    details.innerHTML = `
+      <strong>${escapeHtml(node.name)}</strong>
+      <span>${kindNames[node.kind] || '未知'}</span>
+      <span>${status}</span>
+    `;
+  };
+
+  root.querySelectorAll('.map-node').forEach(el => {
     const key = el.dataset.key;
-    el.addEventListener('click', () => dispatch({ type: 'enter', key }));
-    el.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
+    const node = nodes.find(n => n.key === key);
+    if (!node) return;
+
+    const handleEnter = () => {
+      if (availableKeys.has(key)) {
         dispatch({ type: 'enter', key });
       }
-    });
+    };
+
+    if (availableKeys.has(key)) {
+      el.addEventListener('click', handleEnter);
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleEnter();
+        }
+      });
+    }
+
+    el.addEventListener('mouseenter', () => showDetails(node));
+    el.addEventListener('focus', () => showDetails(node));
   });
+
+  root.querySelector('.map-scroll').addEventListener('mouseleave', () => {
+    const next = nodes.find(n => availableKeys.has(n.key));
+    if (next) showDetails(next);
+  });
+
+  const nextChoice = nodes.find(n => availableKeys.has(n.key));
+  if (nextChoice) showDetails(nextChoice);
+
+  // Scroll to current node if possible
+  const currentEl = root.querySelector('.map-node.current, .map-node.available');
+  if (currentEl) {
+    const circle = currentEl.querySelector('circle');
+    if (circle) {
+      const cx = circle.getAttribute('cx');
+      const cy = circle.getAttribute('cy');
+      const scrollContainer = root.querySelector('.map-scroll');
+      scrollContainer.scrollTop = cy - scrollContainer.clientHeight / 2;
+      scrollContainer.scrollLeft = cx - scrollContainer.clientWidth / 2;
+    }
+  }
 }
 
 function renderStatuses(statusObj) {
@@ -380,7 +438,7 @@ function renderCombat(root) {
           <div class="value">HP ${state.hp}/${state.maxHp}</div>
           <div class="hp-bar"><i style="width:${state.hp/state.maxHp*100}%"></i></div>
           <div>能量 ${b.energy}/3</div>
-          <div>布防 ${b.playerBlock}</div>
+          <div class="block-value" data-block="${b.playerBlock}"><span class="mini-armor" aria-hidden="true"></span><span>布防 ${b.playerBlock}</span></div>
           ${playerStatuses ? `<div class="player-statuses">${playerStatuses}</div>` : ''}
         </div>
         <div class="stance-box">
@@ -1031,6 +1089,7 @@ function dispatch(action) {
     saveState();
     selectedCardUid = null;
     renderPhase();
+    globalThis.characterStages?.cueFromTransition('new',prev,state,action);
     if (prev.phase === 'combat' && state.phase === 'combat' && capture) {
       animateCombatTransition(prev, state, action, capture)
         .catch(() => {})

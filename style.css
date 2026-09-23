@@ -922,3 +922,617 @@ body.home-mode img {
   max-width: 100%;
   height: auto;
 }
+
+/* ===== Wa Map Redesign CSS ===== */
+/* This stylesheet enhances the map screen for a more tactical, decision-oriented climbing map.
+   It relies on the existing DOM structure and base styles, overriding where necessary.
+   Designed for both desktop and mobile (390x844). */
+
+/* ----- Board container and scroll area ----- */
+.map-scroll {
+  background:
+    radial-gradient(ellipse at 50% 20%, #3a3323aa, transparent 70%),
+    linear-gradient(180deg, #1d1b14 0%, #2a261b 55%, #171510 100%);
+  border: 1px solid #6a5f42;
+  box-shadow: 0 8px 40px #000c, inset 0 0 50px #74624555;
+  border-radius: 8px;
+  position: relative;
+  overflow: auto;
+  scrollbar-color: #8a7b54 #1f1b12;
+}
+
+.map-board {
+  position: relative;
+  background:
+    repeating-linear-gradient(70deg, rgba(184, 165, 118, .06) 0 2px, transparent 2px 12px),
+    radial-gradient(ellipse at 50% 40%, #c9b98e30, transparent 72%);
+  overflow: hidden;
+  /* Keep existing min-height overrides from base; we'll add our own for consistency */
+  min-height: 590px;
+}
+
+/* Season board full height (from season-ui.css) */
+.season-map .map-board {
+  min-height: 1000px;
+  background:
+    repeating-linear-gradient(70deg, rgba(184, 165, 118, .06) 0 2px, transparent 2px 12px),
+    radial-gradient(ellipse at 50% 35%, #c9b98e30, transparent 72%);
+}
+
+/* ----- Path / SVG lines ----- */
+.map-paths {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.map-paths path {
+  stroke: #6a5e42;
+  stroke-width: 2;
+  stroke-dasharray: 4 7;
+  fill: none;
+  opacity: .5;
+  transition: stroke .2s, opacity .2s, stroke-width .2s;
+}
+
+/* Taken path: visible and vivid */
+.map-paths path.taken {
+  stroke: #c9a35c;
+  stroke-width: 3.5;
+  stroke-dasharray: none;
+  opacity: .9;
+  filter: drop-shadow(0 0 3px #f0c97e66);
+}
+
+/* Available path (from current to reachable nodes) */
+.map-paths path.available {
+  stroke: #d4af6a;
+  stroke-width: 3;
+  stroke-dasharray: 6 4;
+  opacity: .8;
+  filter: drop-shadow(0 0 4px #f0c97e88);
+}
+
+/* ----- Nodes (map stops) ----- */
+.map-stop {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 3;
+  color: #d4c5a0;
+  transition: transform .15s ease-out, opacity .3s;
+}
+
+/* Node button (crest-like) */
+.map-stop > button {
+  position: relative;
+  display: block;
+  margin: auto;
+  width: 50px;
+  height: 50px;
+  padding: 12px;
+  border: 2px solid #7a6a48;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 20%, #8f7b54, #4d422d 70%);
+  color: #f5e6c8;
+  box-shadow: 0 0 0 3px #191711cc, 0 8px 16px #000a, inset 0 1px 4px #fff4;
+  transition: transform .12s, box-shadow .12s, border-color .12s;
+  touch-action: manipulation;
+}
+
+.map-stop > button .icon {
+  width: 24px;
+  height: 24px;
+  filter: drop-shadow(0 1px 2px #0008);
+}
+
+/* Hover/focus feedback for non-disabled */
+.map-stop > button:not(:disabled):hover,
+.map-stop > button:not(:disabled):focus-visible {
+  transform: scale(1.12);
+  border-color: #e3c07e;
+  box-shadow: 0 0 0 4px #e3c07e55, 0 0 18px #edcf8744, 0 8px 16px #000e, inset 0 1px 4px #fff4;
+  z-index: 5;
+}
+
+.map-stop > button:disabled {
+  cursor: not-allowed;
+  opacity: 1; /* base sets disabled opacity to .45; we override for distinct styles */
+}
+
+/* ----- Node states ----- */
+
+/* Locked: dark, faded, but still shaped like a crest */
+.map-stop.locked {
+  opacity: .7;
+}
+.map-stop.locked > button {
+  background: radial-gradient(circle at 30% 20%, #4c4536, #28241b 70%);
+  border-color: #56503d;
+  color: #9a917c;
+  box-shadow: 0 0 0 3px #191711cc, 0 4px 8px #0006, inset 0 1px 2px #fff2;
+}
+
+/* Visited: green/gold, with checkmark */
+.map-stop.visited > button {
+  background: radial-gradient(circle at 30% 20%, #6b8f65, #36533c 70%);
+  border-color: #9db889;
+  color: #ece5c8;
+  box-shadow: 0 0 0 3px #17201599, 0 8px 16px #000a, inset 0 1px 4px #fff4;
+}
+
+.map-stop.visited .visited-check {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #4e8f4e;
+  color: #feffd6;
+  border: 2px solid #172015;
+  font-size: 14px;
+  line-height: 17px;
+  text-align: center;
+  box-shadow: 0 0 0 2px #263c29, 0 2px 5px #000;
+  z-index: 2;
+}
+
+/* Bypassed: very faded, cracked? */
+.map-stop.bypassed {
+  opacity: .45;
+  filter: grayscale(.8);
+}
+.map-stop.bypassed > button {
+  background: radial-gradient(circle at 30% 20%, #565144, #332e23 70%);
+  border-color: #5a513d;
+  color: #9a917c;
+  box-shadow: 0 0 0 3px #19171155, 0 4px 8px #0004, inset 0 1px 2px #fff1;
+}
+
+/* Current: THE decision point; eye-catching */
+.map-stop.current {
+  z-index: 6;
+}
+.map-stop.current > button {
+  background: radial-gradient(circle at 30% 20%, #d68f45, #7a3d1d 70%);
+  border-color: #ffd166;
+  color: #fff9e6;
+  box-shadow:
+    0 0 0 4px #ffd16655,
+    0 0 0 8px #b0712e88,
+    0 0 30px #f5b34bcc,
+    0 12px 25px #000e,
+    inset 0 1px 6px #fff6;
+  animation: currentPulse 2.5s infinite alternate;
+}
+
+@keyframes currentPulse {
+  0% { box-shadow: 0 0 0 4px #ffd16633, 0 0 0 8px #b0712e55, 0 0 20px #f5b34b99, 0 12px 25px #000e, inset 0 1px 6px #fff6; }
+  100% { box-shadow: 0 0 0 6px #ffd16666, 0 0 0 11px #b0712e88, 0 0 35px #f5b34bdd, 0 12px 25px #000e, inset 0 1px 6px #fff6; }
+}
+
+/* Boss nodes are special, diamond/hex */
+.map-stop.kind-boss > button {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  transform: rotate(0deg);
+  clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+  background: radial-gradient(circle at 30% 20%, #b3543d, #5e2a1e 70%);
+}
+
+.map-stop.kind-boss > button .icon {
+  width: 36px;
+  height: 36px;
+}
+
+/* ----- Labels and here-marker ----- */
+.node-label {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  color: #f0e4c5;
+  text-shadow: 0 1px 3px #000c;
+  white-space: nowrap;
+  background: rgba(20, 17, 12, .65);
+  border-radius: 4px;
+  padding: 2px 5px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* For current node, label prominent */
+.map-stop.current .node-label {
+  color: #ffedd0;
+  background: rgba(50, 31, 14, .8);
+  border: 1px solid #f0b95e;
+}
+
+/* For visited, dim but readable */
+.map-stop.visited .node-label {
+  color: #d4e2b8;
+}
+
+/* For locked, muted */
+.map-stop.locked .node-label {
+  color: #958c77;
+}
+
+/* For bypassed, strike-through */
+.map-stop.bypassed .node-label {
+  color: #7a7463;
+  text-decoration: line-through;
+}
+
+/* "here-label" small text under current node */
+.here-label {
+  display: block;
+  margin-top: 4px;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #f8c46a;
+  text-shadow: 0 1px 2px #000;
+  animation: fadeInOut 2s infinite;
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .6; }
+}
+
+/* ----- Bypassed / locked dimming handled per state, but also add a small "lock" or "skip" indicator perhaps? Not needed. ----- */
+
+/* ----- Map watermark ----- */
+.map-watermark {
+  position: absolute;
+  top: 49%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-20deg);
+  color: #51462222;
+  font-family: Georgia, serif;
+  font-size: 60px;
+  font-weight: 800;
+  letter-spacing: 12px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Season map watermark color to match */
+.season-map .map-watermark {
+  color: #51462233;
+}
+
+/* ----- Map start label (bottom) ----- */
+.map-start {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: #b8a77a;
+  z-index: 5;
+  background: rgba(20, 17, 12, .6);
+  padding: 3px 10px;
+  border-radius: 4px;
+}
+
+/* Hidden by default in base, but we can keep it hidden or show as a small note; we'll show it subtly */
+.map-start {
+  display: block;
+}
+
+/* ----- Overlay / pseudo elements for edges? We'll use existing svg. ----- */
+
+/* ===== Mobile adjustments (390x844) ===== */
+@media (max-width: 720px) {
+  .map-screen {
+    display: block;
+    height: 100dvh;
+    padding: 10px 8px;
+  }
+
+  .map-intro {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    min-height: 30px;
+    padding: 0;
+  }
+
+  .map-intro h1 {
+    font-size: 20px;
+    letter-spacing: 1px;
+    margin: 0;
+  }
+
+  .map-intro h1 br {
+    display: none;
+  }
+
+  .map-intro > p,
+  .map-progress,
+  .map-legend,
+  .map-instruction {
+    display: none; /* already hidden in base, but ensure */
+  }
+
+  .map-scroll {
+    height: calc(100dvh - 110px);
+    min-height: 0;
+    margin-top: 10px;
+  }
+
+  .map-board {
+    min-height: 800px; /* ensure enough scroll for tall boards */
+  }
+
+  .season-map .map-board {
+    min-height: 1000px;
+  }
+
+  /* Nodes: ensure touch size at least 40px */
+  .map-stop > button {
+    width: 44px;
+    height: 44px;
+    padding: 9px;
+    border-radius: 50%;
+  }
+
+  .map-stop > button .icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .map-stop.kind-boss > button {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+  }
+
+  .map-stop.kind-boss > button .icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .node-label {
+    font-size: 9px;
+    max-width: 100px;
+  }
+
+  .here-label {
+    font-size: 8px;
+  }
+
+  .map-watermark {
+    font-size: 28px;
+  }
+
+  .map-start {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+}
+
+/* Very small screens (<=390px) */
+@media (max-width: 390px) {
+  .map-stop > button {
+    width: 42px;
+    height: 42px;
+  }
+  .map-stop.kind-boss > button {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+/* ===== Desktop fine-tuning ===== */
+@media (min-width: 721px) {
+  .map-screen {
+    grid-template-columns: 220px minmax(420px, 720px) 200px;
+    gap: 28px;
+    padding: 24px 35px;
+  }
+
+  .map-intro h1 {
+    font-size: 48px;
+    letter-spacing: 8px;
+  }
+
+  .map-stop > button {
+    width: 54px;
+    height: 54px;
+    padding: 14px;
+  }
+
+  .map-stop > button .icon {
+    width: 25px;
+    height: 25px;
+  }
+
+  .map-stop.kind-boss > button {
+    width: 70px;
+    height: 70px;
+    border-radius: 20px;
+  }
+
+  .map-stop.kind-boss > button .icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .node-label {
+    font-size: 11px;
+    max-width: 150px;
+  }
+
+  .map-stop.current > button {
+    box-shadow:
+      0 0 0 6px #ffd16655,
+      0 0 0 12px #b0712e88,
+      0 0 40px #f5b34bcc,
+      0 14px 30px #000e,
+      inset 0 1px 6px #fff6;
+  }
+
+  .map-stop.current {
+    animation: none;
+  }
+
+  .here-label {
+    font-size: 10px;
+  }
+
+  .map-watermark {
+    font-size: 80px;
+  }
+
+  .map-start {
+    font-size: 11px;
+  }
+}
+
+/* ===== Accessibility: ensure focus visible outline ===== */
+.map-stop > button:focus-visible {
+  outline: none;
+  border-color: #ffd166;
+  box-shadow: 0 0 0 3px #ffd166aa, 0 0 20px #f5b34b;
+}
+
+/* ===== Reduced motion: disable pulse and transitions ===== */
+@media (prefers-reduced-motion: reduce) {
+  .map-stop.current > button {
+    animation: none;
+  }
+  .map-stop > button {
+    transition: none;
+  }
+  .here-label {
+    animation: none;
+  }
+}
+
+/* ===== Optional: adjust for season map specifics ===== */
+/* The season map already has some overrides in season-ui.css. We'll enhance a bit more. */
+.season-map .map-stop.current > button {
+  background: radial-gradient(circle at 30% 20%, #d68f45, #7a3d1d 70%);
+  border-color: #ffd166;
+  color: #fff9e6;
+}
+
+.season-map .map-stop.current .node-label {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Season itinerary styling (already present but we can add minor touch) */
+.season-itinerary li.active b {
+  background: #ffd16633;
+  color: #ffd166;
+}
+
+/* Shared geometry and interaction; each demo keeps its own art, text and rules. */
+.combat-screen .hand-card, .battle .hand-area .hand-card {
+  border-radius: 10px;
+  touch-action: none;
+  user-select: none;
+  transition: transform .16s ease-out, filter .16s ease-out, box-shadow .16s ease-out;
+  will-change: transform;
+}
+.combat-screen .hand-card { width: 162px; height: 246px; }
+.battle .hand-area .hand-card { width: 162px; min-width: 162px; flex-basis: 162px; height: 246px; min-height: 246px; }
+.combat-screen .hand-card:hover, .combat-screen .hand-card:focus-visible,
+.battle .hand-area .hand-card:hover, .battle .hand-area .hand-card:focus-visible {
+  filter: drop-shadow(0 0 11px #edce8290);
+  z-index: 30;
+}
+.combat-screen .hand-card.selected, .battle .hand-area .hand-card.selected {
+  outline: 2px solid #f1d383;
+  outline-offset: 3px;
+  filter: drop-shadow(0 0 13px #d7b75f88);
+  z-index: 40;
+}
+.combat-screen .hand-card.dragging-card, .battle .hand-area .hand-card.dragging-card {
+  transition: none !important;
+  filter: drop-shadow(0 12px 18px #000a) !important;
+}
+.combat-screen .hand-card.unplayable, .battle .hand-area .hand-card.not-playable { filter: saturate(.42) brightness(.78); }
+@media (max-width: 1100px) {
+  .combat-screen .hand-card { width: 146px; height: 218px; }
+  .battle .hand-area .hand-card { width: 146px; min-width: 146px; flex-basis: 146px; height: 218px; min-height: 218px; }
+}
+@media (max-width: 720px) {
+  .combat-screen .hand-card { width: 142px; min-width: 142px; height: 212px; }
+  .battle .hand-area .hand-card { width: 142px; min-width: 142px; flex-basis: 142px; height: 212px; min-height: 212px; }
+}
+@media (max-width: 390px) {
+  .combat-screen .hand-card { width: 124px; min-width: 124px; height: 177px; }
+  .battle .hand-area .hand-card { width: 124px; min-width: 124px; flex-basis: 124px; height: 177px; min-height: 177px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .combat-screen .hand-card, .battle .hand-area .hand-card { transition: none !important; }
+}
+
+/* shared/character-stage.css
+   Styles for the character stage containers and fallback SVG.
+   The Three.js canvas is appended by JS; these styles ensure a clean layout. */
+
+.character-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100px;
+  display: block;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.character-stage canvas,
+.character-stage svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Fallback overlay (appended, not replacing original content) */
+.character-stage .character-stage-fallback {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.character-stage .character-stage-fallback svg {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Both games mount the same WebGL squad into their existing battle art slot. */
+.character-stage-host { position:absolute; inset:0; z-index:2; pointer-events:none; overflow:hidden; }
+.character-stage-host canvas { display:block; width:100%; height:100%; pointer-events:none; }
+.ally-art-container:has(.character-stage-host canvas) > svg,
+.enemy-art-container:has(.character-stage-host canvas) > svg { opacity:0; }
+.ally-art-container, .enemy-art-container { position:relative; }
+.combat-target:has(.character-stage-host canvas) { width:190px; height:136px; padding:0; }
+.combat-target:has(.character-stage-host canvas) > :not(.character-stage-host):not(.target-caption) { opacity:0; }
+.combat-target .character-stage-host { inset:0; }
+.block-value { display:inline-flex; align-items:center; gap:.45rem; min-height:24px; }
+.mini-armor { width:18px; height:20px; display:inline-block; background:linear-gradient(135deg,#bde6fc,#477da9); clip-path:polygon(50% 0,95% 19%,87% 72%,50% 100%,13% 72%,5% 19%); filter:drop-shadow(0 0 4px #5bbff0); }
+.block-value[data-block="0"] .mini-armor { filter:grayscale(1); opacity:.45; }
+.block-value:not([data-block="0"]) .mini-armor { animation:armor-glint 1.5s ease-in-out infinite alternate; }
+@keyframes armor-glint { to { transform:scale(1.15); filter:drop-shadow(0 0 9px #b9ebff); } }
+@media(max-width:720px) { .combat-target:has(.character-stage-host canvas) { width:135px; height:91px; } }
+@media(prefers-reduced-motion:reduce) { .block-value .mini-armor { animation:none !important; } }

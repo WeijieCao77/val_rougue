@@ -1,6 +1,8 @@
 // Tiny dependency-free packer for this project's named ES-module exports.
 // Supports aliases in named imports (import { act as baseAct }).
 import { readFile, writeFile } from 'node:fs/promises';
+import { build } from 'esbuild';
+import { fileURLToPath } from 'node:url';
 import './build-art.mjs';
 
 const root = new URL('../', import.meta.url);
@@ -55,6 +57,7 @@ for (const file of modules) {
 
 await writeFile(new URL('app.js', root), output.join('\n'));
 await writeFile(new URL('style.css', root),
-  (await read('base-style.css')) + '\n' + (await read('season-ui.css')) + '\n' + (await read('weapon-style.css')) + '\n' + (await read('art-style.css')) + '\n' + (await read('combat-fx.css')) + '\n' + (await read('cover-wa.css'))
+  (await read('base-style.css')) + '\n' + (await read('season-ui.css')) + '\n' + (await read('weapon-style.css')) + '\n' + (await read('art-style.css')) + '\n' + (await read('combat-fx.css')) + '\n' + (await read('cover-wa.css')) + '\n' + (await read('wa-map-redesign.css')) + '\n' + (await read('shared/card-feel.css')) + '\n' + (await read('shared/character-stage.css'))
 );
+await build({ entryPoints: [fileURLToPath(new URL('shared/character-stage-source.js', root))], bundle: true, format: 'esm', platform: 'browser', outfile: fileURLToPath(new URL('character-stage.js', root)), minify: true, target: 'es2020' });
 console.log('Browser assets built.');

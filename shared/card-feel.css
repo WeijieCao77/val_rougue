@@ -1,0 +1,41 @@
+/* Shared geometry and interaction; each demo keeps its own art, text and rules. */
+.combat-screen .hand-card, .battle .hand-area .hand-card {
+  border-radius: 10px;
+  touch-action: none;
+  user-select: none;
+  transition: transform .16s ease-out, filter .16s ease-out, box-shadow .16s ease-out;
+  will-change: transform;
+}
+.combat-screen .hand-card { width: 162px; height: 246px; }
+.battle .hand-area .hand-card { width: 162px; min-width: 162px; flex-basis: 162px; height: 246px; min-height: 246px; }
+.combat-screen .hand-card:hover, .combat-screen .hand-card:focus-visible,
+.battle .hand-area .hand-card:hover, .battle .hand-area .hand-card:focus-visible {
+  filter: drop-shadow(0 0 11px #edce8290);
+  z-index: 30;
+}
+.combat-screen .hand-card.selected, .battle .hand-area .hand-card.selected {
+  outline: 2px solid #f1d383;
+  outline-offset: 3px;
+  filter: drop-shadow(0 0 13px #d7b75f88);
+  z-index: 40;
+}
+.combat-screen .hand-card.dragging-card, .battle .hand-area .hand-card.dragging-card {
+  transition: none !important;
+  filter: drop-shadow(0 12px 18px #000a) !important;
+}
+.combat-screen .hand-card.unplayable, .battle .hand-area .hand-card.not-playable { filter: saturate(.42) brightness(.78); }
+@media (max-width: 1100px) {
+  .combat-screen .hand-card { width: 146px; height: 218px; }
+  .battle .hand-area .hand-card { width: 146px; min-width: 146px; flex-basis: 146px; height: 218px; min-height: 218px; }
+}
+@media (max-width: 720px) {
+  .combat-screen .hand-card { width: 142px; min-width: 142px; height: 212px; }
+  .battle .hand-area .hand-card { width: 142px; min-width: 142px; flex-basis: 142px; height: 212px; min-height: 212px; }
+}
+@media (max-width: 390px) {
+  .combat-screen .hand-card { width: 124px; min-width: 124px; height: 177px; }
+  .battle .hand-area .hand-card { width: 124px; min-width: 124px; flex-basis: 124px; height: 177px; min-height: 177px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .combat-screen .hand-card, .battle .hand-area .hand-card { transition: none !important; }
+}

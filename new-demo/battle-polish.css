@@ -1,0 +1,13 @@
+/* Keep tactical text inside its panels, with the hand remaining the visual focus. */
+.battle .player-area, .battle .enemy-area, .battle .player-box, .battle .enemy-box { min-width:0; }
+.battle .player-box, .battle .enemy-box, .battle .stance-box { overflow-wrap:anywhere; }
+.battle .enemy-name, .battle .intent, .battle .preview-panel, .battle .stance-box { white-space:normal; line-height:1.35; }
+.battle .battle-actions { flex-wrap:wrap; min-width:0; }
+.battle .preview-panel { max-width:min(440px,100%); overflow-wrap:anywhere; }
+.battle .hand-area { min-width:0; }
+.battle .hand-card .card-name, .battle .hand-card .card-text { overflow-wrap:anywhere; }
+@media(max-width:720px) {
+  .battle .player-area, .battle .enemy-area { align-content:start; }
+  .battle .stance-box { font-size:.75rem; }
+  .battle .preview-panel { flex-basis:100%; max-width:100%; font-size:.75rem; }
+}

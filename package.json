@@ -12,6 +12,8 @@
     "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
-    "postgres": "^3.4.4"
+    "esbuild": "^0.28.2",
+    "postgres": "^3.4.4",
+    "three": "^0.186.0"
   }
 }

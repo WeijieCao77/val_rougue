@@ -197,6 +197,7 @@ function commit(action){
  if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);
  animateResolution(before,state,played,flight,action);
  playCombatFx(combatEvents(before,state,action),stage);
+ globalThis.characterStages?.cueFromTransition('wa',before,state,action);
  return r;
 }
 function showModal(title,html){hideCardTip();modal.innerHTML=`<h2 tabindex="-1">${title}</h2>${html}`;if(!dialog.open)dialog.showModal();modal.querySelector('h2').focus({preventScroll:true});dialog.scrollTop=0;}
@@ -377,13 +378,22 @@ document.addEventListener('focusout',e=>{if(e.target.closest('[data-card-id]'))h
 document.addEventListener('scroll',()=>{const el=tipAnchor;hideCardTip();if(el&&el.contains(document.activeElement))scheduleTip(el);},true);window.addEventListener('resize',hideCardTip);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')hideCardTip();});
 function clearAim(){aim.setAttribute('hidden','');document.querySelectorAll('.drop-ready').forEach(el=>el.classList.remove('drop-ready'));}
+function dragTargetAt(c,e,originY){
+ const wanted=targetOf(c);
+ const exact=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-target],[data-drop-target]');
+ if(exact)return (exact.dataset.target||exact.dataset.dropTarget)===wanted?wanted:null;
+ const arena=document.querySelector('.arena')?.getBoundingClientRect();
+ if(!arena||e.clientY>originY-45||e.clientY<arena.top-20||e.clientY>arena.bottom+35||e.clientX<arena.left||e.clientX>arena.right)return null;
+ const midpoint=arena.left+arena.width/2;
+ return (wanted==='enemy'&&e.clientX>midpoint+25)||(wanted==='self'&&e.clientX<midpoint-25)?wanted:null;
+}
 function updateAim(d,e){
  const c=state.battle.hand.find(c=>c.uid===d.uid);if(!c)return;
  aim.removeAttribute('hidden');aim.setAttribute('viewBox',`0 0 ${innerWidth} ${innerHeight}`);
  aim.querySelector('path').setAttribute('d',`M${d.x},${d.y} Q${d.x},${e.clientY} ${e.clientX},${e.clientY}`);
  aim.querySelector('circle').setAttribute('cx',e.clientX);aim.querySelector('circle').setAttribute('cy',e.clientY);
- const hit=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-drop-target]');
- document.querySelectorAll('[data-drop-target]').forEach(el=>el.classList.toggle('drop-ready',el===hit&&el.dataset.dropTarget===targetOf(c)));
+ const target=dragTargetAt(c,e,d.y);
+ document.querySelectorAll('[data-drop-target]').forEach(el=>el.classList.toggle('drop-ready',el.dataset.dropTarget===target));
 }
 function animateResolution(before,after,played,flight,action){
  if(reduceMotion())return;
@@ -438,11 +448,10 @@ function endDrag(e,cancel=false){
  const d=pointerDrag;pointerDrag=null;dragging=null;clearAim();
  if(d.el.hasPointerCapture(e.pointerId))d.el.releasePointerCapture(e.pointerId);
  if(!d.active)return;
- const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-target],[data-drop-target]');
  d.el.classList.remove('dragging-card');d.el.style.removeProperty('--drag-x');d.el.style.removeProperty('--drag-y');
  suppressClick=true;setTimeout(()=>{suppressClick=false;},0);
  const c=state.battle?.hand.find(c=>c.uid===d.uid);
- if(!cancel&&c&&target&&targetOf(c)===(target.dataset.target||target.dataset.dropTarget))commit({type:'play',uid:d.uid,rev:state.rev});
+ if(!cancel&&c&&dragTargetAt(c,e,d.y))commit({type:'play',uid:d.uid,rev:state.rev});
  else{refreshSelection();if(!reduceMotion())d.el.animate([{filter:'brightness(1.4)'},{filter:'brightness(1)'}],{duration:220});notice('卡牌已放回手中。请拖向发亮的目标。');}
 }
 app.addEventListener('pointerup',e=>endDrag(e));

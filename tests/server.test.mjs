@@ -20,7 +20,7 @@ test('Railway server uses PORT and serves only public build assets', async t => 
     child.once('exit', code => { clearTimeout(timer); reject(Error(`Early server exit ${code}`)); });
   });
   const request = (path, options) => fetch(`http://127.0.0.1:${port}${path}`, options);
-  for (const [path, type] of [['/', 'text/html'], ['/app.js', 'text/javascript'], ['/style.css', 'text/css'], ['/art-gallery.html','text/html'], ['/assets/players/CN06.png','image/png'], ['/assets/special/CU01.svg','image/svg+xml'], ['/healthz?probe=1', 'application/json']]) {
+  for (const [path, type] of [['/', 'text/html'], ['/app.js', 'text/javascript'], ['/style.css', 'text/css'], ['/character-stage.js', 'text/javascript'], ['/shared-stage-controller.js', 'text/javascript'], ['/shared/card-feel.css', 'text/css'], ['/shared/character-stage.css', 'text/css'], ['/art-gallery.html','text/html'], ['/assets/players/CN06.png','image/png'], ['/assets/special/CU01.svg','image/svg+xml'], ['/healthz?probe=1', 'application/json']]) {
     const response = await request(path); assert.equal(response.status, 200);
     assert.ok(response.headers.get('content-type').startsWith(type));
     assert.ok((await response.text()).length > 0);

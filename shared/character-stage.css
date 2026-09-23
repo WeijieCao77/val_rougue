@@ -1,0 +1,54 @@
+/* shared/character-stage.css
+   Styles for the character stage containers and fallback SVG.
+   The Three.js canvas is appended by JS; these styles ensure a clean layout. */
+
+.character-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100px;
+  display: block;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.character-stage canvas,
+.character-stage svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Fallback overlay (appended, not replacing original content) */
+.character-stage .character-stage-fallback {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.character-stage .character-stage-fallback svg {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Both games mount the same WebGL squad into their existing battle art slot. */
+.character-stage-host { position:absolute; inset:0; z-index:2; pointer-events:none; overflow:hidden; }
+.character-stage-host canvas { display:block; width:100%; height:100%; pointer-events:none; }
+.ally-art-container:has(.character-stage-host canvas) > svg,
+.enemy-art-container:has(.character-stage-host canvas) > svg { opacity:0; }
+.ally-art-container, .enemy-art-container { position:relative; }
+.combat-target:has(.character-stage-host canvas) { width:190px; height:136px; padding:0; }
+.combat-target:has(.character-stage-host canvas) > :not(.character-stage-host):not(.target-caption) { opacity:0; }
+.combat-target .character-stage-host { inset:0; }
+.block-value { display:inline-flex; align-items:center; gap:.45rem; min-height:24px; }
+.mini-armor { width:18px; height:20px; display:inline-block; background:linear-gradient(135deg,#bde6fc,#477da9); clip-path:polygon(50% 0,95% 19%,87% 72%,50% 100%,13% 72%,5% 19%); filter:drop-shadow(0 0 4px #5bbff0); }
+.block-value[data-block="0"] .mini-armor { filter:grayscale(1); opacity:.45; }
+.block-value:not([data-block="0"]) .mini-armor { animation:armor-glint 1.5s ease-in-out infinite alternate; }
+@keyframes armor-glint { to { transform:scale(1.15); filter:drop-shadow(0 0 9px #b9ebff); } }
+@media(max-width:720px) { .combat-target:has(.character-stage-host canvas) { width:135px; height:91px; } }
+@media(prefers-reduced-motion:reduce) { .block-value .mini-armor { animation:none !important; } }

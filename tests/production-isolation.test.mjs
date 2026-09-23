@@ -135,6 +135,8 @@ test('production isolation for new demo', async () => {
           '/new/cover.css',
           '/new/battle-redesign.css',
           '/new/battle-fx.css',
+          '/new/map-redesign.css',
+          '/new/battle-polish.css',
           '/new/cover.webp',
           '/new/style.css',
           '/new/season-map.js',
