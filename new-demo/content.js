@@ -142,7 +142,11 @@ function powerDesc(powerId) {
     tactical_master: '每回合获得2点额外能量',
     clutch_core: '敌人有烟雾或闪光时，攻击伤害+2',
     final_push: '每回合开始获得3点布防',
-    upgrade_core: '每回合首次打出升级牌后，返还1点能量'
+    upgrade_core: '每回合首次打出升级牌后，返还1点能量',
+    barricade: '布防在回合交替时不会清零',
+    inflame: '本场每次攻击伤害+2',
+    footwork: '本场每次布防+2',
+    dark_embrace: '每消耗一张牌，抽1张牌'
   };
   return map[powerId] || '';
 }
@@ -156,7 +160,7 @@ function def(card) {
     // Generate text from effects, unless power then use powerDesc.
     if (card.type === 'power') {
       card.text = `能力：${powerDesc(card.power)}`;
-      card.upgradeText = undefined; // powers have no upgrade effects
+      card.upgradeText = card.upgradePowerText;
     } else {
       card.text = formatEffects(card.effects);
       if (card.upgradeEffects && card.upgradeEffects.length) {
@@ -269,7 +273,13 @@ const defs = [
   { id:'TA80', name:'烟中回看', cost:1, type:'skill', tag:'utility', rarity:'uncommon', effects:[conditional('enemy_smoke', upgradeRandomInHand()), smoke(3), block(2)], upgradeEffects:[conditional('enemy_smoke', upgradeRandomInHand()), smoke(4), block(4)] },
   { id:'TA81', name:'精练攻势', cost:1, type:'attack', tag:'hybrid', rarity:'uncommon', effects:[attackScaledByUpgradedHand(5,2,4)], upgradeEffects:[attackScaledByUpgradedHand(7,2,4)] },
   { id:'TA82', name:'连夜复盘', cost:1, type:'skill', tag:'response', rarity:'rare', effects:[draw(2), upgradeRandomInHand(), exhaustSelf()], upgradeEffects:[draw(3), upgradeRandomInHand(), exhaustSelf()], exhaust:true },
-  { id:'TA83', name:'精练体系', cost:2, type:'power', tag:'core', rarity:'rare', power:'upgrade_core', effects:[], upgradeEffects:[] }
+  { id:'TA83', name:'精练体系', cost:2, type:'power', tag:'core', rarity:'rare', power:'upgrade_core', effects:[], upgradeEffects:[] },
+
+  // FPS tactical ability cards (4)
+  { id:'TA84', name:'长期工事', cost:3, upgradeCost:2, type:'power', tag:'response', rarity:'rare', power:'barricade', effects:[], upgradeEffects:[] },
+  { id:'TA85', name:'火力训练', cost:1, type:'power', tag:'response', rarity:'uncommon', power:'inflame', effects:[], upgradeEffects:[], upgradePowerText:'能力：本场每次攻击伤害+3' },
+  { id:'TA86', name:'架点训练', cost:1, type:'power', tag:'response', rarity:'uncommon', power:'footwork', effects:[], upgradeEffects:[], upgradePowerText:'能力：本场每次布防+3' },
+  { id:'TA87', name:'消耗复盘', cost:2, upgradeCost:1, type:'power', tag:'response', rarity:'rare', power:'dark_embrace', effects:[], upgradeEffects:[] }
 ];
 
 defs.forEach(c => def(c));

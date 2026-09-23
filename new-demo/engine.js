@@ -362,16 +362,18 @@ function playCard(state, action) {
   }
 
   if (def.type === 'power') {
+    const strength = def.power === 'inflame' || def.power === 'footwork' ? (card.up ? 3 : 2) : 1;
     if (!b.powers.includes(def.power)) {
       b.powers.push(def.power);
-      b.powerStacks[def.power] = 1;
+      b.powerStacks[def.power] = strength;
     } else {
-      b.powerStacks[def.power]++;
+      b.powerStacks[def.power] += strength;
     }
     b.powerCards.push(card);
     // Power card is removed from rotation, not discarded or exhausted
   } else if (def.exhaust || effects.some(e => e.type === 'exhaustSelf')) {
     b.exhaustPile.push(card);
+    if (b.powerStacks.dark_embrace) drawCards(state, b.powerStacks.dark_embrace);
   } else {
     b.discardPile.push(card);
   }
@@ -413,7 +415,7 @@ function applyEffect(state, eff, sourceCard, mods, context) {
       const times = eff.times || 1;
       const clutchBonus = (b.powers.includes('clutch_core') && ((b.statuses.enemy.smoke || 0) > 0 || (b.statuses.enemy.flash || 0) > 0)) ? 2 * (b.powerStacks.clutch_core || 1) : 0;
       for (let i = 0; i < times; i++) {
-        let dmg = baseDamage;
+        let dmg = baseDamage + (b.powerStacks.inflame || 0);
         if (i === 0 && bonus > 0) dmg += bonus;
         if (clutchBonus > 0) dmg += clutchBonus;
         dealDamageToEnemy(state, dmg);
@@ -430,7 +432,7 @@ function applyEffect(state, eff, sourceCard, mods, context) {
         }
         if (bonus > 0) context.blockBonusUsed = true;
       }
-      b.playerBlock += blk + bonus;
+      b.playerBlock += blk + bonus + (b.powerStacks.footwork || 0);
       break;
     }
     case 'smoke': {
@@ -696,7 +698,9 @@ function endTurn(state) {
   b.upgradeEnergyUsedThisTurn = false;
   b.turn++;
   b.energy = 3;
-  b.playerBlock = 0;
+  if (!b.powers.includes('barricade')) {
+    b.playerBlock = 0;
+  }
   applyTurnStartPowers(state);
   drawCards(state, 5);
   nextEnemyIntent(state);

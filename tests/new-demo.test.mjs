@@ -93,9 +93,9 @@ function totalBattleCards(battle) {
 
 // ----------------------------- Tests -----------------------------
 
-test('content: 83 unique permanent cards and 3 status cards', () => {
-  assert.equal(CARD_IDS.length, 83);
-  assert.equal(new Set(CARD_IDS).size, 83);
+test('content: 87 unique permanent cards and 3 status cards', () => {
+  assert.equal(CARD_IDS.length, 87);
+  assert.equal(new Set(CARD_IDS).size, 87);
   assert.equal(Object.keys(STATUS_CARDS).length, 3);
   for (const id of CARD_IDS) {
     const c = CARDS[id];
@@ -145,6 +145,45 @@ test('source-anchored upgrade cards use their upgraded effect and energy cost', 
   assert.equal(state.battle.energy, 0);
   assert.equal(state.battle.playerBlock, 0);
   assert.equal(state.battle.hand[0].up, true);
+});
+
+test('source-anchored abilities retain block and scale every attack or defense', () => {
+  let state = createTestBattle({handCards:['TA84'], playerBlock:7, energy:2});
+  assert(act(state, {type:'play', uid:state.battle.hand[0].uid}).error);
+  state.battle.hand[0].up = true;
+  state = playCardById(state, 'TA84');
+  assert.equal(state.battle.energy, 0);
+  assert.equal(state.battle.discardPile.length, 0);
+  state = endTurn(state);
+  assert.equal(state.battle.playerBlock, 7);
+
+  state = createTestBattle({handCards:['TA85','TA24'], enemyHp:50, energy:3});
+  state = playCardById(state, 'TA85');
+  state = playCardById(state, 'TA24');
+  assert.equal(state.battle.enemyHp, 29); // (5 + 2 firepower) × 3 hits
+
+  state = createTestBattle({handCards:['TA85','TA85','TA05'], enemyHp:30, energy:3});
+  state.battle.hand[1].up = true;
+  state = playCardById(state, 'TA85');
+  state = playCardById(state, 'TA85');
+  state = playCardById(state, 'TA05');
+  assert.equal(state.battle.enemyHp, 21); // 4 base + 2 normal + 3 upgraded
+
+  state = createTestBattle({handCards:['TA86','TA02'], energy:3});
+  state.battle.hand[0].up = true;
+  state = playCardById(state, 'TA86');
+  state = playCardById(state, 'TA02');
+  assert.equal(state.battle.playerBlock, 11); // 5 card + 3 cover + 3 upgraded defense
+});
+
+test('exhaust draw ability draws after the played card leaves hand', () => {
+  let state = createTestBattle({handCards:['TA87','TA74'], drawPile:['TA01'], energy:3});
+  state = playCardById(state, 'TA87');
+  assert.equal(state.battle.powerCards.length, 1);
+  state = playCardById(state, 'TA74');
+  assert.equal(state.battle.exhaustPile.length, 1);
+  assert.equal(state.battle.hand.length, 1);
+  assert.equal(state.battle.hand[0].id, 'TA01');
 });
 
 test('upgrade payoff counts other upgraded cards and power returns energy once per turn', () => {
