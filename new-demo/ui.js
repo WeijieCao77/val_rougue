@@ -288,7 +288,7 @@ function renderMap(root) {
   const legal = legalActions(state).filter(a => a.type === 'enter');
   const availableKeys = new Set(legal.map(a => a.key));
 
-  const w = 400, h = 520;
+  const w = 400, h = 1000;
   const scaleX = w / 100;
   const scaleY = h / 100;
   const sx = (x) => x * scaleX;
@@ -309,7 +309,7 @@ function renderMap(root) {
     const glyph = { battle: '⚔', elite: '☠', event: '?', shop: '⇄', rest: '✚', boss: '👑' }[n.kind] || '·';
     const label = n.name || { battle: '战斗', elite: '强敌', event: '事件', shop: '转会', rest: '休整', boss: 'Boss' }[n.kind] || n.kind;
     return `<g class="${cls}" data-key="${n.key}" tabindex="${isAvailable ? '0' : '-1'}" role="button" aria-label="${n.kind === 'boss' ? 'Boss：' : n.kind === 'elite' ? '强敌：' : ''}${escapeHtml(n.name)}" style="cursor:pointer">
-      <circle cx="${sx(n.x)}" cy="${sy(n.y)}" r="18" />
+      <circle cx="${sx(n.x)}" cy="${sy(n.y)}" r="${n.kind === 'boss' ? 24 : 18}" />
       <text class="map-glyph" x="${sx(n.x)}" y="${sy(n.y) + 1}">${glyph}</text>
       ${isAvailable ? `<text class="map-choice-label" x="${sx(n.x)}" y="${sy(n.y) - 29}">${escapeHtml(label)}</text>` : ''}
     </g>`;
@@ -317,7 +317,7 @@ function renderMap(root) {
 
   root.innerHTML = `
     <div class="map-container">
-      ${guideStrip('map', '先点亮起的节点开赛。每场胜利后挑一张新牌；路线会分叉，选安全补给还是挑战强敌由你决定。')}
+      ${guideStrip('map', '先点亮起的节点开赛。向上滑动可预览后续路线和决赛；每场胜利后挑一张新牌。')}
       <div class="map-stage-info">
         <span>幕 ${state.act}：${act.name} · ${act.subtitle} · ${state.completed.filter(key => state.map.nodes.some(node => node.key === key)).length}/12 站</span>
         <span>HP ${state.hp}/${state.maxHp} · 💰 ${state.money}</span>

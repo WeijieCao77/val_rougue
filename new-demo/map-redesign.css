@@ -197,25 +197,38 @@
   }
 }
 
-/* Show the full twelve-stop act instead of opening inside a tall scroll area. */
+/* Give each tournament stop room to breathe and scroll the route itself. */
 .map-container .map-scroll {
   max-width: 430px;
-  max-height: none;
-  overflow: visible;
+  height: min(72dvh, 680px);
+  max-height: min(72dvh, 680px);
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: .55rem;
+  scrollbar-color: #737587 #222638;
 }
 .map-container .map-svg {
   max-width: 400px;
-  aspect-ratio: 400 / 520;
+  aspect-ratio: 400 / 1000;
 }
-.map-container .map-node:not(.available):not(.completed):not(.current) { opacity: .62; }
-.map-container .map-edge { opacity: .7; }
+.map-container .map-node:not(.available):not(.completed):not(.current) { opacity: .86; }
+.map-container .map-edge { stroke: #81859a; stroke-width: 1.3; stroke-dasharray: 3 7; opacity: .7; }
+.map-container .map-node circle { fill: #272e3e; stroke: #71798d; stroke-width: 1.5; }
+.map-container .map-node.available circle { fill: #3a4552; stroke: #e0b76e; stroke-width: 2.5; }
+.map-container .map-node.available .map-glyph { fill: #f6e8c6; }
+.map-container .map-node.available:hover circle,
+.map-container .map-node.available:focus circle { fill: #4b5c64; stroke: #f6d48b; transform: scale(1.08); }
+.map-container .map-node.completed circle { fill: #344b46; stroke: #90ae9e; }
+.map-container .map-node.kind-boss circle { stroke: #dfbf80; stroke-width: 2.5; }
 @media (min-width: 900px) {
   .map-container { grid-template-columns: minmax(400px, 430px) minmax(240px, 300px); grid-template-rows: auto auto 1fr auto; gap: .35rem; max-width: 800px; }
   .map-container .guide-strip { grid-column: 1 / -1; grid-row: 1; }
   .map-container .map-stage-info { grid-column: 1 / -1; grid-row: 2; }
   .map-container .map-quick-legend { display: none; }
-  .map-container .map-scroll { grid-column: 1; grid-row: 3 / 5; max-height: none; }
+  .map-container .map-scroll { grid-column: 1; grid-row: 3 / 5; max-height: min(72dvh, 680px); }
   .map-container .map-legend { grid-column: 2; grid-row: 3; }
   .map-container .node-details { grid-column: 2; grid-row: 4; }
+}
+@media (max-width: 500px) {
+  .map-container .map-scroll { height: 65dvh; max-height: 65dvh; }
 }
