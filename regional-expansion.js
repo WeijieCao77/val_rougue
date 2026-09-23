@@ -145,12 +145,13 @@ export const EXPANSION_ROWS = [
   [
     "CN25",
     "whzy",
-    "哨位",
+    "决斗",
     2,
     [
       {
-        "type": "block",
-        "n": 10
+        "type": "hit",
+        "n": 13,
+        "times": 1
       },
       {
         "type": "token",
@@ -159,8 +160,9 @@ export const EXPANSION_ROWS = [
     ],
     [
       {
-        "type": "block",
-        "n": 12
+        "type": "hit",
+        "n": 17,
+        "times": 1
       },
       {
         "type": "token",
@@ -191,7 +193,7 @@ export const EXPANSION_ROWS = [
   [
     "CN27",
     "rushia",
-    "先锋",
+    "控场",
     2,
     [
       {
@@ -231,7 +233,7 @@ export const EXPANSION_ROWS = [
   [
     "CN29",
     "Nicc",
-    "决斗",
+    "先锋",
     1,
     [
       {
@@ -252,7 +254,7 @@ export const EXPANSION_ROWS = [
   [
     "CN30",
     "Flex1n",
-    "哨位",
+    "控场",
     1,
     [
       {
@@ -279,7 +281,7 @@ export const EXPANSION_ROWS = [
   [
     "CN31",
     "Akeman",
-    "控场",
+    "决斗",
     1,
     [
       {
@@ -298,7 +300,7 @@ export const EXPANSION_ROWS = [
   [
     "CN32",
     "sScary",
-    "先锋",
+    "控场",
     1,
     [
       {
@@ -383,12 +385,13 @@ export const EXPANSION_ROWS = [
   [
     "CN35",
     "NoMan",
-    "哨位",
+    "决斗",
     1,
     [
       {
-        "type": "block",
-        "n": 6
+        "type": "hit",
+        "n": 6,
+        "times": 1
       },
       {
         "type": "weak",
@@ -397,8 +400,9 @@ export const EXPANSION_ROWS = [
     ],
     [
       {
-        "type": "block",
-        "n": 8
+        "type": "hit",
+        "n": 9,
+        "times": 1
       },
       {
         "type": "weak",
@@ -493,7 +497,7 @@ export const EXPANSION_ROWS = [
   [
     "CN39",
     "OBONE",
-    "决斗",
+    "控场",
     3,
     [
       {
@@ -1627,12 +1631,13 @@ export const EXPANSION_ROWS = [
   [
     "AM26",
     "reduxx",
-    "哨位",
+    "决斗",
     1,
     [
       {
-        "type": "block",
-        "n": 3
+        "type": "hit",
+        "n": 6,
+        "times": 1
       },
       {
         "type": "vulnerable",
@@ -1641,8 +1646,9 @@ export const EXPANSION_ROWS = [
     ],
     [
       {
-        "type": "block",
-        "n": 3
+        "type": "hit",
+        "n": 9,
+        "times": 1
       },
       {
         "type": "vulnerable",
@@ -1770,12 +1776,13 @@ export const EXPANSION_ROWS = [
   [
     "AM31",
     "silentzz",
-    "哨位",
+    "决斗",
     1,
     [
       {
-        "type": "block",
-        "n": 4
+        "type": "hit",
+        "n": 6,
+        "times": 1
       },
       {
         "type": "draw",
@@ -1784,8 +1791,9 @@ export const EXPANSION_ROWS = [
     ],
     [
       {
-        "type": "block",
-        "n": 5
+        "type": "hit",
+        "n": 9,
+        "times": 1
       },
       {
         "type": "draw",
@@ -1826,7 +1834,7 @@ export const EXPANSION_ROWS = [
   [
     "AM33",
     "blowz",
-    "控场",
+    "先锋",
     1,
     [
       {
@@ -1959,7 +1967,7 @@ export const EXPANSION_ROWS = [
   [
     "AM38",
     "pANcada",
-    "哨位",
+    "控场",
     2,
     [
       {
@@ -2256,7 +2264,7 @@ export const EXPANSION_ROWS = [
   [
     "AM49",
     "brawk",
-    "哨位",
+    "先锋",
     2,
     [
       {
@@ -2283,7 +2291,7 @@ export const EXPANSION_ROWS = [
   [
     "AM50",
     "skuba",
-    "自由人",
+    "控场",
     1,
     [
       {
@@ -3005,7 +3013,7 @@ export const EXPANSION_ROWS = [
   [
     "EU21",
     "PROFEK",
-    "哨位",
+    "控场",
     1,
     [
       {
@@ -3032,7 +3040,7 @@ export const EXPANSION_ROWS = [
   [
     "EU22",
     "UNFAKE",
-    "哨位",
+    "先锋",
     0,
     [
       {
@@ -3080,7 +3088,7 @@ export const EXPANSION_ROWS = [
   [
     "EU24",
     "MiniBoo",
-    "先锋",
+    "决斗",
     1,
     [
       {
@@ -3543,7 +3551,7 @@ export const EXPANSION_ROWS = [
   [
     "EU41",
     "bipo",
-    "自由人",
+    "决斗",
     3,
     [
       {
@@ -3778,7 +3786,7 @@ export const EXPANSION_ROWS = [
   [
     "EU50",
     "Filu",
-    "自由人",
+    "决斗",
     2,
     [
       {
@@ -4548,7 +4556,7 @@ export const EXPANSION_ROWS = [
   [
     "PA21",
     "stax",
-    "控场",
+    "先锋",
     1,
     [
       {
@@ -4691,7 +4699,7 @@ export const EXPANSION_ROWS = [
   [
     "PA26",
     "Lakia",
-    "控场",
+    "先锋",
     2,
     [
       {
@@ -4876,7 +4884,7 @@ export const EXPANSION_ROWS = [
   [
     "PA33",
     "SSeeS",
-    "决斗",
+    "控场",
     3,
     [
       {
@@ -5100,7 +5108,7 @@ export const EXPANSION_ROWS = [
   [
     "PA41",
     "crazyguy",
-    "自由人",
+    "先锋",
     1,
     [
       {
@@ -5150,7 +5158,7 @@ export const EXPANSION_ROWS = [
   [
     "PA43",
     "Kushy",
-    "控场",
+    "先锋",
     1,
     [
       {
@@ -5312,7 +5320,7 @@ export const EXPANSION_ROWS = [
   [
     "PA49",
     "JessieVash",
-    "哨位",
+    "先锋",
     1,
     [
       {
@@ -6049,8 +6057,8 @@ export const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "CN25": {
-    "title": "防御阵地",
-    "scene": "构建坚实的防线",
+    "title": "正面强突",
+    "scene": "先手压进打开枪线，队友跟进补枪。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -6109,8 +6117,8 @@ export const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "CN35": {
-    "title": "防守反击",
-    "scene": "防守后削弱对手",
+    "title": "抢线压制",
+    "scene": "抢下第一条枪线，再限制对手反打。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -6397,8 +6405,8 @@ export const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "AM26": {
-    "title": "防守反击",
-    "scene": "抵挡攻击并标记破绽。",
+    "title": "突破破绽",
+    "scene": "前压造成伤害，为后续进攻打出缺口。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -6427,8 +6435,8 @@ export const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "AM31": {
-    "title": "静默守护",
-    "scene": "稳固防线并补充资源。",
+    "title": "前压转火",
+    "scene": "先手交火后寻找下一处突破口。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },

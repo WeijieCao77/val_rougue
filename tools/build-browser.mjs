@@ -23,6 +23,7 @@ const modules = [
   'combat-fx.js',
   'wa-season.js',
   'wa-online.js',
+  'shared/card-pile-motion.js',
   'ui-source.js'
 ];
 

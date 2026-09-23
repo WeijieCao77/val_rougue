@@ -4,6 +4,7 @@ import { ACTS } from './season-map.js';
 import { cardArt, combatArt, relicArt } from './art.js';
 import { captureCombatPresentation, animateCombatTransition, clearCombatPresentation } from './fx.js';
 import { attachCardGesture } from '/shared/card-gesture.js';
+import { flyCardsFromPile, flyCardsToPile } from '/shared/card-pile-motion.js';
 
 const STORAGE_KEY = 'new-demo-run-route-v2';
 const GUIDE_KEY = 'new-demo-guide-v2-';
@@ -1107,45 +1108,37 @@ function dispatch(action) {
       return true;
     }
 
-    // Play card action timeline only for actual card play
-    if (action.type === 'play' && prev.phase === 'combat' && state.phase === 'combat' && capture) {
-      handlePlayCardTimeline(prev, state, action, capture, reducedMotion).then(() => {
+    if (action.type === 'play' && prev.phase === 'combat' && capture) {
+      handlePlayCardTimeline(prev, state, action, capture, reducedMotion).catch(console.error).then(async () => {
         renderPhase();
-        presentationBusy = false;
-        previousState = state;
-      }).catch(() => {
-        renderPhase();
+        await revealDrawnCards(prev);
+      }).finally(() => {
         presentationBusy = false;
         previousState = state;
       });
       return true;
     }
 
-    // If battle ended due to play (victory -> reward phase), ensure play timeline then render reward
-    if (action.type === 'play' && prev.phase === 'combat' && state.phase !== 'combat' && capture) {
-      handlePlayCardTimeline(prev, state, action, capture, reducedMotion).then(() => {
-        renderPhase();
-        presentationBusy = false;
-        previousState = state;
-      }).catch(() => {
-        renderPhase();
-        presentationBusy = false;
-        previousState = state;
-      });
-      return true;
-    }
-
-    // No timeline needed
+    // Entering combat also deals a real opening hand from the visible pile.
     renderPhase();
     globalThis.characterStages?.cueFromTransition('new', prev, state, action);
-    presentationBusy = false;
-    previousState = state;
+    revealDrawnCards(prev).finally(() => {
+      presentationBusy = false;
+      previousState = state;
+    });
     return true;
   } catch (e) {
     presentationBusy = false;
     console.error(e);
     return false;
   }
+}
+
+function revealDrawnCards(prev) {
+  if (state.phase !== 'combat' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return Promise.resolve();
+  const old = new Set(prev.battle?.hand?.map(card => card.uid) || []);
+  const cards = [...document.querySelectorAll('#hand-area .hand-card[data-uid]')].filter(el => !old.has(el.dataset.uid));
+  return flyCardsFromPile(cards, document.getElementById('pile-draw'));
 }
 
 function delay(ms) {
@@ -1474,41 +1467,12 @@ async function handleEndTurnTimeline(prev, next, action, capture, reducedMotion)
       return;
     }
 
-    const dcp = capture.discardPile;
-    const handCardEls = document.querySelectorAll('.hand-card[data-uid]');
-    // Store original visibility of hand cards
-    const originalVisibilities = new Map();
-    for (const el of handCardEls) {
-      originalVisibilities.set(el, el.style.visibility);
-    }
-
-    // Animate each remaining hand card to discard pile sequentially and hide originals
-    for (let i = 0; i < capture.handCardClones.length; i++) {
-      const item = capture.handCardClones[i];
-      const clone = item.clone;
-      const width = parseFloat(clone.style.width) || 160;
-      const height = parseFloat(clone.style.height) || 230;
-      clone.style.position = 'absolute';
-      clone.style.left = (item.center.x - width / 2) + 'px';
-      clone.style.top = (item.center.y - height / 2) + 'px';
-      clone.style.width = width + 'px';
-      clone.style.height = height + 'px';
-      clone.style.pointerEvents = 'none';
-      clone.style.zIndex = '9999';
-      session.root.appendChild(clone);
-      // Hide corresponding original card element
-      const originalEl = document.querySelector(`.hand-card[data-uid="${item.uid}"]`);
-      if (originalEl) originalEl.style.visibility = 'hidden';
-      const anim = clone.animate([
-        { transform: 'translate(0,0) scale(1)', opacity: 1 },
-        { transform: `translate(${dcp.x - item.center.x}px, ${dcp.y - item.center.y}px) scale(0.2)`, opacity: 0 }
-      ], { duration: 300, delay: i * 100, easing: 'ease-in', fill: 'forwards' });
-      session.animations.push(anim);
-    }
-    const totalDiscardTime = capture.handCardClones.length > 0 ? (capture.handCardClones.length - 1) * 100 + 300 : 0;
-    await delay(totalDiscardTime);
-
-    // Keep discarded originals hidden until the next hand is rendered.
+    const handCardEls = [...document.querySelectorAll('#hand-area .hand-card[data-uid]')];
+    const exhausted = new Set(next.battle?.exhaustPile?.map(card => card.uid) || []);
+    await Promise.all([
+      flyCardsToPile(handCardEls.filter(el => !exhausted.has(el.dataset.uid)), document.getElementById('pile-discard'), { keepHidden: true }),
+      flyCardsToPile(handCardEls.filter(el => exhausted.has(el.dataset.uid)), document.getElementById('pile-exhaust'), { keepHidden: true }),
+    ]);
 
     // Enemy turn banner
     const battle = document.querySelector('.battle');
@@ -1596,32 +1560,7 @@ async function handleEndTurnTimeline(prev, next, action, capture, reducedMotion)
     await delay(500);
 
     renderPhase();
-    if (next.phase === 'combat') {
-      const drawPile = document.getElementById('pile-draw');
-      const source = drawPile?.getBoundingClientRect();
-      const sx = source ? source.left + source.width / 2 : capture.drawPile.x;
-      const sy = source ? source.top + source.height / 2 : capture.drawPile.y;
-      const cards = [...document.querySelectorAll('.hand-card[data-uid]')];
-      const flights = cards.map((el, index) => {
-        const rect = el.getBoundingClientRect();
-        const clone = el.cloneNode(true);
-        clone.style.cssText = `${el.style.cssText};position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;margin:0;transform:none;pointer-events:none;z-index:10000;`;
-        session.root.appendChild(clone);
-        el.style.visibility = 'hidden';
-        const dx = sx - rect.left - rect.width / 2;
-        const dy = sy - rect.top - rect.height / 2;
-        const animation = clone.animate([
-          { transform: `translate(${dx}px, ${dy}px) scale(.35)`, opacity: .35 },
-          { transform: 'translate(0, 0) scale(1)', opacity: 1 }
-        ], { duration: 320, delay: index * 90, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' });
-        session.animations.push(animation);
-        return animation.finished.catch(() => {}).then(() => {
-          el.style.visibility = '';
-          clone.remove();
-        });
-      });
-      await Promise.all(flights);
-    }
+    if (next.phase === 'combat') await flyCardsFromPile([...document.querySelectorAll('#hand-area .hand-card[data-uid]')], document.getElementById('pile-draw'));
 
     cleanup();
   } catch (e) {

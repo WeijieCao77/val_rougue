@@ -341,18 +341,20 @@ export const REGIONAL_ROWS=[
   [
     "AM09",
     "BABYBAY",
-    "哨位",
+    "决斗",
     2,
     [
       {
-        "type": "block",
-        "n": 14
+        "type": "hit",
+        "n": 14,
+        "times": 1
       }
     ],
     [
       {
-        "type": "block",
-        "n": 18
+        "type": "hit",
+        "n": 18,
+        "times": 1
       }
     ],
     "discard"
@@ -1159,26 +1161,28 @@ export const REGIONAL_ROWS=[
   [
     "PA07",
     "t3xture",
-    "哨位",
+    "决斗",
     1,
     [
       {
-        "type": "block",
-        "n": 4
+        "type": "hit",
+        "n": 6,
+        "times": 1
       },
       {
         "type": "token",
-        "id": "TK02"
+        "id": "TK01"
       }
     ],
     [
       {
-        "type": "block",
-        "n": 7
+        "type": "hit",
+        "n": 9,
+        "times": 1
       },
       {
         "type": "token",
-        "id": "TK02"
+        "id": "TK01"
       }
     ],
     "discard"
@@ -1213,18 +1217,20 @@ export const REGIONAL_ROWS=[
   [
     "PA09",
     "Raxcal",
-    "哨位",
+    "决斗",
     2,
     [
       {
-        "type": "block",
-        "n": 14
+        "type": "hit",
+        "n": 14,
+        "times": 1
       }
     ],
     [
       {
-        "type": "block",
-        "n": 18
+        "type": "hit",
+        "n": 18,
+        "times": 1
       }
     ],
     "discard"
@@ -1370,7 +1376,7 @@ export const REGIONAL_ROWS=[
   [
     "PA16",
     "Jinggg",
-    "自由人",
+    "决斗",
     1,
     [
       {
@@ -1391,7 +1397,7 @@ export const REGIONAL_ROWS=[
   [
     "PA17",
     "something",
-    "自由人",
+    "决斗",
     2,
     [
       {
@@ -1507,14 +1513,14 @@ export const REGIONAL_TACTICS={
     "source": "https://playvalorant.com/en-us/agents/sage/"
   },
   "AM09": {
-    "title": "冰墙封口",
-    "scene": "贤者升起冰墙，让入口的火力先撞上墙。",
-    "origin": "贤者 · 冰墙",
+    "title": "正面突破",
+    "scene": "拉开身位进入交火，直接向对手施压。",
+    "origin": "比赛 · 决斗突破",
     "verbs": {
-      "block": "冰墙承接火力"
+      "hit": "先手突破"
     },
-    "note": "墙体不作为独立单位；仅增加布防，按统一时机清空。",
-    "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+    "note": "原创交火场景；角色位置参考选手生涯特工使用记录。",
+    "source": "https://www.vlr.gg/player/2170/babybay/?timespan=all"
   },
   "AM10": {
     "title": "腐坏逼退",
@@ -1795,10 +1801,11 @@ export const REGIONAL_TACTICS={
     "note": "原创枪法场景；不引用选手现实名场面，也不要求回合数或比分条件。"
   },
   "PA07": {
-    "title": "分段封路",
-    "scene": "先封住一个入口，另一道部署留待使用。",
-    "note": "原创团队战术。所有收益按卡面规则逐项结算，不增加额外命中、击杀、地图位置或隐藏触发条件。",
-    "origin": "团队 · 原创战术"
+    "title": "前压补枪",
+    "scene": "先手打开交火，队友紧跟着补上第二枪。",
+    "note": "t3xture 以决斗位比赛经历为主要角色参考；场景是原创战术描述，补枪需另打生成的临时牌。",
+    "origin": "赛场 · 决斗前压",
+    "source": "https://www.vlr.gg/player/9196/t3xture/?timespan=all"
   },
   "PA08": {
     "title": "侦防同步",
@@ -1807,14 +1814,14 @@ export const REGIONAL_TACTICS={
     "origin": "团队 · 原创战术"
   },
   "PA09": {
-    "title": "冰墙封口",
-    "scene": "贤者升起冰墙，让入口的火力先撞上墙。",
-    "origin": "贤者 · 冰墙",
+    "title": "强行破点",
+    "scene": "趁枪线尚未站稳，抢先冲出掩体。",
+    "origin": "比赛 · 决斗突破",
     "verbs": {
-      "block": "冰墙承接火力"
+      "hit": "抢点交火"
     },
-    "note": "墙体不作为独立单位；仅增加布防，按统一时机清空。",
-    "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+    "note": "原创交火场景；角色位置参考选手生涯特工使用记录。",
+    "source": "https://www.vlr.gg/player/48925/raxcal/?timespan=all"
   },
   "PA10": {
     "title": "腐坏逼退",

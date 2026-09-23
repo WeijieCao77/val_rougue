@@ -5,6 +5,7 @@ import {VERSION,CARDS,SKINS,ENEMIES,describe,cardName,effects,TACTICS,displayTex
 import {createRun,canPlay,preview,intent,intentText,healAmount,removalReason,observe} from './engine.js';
 import {createWaSeason,waAct as act,waLegalActions as legalActions} from './wa-season.js';
 import {syncWaCheckpoint} from './wa-online.js';
+import {flyCardsFromPile,flyCardsToPile} from './shared/card-pile-motion.js';
 const createSeason=(seed,tutorial,region)=>createWaSeason(seed,tutorial,region,crypto.randomUUID());
 import {routeNodes,mapEntry,nextScreen,restoreScreen} from './navigation.js';
 import {ACTS,availableNodes} from './season-map.js';
@@ -204,12 +205,12 @@ function commit(action){
   const banner=document.createElement('div');banner.className='enemy-turn-banner';banner.innerHTML='<strong>结束回合</strong><span>未用手牌进入弃牌堆</span>';
   arena?.append(banner);
   document.querySelector('.combat-screen')?.setAttribute('inert','');
-  const oldHand=[...document.querySelectorAll('.hand-fan [data-select]')],discard=document.querySelector('.discard-pile')?.getBoundingClientRect();
-  if(!reduceMotion()&&discard)oldHand.forEach((el,i)=>{const rect=el.getBoundingClientRect();el.animate([{opacity:1,translate:'0 0',scale:'1'},{opacity:0,translate:`${discard.left+discard.width/2-rect.left-rect.width/2}px ${discard.top+discard.height/2-rect.top-rect.height/2}px`,scale:'.2'}],{duration:320,delay:i*75,easing:'ease-in',fill:'forwards'});});
-  const enemyAt=reduceMotion()?220:Math.max(580,oldHand.length*75+320);
+  const oldHand=[...document.querySelectorAll('.hand-fan [data-select]')],exhausted=new Set(before.battle.hand.filter(c=>CARDS[c.id].zone==='exhaustEnd').map(c=>c.uid));
+  Promise.all([flyCardsToPile(oldHand.filter(el=>!exhausted.has(el.dataset.select)),document.querySelector('.discard-pile'),{keepHidden:true}),flyCardsToPile(oldHand.filter(el=>exhausted.has(el.dataset.select)),document.querySelector('.exhaust-link'),{keepHidden:true})]).catch(()=>{});
+  const enemyAt=reduceMotion()?220:Math.max(580,oldHand.length?440+(oldHand.length-1)*95:0);
   const events=combatEvents(before,r.state,action);
   setTimeout(()=>{banner.querySelector('strong').textContent='对手回合';banner.querySelector('span').textContent='攻击结算';playCombatFx(events,stage);globalThis.characterStages?.cueFromTransition('wa',before,r.state,action);},enemyAt);
-  setTimeout(()=>{state=r.state;screen=nextScreen(before,state);selected=null;echo=null;dialog.close();persist();notice(saveError||'');render();if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);const drawn=[...document.querySelectorAll('.hand-fan [data-select]')];if(!reduceMotion()&&drawn.length){const source=document.querySelector('.draw-pile')?.getBoundingClientRect();drawn.forEach((el,i)=>{const rect=el.getBoundingClientRect(),dx=source?source.left+source.width/2-rect.left-rect.width/2:0,dy=source?source.top+source.height/2-rect.top-rect.height/2:60;el.style.opacity='0';const animation=el.animate([{opacity:0,translate:`${dx}px ${dy}px`,scale:'.25'},{opacity:1,translate:'0 0',scale:'1'}],{duration:330,delay:i*115,easing:'cubic-bezier(.2,.8,.2,1)',fill:'forwards'});animation.finished.finally(()=>{el.style.opacity='';animation.cancel();}).catch(()=>{});});setTimeout(()=>{turnAnimating=false;},drawn.length*115+350);}else turnAnimating=false;},enemyAt+(reduceMotion()?420:1100));
+  setTimeout(()=>{state=r.state;screen=nextScreen(before,state);selected=null;echo=null;dialog.close();persist();notice(saveError||'');render();if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);const drawn=[...document.querySelectorAll('.hand-fan [data-select]')];flyCardsFromPile(drawn,document.querySelector('.draw-pile')).finally(()=>{turnAnimating=false;});},enemyAt+(reduceMotion()?420:1100));
   return r;
  }
  state=r.state;screen=nextScreen(before,state);selected=null;echo=played||null;dialog.close();persist();notice(saveError||'');render();
@@ -426,7 +427,8 @@ function animateResolution(before,after,played,flight,action){
   pile?.animate([{filter:'brightness(2)',transform:'scale(1.08)'},{filter:'brightness(1)',transform:'scale(1)'}],{duration:360});
  }
  const old=new Set(before.battle?.hand.map(c=>c.uid)||[]);
- document.querySelectorAll('[data-select]').forEach((el,i)=>{if(!old.has(el.dataset.select))el.animate([{opacity:0,translate:'0 20px'},{opacity:1,translate:'0 0'}],{duration:230,delay:i*25});});
+ const drawn=[...document.querySelectorAll('.hand-fan [data-select]')].filter(el=>!old.has(el.dataset.select));
+ if(drawn.length&&!reduceMotion()){turnAnimating=true;flyCardsFromPile(drawn,document.querySelector('.draw-pile')).finally(()=>{turnAnimating=false;});}
  document.querySelector('.energy-orb')?.animate([{filter:'brightness(1.5)'},{filter:'brightness(1)'}],{duration:240});
  if(action.type==='end'&&after.phase==='combat')notice(`第 ${after.battle?.turn||1} 回合 · 重新抽牌`);
 }

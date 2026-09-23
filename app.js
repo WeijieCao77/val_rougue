@@ -343,18 +343,20 @@ const REGIONAL_ROWS=[
   [
     "AM09",
     "BABYBAY",
-    "哨位",
+    "决斗",
     2,
     [
       {
-        "type": "block",
-        "n": 14
+        "type": "hit",
+        "n": 14,
+        "times": 1
       }
     ],
     [
       {
-        "type": "block",
-        "n": 18
+        "type": "hit",
+        "n": 18,
+        "times": 1
       }
     ],
     "discard"
@@ -1161,26 +1163,28 @@ const REGIONAL_ROWS=[
   [
     "PA07",
     "t3xture",
-    "哨位",
+    "决斗",
     1,
     [
       {
-        "type": "block",
-        "n": 4
+        "type": "hit",
+        "n": 6,
+        "times": 1
       },
       {
         "type": "token",
-        "id": "TK02"
+        "id": "TK01"
       }
     ],
     [
       {
-        "type": "block",
-        "n": 7
+        "type": "hit",
+        "n": 9,
+        "times": 1
       },
       {
         "type": "token",
-        "id": "TK02"
+        "id": "TK01"
       }
     ],
     "discard"
@@ -1215,18 +1219,20 @@ const REGIONAL_ROWS=[
   [
     "PA09",
     "Raxcal",
-    "哨位",
+    "决斗",
     2,
     [
       {
-        "type": "block",
-        "n": 14
+        "type": "hit",
+        "n": 14,
+        "times": 1
       }
     ],
     [
       {
-        "type": "block",
-        "n": 18
+        "type": "hit",
+        "n": 18,
+        "times": 1
       }
     ],
     "discard"
@@ -1372,7 +1378,7 @@ const REGIONAL_ROWS=[
   [
     "PA16",
     "Jinggg",
-    "自由人",
+    "决斗",
     1,
     [
       {
@@ -1393,7 +1399,7 @@ const REGIONAL_ROWS=[
   [
     "PA17",
     "something",
-    "自由人",
+    "决斗",
     2,
     [
       {
@@ -1509,14 +1515,14 @@ const REGIONAL_TACTICS={
     "source": "https://playvalorant.com/en-us/agents/sage/"
   },
   "AM09": {
-    "title": "冰墙封口",
-    "scene": "贤者升起冰墙，让入口的火力先撞上墙。",
-    "origin": "贤者 · 冰墙",
+    "title": "正面突破",
+    "scene": "拉开身位进入交火，直接向对手施压。",
+    "origin": "比赛 · 决斗突破",
     "verbs": {
-      "block": "冰墙承接火力"
+      "hit": "先手突破"
     },
-    "note": "墙体不作为独立单位；仅增加布防，按统一时机清空。",
-    "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+    "note": "原创交火场景；角色位置参考选手生涯特工使用记录。",
+    "source": "https://www.vlr.gg/player/2170/babybay/?timespan=all"
   },
   "AM10": {
     "title": "腐坏逼退",
@@ -1797,10 +1803,11 @@ const REGIONAL_TACTICS={
     "note": "原创枪法场景；不引用选手现实名场面，也不要求回合数或比分条件。"
   },
   "PA07": {
-    "title": "分段封路",
-    "scene": "先封住一个入口，另一道部署留待使用。",
-    "note": "原创团队战术。所有收益按卡面规则逐项结算，不增加额外命中、击杀、地图位置或隐藏触发条件。",
-    "origin": "团队 · 原创战术"
+    "title": "前压补枪",
+    "scene": "先手打开交火，队友紧跟着补上第二枪。",
+    "note": "t3xture 以决斗位比赛经历为主要角色参考；场景是原创战术描述，补枪需另打生成的临时牌。",
+    "origin": "赛场 · 决斗前压",
+    "source": "https://www.vlr.gg/player/9196/t3xture/?timespan=all"
   },
   "PA08": {
     "title": "侦防同步",
@@ -1809,14 +1816,14 @@ const REGIONAL_TACTICS={
     "origin": "团队 · 原创战术"
   },
   "PA09": {
-    "title": "冰墙封口",
-    "scene": "贤者升起冰墙，让入口的火力先撞上墙。",
-    "origin": "贤者 · 冰墙",
+    "title": "强行破点",
+    "scene": "趁枪线尚未站稳，抢先冲出掩体。",
+    "origin": "比赛 · 决斗突破",
     "verbs": {
-      "block": "冰墙承接火力"
+      "hit": "抢点交火"
     },
-    "note": "墙体不作为独立单位；仅增加布防，按统一时机清空。",
-    "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+    "note": "原创交火场景；角色位置参考选手生涯特工使用记录。",
+    "source": "https://www.vlr.gg/player/48925/raxcal/?timespan=all"
   },
   "PA10": {
     "title": "腐坏逼退",
@@ -2053,12 +2060,13 @@ const EXPANSION_ROWS = [
   [
     "CN25",
     "whzy",
-    "哨位",
+    "决斗",
     2,
     [
       {
-        "type": "block",
-        "n": 10
+        "type": "hit",
+        "n": 13,
+        "times": 1
       },
       {
         "type": "token",
@@ -2067,8 +2075,9 @@ const EXPANSION_ROWS = [
     ],
     [
       {
-        "type": "block",
-        "n": 12
+        "type": "hit",
+        "n": 17,
+        "times": 1
       },
       {
         "type": "token",
@@ -2099,7 +2108,7 @@ const EXPANSION_ROWS = [
   [
     "CN27",
     "rushia",
-    "先锋",
+    "控场",
     2,
     [
       {
@@ -2139,7 +2148,7 @@ const EXPANSION_ROWS = [
   [
     "CN29",
     "Nicc",
-    "决斗",
+    "先锋",
     1,
     [
       {
@@ -2160,7 +2169,7 @@ const EXPANSION_ROWS = [
   [
     "CN30",
     "Flex1n",
-    "哨位",
+    "控场",
     1,
     [
       {
@@ -2187,7 +2196,7 @@ const EXPANSION_ROWS = [
   [
     "CN31",
     "Akeman",
-    "控场",
+    "决斗",
     1,
     [
       {
@@ -2206,7 +2215,7 @@ const EXPANSION_ROWS = [
   [
     "CN32",
     "sScary",
-    "先锋",
+    "控场",
     1,
     [
       {
@@ -2291,12 +2300,13 @@ const EXPANSION_ROWS = [
   [
     "CN35",
     "NoMan",
-    "哨位",
+    "决斗",
     1,
     [
       {
-        "type": "block",
-        "n": 6
+        "type": "hit",
+        "n": 6,
+        "times": 1
       },
       {
         "type": "weak",
@@ -2305,8 +2315,9 @@ const EXPANSION_ROWS = [
     ],
     [
       {
-        "type": "block",
-        "n": 8
+        "type": "hit",
+        "n": 9,
+        "times": 1
       },
       {
         "type": "weak",
@@ -2401,7 +2412,7 @@ const EXPANSION_ROWS = [
   [
     "CN39",
     "OBONE",
-    "决斗",
+    "控场",
     3,
     [
       {
@@ -3535,12 +3546,13 @@ const EXPANSION_ROWS = [
   [
     "AM26",
     "reduxx",
-    "哨位",
+    "决斗",
     1,
     [
       {
-        "type": "block",
-        "n": 3
+        "type": "hit",
+        "n": 6,
+        "times": 1
       },
       {
         "type": "vulnerable",
@@ -3549,8 +3561,9 @@ const EXPANSION_ROWS = [
     ],
     [
       {
-        "type": "block",
-        "n": 3
+        "type": "hit",
+        "n": 9,
+        "times": 1
       },
       {
         "type": "vulnerable",
@@ -3678,12 +3691,13 @@ const EXPANSION_ROWS = [
   [
     "AM31",
     "silentzz",
-    "哨位",
+    "决斗",
     1,
     [
       {
-        "type": "block",
-        "n": 4
+        "type": "hit",
+        "n": 6,
+        "times": 1
       },
       {
         "type": "draw",
@@ -3692,8 +3706,9 @@ const EXPANSION_ROWS = [
     ],
     [
       {
-        "type": "block",
-        "n": 5
+        "type": "hit",
+        "n": 9,
+        "times": 1
       },
       {
         "type": "draw",
@@ -3734,7 +3749,7 @@ const EXPANSION_ROWS = [
   [
     "AM33",
     "blowz",
-    "控场",
+    "先锋",
     1,
     [
       {
@@ -3867,7 +3882,7 @@ const EXPANSION_ROWS = [
   [
     "AM38",
     "pANcada",
-    "哨位",
+    "控场",
     2,
     [
       {
@@ -4164,7 +4179,7 @@ const EXPANSION_ROWS = [
   [
     "AM49",
     "brawk",
-    "哨位",
+    "先锋",
     2,
     [
       {
@@ -4191,7 +4206,7 @@ const EXPANSION_ROWS = [
   [
     "AM50",
     "skuba",
-    "自由人",
+    "控场",
     1,
     [
       {
@@ -4913,7 +4928,7 @@ const EXPANSION_ROWS = [
   [
     "EU21",
     "PROFEK",
-    "哨位",
+    "控场",
     1,
     [
       {
@@ -4940,7 +4955,7 @@ const EXPANSION_ROWS = [
   [
     "EU22",
     "UNFAKE",
-    "哨位",
+    "先锋",
     0,
     [
       {
@@ -4988,7 +5003,7 @@ const EXPANSION_ROWS = [
   [
     "EU24",
     "MiniBoo",
-    "先锋",
+    "决斗",
     1,
     [
       {
@@ -5451,7 +5466,7 @@ const EXPANSION_ROWS = [
   [
     "EU41",
     "bipo",
-    "自由人",
+    "决斗",
     3,
     [
       {
@@ -5686,7 +5701,7 @@ const EXPANSION_ROWS = [
   [
     "EU50",
     "Filu",
-    "自由人",
+    "决斗",
     2,
     [
       {
@@ -6456,7 +6471,7 @@ const EXPANSION_ROWS = [
   [
     "PA21",
     "stax",
-    "控场",
+    "先锋",
     1,
     [
       {
@@ -6599,7 +6614,7 @@ const EXPANSION_ROWS = [
   [
     "PA26",
     "Lakia",
-    "控场",
+    "先锋",
     2,
     [
       {
@@ -6784,7 +6799,7 @@ const EXPANSION_ROWS = [
   [
     "PA33",
     "SSeeS",
-    "决斗",
+    "控场",
     3,
     [
       {
@@ -7008,7 +7023,7 @@ const EXPANSION_ROWS = [
   [
     "PA41",
     "crazyguy",
-    "自由人",
+    "先锋",
     1,
     [
       {
@@ -7058,7 +7073,7 @@ const EXPANSION_ROWS = [
   [
     "PA43",
     "Kushy",
-    "控场",
+    "先锋",
     1,
     [
       {
@@ -7220,7 +7235,7 @@ const EXPANSION_ROWS = [
   [
     "PA49",
     "JessieVash",
-    "哨位",
+    "先锋",
     1,
     [
       {
@@ -7957,8 +7972,8 @@ const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "CN25": {
-    "title": "防御阵地",
-    "scene": "构建坚实的防线",
+    "title": "正面强突",
+    "scene": "先手压进打开枪线，队友跟进补枪。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8017,8 +8032,8 @@ const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "CN35": {
-    "title": "防守反击",
-    "scene": "防守后削弱对手",
+    "title": "抢线压制",
+    "scene": "抢下第一条枪线，再限制对手反打。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8305,8 +8320,8 @@ const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "AM26": {
-    "title": "防守反击",
-    "scene": "抵挡攻击并标记破绽。",
+    "title": "突破破绽",
+    "scene": "前压造成伤害，为后续进攻打出缺口。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8335,8 +8350,8 @@ const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "AM31": {
-    "title": "静默守护",
-    "scene": "稳固防线并补充资源。",
+    "title": "前压转火",
+    "scene": "先手交火后寻找下一处突破口。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -13222,6 +13237,80 @@ async function syncWaCheckpoint(state, notify = () => {}) {
 return {loadAccount,saveAccount,getPendingProofCache,setPendingProofCache,clearPendingProofCache,apiFetch,apiCreateAccount,apiGetAccount,apiClaimArchive,apiResolvePending,apiCreateRoom,apiJoinRoom,apiGetRoom,apiReady,apiAction,apiLeaveRoom,buildRunFromSeason,syncWaCheckpoint};
 })();
 const module15=(()=>{
+// Rendered card faces travel above scrolling hand containers, then reveal the real cards.
+const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const center = rect => ({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+
+function cloneCard(card, layer) {
+  const rect = card.getBoundingClientRect();
+  const clone = card.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.removeAttribute('tabindex');
+  clone.removeAttribute('data-select');
+  clone.removeAttribute('data-uid');
+  clone.setAttribute('aria-hidden', 'true');
+  clone.classList.remove('selected', 'dragging-card');
+  Object.assign(clone.style, {
+    position: 'fixed', left: `${rect.left}px`, top: `${rect.top}px`,
+    bottom: 'auto', width: `${rect.width}px`, minWidth: `${rect.width}px`,
+    height: `${rect.height}px`, margin: '0', transform: 'none',
+    transition: 'none', pointerEvents: 'none', opacity: '1',
+  });
+  layer.appendChild(clone);
+  return { clone, rect };
+}
+
+function layer() {
+  const el = document.createElement('div');
+  el.className = 'card-pile-motion-layer';
+  Object.assign(el.style, { position: 'fixed', inset: '0', zIndex: '10000', pointerEvents: 'none' });
+  document.body.appendChild(el);
+  return el;
+}
+
+function flyCardsToPile(cards, pile, { stagger = 95, duration = 440, keepHidden = false } = {}) {
+  if (!cards.length || !pile || reduced()) return Promise.resolve();
+  const overlay = layer();
+  const destination = center(pile.getBoundingClientRect());
+  const jobs = cards.map((card, index) => {
+    const { clone, rect } = cloneCard(card, overlay);
+    card.style.visibility = 'hidden';
+    const start = center(rect);
+    const dx = destination.x - start.x;
+    const dy = destination.y - start.y;
+    const animation = clone.animate([
+      { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+      { transform: `translate(${dx * .54}px, ${dy * .54 - 38}px) scale(.78)`, opacity: 1, offset: .55 },
+      { transform: `translate(${dx}px, ${dy}px) scale(.16)`, opacity: 0 },
+    ], { duration, delay: index * stagger, easing: 'ease-in-out', fill: 'forwards' });
+    return animation.finished.catch(() => {}).then(() => { clone.remove(); if (!keepHidden) card.style.visibility = ''; });
+  });
+  return Promise.all(jobs).finally(() => overlay.remove());
+}
+
+function flyCardsFromPile(cards, pile, { stagger = 125, duration = 430 } = {}) {
+  if (!cards.length || !pile || reduced()) return Promise.resolve();
+  const overlay = layer();
+  const source = center(pile.getBoundingClientRect());
+  const jobs = cards.map((card, index) => {
+    const { clone, rect } = cloneCard(card, overlay);
+    card.style.visibility = 'hidden';
+    const end = center(rect);
+    const dx = source.x - end.x;
+    const dy = source.y - end.y;
+    const animation = clone.animate([
+      { transform: `translate(${dx}px, ${dy}px) scale(.18)`, opacity: .65 },
+      { transform: `translate(${dx * .48}px, ${dy * .48 - 42}px) scale(.82)`, opacity: 1, offset: .53 },
+      { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+    ], { duration, delay: index * stagger, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'forwards' });
+    return animation.finished.catch(() => {}).then(() => { clone.remove(); card.style.visibility = ''; });
+  });
+  return Promise.all(jobs).finally(() => overlay.remove());
+}
+
+return {flyCardsToPile,flyCardsFromPile};
+})();
+const module16=(()=>{
 const { cardArtwork, opponentArtwork, artCredit } = module10;
 const { combatEvents } = module11;
 const { clearCombatFx, captureCombatStage, playCombatFx } = module12;
@@ -13229,6 +13318,7 @@ const { VERSION, CARDS, SKINS, ENEMIES, describe, cardName, effects, TACTICS, di
 const { createRun, canPlay, preview, intent, intentText, healAmount, removalReason, observe } = module6;
 const { createWaSeason, waAct:act, waLegalActions:legalActions } = module13;
 const { syncWaCheckpoint } = module14;
+const { flyCardsFromPile, flyCardsToPile } = module15;
 const createSeason=(seed,tutorial,region)=>createWaSeason(seed,tutorial,region,crypto.randomUUID());
 const { routeNodes, mapEntry, nextScreen, restoreScreen } = module7;
 const { ACTS, availableNodes } = module4;
@@ -13428,12 +13518,12 @@ function commit(action){
   const banner=document.createElement('div');banner.className='enemy-turn-banner';banner.innerHTML='<strong>结束回合</strong><span>未用手牌进入弃牌堆</span>';
   arena?.append(banner);
   document.querySelector('.combat-screen')?.setAttribute('inert','');
-  const oldHand=[...document.querySelectorAll('.hand-fan [data-select]')],discard=document.querySelector('.discard-pile')?.getBoundingClientRect();
-  if(!reduceMotion()&&discard)oldHand.forEach((el,i)=>{const rect=el.getBoundingClientRect();el.animate([{opacity:1,translate:'0 0',scale:'1'},{opacity:0,translate:`${discard.left+discard.width/2-rect.left-rect.width/2}px ${discard.top+discard.height/2-rect.top-rect.height/2}px`,scale:'.2'}],{duration:320,delay:i*75,easing:'ease-in',fill:'forwards'});});
-  const enemyAt=reduceMotion()?220:Math.max(580,oldHand.length*75+320);
+  const oldHand=[...document.querySelectorAll('.hand-fan [data-select]')],exhausted=new Set(before.battle.hand.filter(c=>CARDS[c.id].zone==='exhaustEnd').map(c=>c.uid));
+  Promise.all([flyCardsToPile(oldHand.filter(el=>!exhausted.has(el.dataset.select)),document.querySelector('.discard-pile'),{keepHidden:true}),flyCardsToPile(oldHand.filter(el=>exhausted.has(el.dataset.select)),document.querySelector('.exhaust-link'),{keepHidden:true})]).catch(()=>{});
+  const enemyAt=reduceMotion()?220:Math.max(580,oldHand.length?440+(oldHand.length-1)*95:0);
   const events=combatEvents(before,r.state,action);
   setTimeout(()=>{banner.querySelector('strong').textContent='对手回合';banner.querySelector('span').textContent='攻击结算';playCombatFx(events,stage);globalThis.characterStages?.cueFromTransition('wa',before,r.state,action);},enemyAt);
-  setTimeout(()=>{state=r.state;screen=nextScreen(before,state);selected=null;echo=null;dialog.close();persist();notice(saveError||'');render();if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);const drawn=[...document.querySelectorAll('.hand-fan [data-select]')];if(!reduceMotion()&&drawn.length){const source=document.querySelector('.draw-pile')?.getBoundingClientRect();drawn.forEach((el,i)=>{const rect=el.getBoundingClientRect(),dx=source?source.left+source.width/2-rect.left-rect.width/2:0,dy=source?source.top+source.height/2-rect.top-rect.height/2:60;el.style.opacity='0';const animation=el.animate([{opacity:0,translate:`${dx}px ${dy}px`,scale:'.25'},{opacity:1,translate:'0 0',scale:'1'}],{duration:330,delay:i*115,easing:'cubic-bezier(.2,.8,.2,1)',fill:'forwards'});animation.finished.finally(()=>{el.style.opacity='';animation.cancel();}).catch(()=>{});});setTimeout(()=>{turnAnimating=false;},drawn.length*115+350);}else turnAnimating=false;},enemyAt+(reduceMotion()?420:1100));
+  setTimeout(()=>{state=r.state;screen=nextScreen(before,state);selected=null;echo=null;dialog.close();persist();notice(saveError||'');render();if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);const drawn=[...document.querySelectorAll('.hand-fan [data-select]')];flyCardsFromPile(drawn,document.querySelector('.draw-pile')).finally(()=>{turnAnimating=false;});},enemyAt+(reduceMotion()?420:1100));
   return r;
  }
  state=r.state;screen=nextScreen(before,state);selected=null;echo=played||null;dialog.close();persist();notice(saveError||'');render();
@@ -13650,7 +13740,8 @@ function animateResolution(before,after,played,flight,action){
   pile?.animate([{filter:'brightness(2)',transform:'scale(1.08)'},{filter:'brightness(1)',transform:'scale(1)'}],{duration:360});
  }
  const old=new Set(before.battle?.hand.map(c=>c.uid)||[]);
- document.querySelectorAll('[data-select]').forEach((el,i)=>{if(!old.has(el.dataset.select))el.animate([{opacity:0,translate:'0 20px'},{opacity:1,translate:'0 0'}],{duration:230,delay:i*25});});
+ const drawn=[...document.querySelectorAll('.hand-fan [data-select]')].filter(el=>!old.has(el.dataset.select));
+ if(drawn.length&&!reduceMotion()){turnAnimating=true;flyCardsFromPile(drawn,document.querySelector('.draw-pile')).finally(()=>{turnAnimating=false;});}
  document.querySelector('.energy-orb')?.animate([{filter:'brightness(1.5)'},{filter:'brightness(1)'}],{duration:240});
  if(action.type==='end'&&after.phase==='combat')notice(`第 ${after.battle?.turn||1} 回合 · 重新抽牌`);
 }

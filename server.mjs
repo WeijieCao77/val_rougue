@@ -14,6 +14,7 @@ const assets = new Map([
   ['/shared-stage-controller.js', ['shared/character-controller.js', 'text/javascript; charset=utf-8']],
   ['/shared/card-feel.css', ['shared/card-feel.css', 'text/css; charset=utf-8']],
   ['/shared/card-gesture.js', ['shared/card-gesture.js', 'text/javascript; charset=utf-8']],
+  ['/shared/card-pile-motion.js', ['shared/card-pile-motion.js', 'text/javascript; charset=utf-8']],
   ['/shared/character-stage.css', ['shared/character-stage.css', 'text/css; charset=utf-8']],
   ['/shared/models/soldier.glb', ['shared/models/soldier.glb', 'model/gltf-binary']],
   ['/shared/models/hazmat.glb', ['shared/models/hazmat.glb', 'model/gltf-binary']],

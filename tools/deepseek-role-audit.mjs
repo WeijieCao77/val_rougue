@@ -1,0 +1,22 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { CARDS, REGIONS } from '../content.js';
+
+const root = path.resolve(import.meta.dirname, '..');
+const keyText = await readFile(process.env.DEEPSEEK_KEY_FILE, 'utf8');
+const key = keyText.match(/sk-[A-Za-z0-9_-]+/)?.[0];
+if (!key) throw Error('DeepSeek key unavailable');
+const headers = { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
+const modelsResponse = await fetch('https://api.deepseek.com/models', { headers, signal: AbortSignal.timeout(20000) });
+if (!modelsResponse.ok) throw Error(`Models HTTP ${modelsResponse.status}`);
+const models = (await modelsResponse.json()).data.map(item => item.id);
+const model = ['deepseek-v4-pro', 'deepseek-reasoner', 'deepseek-chat'].find(id => models.includes(id));
+if (!model) throw Error('No supported model');
+const rows = Object.values(REGIONS).flatMap(region => region.pool.filter(id => CARDS[id]?.player).map(id => ({ id, region: region.name, name: CARDS[id].name, currentRole: CARDS[id].role })));
+const prompt = `Audit these 200 real VALORANT players' game card positions. Prioritize recognizable primary historical competition role over one-map flex picks. This is memory-only triage: you have no live web search, so do not invent sources or assert current 2026 role. Return Chinese JSON {suspects:[{id,name,currentRole,suggestedRole,confidence,reason}],ambiguous:[{id,name,reason}],policy:string}. Only include high-confidence mismatches in suspects, cap at 35. Mark uncertain names ambiguous. t3xture is the user's known example. Roles: 决斗, 哨位, 控场, 先锋, 自由人.\n${JSON.stringify(rows)}`;
+const response = await fetch('https://api.deepseek.com/chat/completions', { method: 'POST', headers, body: JSON.stringify({ model, messages: [{ role: 'system', content: 'You are a VALORANT esports roster analyst. Be conservative; no fabricated verification.' }, { role: 'user', content: prompt }], max_tokens: 6000, thinking: { type: 'disabled' }, response_format: { type: 'json_object' } }), signal: AbortSignal.timeout(150000) });
+if (!response.ok) throw Error(`Completion HTTP ${response.status}`);
+const body = await response.json();
+const result = { model, usage: body.usage, finishReason: body.choices[0].finish_reason, audit: JSON.parse(body.choices[0].message.content) };
+await writeFile(path.join(root, 'reports', 'deepseek-role-audit.json'), JSON.stringify(result, null, 2));
+console.log(JSON.stringify({ model, suspects: result.audit.suspects?.length, ambiguous: result.audit.ambiguous?.length, usage: result.usage, finishReason: result.finishReason }));

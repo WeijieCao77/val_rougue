@@ -1,0 +1,3563 @@
+{
+  "method": "VLR all-time and recent 90-day agent rounds; candidate mismatches require human review",
+  "rows": [
+    {
+      "id": "AM01",
+      "name": "Asuna",
+      "region": "美洲",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/601/asuna",
+      "status": "ok",
+      "rounds": {
+        "决斗": 9061,
+        "哨位": 837,
+        "控场": 483,
+        "先锋": 3572
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.649,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM02",
+      "name": "OXY",
+      "region": "美洲",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/18796/oxy",
+      "status": "ok",
+      "rounds": {
+        "决斗": 9239,
+        "哨位": 874,
+        "控场": 0,
+        "先锋": 23
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.912,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM03",
+      "name": "aspas",
+      "region": "美洲",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/8480/aspas",
+      "status": "ok",
+      "rounds": {
+        "决斗": 10600,
+        "哨位": 121,
+        "控场": 0,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.989,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM04",
+      "name": "zekken",
+      "region": "美洲",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/4004/zekken",
+      "status": "ok",
+      "rounds": {
+        "决斗": 10591,
+        "哨位": 381,
+        "控场": 513,
+        "先锋": 4068
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.681,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM05",
+      "name": "heat",
+      "region": "美洲",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/8673/heat",
+      "status": "ok",
+      "rounds": {
+        "决斗": 4400,
+        "哨位": 1409,
+        "控场": 454,
+        "先锋": 1068
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.6,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM06",
+      "name": "koalanoob",
+      "region": "美洲",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/3722/koalanoob",
+      "status": "ok",
+      "rounds": {
+        "决斗": 11441,
+        "哨位": 2045,
+        "控场": 2075,
+        "先锋": 219
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.725,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM07",
+      "name": "Cryocells",
+      "region": "美洲",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/4147/cryocells",
+      "status": "ok",
+      "rounds": {
+        "决斗": 5239,
+        "哨位": 3713,
+        "控场": 1263,
+        "先锋": 3869
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.372,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM08",
+      "name": "tex",
+      "region": "美洲",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/1818/tex",
+      "status": "ok",
+      "rounds": {
+        "决斗": 4531,
+        "哨位": 4789,
+        "控场": 761,
+        "先锋": 1915
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.399,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM09",
+      "name": "BABYBAY",
+      "region": "美洲",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/2170/babybay",
+      "status": "ok",
+      "rounds": {
+        "决斗": 7162,
+        "哨位": 2494,
+        "控场": 278,
+        "先锋": 238
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.704,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 201,
+        "哨位": 612,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "哨位"
+    },
+    {
+      "id": "AM10",
+      "name": "bang",
+      "region": "美洲",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/3880/bang",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1430,
+        "哨位": 179,
+        "控场": 10980,
+        "先锋": 2046
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.75,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM11",
+      "name": "v1c",
+      "region": "美洲",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/17433/v1c",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1031,
+        "哨位": 2230,
+        "控场": 8053,
+        "先锋": 3314
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.551,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM12",
+      "name": "kiNgg",
+      "region": "美洲",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/8549/kingg",
+      "status": "ok",
+      "rounds": {
+        "决斗": 2470,
+        "哨位": 595,
+        "控场": 6118,
+        "先锋": 1208
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.589,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM13",
+      "name": "vora",
+      "region": "美洲",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/20140/vora",
+      "status": "ok",
+      "rounds": {
+        "决斗": 35,
+        "哨位": 297,
+        "控场": 1146,
+        "先锋": 7898
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.842,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM14",
+      "name": "DaviH",
+      "region": "美洲",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/10885/davih",
+      "status": "ok",
+      "rounds": {
+        "决斗": 574,
+        "哨位": 850,
+        "控场": 1898,
+        "先锋": 6234
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.652,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM15",
+      "name": "mwzera",
+      "region": "美洲",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/939/mwzera",
+      "status": "ok",
+      "rounds": {
+        "决斗": 4974,
+        "哨位": 155,
+        "控场": 231,
+        "先锋": 3227
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.579,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 479
+      },
+      "recentDominant": "先锋"
+    },
+    {
+      "id": "AM16",
+      "name": "Less",
+      "region": "美洲",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/8447/less",
+      "status": "ok",
+      "rounds": {
+        "决斗": 351,
+        "哨位": 4025,
+        "控场": 3726,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.497,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM17",
+      "name": "Zellsis",
+      "region": "美洲",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/729/zellsis",
+      "status": "ok",
+      "rounds": {
+        "决斗": 3266,
+        "哨位": 4271,
+        "控场": 2483,
+        "先锋": 3528
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.315,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM18",
+      "name": "leaf",
+      "region": "美洲",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/7873/leaf",
+      "status": "ok",
+      "rounds": {
+        "决斗": 5032,
+        "哨位": 3541,
+        "控场": 3531,
+        "先锋": 910
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.387,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM19",
+      "name": "valyn",
+      "region": "美洲",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/3885/valyn",
+      "status": "ok",
+      "rounds": {
+        "决斗": 125,
+        "哨位": 303,
+        "控场": 16333,
+        "先锋": 225
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.962,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM20",
+      "name": "trent",
+      "region": "美洲",
+      "currentRole": "先锋",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "AM21",
+      "name": "jawgemo",
+      "region": "美洲",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/3993/jawgemo",
+      "status": "ok",
+      "rounds": {
+        "决斗": 10830,
+        "哨位": 652,
+        "控场": 1563,
+        "先锋": 970
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.773,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM22",
+      "name": "Kyu",
+      "region": "美洲",
+      "currentRole": "控场",
+      "profileUrl": null,
+      "status": "search-exact-matches-5"
+    },
+    {
+      "id": "AM23",
+      "name": "johnqt",
+      "region": "美洲",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/1265/johnqt",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1658,
+        "哨位": 5104,
+        "控场": 2877,
+        "先锋": 2546
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.419,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM24",
+      "name": "N4RRATE",
+      "region": "美洲",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/36245/N4RRATE",
+      "status": "ok",
+      "rounds": {
+        "决斗": 2290,
+        "哨位": 796,
+        "控场": 251,
+        "先锋": 2974
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.471,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM25",
+      "name": "cortezia",
+      "region": "美洲",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/5395/cortezia",
+      "status": "ok",
+      "rounds": {
+        "决斗": 313,
+        "哨位": 2438,
+        "控场": 5888,
+        "先锋": 452
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.648,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 254,
+        "控场": 173,
+        "先锋": 0
+      },
+      "recentDominant": "哨位"
+    },
+    {
+      "id": "AM26",
+      "name": "reduxx",
+      "region": "美洲",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/8419/reduxx",
+      "status": "ok",
+      "rounds": {
+        "决斗": 16167,
+        "哨位": 1134,
+        "控场": 1114,
+        "先锋": 484
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.855,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 355,
+        "哨位": 0,
+        "控场": 227,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "AM27",
+      "name": "Verno",
+      "region": "美洲",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/21668/Verno",
+      "status": "ok",
+      "rounds": {
+        "决斗": 129,
+        "哨位": 2029,
+        "控场": 539,
+        "先锋": 11849
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.815,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM28",
+      "name": "Mazino",
+      "region": "美洲",
+      "currentRole": "控场",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "AM29",
+      "name": "Saadhak",
+      "region": "美洲",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/727/Saadhak",
+      "status": "ok",
+      "rounds": {
+        "决斗": 437,
+        "哨位": 3280,
+        "控场": 1859,
+        "先锋": 4006
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.418,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM30",
+      "name": "Dantedeu5",
+      "region": "美洲",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/41135/Dantedeu5",
+      "status": "ok",
+      "rounds": {
+        "决斗": 3970,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 382
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.912,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM31",
+      "name": "silentzz",
+      "region": "美洲",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/11921/silentzz",
+      "status": "ok",
+      "rounds": {
+        "决斗": 5635,
+        "哨位": 1388,
+        "控场": 264,
+        "先锋": 749
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.701,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "AM32",
+      "name": "Sato",
+      "region": "美洲",
+      "currentRole": "先锋",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "AM33",
+      "name": "blowz",
+      "region": "美洲",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/21251/blowz",
+      "status": "ok",
+      "rounds": {
+        "决斗": 694,
+        "哨位": 34,
+        "控场": 172,
+        "先锋": 4596
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.836,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 383
+      },
+      "recentDominant": "先锋"
+    },
+    {
+      "id": "AM34",
+      "name": "Neon",
+      "region": "美洲",
+      "currentRole": "决斗",
+      "profileUrl": null,
+      "status": "search-exact-matches-8"
+    },
+    {
+      "id": "AM35",
+      "name": "spikeziN",
+      "region": "美洲",
+      "currentRole": "自由人",
+      "profileUrl": null,
+      "status": "search-exact-matches-0"
+    },
+    {
+      "id": "AM36",
+      "name": "PxS",
+      "region": "美洲",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/13823/PxS",
+      "status": "ok",
+      "rounds": {
+        "决斗": 4810,
+        "哨位": 826,
+        "控场": 365,
+        "先锋": 1576
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.635,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 20,
+        "哨位": 0,
+        "控场": 39,
+        "先锋": 15
+      },
+      "recentDominant": "控场"
+    },
+    {
+      "id": "AM37",
+      "name": "cauanzin",
+      "region": "美洲",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/6193/cauanzin",
+      "status": "ok",
+      "rounds": {
+        "决斗": 71,
+        "哨位": 275,
+        "控场": 0,
+        "先锋": 5893
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.945,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM38",
+      "name": "pANcada",
+      "region": "美洲",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/683/pANcada",
+      "status": "ok",
+      "rounds": {
+        "决斗": 594,
+        "哨位": 1617,
+        "控场": 5403,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.71,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "AM39",
+      "name": "lukxo",
+      "region": "美洲",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/28716/lukxo",
+      "status": "ok",
+      "rounds": {
+        "决斗": 207,
+        "哨位": 1589,
+        "控场": 4281,
+        "先锋": 45
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.699,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 83,
+        "哨位": 475,
+        "控场": 93,
+        "先锋": 0
+      },
+      "recentDominant": "哨位"
+    },
+    {
+      "id": "AM40",
+      "name": "Virtyy",
+      "region": "美洲",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/3983/Virtyy",
+      "status": "ok",
+      "rounds": {
+        "决斗": 7307,
+        "哨位": 1024,
+        "控场": 171,
+        "先锋": 6495
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.487,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM41",
+      "name": "Darker",
+      "region": "美洲",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/10557/Darker",
+      "status": "ok",
+      "rounds": {
+        "决斗": 542,
+        "哨位": 716,
+        "控场": 1950,
+        "先锋": 3092
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.491,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM42",
+      "name": "C0M",
+      "region": "美洲",
+      "currentRole": "先锋",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "AM43",
+      "name": "bao",
+      "region": "美洲",
+      "currentRole": "哨位",
+      "profileUrl": null,
+      "status": "search-exact-matches-7"
+    },
+    {
+      "id": "AM44",
+      "name": "dgzin",
+      "region": "美洲",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/8873/dgzin",
+      "status": "ok",
+      "rounds": {
+        "决斗": 7972,
+        "哨位": 467,
+        "控场": 0,
+        "先锋": 112
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.932,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM45",
+      "name": "okeanos",
+      "region": "美洲",
+      "currentRole": "自由人",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "AM46",
+      "name": "supamen",
+      "region": "美洲",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/826/supamen",
+      "status": "ok",
+      "rounds": {
+        "决斗": 68,
+        "哨位": 18,
+        "控场": 9275,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.991,
+      "candidateMismatch": false
+    },
+    {
+      "id": "AM47",
+      "name": "Ethan",
+      "region": "美洲",
+      "currentRole": "先锋",
+      "profileUrl": null,
+      "status": "search-exact-matches-7"
+    },
+    {
+      "id": "AM48",
+      "name": "mada",
+      "region": "美洲",
+      "currentRole": "决斗",
+      "profileUrl": null,
+      "status": "search-exact-matches-4"
+    },
+    {
+      "id": "AM49",
+      "name": "brawk",
+      "region": "美洲",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/2172/brawk",
+      "status": "ok",
+      "rounds": {
+        "决斗": 425,
+        "哨位": 1074,
+        "控场": 334,
+        "先锋": 15392
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.894,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 129,
+        "控场": 42,
+        "先锋": 689
+      },
+      "recentDominant": "先锋"
+    },
+    {
+      "id": "AM50",
+      "name": "skuba",
+      "region": "美洲",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/11118/skuba",
+      "status": "ok",
+      "rounds": {
+        "决斗": 103,
+        "哨位": 2373,
+        "控场": 13122,
+        "先锋": 85
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.837,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 186,
+        "控场": 674,
+        "先锋": 0
+      },
+      "recentDominant": "控场"
+    },
+    {
+      "id": "CN01",
+      "name": "glacier",
+      "region": "中国",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/49973/glacier",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1647,
+        "哨位": 254,
+        "控场": 363,
+        "先锋": 14
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.723,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN02",
+      "name": "SpiritZ1",
+      "region": "中国",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/31753/spiritz1",
+      "status": "ok",
+      "rounds": {
+        "决斗": 3813,
+        "哨位": 97,
+        "控场": 87,
+        "先锋": 585
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.832,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN03",
+      "name": "Kai",
+      "region": "中国",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/37494/kai",
+      "status": "ok",
+      "rounds": {
+        "决斗": 4200,
+        "哨位": 1984,
+        "控场": 164,
+        "先锋": 63
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.655,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN04",
+      "name": "Life",
+      "region": "中国",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/3028/life",
+      "status": "ok",
+      "rounds": {
+        "决斗": 11008,
+        "哨位": 425,
+        "控场": 137,
+        "先锋": 227
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.933,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN05",
+      "name": "Rarga",
+      "region": "中国",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/22047/rarga",
+      "status": "ok",
+      "rounds": {
+        "决斗": 5698,
+        "哨位": 900,
+        "控场": 0,
+        "先锋": 26
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.86,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN06",
+      "name": "ZmjjKK",
+      "region": "中国",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/3520/zmjjkk",
+      "status": "ok",
+      "rounds": {
+        "决斗": 11410,
+        "哨位": 2223,
+        "控场": 139,
+        "先锋": 274
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.812,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN07",
+      "name": "yosemite",
+      "region": "中国",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/6022/yosemite",
+      "status": "ok",
+      "rounds": {
+        "决斗": 2033,
+        "哨位": 5364,
+        "控场": 2730,
+        "先锋": 148
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.522,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN08",
+      "name": "Yuicaw",
+      "region": "中国",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/11218/yuicaw",
+      "status": "ok",
+      "rounds": {
+        "决斗": 3446,
+        "哨位": 4045,
+        "控场": 1348,
+        "先锋": 2156
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.368,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN09",
+      "name": "vo0kashu",
+      "region": "中国",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/3741/vo0kashu",
+      "status": "ok",
+      "rounds": {
+        "决斗": 2735,
+        "哨位": 7046,
+        "控场": 1798,
+        "先锋": 470
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.585,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN10",
+      "name": "Coco",
+      "region": "中国",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/47629/coco",
+      "status": "ok",
+      "rounds": {
+        "决斗": 0,
+        "哨位": 259,
+        "控场": 2014,
+        "先锋": 993
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.617,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN11",
+      "name": "LuoK1ng",
+      "region": "中国",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/3045/luok1ng",
+      "status": "ok",
+      "rounds": {
+        "决斗": 0,
+        "哨位": 78,
+        "控场": 9621,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.992,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN12",
+      "name": "Smoggy",
+      "region": "中国",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/4742/smoggy",
+      "status": "ok",
+      "rounds": {
+        "决斗": 4351,
+        "哨位": 1191,
+        "控场": 4888,
+        "先锋": 2317
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.383,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN13",
+      "name": "BerLIN",
+      "region": "中国",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/7857/berlin",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1647,
+        "哨位": 332,
+        "控场": 4295,
+        "先锋": 4852
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.436,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN14",
+      "name": "nobody",
+      "region": "中国",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/3017/nobody",
+      "status": "ok",
+      "rounds": {
+        "决斗": 475,
+        "哨位": 619,
+        "控场": 781,
+        "先锋": 11809
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.863,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN15",
+      "name": "SiuFatBB",
+      "region": "中国",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/7849/siufatbb",
+      "status": "ok",
+      "rounds": {
+        "决斗": 2353,
+        "哨位": 347,
+        "控场": 860,
+        "先锋": 5347
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.6,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN16",
+      "name": "CHICHOO",
+      "region": "中国",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/15559/chichoo",
+      "status": "ok",
+      "rounds": {
+        "决斗": 271,
+        "哨位": 6344,
+        "控场": 6336,
+        "先锋": 148
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.484,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN17",
+      "name": "Haodong",
+      "region": "中国",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/4720/haodong",
+      "status": "ok",
+      "rounds": {
+        "决斗": 190,
+        "哨位": 1259,
+        "控场": 8202,
+        "先锋": 2081
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.699,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 540,
+        "控场": 223,
+        "先锋": 0
+      },
+      "recentDominant": "哨位"
+    },
+    {
+      "id": "CN18",
+      "name": "AAAAY",
+      "region": "中国",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/19530/aaaay",
+      "status": "ok",
+      "rounds": {
+        "决斗": 603,
+        "哨位": 2251,
+        "控场": 925,
+        "先锋": 5777
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.605,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 372,
+        "控场": 299,
+        "先锋": 0
+      },
+      "recentDominant": "哨位"
+    },
+    {
+      "id": "CN19",
+      "name": "Jieni7",
+      "region": "中国",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/51244/Jieni7",
+      "status": "ok",
+      "rounds": {
+        "决斗": 763,
+        "哨位": 350,
+        "控场": 649,
+        "先锋": 1003
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.363,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN20",
+      "name": "cb",
+      "region": "中国",
+      "currentRole": "哨位",
+      "profileUrl": null,
+      "status": "search-exact-matches-3"
+    },
+    {
+      "id": "CN21",
+      "name": "FengF",
+      "region": "中国",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/4770/FengF",
+      "status": "ok",
+      "rounds": {
+        "决斗": 5114,
+        "哨位": 2404,
+        "控场": 251,
+        "先锋": 1943
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.527,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 205,
+        "哨位": 34,
+        "控场": 0,
+        "先锋": 450
+      },
+      "recentDominant": "先锋"
+    },
+    {
+      "id": "CN22",
+      "name": "Viva",
+      "region": "中国",
+      "currentRole": "先锋",
+      "profileUrl": null,
+      "status": "search-exact-matches-3"
+    },
+    {
+      "id": "CN23",
+      "name": "deLb",
+      "region": "中国",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/10821/deLb",
+      "status": "ok",
+      "rounds": {
+        "决斗": 5329,
+        "哨位": 1927,
+        "控场": 1305,
+        "先锋": 141
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.612,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 79,
+        "哨位": 443,
+        "控场": 204,
+        "先锋": 0
+      },
+      "recentDominant": "哨位"
+    },
+    {
+      "id": "CN24",
+      "name": "nephh",
+      "region": "中国",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/10698/nephh",
+      "status": "ok",
+      "rounds": {
+        "决斗": 515,
+        "哨位": 474,
+        "控场": 1942,
+        "先锋": 5556
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.655,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 208,
+        "先锋": 364
+      },
+      "recentDominant": "先锋"
+    },
+    {
+      "id": "CN25",
+      "name": "whzy",
+      "region": "中国",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/4885/whzy",
+      "status": "ok",
+      "rounds": {
+        "决斗": 11193,
+        "哨位": 634,
+        "控场": 62,
+        "先锋": 64
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.936,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 503,
+        "哨位": 69,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "CN26",
+      "name": "Knight",
+      "region": "中国",
+      "currentRole": "控场",
+      "profileUrl": null,
+      "status": "search-exact-matches-8"
+    },
+    {
+      "id": "CN27",
+      "name": "rushia",
+      "region": "中国",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/48878/rushia",
+      "status": "ok",
+      "rounds": {
+        "决斗": 219,
+        "哨位": 513,
+        "控场": 3736,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.836,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 219,
+        "哨位": 240,
+        "控场": 113,
+        "先锋": 0
+      },
+      "recentDominant": "哨位"
+    },
+    {
+      "id": "CN28",
+      "name": "bud",
+      "region": "中国",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/56260/bud",
+      "status": "ok",
+      "rounds": {
+        "决斗": 186,
+        "哨位": 68,
+        "控场": 160,
+        "先锋": 351
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.459,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN29",
+      "name": "Nicc",
+      "region": "中国",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/11524/Nicc",
+      "status": "ok",
+      "rounds": {
+        "决斗": 207,
+        "哨位": 36,
+        "控场": 1702,
+        "先锋": 5971
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.754,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 587
+      },
+      "recentDominant": "先锋"
+    },
+    {
+      "id": "CN30",
+      "name": "Flex1n",
+      "region": "中国",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/4705/Flex1n",
+      "status": "ok",
+      "rounds": {
+        "决斗": 0,
+        "哨位": 22,
+        "控场": 6701,
+        "先锋": 74
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.986,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "CN31",
+      "name": "Akeman",
+      "region": "中国",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/52904/Akeman",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1534,
+        "哨位": 44,
+        "控场": 256,
+        "先锋": 44
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.817,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 368,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "CN32",
+      "name": "sScary",
+      "region": "中国",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/4382/sScary",
+      "status": "ok",
+      "rounds": {
+        "决斗": 208,
+        "哨位": 127,
+        "控场": 8809,
+        "先锋": 40
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.959,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "CN33",
+      "name": "Setrod",
+      "region": "中国",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/50025/Setrod",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1480,
+        "哨位": 807,
+        "控场": 298,
+        "先锋": 272
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.518,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 370,
+        "哨位": 301,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "CN34",
+      "name": "happywei",
+      "region": "中国",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/37927/happywei",
+      "status": "ok",
+      "rounds": {
+        "决斗": 549,
+        "哨位": 2892,
+        "控场": 2699,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.471,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN35",
+      "name": "NoMan",
+      "region": "中国",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/11527/NoMan",
+      "status": "ok",
+      "rounds": {
+        "决斗": 3501,
+        "哨位": 812,
+        "控场": 110,
+        "先锋": 467
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.716,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 587,
+        "哨位": 61,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "CN36",
+      "name": "Lysoar",
+      "region": "中国",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/37489/Lysoar",
+      "status": "ok",
+      "rounds": {
+        "决斗": 42,
+        "哨位": 3969,
+        "控场": 4136,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.508,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN37",
+      "name": "WsLeo",
+      "region": "中国",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/24308/WsLeo",
+      "status": "ok",
+      "rounds": {
+        "决斗": 20,
+        "哨位": 462,
+        "控场": 754,
+        "先锋": 2319
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.652,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN38",
+      "name": "HeiB",
+      "region": "中国",
+      "currentRole": "自由人",
+      "profileUrl": null,
+      "status": "search-exact-matches-0"
+    },
+    {
+      "id": "CN39",
+      "name": "OBONE",
+      "region": "中国",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/36670/OBONE",
+      "status": "ok",
+      "rounds": {
+        "决斗": 111,
+        "哨位": 405,
+        "控场": 2040,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.798,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "CN40",
+      "name": "GuanG",
+      "region": "中国",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/41054/GuanG",
+      "status": "ok",
+      "rounds": {
+        "决斗": 930,
+        "哨位": 3120,
+        "控场": 261,
+        "先锋": 419
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.66,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN41",
+      "name": "Ezeir",
+      "region": "中国",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/46460/Ezeir",
+      "status": "ok",
+      "rounds": {
+        "决斗": 26,
+        "哨位": 142,
+        "控场": 3321,
+        "先锋": 197
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.901,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN42",
+      "name": "Green",
+      "region": "中国",
+      "currentRole": "先锋",
+      "profileUrl": null,
+      "status": "search-exact-matches-9"
+    },
+    {
+      "id": "CN43",
+      "name": "jkuro",
+      "region": "中国",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/3519/jkuro",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1843,
+        "哨位": 852,
+        "控场": 3039,
+        "先锋": 1028
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.449,
+      "candidateMismatch": false
+    },
+    {
+      "id": "CN44",
+      "name": "stew",
+      "region": "中国",
+      "currentRole": "决斗",
+      "profileUrl": null,
+      "status": "search-exact-matches-5"
+    },
+    {
+      "id": "CN45",
+      "name": "zhe",
+      "region": "中国",
+      "currentRole": "哨位",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "CN46",
+      "name": "coconut",
+      "region": "中国",
+      "currentRole": "控场",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "CN47",
+      "name": "kklin",
+      "region": "中国",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/55828/kklin",
+      "status": "ok",
+      "rounds": {
+        "决斗": 18,
+        "哨位": 458,
+        "控场": 255,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.627,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "CN48",
+      "name": "Spring",
+      "region": "中国",
+      "currentRole": "自由人",
+      "profileUrl": null,
+      "status": "search-exact-matches-6"
+    },
+    {
+      "id": "CN49",
+      "name": "jowa",
+      "region": "中国",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/19292/jowa",
+      "status": "ok",
+      "rounds": {
+        "决斗": 3854,
+        "哨位": 1057,
+        "控场": 2134,
+        "先锋": 8290
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.541,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "CN50",
+      "name": "qiutiaN",
+      "region": "中国",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/43007/qiutiaN",
+      "status": "ok",
+      "rounds": {
+        "决斗": 141,
+        "哨位": 345,
+        "控场": 246,
+        "先锋": 698
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.488,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU01",
+      "name": "Derke",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/5022/derke",
+      "status": "ok",
+      "rounds": {
+        "决斗": 10537,
+        "哨位": 1033,
+        "控场": 159,
+        "先锋": 527
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.86,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU02",
+      "name": "kaajak",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/9554/kaajak",
+      "status": "ok",
+      "rounds": {
+        "决斗": 9099,
+        "哨位": 267,
+        "控场": 642,
+        "先锋": 281
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.884,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU03",
+      "name": "Wo0t",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/21328/wo0t",
+      "status": "ok",
+      "rounds": {
+        "决斗": 3695,
+        "哨位": 471,
+        "控场": 1932,
+        "先锋": 2267
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.442,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU04",
+      "name": "marteen",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/10307/marteen",
+      "status": "ok",
+      "rounds": {
+        "决斗": 7009,
+        "哨位": 147,
+        "控场": 500,
+        "先锋": 602
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.849,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU05",
+      "name": "LewN",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/20144/lewn",
+      "status": "ok",
+      "rounds": {
+        "决斗": 6704,
+        "哨位": 507,
+        "控场": 0,
+        "先锋": 113
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.915,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU06",
+      "name": "Lar0k",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/31305/lar0k",
+      "status": "ok",
+      "rounds": {
+        "决斗": 2540,
+        "哨位": 425,
+        "控场": 195,
+        "先锋": 3376
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.517,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU07",
+      "name": "Alfajer",
+      "region": "EMEA",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/9810/alfajer",
+      "status": "ok",
+      "rounds": {
+        "决斗": 3255,
+        "哨位": 7178,
+        "控场": 690,
+        "先锋": 480
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.619,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU08",
+      "name": "benjyfishy",
+      "region": "EMEA",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/29873/benjyfishy",
+      "status": "ok",
+      "rounds": {
+        "决斗": 753,
+        "哨位": 6343,
+        "控场": 1156,
+        "先锋": 79
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.761,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU09",
+      "name": "Crewen",
+      "region": "EMEA",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/12795/crewen",
+      "status": "ok",
+      "rounds": {
+        "决斗": 40,
+        "哨位": 8146,
+        "控场": 1525,
+        "先锋": 116
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.829,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU10",
+      "name": "Boaster",
+      "region": "EMEA",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/438/boaster",
+      "status": "ok",
+      "rounds": {
+        "决斗": 171,
+        "哨位": 177,
+        "控场": 9859,
+        "先锋": 3136
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.739,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU11",
+      "name": "Ruxic",
+      "region": "EMEA",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/18677/ruxic",
+      "status": "ok",
+      "rounds": {
+        "决斗": 110,
+        "哨位": 180,
+        "控场": 6573,
+        "先锋": 1463
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.789,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU12",
+      "name": "Boo",
+      "region": "EMEA",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/1144/boo",
+      "status": "ok",
+      "rounds": {
+        "决斗": 19,
+        "哨位": 985,
+        "控场": 10785,
+        "先锋": 1044
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.84,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU13",
+      "name": "crashies",
+      "region": "EMEA",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/4/crashies",
+      "status": "ok",
+      "rounds": {
+        "决斗": 158,
+        "哨位": 863,
+        "控场": 422,
+        "先锋": 11730
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.89,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU14",
+      "name": "RieNs",
+      "region": "EMEA",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/10971/riens",
+      "status": "ok",
+      "rounds": {
+        "决斗": 779,
+        "哨位": 1093,
+        "控场": 366,
+        "先锋": 8875
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.799,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU15",
+      "name": "trexx",
+      "region": "EMEA",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/2168/trexx",
+      "status": "ok",
+      "rounds": {
+        "决斗": 3571,
+        "哨位": 562,
+        "控场": 519,
+        "先锋": 3595
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.436,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU16",
+      "name": "Chronicle",
+      "region": "EMEA",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/458/chronicle",
+      "status": "ok",
+      "rounds": {
+        "决斗": 918,
+        "哨位": 3240,
+        "控场": 4287,
+        "先锋": 5322
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.387,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU17",
+      "name": "nAts",
+      "region": "EMEA",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/457/nats",
+      "status": "ok",
+      "rounds": {
+        "决斗": 21,
+        "哨位": 7743,
+        "控场": 4177,
+        "先锋": 164
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.64,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 383,
+        "控场": 142,
+        "先锋": 0
+      },
+      "recentDominant": "哨位"
+    },
+    {
+      "id": "EU18",
+      "name": "SUYGETSU",
+      "region": "EMEA",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/2858/suygetsu",
+      "status": "ok",
+      "rounds": {
+        "决斗": 174,
+        "哨位": 7206,
+        "控场": 4107,
+        "先锋": 367
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.608,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 227,
+        "控场": 397,
+        "先锋": 0
+      },
+      "recentDominant": "控场"
+    },
+    {
+      "id": "EU19",
+      "name": "Jamppi",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/9780/Jamppi",
+      "status": "ok",
+      "rounds": {
+        "决斗": 2641,
+        "哨位": 1282,
+        "控场": 926,
+        "先锋": 5535
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.533,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 339,
+        "哨位": 20,
+        "控场": 0,
+        "先锋": 230
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "EU20",
+      "name": "Sayonara",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": null,
+      "status": "search-exact-matches-7"
+    },
+    {
+      "id": "EU21",
+      "name": "PROFEK",
+      "region": "EMEA",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/5554/PROFEK",
+      "status": "ok",
+      "rounds": {
+        "决斗": 103,
+        "哨位": 1098,
+        "控场": 7574,
+        "先锋": 64
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.857,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 589,
+        "先锋": 0
+      },
+      "recentDominant": "控场"
+    },
+    {
+      "id": "EU22",
+      "name": "UNFAKE",
+      "region": "EMEA",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/4521/UNFAKE",
+      "status": "ok",
+      "rounds": {
+        "决斗": 67,
+        "哨位": 575,
+        "控场": 231,
+        "先锋": 9101
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.912,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 908
+      },
+      "recentDominant": "先锋"
+    },
+    {
+      "id": "EU23",
+      "name": "kamo",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "EU24",
+      "name": "MiniBoo",
+      "region": "EMEA",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/18350/MiniBoo",
+      "status": "ok",
+      "rounds": {
+        "决斗": 8225,
+        "哨位": 295,
+        "控场": 93,
+        "先锋": 525
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.9,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "EU25",
+      "name": "purp0",
+      "region": "EMEA",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/1885/purp0",
+      "status": "ok",
+      "rounds": {
+        "决斗": 4867,
+        "哨位": 1406,
+        "控场": 184,
+        "先锋": 2362
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.552,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 544,
+        "哨位": 15,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "EU26",
+      "name": "wayne",
+      "region": "EMEA",
+      "currentRole": "自由人",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "EU27",
+      "name": "ComeBack",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/40591/ComeBack",
+      "status": "ok",
+      "rounds": {
+        "决斗": 4926,
+        "哨位": 347,
+        "控场": 0,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.934,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU28",
+      "name": "MrFaliN",
+      "region": "EMEA",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/8044/MrFaliN",
+      "status": "ok",
+      "rounds": {
+        "决斗": 221,
+        "哨位": 480,
+        "控场": 2517,
+        "先锋": 6749
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.677,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "EU29",
+      "name": "qRaxs",
+      "region": "EMEA",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/1139/qRaxs",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1401,
+        "哨位": 2442,
+        "控场": 77,
+        "先锋": 6009
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.605,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU30",
+      "name": "yetujey",
+      "region": "EMEA",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/8369/yetujey",
+      "status": "ok",
+      "rounds": {
+        "决斗": 334,
+        "哨位": 6745,
+        "控场": 1883,
+        "先锋": 86
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.745,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU31",
+      "name": "xeus",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/12793/xeus",
+      "status": "ok",
+      "rounds": {
+        "决斗": 7408,
+        "哨位": 273,
+        "控场": 23,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.962,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU32",
+      "name": "ATA KAPTAN",
+      "region": "EMEA",
+      "currentRole": "控场",
+      "profileUrl": null,
+      "status": "search-exact-matches-0"
+    },
+    {
+      "id": "EU33",
+      "name": "KROSTALY",
+      "region": "EMEA",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/15735/KROSTALY",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1897,
+        "哨位": 1008,
+        "控场": 313,
+        "先锋": 4430
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.579,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 580
+      },
+      "recentDominant": "先锋"
+    },
+    {
+      "id": "EU34",
+      "name": "baha",
+      "region": "EMEA",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/10114/baha",
+      "status": "ok",
+      "rounds": {
+        "决斗": 290,
+        "哨位": 172,
+        "控场": 3176,
+        "先锋": 1621
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.604,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 65,
+        "控场": 112,
+        "先锋": 0
+      },
+      "recentDominant": "控场"
+    },
+    {
+      "id": "EU35",
+      "name": "Veqaj",
+      "region": "EMEA",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/12928/Veqaj",
+      "status": "ok",
+      "rounds": {
+        "决斗": 3123,
+        "哨位": 325,
+        "控场": 974,
+        "先锋": 2225
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.47,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU36",
+      "name": "Rosé",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "EU37",
+      "name": "umu7",
+      "region": "EMEA",
+      "currentRole": "自由人",
+      "profileUrl": null,
+      "status": "search-exact-matches-0"
+    },
+    {
+      "id": "EU38",
+      "name": "Loita",
+      "region": "EMEA",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/24344/Loita",
+      "status": "ok",
+      "rounds": {
+        "决斗": 57,
+        "哨位": 90,
+        "控场": 6515,
+        "先锋": 214
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.947,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU39",
+      "name": "starxo",
+      "region": "EMEA",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/565/starxo",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1545,
+        "哨位": 1344,
+        "控场": 1845,
+        "先锋": 6010
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.559,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU40",
+      "name": "Minny",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/23169/Minny",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1043,
+        "哨位": 4864,
+        "控场": 2256,
+        "先锋": 1455
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.506,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 538,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 54
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "EU41",
+      "name": "bipo",
+      "region": "EMEA",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/18400/bipo",
+      "status": "ok",
+      "rounds": {
+        "决斗": 6022,
+        "哨位": 679,
+        "控场": 224,
+        "先锋": 828
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.777,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 393,
+        "控场": 58,
+        "先锋": 0
+      },
+      "recentDominant": "哨位"
+    },
+    {
+      "id": "EU42",
+      "name": "GLYPH",
+      "region": "EMEA",
+      "currentRole": "控场",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "EU43",
+      "name": "Cloud",
+      "region": "EMEA",
+      "currentRole": "哨位",
+      "profileUrl": null,
+      "status": "search-exact-matches-14"
+    },
+    {
+      "id": "EU44",
+      "name": "westside",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "EU45",
+      "name": "ara",
+      "region": "EMEA",
+      "currentRole": "先锋",
+      "profileUrl": null,
+      "status": "search-exact-matches-3"
+    },
+    {
+      "id": "EU46",
+      "name": "Flickless",
+      "region": "EMEA",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/6959/Flickless",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1853,
+        "哨位": 690,
+        "控场": 1041,
+        "先锋": 4712
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.568,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 107,
+        "哨位": 57,
+        "控场": 199,
+        "先锋": 44
+      },
+      "recentDominant": "控场"
+    },
+    {
+      "id": "EU47",
+      "name": "GRUBINHO",
+      "region": "EMEA",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/5550/GRUBINHO",
+      "status": "ok",
+      "rounds": {
+        "决斗": 161,
+        "哨位": 1437,
+        "控场": 6423,
+        "先锋": 4162
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.527,
+      "candidateMismatch": false
+    },
+    {
+      "id": "EU48",
+      "name": "Shao",
+      "region": "EMEA",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/384/Shao",
+      "status": "ok",
+      "rounds": {
+        "决斗": 883,
+        "哨位": 1450,
+        "控场": 2502,
+        "先锋": 6027
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.555,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "EU49",
+      "name": "hiro",
+      "region": "EMEA",
+      "currentRole": "哨位",
+      "profileUrl": null,
+      "status": "search-exact-matches-7"
+    },
+    {
+      "id": "EU50",
+      "name": "Filu",
+      "region": "EMEA",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/4544/Filu",
+      "status": "ok",
+      "rounds": {
+        "决斗": 6771,
+        "哨位": 400,
+        "控场": 1164,
+        "先锋": 236
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.79,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "PA01",
+      "name": "Meiy",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/6672/meiy",
+      "status": "ok",
+      "rounds": {
+        "决斗": 6112,
+        "哨位": 445,
+        "控场": 67,
+        "先锋": 642
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.841,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA02",
+      "name": "HYUNMIN",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/28400/hyunmin",
+      "status": "ok",
+      "rounds": {
+        "决斗": 5258,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 90
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.983,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA03",
+      "name": "Jemkin",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/24895/jemkin",
+      "status": "ok",
+      "rounds": {
+        "决斗": 6356,
+        "哨位": 894,
+        "控场": 153,
+        "先锋": 122
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.845,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA04",
+      "name": "Dambi",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/31827/dambi",
+      "status": "ok",
+      "rounds": {
+        "决斗": 5320,
+        "哨位": 277,
+        "控场": 150,
+        "先锋": 24
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.922,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA05",
+      "name": "JitBoyS",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/13788/jitboys",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1082,
+        "哨位": 2831,
+        "控场": 2342,
+        "先锋": 391
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.426,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA06",
+      "name": "Zeus",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/46135/zeus",
+      "status": "ok",
+      "rounds": {
+        "决斗": 2953,
+        "哨位": 0,
+        "控场": 77,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.975,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA07",
+      "name": "t3xture",
+      "region": "太平洋",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/9196/t3xture",
+      "status": "ok",
+      "rounds": {
+        "决斗": 9321,
+        "哨位": 855,
+        "控场": 24,
+        "先锋": 28
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.911,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 153,
+        "哨位": 268,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "哨位"
+    },
+    {
+      "id": "PA08",
+      "name": "xffero",
+      "region": "太平洋",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/4871/xffero",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1596,
+        "哨位": 3200,
+        "控场": 4880,
+        "先锋": 2059
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.416,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA09",
+      "name": "Raxcal",
+      "region": "太平洋",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/48925/raxcal",
+      "status": "ok",
+      "rounds": {
+        "决斗": 2082,
+        "哨位": 344,
+        "控场": 145,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.81,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 118,
+        "哨位": 344,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "哨位"
+    },
+    {
+      "id": "PA10",
+      "name": "MaKo",
+      "region": "太平洋",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/4462/mako",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1268,
+        "哨位": 197,
+        "控场": 10685,
+        "先锋": 26
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.878,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA11",
+      "name": "Karon",
+      "region": "太平洋",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/34974/karon",
+      "status": "ok",
+      "rounds": {
+        "决斗": 269,
+        "哨位": 659,
+        "控场": 5976,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.866,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA12",
+      "name": "f0rsakeN",
+      "region": "太平洋",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/9801/f0rsaken",
+      "status": "ok",
+      "rounds": {
+        "决斗": 5954,
+        "哨位": 1748,
+        "控场": 3844,
+        "先锋": 3661
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.392,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA13",
+      "name": "invy",
+      "region": "太平洋",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/8504/invy",
+      "status": "ok",
+      "rounds": {
+        "决斗": 380,
+        "哨位": 669,
+        "控场": 618,
+        "先锋": 7148
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.811,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA14",
+      "name": "BeYN",
+      "region": "太平洋",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/4678/beyn",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1959,
+        "哨位": 669,
+        "控场": 395,
+        "先锋": 4791
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.613,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA15",
+      "name": "Munchkin",
+      "region": "太平洋",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/2489/munchkin",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1164,
+        "哨位": 2454,
+        "控场": 4920,
+        "先锋": 2648
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.44,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA16",
+      "name": "Jinggg",
+      "region": "太平洋",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/7378/jinggg",
+      "status": "ok",
+      "rounds": {
+        "决斗": 10804,
+        "哨位": 1383,
+        "控场": 1193,
+        "先锋": 140
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.799,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 375,
+        "哨位": 18,
+        "控场": 151,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "PA17",
+      "name": "something",
+      "region": "太平洋",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/17086/something",
+      "status": "ok",
+      "rounds": {
+        "决斗": 8561,
+        "哨位": 120,
+        "控场": 226,
+        "先锋": 1744
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.804,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 367,
+        "哨位": 37,
+        "控场": 91,
+        "先锋": 49
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "PA18",
+      "name": "d4v41",
+      "region": "太平洋",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/9803/d4v41",
+      "status": "ok",
+      "rounds": {
+        "决斗": 2191,
+        "哨位": 5144,
+        "控场": 3013,
+        "先锋": 4675
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.342,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA19",
+      "name": "free1ng",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/1916/free1ng",
+      "status": "ok",
+      "rounds": {
+        "决斗": 812,
+        "哨位": 3089,
+        "控场": 1030,
+        "先锋": 1969
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.448,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA20",
+      "name": "Hermes",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": null,
+      "status": "search-exact-matches-3"
+    },
+    {
+      "id": "PA21",
+      "name": "stax",
+      "region": "太平洋",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/485/stax",
+      "status": "ok",
+      "rounds": {
+        "决斗": 154,
+        "哨位": 359,
+        "控场": 714,
+        "先锋": 11183
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.901,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 368,
+        "先锋": 0
+      },
+      "recentDominant": "控场"
+    },
+    {
+      "id": "PA22",
+      "name": "carpe",
+      "region": "太平洋",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/31207/carpe",
+      "status": "ok",
+      "rounds": {
+        "决斗": 14,
+        "哨位": 63,
+        "控场": 751,
+        "先锋": 1911
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.698,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "PA23",
+      "name": "iZu",
+      "region": "太平洋",
+      "currentRole": "先锋",
+      "profileUrl": null,
+      "status": "search-exact-matches-4"
+    },
+    {
+      "id": "PA24",
+      "name": "Meteor",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/13039/Meteor",
+      "status": "ok",
+      "rounds": {
+        "决斗": 4386,
+        "哨位": 4779,
+        "控场": 1052,
+        "先锋": 43
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.466,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA25",
+      "name": "BuZz",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": null,
+      "status": "search-exact-matches-4"
+    },
+    {
+      "id": "PA26",
+      "name": "Lakia",
+      "region": "太平洋",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/773/Lakia",
+      "status": "ok",
+      "rounds": {
+        "决斗": 700,
+        "哨位": 62,
+        "控场": 39,
+        "先锋": 7413
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.902,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "PA27",
+      "name": "Ash",
+      "region": "太平洋",
+      "currentRole": "哨位",
+      "profileUrl": null,
+      "status": "search-exact-matches-14"
+    },
+    {
+      "id": "PA28",
+      "name": "ZynX",
+      "region": "太平洋",
+      "currentRole": "先锋",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "PA29",
+      "name": "Rb",
+      "region": "太平洋",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/488/Rb",
+      "status": "ok",
+      "rounds": {
+        "决斗": 4745,
+        "哨位": 1584,
+        "控场": 2783,
+        "先锋": 2809
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.398,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA30",
+      "name": "Francis",
+      "region": "太平洋",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/31828/Francis",
+      "status": "ok",
+      "rounds": {
+        "决斗": 2517,
+        "哨位": 127,
+        "控场": 430,
+        "先锋": 2697
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.467,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA31",
+      "name": "Xross",
+      "region": "太平洋",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/42772/Xross",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1628,
+        "哨位": 680,
+        "控场": 624,
+        "先锋": 1596
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.36,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA32",
+      "name": "Ivy",
+      "region": "太平洋",
+      "currentRole": "先锋",
+      "profileUrl": null,
+      "status": "search-exact-matches-10"
+    },
+    {
+      "id": "PA33",
+      "name": "SSeeS",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/21438/SSeeS",
+      "status": "ok",
+      "rounds": {
+        "决斗": 0,
+        "哨位": 280,
+        "控场": 2386,
+        "先锋": 485
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.757,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 50,
+        "控场": 434,
+        "先锋": 0
+      },
+      "recentDominant": "控场"
+    },
+    {
+      "id": "PA34",
+      "name": "akame",
+      "region": "太平洋",
+      "currentRole": "先锋",
+      "profileUrl": null,
+      "status": "search-exact-matches-14"
+    },
+    {
+      "id": "PA35",
+      "name": "Caedye",
+      "region": "太平洋",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/29841/Caedye",
+      "status": "ok",
+      "rounds": {
+        "决斗": 889,
+        "哨位": 1638,
+        "控场": 1201,
+        "先锋": 460
+      },
+      "unknown": [],
+      "dominant": "哨位",
+      "dominantShare": 0.391,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA36",
+      "name": "yatsuka",
+      "region": "太平洋",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/29843/yatsuka",
+      "status": "ok",
+      "rounds": {
+        "决斗": 896,
+        "哨位": 1288,
+        "控场": 607,
+        "先锋": 1324
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.322,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA37",
+      "name": "Leviathan",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "PA38",
+      "name": "killua",
+      "region": "太平洋",
+      "currentRole": "先锋",
+      "profileUrl": null,
+      "status": "search-exact-matches-21"
+    },
+    {
+      "id": "PA39",
+      "name": "Primmie",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/25255/Primmie",
+      "status": "ok",
+      "rounds": {
+        "决斗": 2316,
+        "哨位": 856,
+        "控场": 138,
+        "先锋": 37
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.692,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA40",
+      "name": "thyy",
+      "region": "太平洋",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/42901/thyy",
+      "status": "ok",
+      "rounds": {
+        "决斗": 844,
+        "哨位": 0,
+        "控场": 866,
+        "先锋": 0
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.506,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA41",
+      "name": "crazyguy",
+      "region": "太平洋",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/1430/crazyguy",
+      "status": "ok",
+      "rounds": {
+        "决斗": 246,
+        "哨位": 792,
+        "控场": 1499,
+        "先锋": 7299
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.742,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 63,
+        "控场": 18,
+        "先锋": 406
+      },
+      "recentDominant": "先锋"
+    },
+    {
+      "id": "PA42",
+      "name": "monyet",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": "https://www.vlr.gg/player/8497/monyet",
+      "status": "ok",
+      "rounds": {
+        "决斗": 5720,
+        "哨位": 74,
+        "控场": 3446,
+        "先锋": 85
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.613,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA43",
+      "name": "Kushy",
+      "region": "太平洋",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/4866/Kushy",
+      "status": "ok",
+      "rounds": {
+        "决斗": 411,
+        "哨位": 938,
+        "控场": 478,
+        "先锋": 8577
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.824,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 74,
+        "哨位": 18,
+        "控场": 24,
+        "先锋": 160
+      },
+      "recentDominant": "先锋"
+    },
+    {
+      "id": "PA44",
+      "name": "naTz",
+      "region": "太平洋",
+      "currentRole": "哨位",
+      "profileUrl": null,
+      "status": "search-exact-matches-5"
+    },
+    {
+      "id": "PA45",
+      "name": "kellyS",
+      "region": "太平洋",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/7437/kellyS",
+      "status": "ok",
+      "rounds": {
+        "决斗": 3837,
+        "哨位": 972,
+        "控场": 756,
+        "先锋": 1667
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.531,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 119,
+        "哨位": 48,
+        "控场": 127,
+        "先锋": 63
+      },
+      "recentDominant": "控场"
+    },
+    {
+      "id": "PA46",
+      "name": "Sylvan",
+      "region": "太平洋",
+      "currentRole": "控场",
+      "profileUrl": "https://www.vlr.gg/player/4056/Sylvan",
+      "status": "ok",
+      "rounds": {
+        "决斗": 663,
+        "哨位": 148,
+        "控场": 6219,
+        "先锋": 327
+      },
+      "unknown": [],
+      "dominant": "控场",
+      "dominantShare": 0.845,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA47",
+      "name": "TenTen",
+      "region": "太平洋",
+      "currentRole": "决斗",
+      "profileUrl": null,
+      "status": "search-exact-matches-2"
+    },
+    {
+      "id": "PA48",
+      "name": "BerserX",
+      "region": "太平洋",
+      "currentRole": "自由人",
+      "profileUrl": "https://www.vlr.gg/player/4874/BerserX",
+      "status": "ok",
+      "rounds": {
+        "决斗": 6120,
+        "哨位": 3976,
+        "控场": 664,
+        "先锋": 803
+      },
+      "unknown": [],
+      "dominant": "决斗",
+      "dominantShare": 0.529,
+      "candidateMismatch": false
+    },
+    {
+      "id": "PA49",
+      "name": "JessieVash",
+      "region": "太平洋",
+      "currentRole": "哨位",
+      "profileUrl": "https://www.vlr.gg/player/2334/JessieVash",
+      "status": "ok",
+      "rounds": {
+        "决斗": 45,
+        "哨位": 1039,
+        "控场": 78,
+        "先锋": 8059
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.874,
+      "candidateMismatch": true,
+      "recentRounds": {
+        "决斗": 0,
+        "哨位": 0,
+        "控场": 0,
+        "先锋": 0
+      },
+      "recentDominant": "决斗"
+    },
+    {
+      "id": "PA50",
+      "name": "xavi8k",
+      "region": "太平洋",
+      "currentRole": "先锋",
+      "profileUrl": "https://www.vlr.gg/player/7754/xavi8k",
+      "status": "ok",
+      "rounds": {
+        "决斗": 1713,
+        "哨位": 2494,
+        "控场": 1411,
+        "先锋": 3979
+      },
+      "unknown": [],
+      "dominant": "先锋",
+      "dominantShare": 0.415,
+      "candidateMismatch": false
+    }
+  ]
+}
