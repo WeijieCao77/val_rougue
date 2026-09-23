@@ -5,8 +5,10 @@ import { cardArt, combatArt, relicArt } from './art.js';
 import { captureCombatPresentation, animateCombatTransition, clearCombatPresentation } from './fx.js';
 import { attachCardGesture } from '/shared/card-gesture.js';
 
-const STORAGE_KEY = 'new-demo-run-v1';
-const GUIDE_KEY = 'new-demo-guide-v1-';
+const STORAGE_KEY = 'new-demo-run-route-v2';
+const GUIDE_KEY = 'new-demo-guide-v2-';
+// Internal beta: discard runs created with the previous route layout.
+try { localStorage.removeItem('new-demo-run-v1'); } catch {}
 let state = null;
 let previousState = null;
 let selectedCardUid = null;

@@ -9,12 +9,14 @@ const createSeason=(seed,tutorial,region)=>createWaSeason(seed,tutorial,region,c
 import {routeNodes,mapEntry,nextScreen,restoreScreen} from './navigation.js';
 import {ACTS,availableNodes} from './season-map.js';
 const app=document.querySelector('#app'),dialog=document.querySelector('#dialog'),modal=document.querySelector('#dialog-content');
-const SAVE='bao-yi-ba-D0.1-save',SEASON_SAVE='peak-season-D0.2-save',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view',LEGACY_VIEW='bao-yi-ba-view-legacy';
+const SAVE='bao-yi-ba-D0.1-save-route-v2',SEASON_SAVE='peak-season-D0.2-save-route-v2',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view-route-v2',LEGACY_VIEW='bao-yi-ba-view-legacy-route-v2';
+// Internal beta: old maps cannot be resumed under the new route rules.
+try{for(const key of ['bao-yi-ba-D0.1-save','peak-season-D0.2-save','bao-yi-ba-view','bao-yi-ba-view-legacy'])localStorage.removeItem(key);}catch{}
 let state=null,atHome=true,hints=true,saveError='',saved=null,screen='map',selected=null,echo=null,dragging=null,pointerDrag=null,suppressClick=false,region='CN',turnAnimating=false;
 let libraryFilter='all',libraryRegionFilter='all';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function loadSave(key,legacy=false){try{const raw=localStorage.getItem(key);if(!raw)return null;const s=JSON.parse(raw);if(!s||!Array.isArray(s.deck)||!Array.isArray(s.actions)||!Number.isInteger(s.rev)||!s.phase)return null;if(legacy){if(s.version!==VERSION)return null;return s;}if(s.version!=='D0.2.0'||s.mode!=='season'||!REGIONS[s.region]||!s.map||!Array.isArray(s.map.nodes)||!Array.isArray(s.map.edges)||!Array.isArray(s.completed)||![1,2,3].includes(s.act))return null;return s;}catch{return null;}}
-try{saved=loadSave(SEASON_SAVE)||loadSave(SAVE,true);if(!saved){const raw=localStorage.getItem(SEASON_SAVE);if(raw)saveError='新赛季存档无法读取，可重新开始。';else{const legacy=localStorage.getItem(SAVE);if(legacy)saveError='旧存档保留中，需要重开才能进入登峰赛季。';}}hints=localStorage.getItem(HINTS)!=='off';}catch{saveError='本地存档无法读取；仍可开始新赛季。';region='CN';}
+try{saved=loadSave(SEASON_SAVE)||loadSave(SAVE,true);if(!saved&&(localStorage.getItem(SEASON_SAVE)||localStorage.getItem(SAVE)))saveError='存档无法读取，可重新开始。';hints=localStorage.getItem(HINTS)!=='off';}catch{saveError='本地存档无法读取；仍可开始新赛季。';region='CN';}
 function notice(text){document.querySelector('#notice').textContent=text;}
 function saveView(){if(state)try{const key=state.mode==='season'?VIEW:LEGACY_VIEW;localStorage.setItem(key,JSON.stringify({seed:state.seed,rev:state.rev,screen,mode:state.mode,region:state.region,version:state.version}));}catch{notice('页面位置未能保存。');}}
 function persist(){
