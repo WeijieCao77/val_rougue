@@ -39,6 +39,23 @@
 /* Both games mount the same WebGL squad into their existing battle art slot. */
 .character-stage-host { position:absolute; inset:0; z-index:2; pointer-events:none; overflow:hidden; }
 .character-stage-host canvas { display:block; width:100%; height:100%; pointer-events:none; }
+.ally-art-container:has(.character-stage-host canvas),
+.fighter.ally .combat-target:has(.character-stage-host canvas) {
+  background:radial-gradient(ellipse at 50% 84%,#5da9b02e,transparent 58%),linear-gradient(165deg,#111d26,#182932 68%,#0d1b24);
+  border-color:#587b83;
+}
+.enemy-art-container:has(.character-stage-host canvas),
+.fighter.enemy .combat-target:has(.character-stage-host canvas) {
+  background:radial-gradient(ellipse at 50% 84%,#ba7c492e,transparent 58%),linear-gradient(165deg,#241a1d,#2b2425 68%,#17191f);
+  border-color:#8b6754;
+}
+.ally-art-container:has(.character-stage-host canvas)::before,
+.enemy-art-container:has(.character-stage-host canvas)::before,
+.combat-target:has(.character-stage-host canvas)::before {
+  content:"";position:absolute;left:11%;right:11%;bottom:10%;height:24%;pointer-events:none;
+  border:1px solid #adc1b739;border-radius:50%;transform:rotateX(70deg);
+  background:radial-gradient(ellipse,#a6bbac14,transparent 70%);
+}
 .ally-art-container:has(.character-stage-host canvas) > svg,
 .enemy-art-container:has(.character-stage-host canvas) > svg { opacity:0; }
 .ally-art-container, .enemy-art-container { position:relative; }

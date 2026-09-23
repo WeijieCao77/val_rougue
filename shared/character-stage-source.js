@@ -1,5 +1,5 @@
 // shared/character-stage-source.js
-// Three.js character stage using Quaternius Toon Shooter GLB models.
+// Three.js character stage using proportionate Quaternius tactical GLTF characters.
 // Exports mountCharacterStage, playCharacterCue, clearCharacterStages.
 // Handles WebGL fallback, reduced motion, resize, loading, and disposal.
 
@@ -208,13 +208,13 @@ function createThreeStage(container, side, variant, block) {
   // Scene and camera
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, initialWidth / initialHeight || 1.3, 0.1, 100);
-  camera.position.set(0, 1.55, initialWidth / initialHeight < 1.65 ? 4.6 : 4.7);
-  camera.lookAt(0, 1.15, 0);
+  camera.position.set(0, 1.3, 2.8);
+  camera.lookAt(0, 0.9, 0);
 
   // Lighting
-  const ambient = new THREE.AmbientLight(0xffffff, 0.85);
+  const ambient = new THREE.AmbientLight(0xffffff, 1.35);
   scene.add(ambient);
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 2.15);
   dirLight.position.set(2, 3, 4);
   scene.add(dirLight);
   const rimLight = new THREE.DirectionalLight(side === 'ally' ? 0x86d9f6 : 0xff8b73, 1.1);
@@ -256,9 +256,8 @@ function createThreeStage(container, side, variant, block) {
     }
     builtSquad.forEach((built, index) => {
       const charGroup = built.group;
-      charGroup.scale.multiplyScalar(index === 1 ? 1.16 : 0.88);
-      charGroup.position.x = (index - 1) * 1.16;
-      charGroup.position.z = index === 1 ? 0.25 : -0.16;
+      charGroup.position.x = 0;
+      charGroup.position.z = 0;
       squadGroup.add(charGroup);
 
       const armorRing = createArmorIndicator(charGroup);
@@ -331,7 +330,7 @@ function createThreeStage(container, side, variant, block) {
         char.group.position.y = THREE.MathUtils.lerp(0, pose.jump ? 0.3 : 0, progress);
       }
       if (pose.scale !== undefined) {
-        char.group.scale.setScalar(THREE.MathUtils.lerp(1, pose.scale, progress));
+        char.group.scale.copy(char.baseScale).multiplyScalar(THREE.MathUtils.lerp(1, pose.scale, progress));
       }
     });
     if (pose.armor !== undefined) {
@@ -343,7 +342,7 @@ function createThreeStage(container, side, variant, block) {
     characters.forEach((char) => {
       const data = char.userData;
       char.group.position.y = data.baseY;
-      char.group.scale.setScalar(1);
+      char.group.scale.copy(char.baseScale);
       if (data.leftArm) {
         data.leftArm.rotation.z = data.baseArmLeftRotZ;
         data.rightArm.rotation.z = data.baseArmRightRotZ;
@@ -379,20 +378,15 @@ function createThreeStage(container, side, variant, block) {
     let fallbackPose = null;
     switch (cue) {
       case 'attack':
-        animName = 'Idle_Shoot';
+        animName = 'Gun_Shoot';
         fallbackPose = { armsUp: true, jump: false, scale: 1, armor: false };
         break;
       case 'hit':
-        animName = 'HitReact';
+        animName = 'HitRecieve';
         fallbackPose = { armsUp: false, jump: true, scale: 1, armor: false };
         break;
       case 'defend':
-        // Prefer Duck animation if available, else use Idle_Shoot as placeholder
-        if (characters.some((char) => char.actions['Duck'])) {
-          animName = 'Duck';
-        } else {
-          animName = 'Idle_Shoot';
-        }
+        animName = 'Idle_Gun_Pointing';
         fallbackPose = { armsUp: false, jump: false, scale: 1.05, armor: true };
         break;
       default:
@@ -567,105 +561,16 @@ function createThreeStage(container, side, variant, block) {
 // Model loading and squad building
 // -----------------------------------------------------------------------------
 async function buildSquadModels(side, variant) {
-  const isAlly = side === 'ally';
-  const models = [];
+  const enemyId = String(variant || 'E01');
+  const selected = side === 'ally'
+    ? { url: '/shared/models/operative-swat.gltf', tintColor: new THREE.Color(0x8bb8ca), scale: 1 }
+    : getEnemyModelSelection(enemyId);
+  const model = cloneModel(await loadModel(selected.url));
+  model.group.scale.setScalar(selected.scale);
+  model.group.rotation.y = side === 'ally' ? -0.22 : 0.22;
+  tintMaterials(model.group, selected.tintColor);
 
-  if (isAlly) {
-    // Ally: three soldier models with slight variations
-    const soldierUrl = '/shared/models/soldier.glb';
-    const soldierData = await loadModel(soldierUrl);
-    for (let i = 0; i < 3; i++) {
-      const clone = cloneModel(soldierData);
-      // Slight variations: scale, rotation, and material tint
-      if (i === 1) clone.group.scale.multiplyScalar(1.05);
-      if (i === 2) clone.group.rotation.y = 0.1;
-      // Tint materials slightly per member (unique clones)
-      tintMaterials(clone.group, new THREE.Color().setHSL(0.6 + i * 0.05, 0.5, 0.6));
-      models.push(clone);
-    }
-  } else {
-    // Enemy: map ID to model URL and variations
-    const enemyId = String(variant || 'E01');
-    const selected = getEnemyModelSelection(enemyId);
-    const baseUrl = selected.url;
-    const baseData = await loadModel(baseUrl);
-
-    // For known IDs, apply deterministic variations (size, tone, etc.)
-    for (let i = 0; i < 3; i++) {
-      const clone = cloneModel(baseData);
-      // Apply per-member slight variation
-      if (i === 0) clone.group.scale.multiplyScalar(selected.scaleVariation[0]);
-      if (i === 1) clone.group.scale.multiplyScalar(selected.scaleVariation[1]);
-      if (i === 2) clone.group.scale.multiplyScalar(selected.scaleVariation[2]);
-      clone.group.rotation.y = (i - 1) * 0.1;
-      tintMaterials(clone.group, selected.tintColor);
-      decorateEnemy(clone.group, enemyId);
-      models.push(clone);
-    }
-  }
-
-  return models;
-}
-
-function decorateEnemy(group, enemyId) {
-  const kind = enemyId.replace(/^A[23]_/, '');
-  if (kind === 'E01') return;
-  group.updateMatrixWorld(true);
-  const bounds = new THREE.Box3().setFromObject(group);
-  const height = Math.max(.1, bounds.max.y - bounds.min.y);
-  const cx = (bounds.min.x + bounds.max.x) / 2;
-  const head = bounds.min.y + height * .88;
-  const chest = bounds.min.y + height * .54;
-  const z = (bounds.min.z + bounds.max.z) / 2 + height * .12;
-  const material = (color) => new THREE.MeshStandardMaterial({ color, metalness: .12, roughness: .72, flatShading: true });
-  const part = (geometry, color, x, y, depth) => {
-    const mesh = new THREE.Mesh(geometry, material(color));
-    mesh.position.set(x, y, depth);
-    mesh.userData.stageOwned = true;
-    group.add(mesh);
-    return mesh;
-  };
-  if (kind === 'E02') {
-    for (const side of [-1, 1]) {
-      part(new THREE.CylinderGeometry(height*.018, height*.018, height*.35, 5), 0x587fbb,
-        cx + side*height*.17, head + height*.2, z - height*.12);
-      part(new THREE.SphereGeometry(height*.055, 8, 6), 0x6ae4f0,
-        cx + side*height*.17, head + height*.38, z - height*.12);
-    }
-  } else if (kind === 'E03') {
-    for (const side of [-1, 1]) {
-      const fin = part(new THREE.ConeGeometry(height*.15, height*.47, 5), 0xc66852,
-        cx + side*height*.29, chest + height*.32, z - height*.16);
-      fin.rotation.z = side * -.48;
-    }
-  } else if (kind === 'E04') {
-    const shield = part(new THREE.BoxGeometry(height*.28, height*.62, height*.07), 0x82929c,
-      cx - height*.34, chest, z + height*.1);
-    shield.rotation.z = -.12;
-    part(new THREE.BoxGeometry(height*.11, height*.15, height*.08), 0xa9e6ed,
-      cx - height*.34, chest + height*.04, z + height*.15);
-  } else if (kind === 'E05') {
-    part(new THREE.BoxGeometry(height*.62, height*.08, height*.32), 0x71828a,
-      cx, head + height*.13, z - height*.02);
-    part(new THREE.BoxGeometry(height*.1, height*.15, height*.04), 0xdbad6c,
-      cx, chest + height*.17, z + height*.15);
-  } else if (kind === 'EL01') {
-    for (const side of [-1, 1]) {
-      const shoulder = part(new THREE.BoxGeometry(height*.29, height*.28, height*.27), 0xb38b49,
-        cx + side*height*.33, chest + height*.19, z);
-      shoulder.rotation.z = side*.18;
-    }
-    part(new THREE.BoxGeometry(height*.28, height*.13, height*.06), 0xf0c55b,
-      cx, head, z + height*.11);
-  } else if (kind === 'B01') {
-    part(new THREE.ConeGeometry(height*.16, height*.4, 5), 0xe1aa48,
-      cx, head + height*.32, z - height*.04);
-    for (const side of [-1, 1]) {
-      const banner = part(new THREE.BoxGeometry(height*.12, height*.55, height*.04), 0xa7393d,
-        cx + side*height*.39, chest + height*.37, z - height*.2);
-      banner.rotation.z = side*.15;
-    }
-  }
+  return [model];
 }
 
 function cloneModel(modelData) {
@@ -680,10 +585,10 @@ function cloneModel(modelData) {
     }
   });
   // Determine default idle action name
-  let defaultActionName = 'Idle';
+  let defaultActionName = 'Idle_Gun';
   if (!actions[defaultActionName]) {
     // Try common alternatives
-    const alternatives = ['Idle_Shoot', 'Idle_Rifle', 'Idle_Pistol', 'Idle_Unarmed'];
+    const alternatives = ['Idle', 'Idle_Neutral'];
     for (const alt of alternatives) {
       if (actions[alt]) {
         defaultActionName = alt;
@@ -746,36 +651,21 @@ function cloneAndTintMaterial(originalMat, baseColor, clonedMaterialsSet) {
 }
 
 function getEnemyModelSelection(enemyId) {
-  // Deterministic mapping for known enemy IDs; no hashing of known IDs.
-  const id = enemyId.replace(/^A[23]_/, ''); // strip act prefix
-  const act = enemyId.includes('A2_') ? 2 : enemyId.includes('A3_') ? 3 : 1;
-
-  // Base URL and variations per ID
+  const id = enemyId.replace(/^A[23]_/, '');
+  const act = enemyId.includes('A3_') ? 3 : enemyId.includes('A2_') ? 2 : 1;
   const selections = {
-    'E01': { url: '/shared/models/enemy.glb', scaleVariation: [1.0, 0.95, 1.05], tintColor: new THREE.Color(0x8c4a4a) },
-    'E02': { url: '/shared/models/enemy.glb', scaleVariation: [0.9, 1.0, 0.85], tintColor: new THREE.Color(0x4a4a8c) },
-    'E03': { url: '/shared/models/enemy.glb', scaleVariation: [1.1, 0.9, 1.0], tintColor: new THREE.Color(0x744d59) },
-    'E04': { url: '/shared/models/hazmat.glb', scaleVariation: [1.0, 1.1, 0.95], tintColor: new THREE.Color(0x8c8c4a) },
-    'E05': { url: '/shared/models/hazmat.glb', scaleVariation: [0.85, 1.0, 0.9], tintColor: new THREE.Color(0x5a5a5a) },
-    'EL01': { url: '/shared/models/soldier.glb', scaleVariation: [1.2, 1.15, 1.25], tintColor: new THREE.Color(0x506773) },
-    'B01': { url: '/shared/models/hazmat.glb', scaleVariation: [1.3, 1.25, 1.35], tintColor: new THREE.Color(0x413c50) },
+    E01: ['adventurer', 0x9b7d66],
+    E02: ['punk', 0xab6b62],
+    E03: ['adventurer', 0x867a91],
+    E04: ['spacesuit', 0xb68465],
+    E05: ['swat', 0xa56a62],
+    EL01: ['spacesuit', 0xb26e47],
+    B01: ['spacesuit', 0xbd644e],
   };
-
-  let selection = selections[id];
-  if (!selection) {
-    // Unknown ID fallback: use enemy.glb with default scale and neutral tint
-    selection = { url: '/shared/models/enemy.glb', scaleVariation: [1.0, 1.0, 1.0], tintColor: new THREE.Color(0xaaaaaa) };
-  }
-
-  // Apply act upgrades: increase scale slightly and adjust tint brightness for A2/A3
-  if (act > 1) {
-    const scaleBoost = act === 2 ? 1.08 : 1.15;
-    selection.scaleVariation = selection.scaleVariation.map((s) => s * scaleBoost);
-    const hsl = {};
-    selection.tintColor.getHSL(hsl);
-    hsl.l = Math.min(0.8, hsl.l + (act === 2 ? 0.1 : 0.15));
-    selection.tintColor.setHSL(hsl.h, hsl.s, hsl.l);
-  }
-
-  return selection;
+  const [name, color] = selections[id] || selections.E01;
+  return {
+    url: `/shared/models/operative-${name}.gltf`,
+    tintColor: new THREE.Color(color),
+    scale: id === 'B01' ? 1.08 : act === 3 ? 1.05 : 1,
+  };
 }

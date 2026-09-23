@@ -7,9 +7,9 @@
 .battle .hand-area { min-width:0; }
 .battle .hand-card .card-name, .battle .hand-card .card-text { overflow-wrap:anywhere; }
 @media(min-width:901px) {
-  .battle { grid-template-rows: minmax(220px, 34vh) 34px 48px minmax(248px, 1fr); gap:5px; padding:6px 12px; height:calc(100dvh - 62px); }
+  .battle { grid-template-rows: minmax(240px, 36vh) 34px 48px minmax(248px, 1fr); gap:5px; padding:6px 12px; height:calc(100dvh - 62px); }
   .battle .player-area, .battle .enemy-area { justify-content:flex-start; gap:4px; padding:4px; }
-  .battle .ally-art-container, .battle .enemy-art-container { height:120px; flex:none; }
+  .battle .ally-art-container, .battle .enemy-art-container { height:clamp(118px,17vh,158px); flex:none; }
   .battle .player-box, .battle .enemy-box { padding:4px 8px; }
   .battle .stance-box { padding:3px 8px; font-size:11px; line-height:1.1; width:min(300px,100%); }
   .battle .stance-box button { margin-top:2px; padding:3px 8px; font-size:11px; }
