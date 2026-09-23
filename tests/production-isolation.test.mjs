@@ -129,6 +129,9 @@ test('production isolation for new demo', async () => {
           '/new/engine.js',
           '/new/content.js',
           '/new/ui.js',
+          '/new/art.js',
+          '/new/fx.js',
+          '/new/presentation.css',
           '/new/style.css',
           '/new/season-map.js',
         ];

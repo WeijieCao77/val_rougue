@@ -1,0 +1,828 @@
+/* presentation.css - overrides and additions for card art, combat art, pile views, drag interactions */
+
+/* Override old card art pseudo elements */
+.card-art::before,
+.card-art::after {
+  content: none !important;
+  display: none !important;
+}
+.card-art {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  height: auto !important;
+  position: relative;
+  overflow: hidden;
+  display: block;
+}
+.card-art svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Hand card art sizing */
+.hand-card .card-art {
+  height: 100px;
+  border-radius: 4px 4px 0 0;
+  margin: -0.5rem -0.5rem 0.4rem -0.5rem;
+}
+
+/* Reward card art */
+.reward-card .card-art,
+.shop-card .card-art,
+.library-card .card-art {
+  height: 80px;
+  border-radius: 4px;
+  margin-bottom: 0.4rem;
+}
+
+/* Deck item art in shop/rest */
+.deck-item-art {
+  width: 60px;
+  flex-shrink: 0;
+}
+.deck-item-art svg {
+  width: 100%;
+  height: auto;
+}
+.deck-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.deck-item > span {
+  flex: 1;
+}
+
+/* Team art on home */
+.team-art {
+  width: 100%;
+  height: 120px;
+  margin-bottom: 0.5rem;
+}
+.team-art svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Battle arena layout */
+.battle {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 0.8rem;
+  position: relative;
+  min-height: 0;
+}
+.enemy-area {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.player-area {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.pile-display {
+  grid-column: 3;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+  justify-content: center;
+}
+.battle-actions {
+  grid-column: 2;
+  grid-row: 2;
+}
+.hand-area {
+  grid-column: 1 / 4;
+  grid-row: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
+  perspective: 800px;
+}
+
+/* Enemy and ally art containers */
+.enemy-art-container,
+.ally-art-container {
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--border-bright);
+  background: var(--panel-dark);
+  box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+.enemy-art-container svg,
+.ally-art-container svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Pile buttons */
+.pile-btn {
+  background: var(--panel-light);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: var(--transition);
+  width: 100%;
+  max-width: 150px;
+}
+.pile-btn:hover {
+  background: #233042;
+  border-color: var(--mint-dark);
+  box-shadow: 0 0 8px rgba(45,212,191,0.3);
+}
+
+/* Pile modal */
+.pile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+.pile-card {
+  background: var(--panel-light);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.pile-card .card-art {
+  width: 100%;
+  height: auto;
+  max-height: 80px;
+  overflow: hidden;
+}
+.pile-card .card-info {
+  font-size: 0.7rem;
+  margin-top: 0.2rem;
+  text-align: center;
+}
+
+/* Drag ghost */
+.drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1000;
+  background: var(--panel);
+  border: 2px solid var(--amber);
+  border-radius: 8px;
+  padding: 0.5rem;
+  box-shadow: 0 0 20px var(--amber-glow);
+  transform: translate(-50%, -50%);
+  display: none;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+.ghost-name {
+  margin-top: 0.2rem;
+}
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
+  .battle {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 100px);
+    padding-bottom: 80px;
+  }
+  .enemy-area { grid-column: 1; grid-row: 1; }
+  .player-area { grid-column: 1; grid-row: 2; }
+  .pile-display { grid-column: 1; grid-row: 3; flex-direction: row; flex-wrap: wrap; }
+  .pile-btn { width: auto; max-width: none; }
+  .battle-actions { grid-column: 1; grid-row: 4; position: sticky; bottom: 0; background: var(--bg); z-index: 10; padding: 0.5rem; }
+  .hand-area { grid-column: 1; grid-row: 5; }
+  .enemy-art-container,
+  .ally-art-container {
+    max-width: 100%;
+  }
+}
+@media (max-width: 390px) {
+  .hand-card .card-art { height: 80px; }
+  .deck-item-art { width: 50px; }
+  .team-art { height: 80px; }
+  .hand-card {
+    width: 100px;
+    flex-shrink: 0;
+  }
+}
+
+/* Ensure no horizontal overflow */
+body {
+  overflow-x: hidden;
+}
+
+/* Hand card fan effect for desktop */
+@media (min-width: 901px) {
+  .hand-card {
+    width: 120px;
+    flex: 0 0 auto;
+    position: relative;
+    transition: transform 0.1s, box-shadow 0.2s;
+  }
+  .hand-card:hover {
+    transform: translateY(-10px) rotate(0deg) scale(1.05);
+    z-index: 5;
+  }
+  .hand-card:not(:hover) {
+    transform: rotate(var(--fan-rotation, 0deg));
+    transform-origin: bottom center;
+  }
+  /* Dynamically set fan rotation via JS? For simplicity, override inline style */
+}
+
+/* Hide scrollbar for horizontal scroll on mobile */
+@media (max-width: 600px) {
+  .hand-area {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .hand-card {
+    flex: 0 0 110px;
+  }
+}
+
+/* New FX Layer Styles for .new-fx-layer */
+.new-fx-layer .new-fx-node {
+  position: absolute;
+  pointer-events: none;
+  z-index: 9999;
+  /* Default transform translate(-50%,-50%) for centering unless overridden by animation */
+  margin-left: 0;
+  margin-top: 0;
+  transform-origin: center;
+}
+.new-fx-layer .fx-damage,
+.new-fx-layer .damage-text,
+.new-fx-layer .block-text,
+.new-fx-layer .status-text,
+.new-fx-layer .stance-text,
+.new-fx-layer .victory-text,
+.new-fx-layer .reduced-hint {
+  font-weight: 900;
+  font-size: 24px;
+  color: #fff;
+  text-shadow: 0 0 4px #000, 0 0 8px #000, 0 0 12px #000, 2px 2px 2px rgba(0,0,0,0.8);
+  -webkit-text-stroke: 1px rgba(0,0,0,0.7);
+  white-space: nowrap;
+  /* Ensure centered via margin adjustments */
+  margin-left: -35px;
+  margin-top: -20px;
+  transform: translate(0,0);
+}
+.new-fx-layer .block-aura,
+.new-fx-layer .enemy-block-aura {
+  width: 160px;
+  height: 150px;
+  background: linear-gradient(135deg, rgba(45,212,191,0.6), rgba(20,90,80,0.8));
+  clip-path: polygon(50% 0%, 85% 15%, 100% 50%, 85% 85%, 50% 100%, 15% 85%, 0% 50%, 15% 15%);
+  box-shadow: 0 0 20px rgba(45,212,191,0.8), 0 0 40px rgba(45,212,191,0.5);
+  margin-left: -80px;
+  margin-top: -75px;
+}
+.new-fx-layer .smoke-cloud {
+  width: 220px;
+  height: 150px;
+  background: radial-gradient(ellipse at center, rgba(156,163,175,0.9) 0%, rgba(107,114,128,0.7) 40%, rgba(55,65,81,0.3) 100%);
+  border-radius: 80% 70% 60% 50% / 70% 60% 50% 40%;
+  filter: blur(8px);
+  margin-left: -110px;
+  margin-top: -75px;
+}
+.new-fx-layer .power-aura {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,193,7,0.9) 0%, rgba(255,87,34,0.6) 50%, transparent 100%);
+  margin-left: -80px;
+  margin-top: -80px;
+}
+.new-fx-layer .flash-star {
+  width: 60px;
+  height: 60px;
+  background: #fff;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  filter: drop-shadow(0 0 10px rgba(255,193,7,0.9));
+  margin-left: -30px;
+  margin-top: -30px;
+}
+.new-fx-layer .reduced-hint {
+  background: rgba(0,0,0,0.7);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 20px;
+}
+
+/* ===== 响应式战斗布局重做 ===== */
+
+/* 桌面端（≥1440px）：左右对半，中央下方操作区 */
+@media (min-width: 901px) {
+  .battle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 1rem;
+    align-items: start;
+    min-width: 0;
+    width: 100%;
+  }
+  .enemy-area {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+  }
+  .player-area {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+  }
+  .pile-display {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+  .battle-actions {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    justify-content: center;
+    width: 100%;
+  }
+  .hand-area {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: flex-end;
+    perspective: 800px;
+    padding: 0.5rem 0;
+  }
+
+  /* 双方图片容器完全等宽，使用clamp高度 */
+  .enemy-art-container,
+  .ally-art-container {
+    width: 100%;
+    max-width: 100%;
+    height: clamp(130px, 20vh, 190px);
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1px solid var(--border-bright);
+    background: var(--panel-dark);
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+  }
+  .enemy-art-container svg,
+  .ally-art-container svg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  /* 状态文本调整 */
+  .enemy-status,
+  .player-status {
+    font-size: 0.9rem;
+    margin: 0.2rem 0;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .enemy-name,
+  .player-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin: 0.2rem 0;
+  }
+
+  /* 手牌卡片尺寸：固定宽高，扇形效果 */
+  .hand-card {
+    width: 160px;
+    height: 250px;
+    flex: 0 0 auto;
+    position: relative;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s;
+    transform-origin: bottom center;
+  }
+  .hand-card img.card-art,
+  .hand-card .card-art {
+    width: 100%;
+    height: 95px;
+    border-radius: 4px 4px 0 0;
+    margin: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hand-card img.card-art svg,
+  .hand-card .card-art svg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .hand-card .card-name {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0.4rem 0 0.2rem;
+    text-align: center;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .hand-card .card-text {
+    font-size: 0.75rem;
+    line-height: 1.3;
+    max-height: 5em; /* 约5行 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    margin: 0 0.3rem;
+  }
+  .hand-card .card-cost {
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffd700;
+    margin: 0.3rem 0;
+  }
+
+  /* 扇形旋转：使用 --fan-rotation 变量，通过 nth-child 给出不同角度 */
+  .hand-card:not(:hover) {
+    transform: rotate(var(--fan-rotation, 0deg));
+  }
+  /* 为前8张卡设置不同的旋转角度，避免JS依赖 */
+  .hand-card:nth-child(1) { --fan-rotation: -8deg; }
+  .hand-card:nth-child(2) { --fan-rotation: -6deg; }
+  .hand-card:nth-child(3) { --fan-rotation: -4deg; }
+  .hand-card:nth-child(4) { --fan-rotation: -2deg; }
+  .hand-card:nth-child(5) { --fan-rotation: 0deg; }
+  .hand-card:nth-child(6) { --fan-rotation: 2deg; }
+  .hand-card:nth-child(7) { --fan-rotation: 4deg; }
+  .hand-card:nth-child(8) { --fan-rotation: 6deg; }
+  .hand-card:nth-child(9) { --fan-rotation: 8deg; }
+  .hand-card:nth-child(n+10) { --fan-rotation: 0deg; }
+  .hand-card:hover {
+    transform: translateY(-20px) rotate(0deg) scale(1.05);
+    z-index: 10;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4), 0 0 12px rgba(45,212,191,0.4);
+  }
+
+  /* 卡牌框装饰：金属边角 */
+  .hand-card {
+    border: 2px solid #c0a86a;
+    border-radius: 8px;
+    background: linear-gradient(145deg, #2a2f3a, #1e232c);
+    padding: 0.5rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    position: relative;
+  }
+  .hand-card::before {
+    content: '';
+    position: absolute;
+    top: -3px; left: -3px; right: -3px; bottom: -3px;
+    border: 1px solid rgba(192,168,106,0.5);
+    border-radius: 10px;
+    pointer-events: none;
+  }
+  /* 费用圆点 */
+  .card-cost {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 26px;
+    height: 26px;
+    background: radial-gradient(circle, #ffd700, #b8860b);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 0 4px rgba(0,0,0,0.7);
+    z-index: 2;
+  }
+  .hand-card .card-cost span {
+    display: block;
+  }
+
+  /* 确保所有battle子项min-width:0 */
+  .battle > * {
+    min-width: 0;
+  }
+}
+
+/* 平板/中等屏幕（601px - 900px）*/
+@media (max-width: 900px) and (min-width: 601px) {
+  .battle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto auto;
+    gap: 0.8rem;
+  }
+  .enemy-area { grid-column: 2; grid-row: 1; }
+  .player-area { grid-column: 1; grid-row: 1; }
+  .pile-display { grid-column: 1 / -1; grid-row: 2; }
+  .battle-actions { grid-column: 1 / -1; grid-row: 3; }
+  .hand-area { grid-column: 1 / -1; grid-row: 4; }
+  .enemy-art-container,
+  .ally-art-container {
+    width: 100%;
+    height: clamp(100px, 18vh, 140px);
+  }
+}
+
+/* 手机端（≤600px）*/
+@media (max-width: 600px) {
+  .battle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto auto auto;
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+  }
+  /* 左右两列：玩家在左，敌人在右，上下紧凑 */
+  .player-area {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+  }
+  .enemy-area {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+  }
+  /* 图片高度减小 */
+  .enemy-art-container,
+  .ally-art-container {
+    width: 100%;
+    height: 90px; /* 或 110px */
+    overflow: hidden;
+    border-radius: 6px;
+  }
+  .enemy-art-container svg,
+  .ally-art-container svg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  /* 名字和意图小字 */
+  .enemy-name,
+  .player-name {
+    font-size: 12px;
+    text-align: center;
+    word-wrap: break-word;
+    line-height: 1.2;
+    margin: 0.2rem 0;
+  }
+  .enemy-intent,
+  .player-intent {
+    font-size: 11px;
+    text-align: center;
+    word-wrap: break-word;
+    line-height: 1.2;
+  }
+  .player-status,
+  .enemy-status {
+    font-size: 0.7rem;
+    line-height: 1.2;
+    text-align: center;
+  }
+  /* 姿态盒紧凑按钮 */
+  .player-stance-box,
+  .enemy-stance-box {
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .stance-btn,
+  .attack-btn,
+  .action-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+    margin: 0;
+  }
+  .player-box,
+  .enemy-box {
+    padding: 6px;
+  }
+
+  /* 行动按钮区域：static不遮挡 */
+  .battle-actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    position: static;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem;
+    width: 100%;
+    padding: 0.3rem 0;
+  }
+  /* 牌堆显示：第3行 */
+  .pile-display {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display: flex;
+    flex-direction: row;
+    gap: 0.4rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .pile-btn {
+    font-size: 12px;
+    padding: 4px 10px;
+    width: auto;
+  }
+  /* 手牌：第4行，全宽底部，横向滚动 */
+  .hand-area {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 0;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+  }
+  .hand-area > * {
+    scroll-snap-align: start;
+  }
+  .hand-card {
+    width: 130px;
+    height: 220px;
+    flex: 0 0 130px;
+    position: relative;
+    transition: transform 0.1s;
+    transform-origin: bottom center;
+  }
+  .hand-card img.card-art,
+  .hand-card .card-art {
+    width: 100%;
+    height: 75px;
+    border-radius: 4px 4px 0 0;
+    margin: 0;
+    overflow: hidden;
+  }
+  .hand-card .card-name {
+    font-size: 13px;
+    line-height: 1.2;
+    margin: 0.3rem 0;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .hand-card .card-text {
+    font-size: 0.7rem;
+    line-height: 1.2;
+    max-height: 3.5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hand-card .card-cost {
+    font-size: 12px;
+    width: 20px;
+    height: 20px;
+    top: 4px;
+    left: 4px;
+  }
+
+  /* 确保首屏露出手牌主体：给战斗容器留出底部空间，允许纵向滚动 */
+  .battle {
+    padding-bottom: 0;
+  }
+  /* 清除旧grid-column:3造成的空白 */
+  .pile-display {
+    grid-column: 1 / -1;
+  }
+  .battle-actions {
+    grid-column: 1 / -1;
+  }
+  .hand-area {
+    grid-column: 1 / -1;
+  }
+}
+
+/* 超小屏（≤390px）微调 */
+@media (max-width: 390px) {
+  .battle {
+    gap: 0.3rem;
+  }
+  .enemy-art-container,
+  .ally-art-container {
+    height: 80px;
+  }
+  .enemy-name,
+  .player-name {
+    font-size: 11px;
+  }
+  .enemy-intent,
+  .player-intent {
+    font-size: 10px;
+  }
+  .hand-card {
+    width: 110px;
+    height: 200px;
+    flex-basis: 110px;
+  }
+  .hand-card img.card-art,
+  .hand-card .card-art {
+    height: 65px;
+  }
+}
+
+/* 全局：防止body overflow hidden掩盖错误 */
+body {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* 清除可能导致卡牌总览影响的规则（仅战斗内部） */
+.battle .card-art {
+  width: 100%;
+  height: auto;
+}
+
+/* 确保敌人/玩家盒子内部元素不会溢出 */
+.player-area > *,
+.enemy-area > * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 按钮文字不换行截断 */
+.battle-actions button,
+.pile-display button {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 对于可能存在的旧规则覆盖 */
+.enemy-area,
+.player-area,
+.pile-display,
+.battle-actions,
+.hand-area {
+  min-width: 0;
+}

@@ -1,6 +1,8 @@
 import { createRun, act, legalActions, observe, preview, describeIntent } from './engine.js';
 import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS } from './content.js';
 import { ACTS } from './season-map.js';
+import { cardArt, combatArt, relicArt } from './art.js';
+import { captureCombatPresentation, animateCombatTransition, clearCombatPresentation } from './fx.js';
 
 const STORAGE_KEY = 'new-demo-run-v1';
 let state = null;
@@ -10,6 +12,7 @@ let showLibrary = false;
 let selectedTeam = 'breach';
 let seedInputValue = '';
 let noticeTimeout = null;
+let presentationBusy = false;
 
 const typeMap = { attack: '攻击', skill: '技能', power: '能力', status: '状态' };
 const rarityMap = { common: '普通', uncommon: '罕见', rare: '稀有' };
@@ -93,6 +96,7 @@ function describeCardFull(card) {
 function renderHome() {
   const teamsHtml = Object.values(TEAMS).map(t => `
     <div class="team-card ${selectedTeam === t.id ? 'selected' : ''}" data-team="${t.id}" tabindex="0" role="button" aria-pressed="${selectedTeam === t.id}">
+      <div class="team-art">${combatArt(t.id, 'ally')}</div>
       <div class="team-name">${escapeHtml(t.name)}</div>
       <div class="team-desc">${escapeHtml(t.desc)}</div>
     </div>
@@ -308,6 +312,8 @@ function renderCombat(root) {
   const legal = legalActions(state);
   const playableUids = new Set(legal.filter(a => a.type === 'play').map(a => a.uid));
   const canStance = legal.some(a => a.type === 'stance');
+  const allyArt = combatArt(state.team, 'ally');
+  const enemyArt = combatArt(b.enemyId, 'enemy');
   const handHtml = b.hand.map((card, idx) => {
     const display = getCardDisplay(card, card.up);
     if (!display) return '';
@@ -315,7 +321,7 @@ function renderCombat(root) {
     const isPlayable = playableUids.has(card.uid);
     const tooltip = describeCardFull(card);
     return `<div class="hand-card ${isSelected ? 'selected' : ''} ${isPlayable ? '' : 'not-playable'}" data-uid="${card.uid}" data-index="${idx}" tabindex="0" role="button" aria-label="${escapeHtml(display.name)}" data-tooltip="${escapeHtml(tooltip)}" style="opacity:${isPlayable ? 1 : 0.5}">
-      <div class="card-art" aria-hidden="true"></div>
+      <div class="card-art">${cardArt(card.id)}</div>
       <div class="card-cost">${display.cost}</div>
       <div class="card-name">${escapeHtml(display.name)}</div>
       <div class="card-type">${typeMap[display.type]}</div>
@@ -332,9 +338,16 @@ function renderCombat(root) {
     }
   }
 
+  const pileCounts = {
+    draw: b.drawPile.length,
+    discard: b.discardPile.length,
+    exhaust: b.exhaustPile.length,
+  };
+
   root.innerHTML = `
-    <div class="battle">
+    <div class="battle" data-presentation-busy="${presentationBusy}">
       <div class="enemy-area">
+        <div class="enemy-art-container">${enemyArt}</div>
         <div class="enemy-box" id="enemy-box">
           <div class="enemy-name">${escapeHtml(b.enemyName)}</div>
           <div class="enemy-hp" data-hp="${b.enemyHp}">
@@ -344,11 +357,9 @@ function renderCombat(root) {
           ${enemyStatuses ? `<div class="enemy-statuses">${enemyStatuses}</div>` : ''}
           <div class="intent">意图：${escapeHtml(intentStr)}</div>
         </div>
-        <div class="squad-enemy" aria-hidden="true">
-          <div class="squad-member"></div><div class="squad-member"></div><div class="squad-member"></div><div class="squad-member"></div>
-        </div>
       </div>
       <div class="player-area">
+        <div class="ally-art-container">${allyArt}</div>
         <div class="player-box" id="player-box">
           <div class="label">队伍状态</div>
           <div class="value">HP ${state.hp}/${state.maxHp}</div>
@@ -362,9 +373,11 @@ function renderCombat(root) {
           <div style="font-size:0.8rem">${b.stance === 'cover' ? '掩护首次布防+3' : '前压首次攻击+3，每次受到攻击+2'}</div>
           <button class="btn" id="btn-stance" ${canStance ? '' : 'disabled'}>切换姿态（1费，每回合一次）${b.stanceSwitchUsedThisTurn ? '已用' : ''}</button>
         </div>
-        <div class="squad-ally" aria-hidden="true">
-          <div class="squad-member"></div><div class="squad-member"></div><div class="squad-member"></div><div class="squad-member"></div>
-        </div>
+      </div>
+      <div class="pile-display">
+        <button class="pile-btn" data-pile="draw" id="pile-draw">抽牌堆 (${pileCounts.draw})</button>
+        <button class="pile-btn" data-pile="discard" id="pile-discard">弃牌堆 (${pileCounts.discard})</button>
+        <button class="pile-btn" data-pile="exhaust" id="pile-exhaust">消耗堆 (${pileCounts.exhaust})</button>
       </div>
       <div class="battle-actions">
         <button class="btn primary" id="btn-play" ${selectedCardUid && playableUids.has(selectedCardUid) ? '' : 'disabled'}>执行战术 (Enter)</button>
@@ -379,40 +392,190 @@ function renderCombat(root) {
 
   // attach events
   const enemyBox = document.getElementById('enemy-box');
-  enemyBox.addEventListener('click', () => { if (selectedCardUid && playableUids.has(selectedCardUid)) dispatch({ type: 'play', uid: selectedCardUid }); });
+  enemyBox.addEventListener('click', () => { if (selectedCardUid && playableUids.has(selectedCardUid) && !presentationBusy) dispatch({ type: 'play', uid: selectedCardUid }); });
   const playerBox = document.getElementById('player-box');
-  playerBox.addEventListener('click', () => { if (selectedCardUid && playableUids.has(selectedCardUid)) dispatch({ type: 'play', uid: selectedCardUid }); });
+  playerBox.addEventListener('click', () => { if (selectedCardUid && playableUids.has(selectedCardUid) && !presentationBusy) dispatch({ type: 'play', uid: selectedCardUid }); });
 
   document.getElementById('btn-play').addEventListener('click', () => {
-    if (selectedCardUid && playableUids.has(selectedCardUid)) {
+    if (selectedCardUid && playableUids.has(selectedCardUid) && !presentationBusy) {
       dispatch({ type: 'play', uid: selectedCardUid });
     }
   });
 
-  document.getElementById('btn-end').addEventListener('click', () => dispatch({ type: 'end' }));
+  document.getElementById('btn-end').addEventListener('click', () => { if (!presentationBusy) dispatch({ type: 'end' }); });
 
   document.getElementById('btn-stance').addEventListener('click', () => {
-    if (canStance) dispatch({ type: 'stance' });
+    if (canStance && !presentationBusy) dispatch({ type: 'stance' });
   });
 
+  document.querySelectorAll('.pile-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      if (presentationBusy) return;
+      const kind = btn.dataset.pile;
+      showPileModal(kind);
+    });
+  });
+
+  // hand card interactions: click select, drag to play
   document.querySelectorAll('.hand-card').forEach(el => {
-    el.addEventListener('click', () => {
-      const uid = el.dataset.uid;
+    const uid = el.dataset.uid;
+
+    el.addEventListener('click', (e) => {
+      if (presentationBusy) return;
+      if (el.dataset.dragging === 'true') {
+        el.dataset.dragging = 'false';
+        return;
+      }
       selectedCardUid = uid;
       renderCombat(root);
     });
-    el.addEventListener('keydown', e => {
+
+    el.addEventListener('keydown', (e) => {
+      if (presentationBusy) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        const uid = el.dataset.uid;
+        e.stopPropagation();
         selectedCardUid = uid;
         renderCombat(root);
       }
     });
-  });
 
-  // keyboard
-  document.addEventListener('keydown', combatKeyHandler);
+    // Pointer drag
+    el.addEventListener('pointerdown', (e) => {
+      if (presentationBusy) return;
+      // Only mouse with left button
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      e.preventDefault();
+      const startX = e.clientX, startY = e.clientY;
+      let moved = false;
+      let dispatched = false;
+      let ghost = null;
+      const rect = el.getBoundingClientRect();
+      el.setPointerCapture(e.pointerId);
+
+      const onPointerMove = (ev) => {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        if (!moved && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+          moved = true;
+          el.dataset.dragging = 'true';
+          ghost = document.createElement('div');
+          ghost.className = 'drag-ghost';
+          const art = el.querySelector('.card-art');
+          if (art) {
+            ghost.appendChild(art.cloneNode(true));
+          }
+          const name = document.createElement('div');
+          name.className = 'ghost-name';
+          name.textContent = el.querySelector('.card-name')?.textContent || '卡牌';
+          ghost.appendChild(name);
+          ghost.style.left = `${ev.clientX}px`;
+          ghost.style.top = `${ev.clientY}px`;
+          ghost.style.display = 'block';
+          document.body.appendChild(ghost);
+        }
+        if (moved) {
+          ghost.style.left = `${ev.clientX}px`;
+          ghost.style.top = `${ev.clientY}px`;
+        }
+      };
+
+      const cleanup = () => {
+        el.removeEventListener('pointermove', onPointerMove);
+        el.removeEventListener('pointerup', onPointerUp);
+        el.removeEventListener('pointercancel', onPointerCancel);
+        el.removeEventListener('lostpointercapture', onPointerCancel);
+        if (ghost) {
+          ghost.remove();
+        }
+        el.dataset.dragging = 'false';
+      };
+
+      const onPointerUp = (ev) => {
+        const wasMoved = moved;
+        const target = wasMoved ? document.elementFromPoint(ev.clientX, ev.clientY) : null;
+        cleanup();
+        // Release capture
+        if (el.hasPointerCapture(e.pointerId)) {
+          el.releasePointerCapture(e.pointerId);
+        }
+        if (wasMoved && target) {
+          const dropZone = target.closest('#enemy-box') || target.closest('.enemy-area') || target.closest('#player-box') || target.closest('.player-area');
+          if (dropZone && playableUids.has(uid) && !presentationBusy && !dispatched) {
+            dispatched = true;
+            selectedCardUid = uid;
+            dispatch({ type: 'play', uid });
+          } else {
+            selectedCardUid = uid;
+            renderCombat(root);
+          }
+        } else if (!wasMoved) {
+          // Handled by click event
+        }
+      };
+
+      const onPointerCancel = (ev) => {
+        cleanup();
+        if (el.hasPointerCapture(e.pointerId)) {
+          el.releasePointerCapture(e.pointerId);
+        }
+      };
+
+      el.addEventListener('pointermove', onPointerMove);
+      el.addEventListener('pointerup', onPointerUp);
+      el.addEventListener('pointercancel', onPointerCancel);
+      el.addEventListener('lostpointercapture', onPointerCancel);
+    });
+  });
+}
+
+function showPileModal(kind) {
+  const modalRoot = document.getElementById('modal-root');
+  if (modalRoot.querySelector('#pile-overlay')) return;
+  let pile;
+  if (kind === 'draw') pile = state.battle.drawPile;
+  else if (kind === 'discard') pile = state.battle.discardPile;
+  else if (kind === 'exhaust') pile = state.battle.exhaustPile;
+  else return;
+  const sortedPile = kind === 'draw' ? [...pile].sort((a,b) => a.id.localeCompare(b.id)) : pile;
+  const cardsHtml = sortedPile.map(card => {
+    const display = getCardDisplay(card, card.up);
+    if (!display) return '';
+    return `<div class="pile-card">
+      <div class="card-art">${cardArt(card.id)}</div>
+      <div class="card-info">${escapeHtml(display.name)} (${display.cost}费)</div>
+    </div>`;
+  }).join('');
+  const previousFocus = document.activeElement;
+  const handleKeydown = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closePile();
+    }
+  };
+  const closePile = () => {
+    modalRoot.innerHTML = '';
+    document.removeEventListener('keydown', handleKeydown);
+    if (previousFocus) previousFocus.focus();
+  };
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" id="pile-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>${kind === 'draw' ? '抽牌堆' : kind === 'discard' ? '弃牌堆' : '消耗堆'}</h2>
+          <button class="btn" id="close-pile">关闭</button>
+        </div>
+        <div class="pile-grid">${cardsHtml || '<div class="library-empty">空</div>'}</div>
+        ${kind === 'draw' ? '<p style="font-size:0.8rem;opacity:0.7;text-align:center;">按名称展示，不代表抽牌顺序</p>' : ''}
+      </div>
+    </div>
+  `;
+  document.getElementById('close-pile').addEventListener('click', closePile);
+  document.getElementById('pile-overlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closePile();
+  });
+  document.addEventListener('keydown', handleKeydown);
+  document.getElementById('close-pile').focus();
 }
 
 function combatKeyHandler(e) {
@@ -450,6 +613,7 @@ function renderReward(root) {
     const def = CARDS[id];
     if (!def) return '';
     return `<div class="reward-card" data-id="${id}">
+      <div class="card-art">${cardArt(id)}</div>
       <div class="card-title">${escapeHtml(def.name)}</div>
       <div class="card-cost">${def.cost}费</div>
       <div class="card-desc">${escapeHtml(def.text)}</div>
@@ -478,6 +642,7 @@ function renderShop(root) {
     const cost = priceOf(item.id);
     const canBuy = state.money >= cost;
     return `<div class="shop-card">
+      <div class="card-art">${cardArt(item.id)}</div>
       <div class="card-title">${escapeHtml(def.name)}</div>
       <div class="card-cost">价格：${cost}</div>
       <div class="card-desc">${escapeHtml(def.text)}</div>
@@ -490,6 +655,7 @@ function renderShop(root) {
     if (!def) return '';
     const canRemove = state.money >= rmCost;
     return `<div class="deck-item">
+      <div class="deck-item-art">${cardArt(c.id)}</div>
       <span>${escapeHtml(def.name)}${c.up ? ' (升级)' : ''}</span>
       <button class="btn" data-remove-uid="${c.uid}" ${canRemove ? '' : 'disabled'}>删除 (${rmCost}💰)</button>
     </div>`;
@@ -526,6 +692,7 @@ function renderRest(root) {
     upgradeListHtml = `<div class="deck-list">` + upgradeable.map(c => {
       const def = getCardDefinition(c.id);
       return `<div class="deck-item">
+        <div class="deck-item-art">${cardArt(c.id)}</div>
         <span>${escapeHtml(def.name)}</span>
         <button class="btn" data-upgrade-uid="${c.uid}">升级</button>
       </div>`;
@@ -683,6 +850,7 @@ function renderLibraryModal() {
           const tooltip = describeCardFull({id, uid:'', up:false});
           const upgradeHtml = c.upgradeText ? `<details class="upgrade-details"><summary>升级文本</summary><div class="upgrade-text">${escapeHtml(c.upgradeText)}</div></details>` : '';
           return `<div class="library-card" data-tooltip="${escapeHtml(tooltip)}" tabindex="0">
+            <div class="card-art">${cardArt(id)}</div>
             <div class="name">${escapeHtml(c.name)}</div>
             <div class="meta">${c.cost}费 ${typeMap[c.type]} ${tagMap[c.tag]} ${rarityMap[c.rarity]}</div>
             <div class="card-text">${escapeHtml(c.text)}</div>
@@ -696,6 +864,7 @@ function renderLibraryModal() {
       html = statusCards.map(c => {
         const tooltip = `${escapeHtml(c.name)} [状态]\n${escapeHtml(c.text)}`;
         return `<div class="library-card status-card" data-tooltip="${tooltip}" tabindex="0">
+          <div class="card-art">${cardArt(c.id)}</div>
           <div class="name">${escapeHtml(c.name)}</div>
           <div class="meta">状态 · 不可打出（不属于75张永久卡池）</div>
           <div class="card-text">${escapeHtml(c.text)}</div>
@@ -707,6 +876,7 @@ function renderLibraryModal() {
       html = relics.map(r => {
         const tooltip = `${escapeHtml(r.name)}\n${escapeHtml(r.desc)}`;
         return `<div class="library-card relic-card" data-tooltip="${tooltip}" tabindex="0">
+          <div class="card-art">${relicArt(r.id)}</div>
           <div class="name">${escapeHtml(r.name)}</div>
           <div class="card-text">${escapeHtml(r.desc)}</div>
           <div class="meta">被动 · 不进入抽牌堆</div>
@@ -830,20 +1000,49 @@ function removePrice(state) {
 }
 
 function dispatch(action) {
-  if (!state) return false;
-  const result = act(state, action);
-  if (result.error) {
-    showNotice(result.error);
+  if (!state || presentationBusy) return false;
+  presentationBusy = true;
+  try {
+    const root = document.getElementById('game-root');
+    const capture = state.phase === 'combat' && root ? captureCombatPresentation(root, state, action) : null;
+    const result = act(state, action);
+    if (result.error) {
+      presentationBusy = false;
+      showNotice(result.error);
+      return false;
+    }
+    const prev = state;
+    state = result.state;
+    saveState();
+    selectedCardUid = null;
+    renderPhase();
+    if (prev.phase === 'combat' && state.phase === 'combat' && capture) {
+      animateCombatTransition(prev, state, action, capture)
+        .catch(() => {})
+        .finally(() => {
+          presentationBusy = false;
+          const battleDiv = document.querySelector('.battle');
+          if (battleDiv) {
+            battleDiv.dataset.presentationBusy = 'false';
+            battleDiv.querySelectorAll('button:disabled').forEach(btn => {
+              // Optionally re-enable? Leave disabled as per state.
+            });
+          }
+        });
+    } else {
+      presentationBusy = false;
+      const battleDiv = document.querySelector('.battle');
+      if (battleDiv) {
+        battleDiv.dataset.presentationBusy = 'false';
+      }
+    }
+    previousState = state;
+    return true;
+  } catch (e) {
+    presentationBusy = false;
+    console.error(e);
     return false;
   }
-  const prev = state;
-  state = result.state;
-  saveState();
-  selectedCardUid = null;
-  renderPhase();
-  applyCombatFx(prev, state);
-  previousState = state;
-  return true;
 }
 
 function applyCombatFx(prev, next) {
@@ -937,6 +1136,11 @@ function initGlobalTooltip() {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   initGlobalTooltip();
+  document.addEventListener('keydown', (e) => {
+    if (state && state.phase === 'combat' && !presentationBusy && !showLibrary && !document.querySelector('.modal-overlay')) {
+      combatKeyHandler(e);
+    }
+  });
   const saved = loadState();
   if (saved) {
     state = saved;

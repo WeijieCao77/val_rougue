@@ -20,6 +20,9 @@ const assets = new Map([
   ['/new/engine.js', ['new-demo/engine.js', 'text/javascript; charset=utf-8']],
   ['/new/content.js', ['new-demo/content.js', 'text/javascript; charset=utf-8']],
   ['/new/ui.js', ['new-demo/ui.js', 'text/javascript; charset=utf-8']],
+  ['/new/art.js', ['new-demo/art.js', 'text/javascript; charset=utf-8']],
+  ['/new/fx.js', ['new-demo/fx.js', 'text/javascript; charset=utf-8']],
+  ['/new/presentation.css', ['new-demo/presentation.css', 'text/css; charset=utf-8']],
   ['/new/style.css', ['new-demo/style.css', 'text/css; charset=utf-8']],
   ['/new/season-map.js', ['new-demo/season-map.js', 'text/javascript; charset=utf-8']],
 ]);
