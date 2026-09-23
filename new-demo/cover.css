@@ -1,8 +1,7 @@
 /* 首页封面样式，仅作用于首页，不影响战斗界面 */
 .hero-cover {
   position: relative;
-  height: 85vh;
-  min-height: 480px;
+  height: clamp(360px, 58dvh, 600px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,8 +206,7 @@
 /* 响应式 */
 @media (max-width: 768px) {
   .hero-cover {
-    height: 75vh;
-    min-height: 360px;
+    height: clamp(320px, 55dvh, 470px);
   }
   .hero-content {
     padding: 1.5rem;
@@ -222,8 +220,7 @@
 
 @media (max-width: 390px) {
   .hero-cover {
-    height: 80vh;
-    min-height: 420px;
+    height: clamp(320px, 55dvh, 440px);
   }
   .hero-content {
     width: 90%;

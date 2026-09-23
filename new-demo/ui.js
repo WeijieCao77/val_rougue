@@ -114,7 +114,7 @@ function renderHome() {
         <h1 class="hero-title">战术试炼</h1>
         <p class="hero-tagline">一支队伍，75种战术，三段赛程</p>
         <div class="hero-actions">
-          <button class="btn hero-btn primary" id="btn-new">开始新局${hasSaved ? '（覆盖当前存档）' : ''}</button>
+          <a class="btn hero-btn primary" href="#team-selection">选择队伍 ↓</a>
           <button class="btn hero-btn" id="btn-continue" ${continueDisabled ? 'disabled' : ''}>继续上局</button>
         </div>
         <div class="hero-nav">
@@ -137,7 +137,8 @@ function renderHome() {
       </div>
       <div class="nav-links">
         <a href="/pvp/">好友PvP</a>
-        <a href="/">瓦demo</a>
+        <a href="/wa/">瓦demo</a>
+        <a href="/">选择版本</a>
       </div>
       <div class="credit">猪之家出品</div>
     </main>
@@ -146,17 +147,24 @@ function renderHome() {
   // 事件绑定
   document.querySelectorAll('.team-card').forEach(el => {
     el.addEventListener('click', () => {
-      selectedTeam = el.dataset.team;
-      renderHome();
+      selectTeam(el.dataset.team);
     });
     el.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        selectedTeam = el.dataset.team;
-        renderHome();
+        selectTeam(el.dataset.team);
       }
     });
   });
+
+  function selectTeam(id) {
+    selectedTeam = id;
+    document.querySelectorAll('.team-card').forEach(card => {
+      const active = card.dataset.team === id;
+      card.classList.toggle('selected', active);
+      card.setAttribute('aria-pressed', String(active));
+    });
+  }
 
   const seedInput = document.getElementById('seed-input');
   seedInput.addEventListener('input', e => {
@@ -184,7 +192,6 @@ function renderHome() {
     }
   }
 
-  document.getElementById('btn-new').addEventListener('click', startNewGame);
   document.getElementById('btn-new-secondary').addEventListener('click', startNewGame);
   document.getElementById('btn-continue').addEventListener('click', continueGame);
   document.getElementById('btn-continue-secondary').addEventListener('click', continueGame);
@@ -216,11 +223,10 @@ function renderGame() {
     renderLibraryModal();
   });
   document.getElementById('btn-home').addEventListener('click', () => {
-    if (window.confirm('返回首页将丢弃当前进度，确定？')) {
-      clearState();
-      state = null;
-      renderHome();
-    }
+    if (presentationBusy) return;
+    clearCombatPresentation();
+    presentationBusy = false;
+    renderHome();
   });
   renderPhase();
 }
@@ -268,7 +274,7 @@ function renderMap(root) {
     const isCurrent = n.key === currentKey;
     const cls = `map-node ${isAvailable ? 'available' : ''} ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`;
     const glyph = { battle: '⚔', elite: '◆', event: '?', shop: '⇄', rest: '✚', boss: '★' }[n.kind] || '·';
-    const label = n.kind === 'battle' ? n.name : ({ elite: '强敌', event: '事件', shop: '转会', rest: '休整', boss: '决赛' }[n.kind] || n.name);
+    const label = n.name || { battle: '战斗', elite: '强敌', event: '事件', shop: '转会', rest: '休整', boss: 'Boss' }[n.kind] || n.kind;
     return `<g class="${cls}" data-key="${n.key}" tabindex="${isAvailable ? '0' : '-1'}" role="button" aria-label="${escapeHtml(n.name)}" style="cursor:pointer">
       <circle cx="${sx(n.x)}" cy="${sy(n.y)}" r="18" />
       <text class="map-glyph" x="${sx(n.x)}" y="${sy(n.y) + 1}">${glyph}</text>
@@ -289,9 +295,12 @@ function renderMap(root) {
         </svg>
       </div>
       <div class="map-legend">
-        <span class="legend-item"><span class="legend-dot current"></span> 当前</span>
-        <span class="legend-item"><span class="legend-dot available"></span> 可进入</span>
-        <span class="legend-item"><span class="legend-dot completed"></span> 已完成</span>
+        <div class="legend-item"><span class="legend-icon">⚔</span> 常规比赛：标准战斗，获胜得卡牌奖励。</div>
+        <div class="legend-item"><span class="legend-icon">◆</span> 强敌：更高难度，奖励更丰厚。</div>
+        <div class="legend-item"><span class="legend-icon">?</span> 未知事件：随机事件，风险与机遇并存。</div>
+        <div class="legend-item"><span class="legend-icon">⇄</span> 转会补给：购买卡牌或删除卡牌。</div>
+        <div class="legend-item"><span class="legend-icon">✚</span> 休整：回复生命或升级卡牌。</div>
+        <div class="legend-item"><span class="legend-icon">★</span> BOSS：幕末强敌，击败进入下一幕。</div>
       </div>
       <div id="node-details" class="node-details" aria-live="polite"></div>
     </div>
@@ -300,6 +309,7 @@ function renderMap(root) {
   const details = root.querySelector('#node-details');
   const showDetails = (node) => {
     const kindNames = { battle: '常规比赛', elite: '高压强敌', event: '未知事件', shop: '战术补给', rest: '战术休整', boss: 'BOSS' };
+    const kindDesc = { battle: '标准战斗，获胜获得卡牌奖励。', elite: '更高难度，奖励更丰厚。', event: '随机事件，风险与机遇并存。', shop: '购买卡牌或删除卡牌。', rest: '回复生命或升级卡牌。', boss: '幕末强敌，击败进入下一幕。' };
     const isAvailable = availableKeys.has(node.key);
     const isCurrent = node.key === currentKey;
     const isCompleted = completedSet.has(node.key);
@@ -310,7 +320,7 @@ function renderMap(root) {
     else status = '暂不可达';
     details.innerHTML = `
       <strong>${escapeHtml(node.name)}</strong>
-      <span>${kindNames[node.kind] || '未知'}</span>
+      <span>${kindNames[node.kind] || '未知'}：${kindDesc[node.kind] || '无说明'}</span>
       <span>${status}</span>
     `;
   };
@@ -786,8 +796,6 @@ function renderResult(root) {
     renderHome();
   });
   document.getElementById('btn-home2').addEventListener('click', () => {
-    clearState();
-    state = null;
     renderHome();
   });
 }
@@ -1014,6 +1022,36 @@ function dispatch(action) {
       return false;
     }
     const prev = state;
+    if (action.type === 'end' && prev.phase === 'combat') {
+      selectedCardUid = null;
+      const battle = document.querySelector('.battle');
+      const banner = document.createElement('div');
+      banner.className = 'enemy-turn-banner';
+      banner.innerHTML = '<strong>对手回合</strong><span>对手正在执行战术</span>';
+      battle?.append(banner);
+      battle?.setAttribute('inert', '');
+      setTimeout(() => {
+        banner.querySelector('span').textContent = '攻击结算';
+        battle?.classList.add('enemy-acting');
+        globalThis.characterStages?.cueFromTransition('new', prev, result.state, action);
+        const player = document.getElementById('player-box');
+        player?.classList.add('enemy-impact');
+        const loss = Math.max(0, prev.hp - result.state.hp);
+        if (loss && player) {
+          const number = document.createElement('b');
+          number.className = 'enemy-loss'; number.textContent = `−${loss}`;
+          player.append(number);
+        }
+      }, 520);
+      setTimeout(() => {
+        state = result.state;
+        saveState();
+        renderPhase();
+        presentationBusy = false;
+        previousState = state;
+      }, 1750);
+      return true;
+    }
     state = result.state;
     saveState();
     selectedCardUid = null;

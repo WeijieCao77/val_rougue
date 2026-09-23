@@ -70,7 +70,7 @@ test('production isolation for new demo', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'wa-demo-test-'));
   const cleanEnv = Object.fromEntries(
     Object.entries(process.env).filter(([key]) =>
-      !key.startsWith('RAILWAY_') && key !== 'DATABASE_URL' && key !== 'ENABLE_NEW_DEMO'
+      !key.startsWith('RAILWAY_') && key !== 'DATABASE_URL'
     )
   );
 
@@ -81,29 +81,24 @@ test('production isolation for new demo', async () => {
       expectEnabled: true,
     },
     {
-      name: 'local-disable-flag',
-      env: { NODE_ENV: 'test', PORT: '0', DATA_DIR: path.join(root, 'local-disable-flag'), ENABLE_NEW_DEMO: 'false' },
-      expectEnabled: false,
-    },
-    {
       name: 'prod-node-env',
-      env: { NODE_ENV: 'production', PORT: '0', DATA_DIR: path.join(root, 'prod-node'), ENABLE_NEW_DEMO: 'true' },
-      expectEnabled: false,
+      env: { NODE_ENV: 'production', PORT: '0', DATA_DIR: path.join(root, 'prod-node') },
+      expectEnabled: true,
     },
     {
       name: 'railway-env-id',
       env: { NODE_ENV: 'test', PORT: '0', DATA_DIR: path.join(root, 'railway-env-id'), RAILWAY_ENVIRONMENT_ID: 'abc' },
-      expectEnabled: false,
+      expectEnabled: true,
     },
     {
       name: 'railway-project-id',
       env: { NODE_ENV: 'test', PORT: '0', DATA_DIR: path.join(root, 'railway-project-id'), RAILWAY_PROJECT_ID: 'abc' },
-      expectEnabled: false,
+      expectEnabled: true,
     },
     {
       name: 'railway-service-name',
       env: { NODE_ENV: 'test', PORT: '0', DATA_DIR: path.join(root, 'railway-service-name'), RAILWAY_SERVICE_NAME: 'abc' },
-      expectEnabled: false,
+      expectEnabled: true,
     },
   ];
 
@@ -164,6 +159,9 @@ test('production isolation for new demo', async () => {
         // root and /pvp/ should always be 200
         const rootRes = await fetch(`http://127.0.0.1:${port}/`);
         assert.equal(rootRes.status, 200);
+        assert.match(await rootRes.text(), /选择游戏版本/);
+        const waRes = await fetch(`http://127.0.0.1:${port}/wa/`);
+        assert.equal(waRes.status, 200);
         const pvpRes = await fetch(`http://127.0.0.1:${port}/pvp/`);
         assert.equal(pvpRes.status, 200);
       } finally {

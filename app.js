@@ -4193,87 +4193,6 @@ async function syncWaCheckpoint(state, notify = () => {}) {
 return {loadAccount,saveAccount,getPendingProofCache,setPendingProofCache,clearPendingProofCache,apiFetch,apiCreateAccount,apiGetAccount,apiClaimArchive,apiResolvePending,apiCreateRoom,apiJoinRoom,apiGetRoom,apiReady,apiAction,apiLeaveRoom,buildRunFromSeason,syncWaCheckpoint};
 })();
 const module12=(()=>{
-// Shared pointer gesture for both games. Rules and legal targets stay with each game.
-function attachCardGesture(container, callbacks) {
-  let drag = null;
-  let swallowClick = false;
-  const cardAt = target => target instanceof Element ? target.closest('.hand-card.shared-card') : null;
-
-  function moveProxy(x, y) {
-    if (!drag?.proxy) return;
-    drag.proxy.style.left = `${x}px`;
-    drag.proxy.style.top = `${y}px`;
-  }
-
-  container.addEventListener('pointerdown', event => {
-    const element = cardAt(event.target);
-    if (!element || !container.contains(element) || (event.pointerType === 'mouse' && event.button !== 0)) return;
-    const card = callbacks.getCard(element);
-    if (!card || !callbacks.canDrag(card, element)) return;
-    drag = { element, card, id: event.pointerId, x: event.clientX, y: event.clientY, active: false, proxy: null };
-    element.setPointerCapture(event.pointerId);
-  });
-
-  container.addEventListener('pointermove', event => {
-    if (!drag || drag.id !== event.pointerId) return;
-    if (!drag.active && Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 8) return;
-    if (!drag.active) {
-      drag.active = true;
-      const rect = drag.element.getBoundingClientRect();
-      const proxy = drag.element.cloneNode(true);
-      proxy.classList.remove('selected');
-      proxy.classList.add('card-drag-proxy');
-      proxy.removeAttribute('id');
-      proxy.setAttribute('aria-hidden', 'true');
-      proxy.style.width = `${rect.width}px`;
-      proxy.style.height = `${rect.height}px`;
-      drag.proxy = proxy;
-      document.body.append(proxy);
-      drag.element.classList.add('card-drag-origin');
-      callbacks.onStart?.(drag.card, drag.element);
-    }
-    moveProxy(event.clientX, event.clientY);
-    callbacks.onMove?.(drag.card, { x: event.clientX, y: event.clientY, startX: drag.x, startY: drag.y });
-    event.preventDefault();
-  });
-
-  function finish(event, cancelled = false) {
-    if (!drag || drag.id !== event.pointerId) return;
-    const current = drag;
-    drag = null;
-    if (current.element.hasPointerCapture(event.pointerId)) current.element.releasePointerCapture(event.pointerId);
-    if (!current.active) return;
-    current.element.classList.remove('card-drag-origin');
-    swallowClick = true;
-    setTimeout(() => { swallowClick = false; }, 0);
-    const point = { x: event.clientX, y: event.clientY, startX: current.x, startY: current.y };
-    const landed = !cancelled && callbacks.onDrop?.(current.card, point) === true;
-    callbacks.onEnd?.(current.card, point, landed);
-    if (landed || !current.proxy) { current.proxy?.remove(); return; }
-    const rect = current.element.getBoundingClientRect();
-    const proxy = current.proxy;
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { proxy.remove(); return; }
-    const animation = proxy.animate([
-      { left: `${event.clientX}px`, top: `${event.clientY}px`, opacity: .95 },
-      { left: `${rect.left + rect.width / 2}px`, top: `${rect.top + rect.height / 2}px`, opacity: .45 },
-    ], { duration: 190, easing: 'cubic-bezier(.22,.8,.3,1)' });
-    animation.finished.finally(() => proxy.remove()).catch(() => proxy.remove());
-  }
-
-  container.addEventListener('pointerup', event => finish(event));
-  container.addEventListener('pointercancel', event => finish(event, true));
-  container.addEventListener('lostpointercapture', event => finish(event, true));
-  container.addEventListener('click', event => {
-    if (!swallowClick) return;
-    swallowClick = false;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-  }, true);
-}
-
-return {attachCardGesture};
-})();
-const module13=(()=>{
 const { cardArtwork, opponentArtwork, artCredit } = module7;
 const { combatEvents } = module8;
 const { clearCombatFx, captureCombatStage, playCombatFx } = module9;
@@ -4284,10 +4203,9 @@ const { syncWaCheckpoint } = module11;
 const createSeason=(seed,tutorial,region)=>createWaSeason(seed,tutorial,region,crypto.randomUUID());
 const { routeNodes, mapEntry, nextScreen, restoreScreen } = module4;
 const { ACTS, availableNodes } = module1;
-const { attachCardGesture } = module12;
 const app=document.querySelector('#app'),dialog=document.querySelector('#dialog'),modal=document.querySelector('#dialog-content');
 const SAVE='bao-yi-ba-D0.1-save',SEASON_SAVE='peak-season-D0.2-save',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view',LEGACY_VIEW='bao-yi-ba-view-legacy';
-let state=null,atHome=true,hints=true,saveError='',saved=null,screen='map',selected=null,echo=null,dragging=null,pointerDrag=null,suppressClick=false,region='CN',seedInput='';
+let state=null,atHome=true,hints=true,saveError='',saved=null,screen='map',selected=null,echo=null,dragging=null,pointerDrag=null,suppressClick=false,region='CN',seedInput='',turnAnimating=false;
 let libraryFilter='all',libraryRegionFilter='all';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function loadSave(key,legacy=false){try{const raw=localStorage.getItem(key);if(!raw)return null;const s=JSON.parse(raw);if(!s||!Array.isArray(s.deck)||!Array.isArray(s.actions)||!Number.isInteger(s.rev)||!s.phase)return null;if(legacy){if(s.version!==VERSION)return null;return s;}if(s.version!=='D0.2.0'||s.mode!=='season'||!REGIONS[s.region]||!s.map||!Array.isArray(s.map.nodes)||!Array.isArray(s.map.edges)||!Array.isArray(s.completed)||![1,2,3].includes(s.act))return null;return s;}catch{return null;}}
@@ -4338,7 +4256,7 @@ function home(){
      <p class="cover-sub">把这支队伍，带到赛季最后一场。</p>
      <div class="cover-actions">
        ${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}
-       ${ui('确认开赛','start-season','primary')}
+       <a class="primary cover-select-link" href="#cover-setup">选择赛区 ↓</a>
      </div>
    </div>
  </section>
@@ -4349,11 +4267,13 @@ function home(){
      <p class="region-note">${esc(regions.find(r=>r.id===region).tagline)} / 18 名选手 / 三幕完整征程</p>
    </div>
    <label class="seed-label">赛季种子<input id="seed" placeholder="留空，每局随机" maxlength="80" value="${esc(seedInput)}" autocomplete="off"></label>
+   <div class="setup-start">${ui('确认开赛','start-season','primary')}</div>
    <div class="button-row">
      ${ui('游戏规则','rules','text-button')}
      ${ui('卡牌总览','library','text-button')}
      <a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a>
      <a class="text-button" href="/pvp/">好友PvP</a>
+     <a class="text-button" href="/">选择版本</a>
      ${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="text-button" href="/new/">新demo</a>` : ''}
    </div>
    <p class="title-note">四大赛区 · 72 张选手牌 · 三幕 × 11 站</p>
@@ -4386,11 +4306,11 @@ function seasonRoute(){
  return `<main class="map-screen season-map"><aside class="map-intro"><div class="eyebrow">ACT ${['I','II','III'][s.act-1]} / ${esc(REGIONS[s.region].name)}</div><h1>${info.name}</h1>${itinerary}<div class="map-progress"><b>${done}</b><span> / 11 站完成</span></div><div class="map-legend">${[['battle','比赛'],['elite','强敌'],['event','未知事件'],['shop','转会市场'],['rest','俱乐部活动'],['boss','世界赛']].map(([k,t])=>`<span>${icon(k)}${t}</span>`).join('')}</div><p class="map-instruction">${resume?'比赛与奖励尚未完成，可查看后续路线，再返回当前节点。':s.currentNode===null?'三个起点任选其一。之后只能沿连线向上前进。':'沿连线选择下一站。分叉会改变接下来的比赛和补强机会。'}</p>${s.phase!=='map'?ui(s.phase==='intermission'?'查看晋级与下一幕':s.phase==='result'?'查看赛季结算':'返回当前节点','return-room','primary'):''}</aside><div class="map-scroll"><div class="map-board season-board"><div class="map-watermark">ASCEND</div><svg class="map-paths" viewBox="0 0 700 1000" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes.map(n=>`<div class="map-stop ${n.status} kind-${n.kind}" style="left:${n.x}%;top:${n.y}%"><button data-map="${n.key}" ${n.status==='current'?'':'disabled'} aria-label="${n.status==='current'?(resume?'返回':'进入'):n.status==='visited'?'已完成':n.status==='bypassed'?'未选择':'未解锁'}：第 ${n.step} 站 ${esc(n.name)}">${icon(n.kind)}${n.status==='visited'?'<span class="visited-check">✓</span>':''}</button><span class="node-label">${esc(n.name)}</span>${n.status==='current'?`<small class="here-label">${resume?'正在进行':'可选下一站'}</small>`:''}</div>`).join('')}</div></div><aside class="map-current"><span class="eyebrow">赛季已走过 ${s.node} / 33 站</span><h3>${s.phase==='intermission'?'世界赛晋级':s.phase==='result'?'赛季结束':resume?'完成当前节点':`可选 ${choices.length} 条路线`}</h3><p>本幕终点：${info.bossName}。<br>强敌提供皮肤；俱乐部活动可恢复声望或训练；市场可招募与移除牌。</p><p>节点内容与连线随赛季种子生成。已进入的节点不会因刷新而改变。</p>${s.phase!=='map'?ui('返回当前进度','return-room','secondary'):''}</aside></main>`;
 }
 function targetOf(c){return effects(c).some(e=>['hit','weak','vulnerable'].includes(e.type))?'enemy':'self';}
-function handCard(c,i,n){const t=CARDS[c.id],reason=canPlay(state,c.uid),offset=i-(n-1)/2;return `<button class="hand-card shared-card role-${t.player?t.role:t.id.slice(0,2)} ${reason?'unplayable':''} ${c.up?'upgraded':''}" data-card-id="${c.id}" data-card-up="${!!c.up}" data-select="${c.uid}" draggable="false" style="--offset:${offset};--tilt:${offset*(n>6?1.6:3)}deg;--bend:${Math.abs(offset)*Math.abs(offset)*1.8}px;--order:${i}" aria-label="选择 ${esc(cardName(c))} · ${esc(TACTICS[c.id].title)}，${t.role}，${t.cost===null?'不能打出':t.cost+' 行动点'}，${esc(describe(c))}"><span class="card-face">${face(c)}</span><span class="card-key">${(i+1)%10}</span>${reason?`<span class="card-unavailable">${esc(reason)}</span>`:''}</button>`;}
+function handCard(c,i,n){const t=CARDS[c.id],reason=canPlay(state,c.uid),offset=i-(n-1)/2;return `<button class="hand-card role-${t.player?t.role:t.id.slice(0,2)} ${reason?'unplayable':''} ${c.up?'upgraded':''}" data-card-id="${c.id}" data-card-up="${!!c.up}" data-select="${c.uid}" draggable="false" style="--offset:${offset};--tilt:${offset*(n>6?1.6:3)}deg;--bend:${Math.abs(offset)*Math.abs(offset)*1.8}px;--order:${i}" aria-label="选择 ${esc(cardName(c))} · ${esc(TACTICS[c.id].title)}，${t.role}，${t.cost===null?'不能打出':t.cost+' 行动点'}，${esc(describe(c))}"><span class="card-face">${face(c)}</span><span class="card-key">${(i+1)%10}</span>${reason?`<span class="card-unavailable">${esc(reason)}</span>`:''}</button>`;}
 function fighter(which){
  const own=which==='self',b=state.battle,e=ENEMIES[b.enemy],hp=own?state.hp:b.enemyHp,max=own?state.maxHp:e.hp,block=own?b.block:b.enemyBlock;
  const growth=e.growth??2;
- return `<section data-drop-target="${which}" data-character-variant="${own?state.region:b.enemy}" class="fighter ${own?'ally':'enemy'}">${!own?`<div class="intent-bubble"><small>对手意图</small><strong>${displayText(intentText(state))}</strong>${e.boss?`<span>长战增伤 +${b.cycles*growth}</span>`:''}</div>`:'<div class="team-label">'+(state.region||'CN')+'俱乐部</div>'}<button class="combat-target" data-target="${which}" aria-label="${own?'我方俱乐部':'对手队伍'}，可作为出牌目标">${own?`<span class="crest">${icon('shield')}<b>${state.region||'CN'}</b></span>`:opponentArtwork(b.enemy)}<span class="target-caption">${own?'施放到我方':'施放到对手'}</span></button><h2>${own?(REGIONS[state.region]?.name||'新锐')+'俱乐部':e.name}</h2><div class="life-row"><span class="shield-value" title="布防：陷阱、墙与阻滞提供的伤害抵消；下次己方回合开始清空。" aria-label="布防 ${block}">${icon('shield')}<small>布防</small> ${block}</span><div class="life-bar ${own?'own':''}"><i style="width:${hp/max*100}%"></i><span>${hp} / ${max} ${own?'声望':'防线'}</span></div></div><div class="statuses">${own?(b.weak?`<span>压制 ${b.weak}</span>`:''):`${b.enemyWeak?`<span>压制 ${b.enemyWeak}</span>`:''}${b.enemyVulnerable?`<span>易伤 ${b.enemyVulnerable}</span>`:''}`}</div>${own?`<div class="active-powers">${b.powers.map(c=>`<span title="${esc(describe(c))}">${icon('power')}${esc(cardName(c))}</span>`).join('')}</div>`:''}</section>`;
+ return `<section data-drop-target="${which}" class="fighter ${own?'ally':'enemy'}">${!own?`<div class="intent-bubble"><small>对手意图</small><strong>${displayText(intentText(state))}</strong>${e.boss?`<span>长战增伤 +${b.cycles*growth}</span>`:''}</div>`:'<div class="team-label">'+(state.region||'CN')+'俱乐部</div>'}<button class="combat-target" data-target="${which}" aria-label="${own?'我方俱乐部':'对手队伍'}，可作为出牌目标">${own?`<span class="crest">${icon('shield')}<b>${state.region||'CN'}</b></span>`:opponentArtwork(b.enemy)}<span class="target-caption">${own?'施放到我方':'施放到对手'}</span></button><h2>${own?(REGIONS[state.region]?.name||'新锐')+'俱乐部':e.name}</h2><div class="life-row"><span class="shield-value" title="布防：陷阱、墙与阻滞提供的伤害抵消；下次己方回合开始清空。" aria-label="布防 ${block}">${icon('shield')}<small>布防</small> ${block}</span><div class="life-bar ${own?'own':''}"><i style="width:${hp/max*100}%"></i><span>${hp} / ${max} ${own?'声望':'防线'}</span></div></div><div class="statuses">${own?(b.weak?`<span>压制 ${b.weak}</span>`:''):`${b.enemyWeak?`<span>压制 ${b.enemyWeak}</span>`:''}${b.enemyVulnerable?`<span>易伤 ${b.enemyVulnerable}</span>`:''}`}</div>${own?`<div class="active-powers">${b.powers.map(c=>`<span title="${esc(describe(c))}">${icon('power')}${esc(cardName(c))}</span>`).join('')}</div>`:''}</section>`;
 }
 function battle(){
  const b=state.battle,incoming=intent(state).filter(a=>a.type==='hit').reduce((n,a)=>n+a.n*a.times,0),hurt=Math.max(0,incoming-b.block),curse=b.hand.filter(c=>c.id==='CU02').length*2;
@@ -4465,11 +4385,23 @@ function refreshSelection(){
  if(document.querySelector('#target-hint'))document.querySelector('#target-hint').textContent=reason||`点击${target==='enemy'?'对手':'我方'}出牌，或拖动卡牌`;
 }
 function commit(action){
+ if(turnAnimating)return {error:'对手回合进行中'};
  const stage=captureCombatStage();
  const cardEl=action.type==='play'?document.querySelector(`[data-select="${action.uid}"]`):null;
  const flight=cardEl?{rect:cardEl.getBoundingClientRect(),html:cardEl.innerHTML,role:cardEl.className}:null;
  const before=state,played=action.type==='play'?state.battle?.hand.find(c=>c.uid===action.uid):null,r=act(state,action);
  if(r.error){notice(r.error);return r;}
+ if(action.type==='end'&&before.phase==='combat'){
+  turnAnimating=true;hideCardTip();
+  const arena=document.querySelector('.arena');
+  const banner=document.createElement('div');banner.className='enemy-turn-banner';banner.innerHTML='<strong>对手回合</strong><span>对手正在执行战术</span>';
+  arena?.append(banner);
+  document.querySelector('.combat-screen')?.setAttribute('inert','');
+  const events=combatEvents(before,r.state,action);
+  setTimeout(()=>{banner.querySelector('span').textContent='攻击结算';playCombatFx(events,stage);globalThis.characterStages?.cueFromTransition('wa',before,r.state,action);},420);
+  setTimeout(()=>{turnAnimating=false;state=r.state;screen=nextScreen(before,state);selected=null;echo=null;dialog.close();persist();notice(saveError||'');render();if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);animateResolution(before,state,null,null,action);},1750);
+  return r;
+ }
  state=r.state;screen=nextScreen(before,state);selected=null;echo=played||null;dialog.close();persist();notice(saveError||'');render();
  if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);
  animateResolution(before,state,played,flight,action);
@@ -4535,7 +4467,7 @@ function start(tutorial,selectedRegion){
 }
 function startLegacy(tutorial){const seed=document.querySelector('#seed')?.value.trim()||`season-${Date.now()}`;state=createRun(seed,tutorial);atHome=false;screen='map';selected=null;echo=null;dialog.close();persist();notice('选择路线图上发亮的节点，开始第一场比赛。');render();}
 function handleUI(name){
- if(name.startsWith('set-region-')){region=name.slice('set-region-'.length);seedInput=document.querySelector('#seed')?.value||seedInput;render();return;}
+ if(name.startsWith('set-region-')){region=name.slice('set-region-'.length);seedInput=document.querySelector('#seed')?.value||seedInput;document.querySelectorAll('.region-tab').forEach(el=>el.classList.toggle('active',el.dataset.ui===name));const note=document.querySelector('.region-note');if(note)note.textContent=`${REGIONS[region].tagline} / 18 名选手 / 三幕完整征程`;return;}
  if(name==='start-season'){
   if(saved&&saved.mode==='season'&&saved.phase!=='result'){
    showModal('开始新赛季',`<p>新赛季会覆盖当前的登峰赛季进度。</p><p>旧版存档会保留。</p><div class="button-row">${ui('确认开赛','confirm-season','primary')}${ui('继续上次赛季','continue')}</div>`);
@@ -4687,6 +4619,7 @@ function animateResolution(before,after,played,flight,action){
  if(action.type==='end'&&after.phase==='combat')notice(`第 ${after.battle?.turn||1} 回合 · 重新抽牌`);
 }
 document.addEventListener('click',e=>{
+ if(turnAnimating)return;
  if(suppressClick){suppressClick=false;e.preventDefault();return;}
  const btn=e.target.closest('button');if(!btn||btn.disabled)return;
  if(btn.dataset.select){selected=selected===btn.dataset.select?null:btn.dataset.select;refreshSelection();notice('');if(selected)showCardTip(btn);else hideCardTip();return;}
@@ -4707,16 +4640,32 @@ document.addEventListener('click',e=>{
  if(btn.dataset.ui){handleUI(btn.dataset.ui);return;}
  if(btn.dataset.action)commit(JSON.parse(btn.dataset.action));
 });
-// Both demos use the same full-card drag gesture; each keeps its own legal targets.
+// Pointer capture makes dragging work consistently with a mouse, touch or a pen.
 app.addEventListener('dragstart',e=>e.preventDefault());
-attachCardGesture(app,{
- getCard:el=>state?.battle?.hand.find(c=>c.uid===el.dataset.select),
- canDrag:c=>state?.phase==='combat'&&!canPlay(state,c.uid),
- onStart:(c,el)=>{hideCardTip();dragging=c.uid;selected=c.uid;refreshSelection();},
- onMove:(c,p)=>updateAim({uid:c.uid,x:p.startX,y:p.startY},{clientX:p.x,clientY:p.y}),
- onDrop:(c,p)=>{clearAim();dragging=null;const live=state?.battle?.hand.find(x=>x.uid===c.uid);if(!live||!dragTargetAt(live,{clientX:p.x,clientY:p.y},p.startY)){notice('卡牌已放回手中。请拖向发亮的目标。');refreshSelection();return false;}return !commit({type:'play',uid:c.uid,rev:state.rev}).error;},
- onEnd:()=>{clearAim();dragging=null;}
+app.addEventListener('pointerdown',e=>{
+ const el=e.target.closest('[data-select]');if(!el||e.button!==0||canPlay(state,el.dataset.select))return;
+ pointerDrag={uid:el.dataset.select,x:e.clientX,y:e.clientY,el,active:false,pointerId:e.pointerId};
+ el.setPointerCapture(e.pointerId);
 });
+app.addEventListener('pointermove',e=>{
+ if(!pointerDrag||pointerDrag.pointerId!==e.pointerId)return;
+ const d=pointerDrag;if(!d.active&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<8)return;
+ if(!d.active){hideCardTip();d.active=true;dragging=d.uid;selected=d.uid;refreshSelection();d.el.classList.add('dragging-card');}
+ updateAim(d,e);e.preventDefault();d.el.style.setProperty('--drag-x',`${e.clientX}px`);d.el.style.setProperty('--drag-y',`${e.clientY}px`);
+});
+function endDrag(e,cancel=false){
+ if(!pointerDrag||pointerDrag.pointerId!==e.pointerId)return;
+ const d=pointerDrag;pointerDrag=null;dragging=null;clearAim();
+ if(d.el.hasPointerCapture(e.pointerId))d.el.releasePointerCapture(e.pointerId);
+ if(!d.active)return;
+ d.el.classList.remove('dragging-card');d.el.style.removeProperty('--drag-x');d.el.style.removeProperty('--drag-y');
+ suppressClick=true;setTimeout(()=>{suppressClick=false;},0);
+ const c=state.battle?.hand.find(c=>c.uid===d.uid);
+ if(!cancel&&c&&dragTargetAt(c,e,d.y))commit({type:'play',uid:d.uid,rev:state.rev});
+ else{refreshSelection();if(!reduceMotion())d.el.animate([{filter:'brightness(1.4)'},{filter:'brightness(1)'}],{duration:220});notice('卡牌已放回手中。请拖向发亮的目标。');}
+}
+app.addEventListener('pointerup',e=>endDrag(e));
+app.addEventListener('pointercancel',e=>endDrag(e,true));
 document.addEventListener('keydown',e=>{
  if(dialog.open||atHome||screen!=='room'||state?.phase!=='combat'||e.target.matches('input,textarea')||e.repeat)return;
  if(/^[0-9]$/.test(e.key)){const c=state.battle.hand[e.key==='0'?9:Number(e.key)-1];if(c){e.preventDefault();selected=c.uid;refreshSelection();showCardTip(document.querySelector(`[data-select="${c.uid}"]`));}}

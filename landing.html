@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登峰赛季 · 选择版本</title>
+  <style>
+    *{box-sizing:border-box}html{background:#0b1118;color:#f4ead7;font-family:system-ui,"Microsoft YaHei",sans-serif}body{margin:0;min-height:100dvh}h1,h2,p{margin:0}
+    .top{position:absolute;z-index:4;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:20px 34px;pointer-events:none;text-shadow:0 2px 8px #000}.top strong{font-family:Georgia,"SimSun",serif;font-size:22px;letter-spacing:.16em}.top span{font-size:13px;letter-spacing:.12em;color:#d6c6a8}
+    .versions{display:grid;grid-template-columns:1fr 1fr;min-height:100dvh}.version{position:relative;display:flex;align-items:end;min-height:100dvh;overflow:hidden;text-decoration:none;color:inherit;isolation:isolate;padding:clamp(30px,5vw,84px);border-right:1px solid #e9dec244}.version:last-child{border-right:0}.version:before{content:"";position:absolute;inset:0;z-index:-2;background-image:var(--art);background-size:cover;background-position:center;transition:transform .5s ease,filter .5s ease;filter:saturate(.75)}.version:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,#070d1708 20%,#08111855 46%,#090e14f5 100%)}.version:hover:before,.version:focus-visible:before{transform:scale(1.045);filter:saturate(1.05)}.version:focus-visible{outline:3px solid #e5c783;outline-offset:-5px}
+    .version.new:before{background-position:52% center}.content{max-width:520px;position:relative;z-index:1;transition:transform .3s}.version:hover .content,.version:focus-visible .content{transform:translateY(-8px)}.eyebrow{display:inline-block;color:#f7d795;font-size:13px;letter-spacing:.25em;font-weight:700;margin-bottom:13px}.new .eyebrow{color:#9ee7dc}.content h2{font-family:Georgia,"SimSun",serif;font-size:clamp(42px,5vw,80px);line-height:1.1;letter-spacing:.08em;text-shadow:0 3px 20px #000a}.content p{font-size:clamp(15px,1.35vw,19px);color:#e1e1da;line-height:1.7;margin:16px 0 25px}.cta{display:inline-flex;align-items:center;gap:18px;padding:13px 20px;border:1px solid #d9b677;background:#5b4a33c9;color:#fff3d2;font-weight:700;letter-spacing:.1em;border-radius:4px;box-shadow:0 8px 24px #0005}.new .cta{background:#1d5b5bcc;border-color:#81e1d1;color:#e5fffa}.cta span{font-size:22px;line-height:1}
+    .credit{position:absolute;z-index:3;bottom:17px;right:24px;font-size:11px;color:#d0c9b3aa;letter-spacing:.12em}
+    @media(max-width:760px){.top{position:relative;background:#0d151c;padding:14px 20px}.top strong{font-size:18px}.top span{font-size:11px}.versions{grid-template-columns:1fr}.version{min-height:47dvh;padding:28px 24px;border-right:0;border-bottom:1px solid #e9dec244}.version:before{background-position:center 40%}.content h2{font-size:clamp(36px,9vw,56px)}.content p{font-size:14px;margin:9px 0 14px}.eyebrow{font-size:11px;margin-bottom:8px}.cta{padding:9px 14px}.credit{position:static;text-align:center;background:#0d151c;padding:10px}}
+    @media(prefers-reduced-motion:reduce){.version:before,.content{transition:none}}
+  </style>
+</head>
+<body>
+  <header class="top"><strong>登峰赛季</strong><span>选择你的赛场</span></header>
+  <main class="versions" aria-label="选择游戏版本">
+    <a class="version wa" href="/wa/" style="--art:url('/cover-wa.webp')" aria-label="进入瓦 Demo">
+      <div class="content"><span class="eyebrow">瓦 DEMO · 真实选手与赛区</span><h2>登峰赛季</h2><p>选择赛区、招募选手，把队伍带到赛季最后一场。</p><span class="cta">进入瓦 Demo <span aria-hidden="true">→</span></span></div>
+    </a>
+    <a class="version new" href="/new/" style="--art:url('/new/cover.webp')" aria-label="进入新 Demo">
+      <div class="content"><span class="eyebrow">新 DEMO · 原创战术构筑</span><h2>战术试炼</h2><p>选择队伍风格，用战术牌、姿态与路线打出自己的赛程。</p><span class="cta">进入新 Demo <span aria-hidden="true">→</span></span></div>
+    </a>
+  </main>
+  <footer class="credit">猪之家出品</footer>
+</body>
+</html>

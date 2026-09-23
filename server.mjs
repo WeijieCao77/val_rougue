@@ -4,8 +4,10 @@ import { openStore } from './online/store.mjs';
 import { createOnlineHandler } from './online/api.mjs';
 
 const assets = new Map([
-  ['/', ['index.html', 'text/html; charset=utf-8']],
-  ['/index.html', ['index.html', 'text/html; charset=utf-8']],
+  ['/', ['landing.html', 'text/html; charset=utf-8']],
+  ['/index.html', ['landing.html', 'text/html; charset=utf-8']],
+  ['/wa/', ['index.html', 'text/html; charset=utf-8']],
+  ['/wa/index.html', ['index.html', 'text/html; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8']],
   ['/character-stage.js', ['character-stage.js', 'text/javascript; charset=utf-8']],
@@ -40,8 +42,7 @@ const assets = new Map([
 ]);
 
 const imageTypes = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', svg: 'image/svg+xml' };
-const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT_ID || !!process.env.RAILWAY_PROJECT_ID || !!process.env.RAILWAY_SERVICE_NAME;
-const newDemoEnabled = isProduction ? false : (process.env.ENABLE_NEW_DEMO !== 'false');
+const newDemoEnabled = true;
 const port = Number(process.env.PORT || 4177);
 if (!Number.isInteger(port) || port < 0 || port > 65535) throw Error('Invalid PORT');
 

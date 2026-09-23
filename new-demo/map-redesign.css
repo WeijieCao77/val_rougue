@@ -7,7 +7,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.7rem;
+  background: radial-gradient(ellipse at 50% 35%, #32404833, transparent 65%);
 }
 
 .map-stage-info {
@@ -15,7 +16,7 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  max-width: 440px;
+  max-width: 880px;
   background: #1e1e2e;
   color: #cdd6f4;
   padding: 0.5rem 0.8rem;
@@ -26,15 +27,15 @@
 
 .map-scroll {
   width: 100%;
-  max-width: 440px;
+  max-width: 560px;
   height: auto;
   max-height: 70vh;
   overflow-y: auto;
   overflow-x: hidden;
   border: 1px solid #313244;
   border-radius: 12px;
-  background: #181825;
-  padding: 0.5rem;
+  background: radial-gradient(ellipse at 50% 50%,#30344b,#181825 72%);
+  padding: 1rem;
   box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
@@ -45,7 +46,8 @@
   display: block;
   margin: 0 auto;
   min-width: 0;
-  height: 880px;
+  height: auto;
+  aspect-ratio: 400 / 880;
   width: 100%;
 }
 
@@ -100,21 +102,28 @@
 }
 
 .map-legend {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .4rem;
   width: 100%;
   max-width: 440px;
-  color: #a6adc8;
-  font-size: 0.75rem;
+  color: #d8ddec;
+  font-size: 0.72rem;
 }
 
 .legend-item {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: .5rem;
+  min-height: 44px;
+  padding: .4rem .5rem;
+  background: #242838;
+  border: 1px solid #48526b;
+  border-radius: 6px;
+  line-height: 1.35;
 }
+.legend-icon{flex:0 0 24px;display:grid;place-items:center;width:24px;height:24px;border:1px solid #a9b7d2;border-radius:50%;color:#f4d295;font-size:15px;font-weight:800}
+@media(max-width:500px){.map-legend{grid-template-columns:1fr 1fr}.legend-item{font-size:.66rem;padding:.35rem;gap:.3rem}.legend-icon{flex-basis:20px;width:20px;height:20px}}
 
 .legend-dot {
   width: 12px;
@@ -136,6 +145,14 @@
 .legend-dot.completed {
   background: #a6e3a1;
   border: 2px solid #94e2d5;
+}
+
+@media(min-width:900px){
+  .map-container{display:grid;grid-template-columns:minmax(460px,560px) minmax(240px,300px);grid-template-rows:auto 1fr auto;justify-content:center;align-items:start;column-gap:18px;max-width:920px;margin:auto}
+  .map-stage-info{grid-column:1 / -1;max-width:none}
+  .map-scroll{grid-column:1;grid-row:2 / 4;max-height:calc(100dvh - 120px)}
+  .map-legend{grid-column:2;grid-row:2;grid-template-columns:1fr;max-width:none;align-self:start}
+  .node-details{grid-column:2;grid-row:3;max-width:none}
 }
 
 .node-details {
@@ -164,7 +181,7 @@
 /* Desktop adjustments */
 @media (min-width: 768px) {
   .map-container {
-    max-width: 600px;
+    max-width: 920px;
   }
   .map-scroll {
     max-height: 75vh;

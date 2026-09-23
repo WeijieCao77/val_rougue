@@ -25,3 +25,61 @@
   .battle .stance-box { font-size:.75rem; }
   .battle .preview-panel { flex-basis:100%; max-width:100%; font-size:.75rem; }
 }
+
+/* Mirror the Wa demo hand: overlapping fan, lifted hover, and the card itself
+   following the pointer. The new demo keeps its own artwork and rules. */
+.battle .hand-area {
+  position:relative;
+  display:block;
+  min-height:264px;
+  overflow:visible;
+  padding:0;
+  perspective:none;
+  --step:clamp(36px,calc((100vw - 430px)/var(--slots)),135px);
+}
+.battle .hand-area .hand-card.shared-card {
+  position:absolute;
+  left:50%;
+  bottom:18px;
+  width:162px;
+  height:246px;
+  transform-origin:50% 110%;
+  transform:translateX(calc(-50% + var(--offset)*var(--step))) translateY(min(var(--bend),18px)) rotate(var(--tilt));
+  z-index:calc(3 + var(--order));
+}
+.battle .hand-area .hand-card.shared-card:hover:not(.selected),
+.battle .hand-area .hand-card.shared-card:focus-visible:not(.selected) {
+  transform:translateX(calc(-50% + var(--offset)*var(--step))) translateY(-19px) rotate(0);
+  z-index:40;
+}
+.battle .hand-area .hand-card.shared-card.selected {
+  transform:translateX(calc(-50% + var(--offset)*var(--step))) translateY(-29px) rotate(0) scale(1.055);
+  z-index:41;
+}
+.battle .hand-area .hand-card.shared-card.dragging-card {
+  position:fixed!important;
+  left:var(--drag-x)!important;
+  top:var(--drag-y)!important;
+  bottom:auto!important;
+  transform:translate(-50%,-50%) rotate(-5deg)!important;
+  z-index:2000!important;
+  pointer-events:none;
+  transition:none!important;
+  filter:drop-shadow(0 12px 18px #000a)!important;
+}
+@media(max-width:1100px) {
+  .battle .hand-area .hand-card.shared-card { width:146px; height:218px; }
+}
+@media(max-width:720px) {
+  .battle .hand-area { min-height:205px; --step:clamp(18px,calc((100vw - 190px)/var(--slots)),67px); }
+  .battle .hand-area .hand-card.shared-card { width:124px; height:177px; bottom:16px; }
+}
+.battle .enemy-turn-banner{position:absolute;z-index:90;left:50%;top:8%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;min-width:180px;padding:12px 24px;border:1px solid #e4ab74;border-radius:9px;background:#251d2bef;box-shadow:0 10px 35px #000a,0 0 28px #bd745577;color:#ffe4c2;pointer-events:none;animation:enemy-turn-in .25s ease-out}
+.battle .enemy-turn-banner strong{font-size:20px;letter-spacing:3px}.battle .enemy-turn-banner span{font-size:11px;color:#cbb2ab}
+.battle.enemy-acting .enemy-art-container{animation:enemy-strike .6s ease-in-out both}.battle .enemy-impact{animation:enemy-hit .55s ease-out both}
+.battle .enemy-loss{position:absolute;z-index:95;left:50%;top:-16px;color:#ff9a80;font-size:25px;text-shadow:0 2px 7px #000;animation:enemy-loss-float 1s ease-out both;pointer-events:none}
+@keyframes enemy-turn-in{from{opacity:0;transform:translate(-50%,-15px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes enemy-strike{0%{transform:translateX(0)}45%{transform:translateX(-28px) scale(1.05)}100%{transform:translateX(0)}}
+@keyframes enemy-hit{0%,38%{filter:none}50%{filter:brightness(2) sepia(.6)}100%{filter:none}}
+@keyframes enemy-loss-float{from{opacity:0;transform:translate(-50%,10px)}25%{opacity:1}to{opacity:0;transform:translate(-50%,-35px)}}
+.battle{position:relative}.battle .player-box{position:relative}
