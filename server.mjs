@@ -11,6 +11,7 @@ const assets = new Map([
   ['/character-stage.js', ['character-stage.js', 'text/javascript; charset=utf-8']],
   ['/shared-stage-controller.js', ['shared/character-controller.js', 'text/javascript; charset=utf-8']],
   ['/shared/card-feel.css', ['shared/card-feel.css', 'text/css; charset=utf-8']],
+  ['/shared/card-gesture.js', ['shared/card-gesture.js', 'text/javascript; charset=utf-8']],
   ['/shared/character-stage.css', ['shared/character-stage.css', 'text/css; charset=utf-8']],
   ['/cover-wa.webp', ['cover-wa.webp', 'image/webp']],
   ['/art-gallery.html', ['art-gallery.html', 'text/html; charset=utf-8']],

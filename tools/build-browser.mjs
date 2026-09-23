@@ -20,6 +20,7 @@ const modules = [
   'combat-fx.js',
   'wa-season.js',
   'wa-online.js',
+  'shared/card-gesture.js',
   'ui-source.js'
 ];
 

@@ -3,6 +3,7 @@ import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS } from './content.js';
 import { ACTS } from './season-map.js';
 import { cardArt, combatArt, relicArt } from './art.js';
 import { captureCombatPresentation, animateCombatTransition, clearCombatPresentation } from './fx.js';
+import { attachCardGesture } from '/shared/card-gesture.js';
 
 const STORAGE_KEY = 'new-demo-run-v1';
 let state = null;
@@ -393,12 +394,16 @@ function renderCombat(root) {
     const isSelected = selectedCardUid === card.uid;
     const isPlayable = playableUids.has(card.uid);
     const tooltip = describeCardFull(card);
-    return `<div class="hand-card ${isSelected ? 'selected' : ''} ${isPlayable ? '' : 'not-playable'}" data-uid="${card.uid}" data-index="${idx}" tabindex="0" role="button" aria-label="${escapeHtml(display.name)}" data-tooltip="${escapeHtml(tooltip)}" style="opacity:${isPlayable ? 1 : 0.5}">
-      <div class="card-art">${cardArt(card.id)}</div>
-      <div class="card-cost">${display.cost}</div>
-      <div class="card-name">${escapeHtml(display.name)}</div>
-      <div class="card-type">${typeMap[display.type]}</div>
-      <div class="card-text">${escapeHtml(display.text)}</div>
+    const offset = idx - (b.hand.length - 1) / 2;
+    return `<div class="hand-card shared-card role-${escapeHtml(display.type)} ${isSelected ? 'selected' : ''} ${isPlayable ? '' : 'not-playable'}" data-uid="${card.uid}" data-index="${idx}" tabindex="0" role="button" aria-label="${escapeHtml(display.name)}" data-tooltip="${escapeHtml(tooltip)}" style="--offset:${offset};--tilt:${offset * (b.hand.length > 6 ? 1.6 : 3)}deg;--bend:${Math.abs(offset) * Math.abs(offset) * 1.8}px;--order:${idx}">
+      <div class="card-face">
+        <span class="card-cost">${display.cost}</span>
+        <span class="card-title">${escapeHtml(display.name)}</span>
+        <span class="card-portrait">${cardArt(card.id)}<span class="portrait-role">${escapeHtml(typeMap[display.type] || display.type)}</span></span>
+        <b class="card-tactic">${escapeHtml(tagMap[display.tag] || display.tag || typeMap[display.type] || '')}</b>
+        <span class="card-effect"><span>${escapeHtml(display.text)}</span></span>
+        <span class="card-foot">${escapeHtml(rarityMap[display.rarity] || '')}${display.exhaust ? ' · 消耗' : ''}</span>
+      </div>
     </div>`;
   }).join('');
 
@@ -420,7 +425,7 @@ function renderCombat(root) {
   root.innerHTML = `
     <div class="battle" data-presentation-busy="${presentationBusy}">
       <div class="enemy-area">
-        <div class="enemy-art-container">${enemyArt}</div>
+        <div class="enemy-art-container" data-character-variant="${escapeHtml(b.enemyId)}">${enemyArt}</div>
         <div class="enemy-box" id="enemy-box">
           <div class="enemy-name">${escapeHtml(b.enemyName)}</div>
           <div class="enemy-hp" data-hp="${b.enemyHp}">
@@ -457,7 +462,7 @@ function renderCombat(root) {
         <button class="btn" id="btn-end">结束回合 (E)</button>
         ${previewHtml}
       </div>
-      <div class="hand-area" id="hand-area" role="list">
+      <div class="hand-area" id="hand-area" role="list" style="--slots:${Math.max(1,b.hand.length)}">
         ${handHtml}
       </div>
     </div>
@@ -489,116 +494,40 @@ function renderCombat(root) {
     });
   });
 
-  // hand card interactions: click select, drag to play
-  document.querySelectorAll('.hand-card').forEach(el => {
-    const uid = el.dataset.uid;
-
-    el.addEventListener('click', (e) => {
+  // Selection stays game-specific; dragging uses the same full-card gesture as Wa.
+  root.querySelectorAll('.hand-card.shared-card').forEach(el => {
+    el.addEventListener('click', () => {
       if (presentationBusy) return;
-      if (el.dataset.dragging === 'true') {
-        el.dataset.dragging = 'false';
-        return;
-      }
-      selectedCardUid = uid;
+      selectedCardUid = el.dataset.uid;
       renderCombat(root);
     });
-
-    el.addEventListener('keydown', (e) => {
-      if (presentationBusy) return;
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        e.stopPropagation();
-        selectedCardUid = uid;
-        renderCombat(root);
-      }
+    el.addEventListener('keydown', event => {
+      if (presentationBusy || !['Enter',' '].includes(event.key)) return;
+      event.preventDefault();event.stopPropagation();
+      selectedCardUid = el.dataset.uid;
+      renderCombat(root);
     });
-
-    // Pointer drag
-    el.addEventListener('pointerdown', (e) => {
-      if (presentationBusy) return;
-      // Only mouse with left button
-      if (e.pointerType !== 'mouse' || e.button !== 0) return;
-      e.preventDefault();
-      const startX = e.clientX, startY = e.clientY;
-      let moved = false;
-      let dispatched = false;
-      let ghost = null;
-      const rect = el.getBoundingClientRect();
-      el.setPointerCapture(e.pointerId);
-
-      const onPointerMove = (ev) => {
-        const dx = ev.clientX - startX;
-        const dy = ev.clientY - startY;
-        if (!moved && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
-          moved = true;
-          el.dataset.dragging = 'true';
-          ghost = document.createElement('div');
-          ghost.className = 'drag-ghost';
-          const art = el.querySelector('.card-art');
-          if (art) {
-            ghost.appendChild(art.cloneNode(true));
-          }
-          const name = document.createElement('div');
-          name.className = 'ghost-name';
-          name.textContent = el.querySelector('.card-name')?.textContent || '卡牌';
-          ghost.appendChild(name);
-          ghost.style.left = `${ev.clientX}px`;
-          ghost.style.top = `${ev.clientY}px`;
-          ghost.style.display = 'block';
-          document.body.appendChild(ghost);
-        }
-        if (moved) {
-          ghost.style.left = `${ev.clientX}px`;
-          ghost.style.top = `${ev.clientY}px`;
-        }
-      };
-
-      const cleanup = () => {
-        el.removeEventListener('pointermove', onPointerMove);
-        el.removeEventListener('pointerup', onPointerUp);
-        el.removeEventListener('pointercancel', onPointerCancel);
-        el.removeEventListener('lostpointercapture', onPointerCancel);
-        if (ghost) {
-          ghost.remove();
-        }
-        el.dataset.dragging = 'false';
-      };
-
-      const onPointerUp = (ev) => {
-        const wasMoved = moved;
-        const target = wasMoved ? document.elementFromPoint(ev.clientX, ev.clientY) : null;
-        cleanup();
-        // Release capture
-        if (el.hasPointerCapture(e.pointerId)) {
-          el.releasePointerCapture(e.pointerId);
-        }
-        if (wasMoved && target) {
-          const dropZone = target.closest('#enemy-box') || target.closest('.enemy-area') || target.closest('#player-box') || target.closest('.player-area');
-          if (dropZone && playableUids.has(uid) && !presentationBusy && !dispatched) {
-            dispatched = true;
-            selectedCardUid = uid;
-            dispatch({ type: 'play', uid });
-          } else {
-            selectedCardUid = uid;
-            renderCombat(root);
-          }
-        } else if (!wasMoved) {
-          // Handled by click event
-        }
-      };
-
-      const onPointerCancel = (ev) => {
-        cleanup();
-        if (el.hasPointerCapture(e.pointerId)) {
-          el.releasePointerCapture(e.pointerId);
-        }
-      };
-
-      el.addEventListener('pointermove', onPointerMove);
-      el.addEventListener('pointerup', onPointerUp);
-      el.addEventListener('pointercancel', onPointerCancel);
-      el.addEventListener('lostpointercapture', onPointerCancel);
-    });
+  });
+  const hand = root.querySelector('#hand-area');
+  const clearDrop = () => root.querySelectorAll('.drop-ready').forEach(el => el.classList.remove('drop-ready'));
+  const zoneAt = point => {
+    const battle = root.querySelector('.battle')?.getBoundingClientRect();
+    const handTop = hand.getBoundingClientRect().top;
+    if (!battle || point.y < battle.top || point.y > handTop - 20 || point.x < battle.left || point.x > battle.right) return null;
+    return point.x < battle.left + battle.width / 2 ? root.querySelector('.player-area') : root.querySelector('.enemy-area');
+  };
+  attachCardGesture(hand, {
+    getCard: el => b.hand.find(card => card.uid === el.dataset.uid),
+    canDrag: card => !presentationBusy && playableUids.has(card.uid),
+    onStart: (card, el) => { selectedCardUid = card.uid; el.classList.add('selected'); },
+    onMove: (_card, point) => { clearDrop(); zoneAt(point)?.classList.add('drop-ready'); },
+    onDrop: (card, point) => {
+      const zone = zoneAt(point); clearDrop();
+      if (!zone || presentationBusy || !playableUids.has(card.uid)) return false;
+      selectedCardUid = card.uid;
+      return dispatch({ type: 'play', uid: card.uid });
+    },
+    onEnd: clearDrop,
   });
 }
 

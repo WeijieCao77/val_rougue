@@ -6,6 +6,20 @@
 .battle .preview-panel { max-width:min(440px,100%); overflow-wrap:anywhere; }
 .battle .hand-area { min-width:0; }
 .battle .hand-card .card-name, .battle .hand-card .card-text { overflow-wrap:anywhere; }
+@media(min-width:901px) {
+  .battle { grid-template-rows: minmax(220px, 34vh) 34px 48px minmax(248px, 1fr); gap:5px; padding:6px 12px; height:calc(100dvh - 62px); }
+  .battle .player-area, .battle .enemy-area { justify-content:flex-start; gap:4px; padding:4px; }
+  .battle .ally-art-container, .battle .enemy-art-container { height:120px; flex:none; }
+  .battle .player-box, .battle .enemy-box { padding:4px 8px; }
+  .battle .stance-box { padding:3px 8px; font-size:11px; line-height:1.1; width:min(300px,100%); }
+  .battle .stance-box button { margin-top:2px; padding:3px 8px; font-size:11px; }
+  .battle .intent { padding:2px 5px; margin-top:2px; }
+  .battle .pile-display { padding:2px; }
+  .battle .battle-actions { margin:0; padding:0; align-items:center; }
+  .battle .battle-actions .btn { padding:4px 12px; }
+  .battle .preview-panel { padding:3px 6px; font-size:11px; }
+  .battle .hand-area { min-height:248px; padding:0; }
+}
 @media(max-width:720px) {
   .battle .player-area, .battle .enemy-area { align-content:start; }
   .battle .stance-box { font-size:.75rem; }

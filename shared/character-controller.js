@@ -6,11 +6,11 @@ let scheduled = false;
 function targets() {
   if (document.querySelector('.battle')) return [
     { element: document.querySelector('.battle .ally-art-container'), side: 'ally', variant: 'tactical', block: Number(document.querySelector('.block-value')?.dataset.block || 0) > 0 },
-    { element: document.querySelector('.battle .enemy-art-container'), side: 'enemy', variant: document.querySelector('.enemy-name')?.textContent || 'rival', block: false },
+    { element: document.querySelector('.battle .enemy-art-container'), side: 'enemy', variant: document.querySelector('.battle .enemy-art-container')?.dataset.characterVariant || 'E01', block: false },
   ];
   if (document.querySelector('.combat-screen')) return [
     { element: document.querySelector('.fighter.ally .combat-target'), side: 'ally', variant: document.querySelector('.team-label')?.textContent || 'club', block: Number(document.querySelector('.fighter.ally .shield-value')?.textContent.replace(/\D/g, '') || 0) > 0 },
-    { element: document.querySelector('.fighter.enemy .combat-target'), side: 'enemy', variant: document.querySelector('.fighter.enemy h2')?.textContent || 'rival', block: Number(document.querySelector('.fighter.enemy .shield-value')?.textContent.replace(/\D/g, '') || 0) > 0 },
+    { element: document.querySelector('.fighter.enemy .combat-target'), side: 'enemy', variant: document.querySelector('.fighter.enemy')?.dataset.characterVariant || 'E01', block: Number(document.querySelector('.fighter.enemy .shield-value')?.textContent.replace(/\D/g, '') || 0) > 0 },
   ];
   return [];
 }
