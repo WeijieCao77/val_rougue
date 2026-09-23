@@ -130,6 +130,65 @@ test('map generation is deterministic for same seed', () => {
   assert.deepEqual(mapA, mapB);
 });
 
+test('map specials move across seeds while every act keeps reachable event, shop and elite nodes', () => {
+  const layouts = new Set();
+  for (let i = 0; i < 30; i++) {
+    const map = buildMap(`variety-${i}`, 1);
+    const byKey = new Map(map.nodes.map(n => [n.key, n]));
+    const reachable = new Set(map.starts);
+    for (let step = 1; step < 11; step++) {
+      for (const edge of map.edges) if (reachable.has(edge.from)) reachable.add(edge.to);
+    }
+    for (const kind of ['event', 'shop', 'elite']) {
+      assert(map.nodes.some(n => n.kind === kind && reachable.has(n.key)), `${kind} missing or unreachable for variety-${i}`);
+    }
+    layouts.add(map.nodes.filter(n => ['event','shop','elite'].includes(n.kind)).map(n => `${n.step}:${n.lane}:${n.kind}`).join('|'));
+    assert(byKey.has(map.bossId));
+  }
+  assert(layouts.size > 20, `only ${layouts.size} layouts across 30 seeds`);
+});
+
+test('opponent intent order varies by seed and remains replayable', () => {
+  const orders = new Set();
+  for (let i = 0; i < 20; i++) {
+    const seed = `opponent-${i}`;
+    const start = (s) => act(s, {type:'enter', key:s.map.starts[0]}).state.battle;
+    const first = start(createRun(seed));
+    const replay = start(createRun(seed));
+    assert.deepEqual(first.enemyScript, replay.enemyScript);
+    assert.deepEqual(first.enemyIntent, replay.enemyIntent);
+    orders.add(JSON.stringify(first.enemyScript));
+  }
+  assert(orders.size > 1);
+});
+
+test('expensive cards trade raw damage for tactical effects', () => {
+  let s = createTestBattle({ handCards:['TA30'], enemyHp:50, enemyStatuses:{block:12}, energy:3 });
+  s = playCardById(s, 'TA30');
+  assert.equal(s.battle.enemyHp, 36, 'counter-angle strips guard before damage');
+  assert.equal(s.battle.exhaustPile.length, 1);
+  s = createTestBattle({ handCards:['TA21'], enemyHp:60, enemyStatuses:{smoke:1}, drawPile:['TA01'], energy:3 });
+  s = playCardById(s, 'TA21');
+  assert.equal(s.battle.enemyHp, 34, 'smoke setup adds ten damage');
+  assert.equal(s.battle.hand.length, 1, 'high cost payoff also cycles a card');
+});
+
+test('new event choices preserve resources and reject unaffordable options atomically', () => {
+  const event = {id:'ev5', choices:[{id:'cash'},{id:'fans'}]};
+  let s = createRun('event-tradeoff');
+  s.phase = 'event';
+  s.event = event;
+  s.money = 40;
+  const before = structuredClone(s);
+  const rejected = act(s, {type:'event', choice:'fans'});
+  assert(rejected.error);
+  assert.deepEqual(s, before);
+  const accepted = act(s, {type:'event', choice:'cash'});
+  assert(!accepted.error, accepted.error);
+  assert.equal(accepted.state.maxHp, s.maxHp - 4);
+  assert.equal(accepted.state.money, 110);
+});
+
 test('illegal action does not mutate state', () => {
   const state = createRun('test-seed');
   const snapshot = JSON.parse(JSON.stringify(state));

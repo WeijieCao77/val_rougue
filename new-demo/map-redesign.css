@@ -24,6 +24,7 @@
   font-size: 0.85rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
+.map-quick-legend{max-width:880px;width:100%;box-sizing:border-box;text-align:center;color:#dbe6de;font-size:12px;line-height:1.4;letter-spacing:.03em}
 
 .map-scroll {
   width: 100%;

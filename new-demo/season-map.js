@@ -57,10 +57,18 @@ export function buildMap(seed,act){
    if(!crosses){connect(p,n);added++;if(added>=(random()<.55?1:2))break;}
   }
  }
- layers[1][Math.floor(random()*layers[1].length)].kind='event';
- layers[3][Math.floor(random()*layers[3].length)].kind='shop';
- layers[5][Math.floor(random()*layers[5].length)].kind='elite';
  const byKey=new Map(nodes.map(n=>[n.key,n]));
+ // Each act has a guaranteed event, shop and elite, but their rows and lanes vary by seed.
+ const usedRows=new Set();
+ for(const {kind,rows} of [{kind:'event',rows:[1,2,3]},{kind:'shop',rows:[3,4,5,6]},{kind:'elite',rows:[5,6,7,8]}]){
+  const options=rows.filter(row=>!usedRows.has(row)).flatMap(row=>layers[row].filter(n=>{
+   const parents=edges.filter(e=>e.to===n.key).map(e=>byKey.get(e.from));
+   return !parents.some(p=>p.kind===kind);
+  }).map(n=>({row,n})));
+  const chosen=pick(options);
+  chosen.n.kind=kind;
+  usedRows.add(chosen.row);
+ }
  for(const n of nodes){
   const parents=edges.filter(e=>e.to===n.key).map(e=>byKey.get(e.from));
   if(['elite','shop','rest'].includes(n.kind)&&n.step!==10&&parents.some(p=>p.kind===n.kind))n.kind='battle';

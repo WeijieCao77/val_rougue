@@ -41,13 +41,13 @@ function formatEffects(effects) {
         parts.push(`获得${eff.n}点布防`);
         break;
       case 'smoke':
-        parts.push(`给予${eff.n}层烟雾（受到攻击伤害减少等于层数，敌人回合结束-1层）`);
+        parts.push(`给予${eff.n}层烟雾`);
         break;
       case 'flash':
-        parts.push(`给予${eff.n}层闪光（下一次受到的攻击伤害减少${eff.n*3}点，消耗全部层数）`);
+        parts.push(`给予${eff.n}层闪光`);
         break;
       case 'weak':
-        parts.push(`给予${eff.n}层虚弱`);
+        parts.push(`给予${eff.n}层压制`);
         break;
       case 'vuln':
         parts.push(`给予${eff.n}层易伤`);
@@ -80,13 +80,13 @@ function formatEffects(effects) {
         parts.push(`将${eff.n}张「${CARDS[eff.id]?.name || eff.id}」加入手牌`);
         break;
       case 'purgePlayerStatus': {
-        const name = { weak: '虚弱', vuln: '易伤', smoke: '烟雾', flash: '闪光' }[eff.id] || eff.id;
+        const name = { weak: '压制', vuln: '易伤', smoke: '烟雾', flash: '闪光' }[eff.id] || eff.id;
         parts.push(`清除自身${eff.n}层${name}`);
         break;
       }
       case 'purgeEnemyStatus': {
-        const name = { weak: '虚弱', vuln: '易伤', smoke: '烟雾', flash: '闪光', block: '布防' }[eff.id] || eff.id;
-        parts.push(`移除敌人${eff.n}层${name}`);
+        const name = { weak: '压制', vuln: '易伤', smoke: '烟雾', flash: '闪光', block: '布防' }[eff.id] || eff.id;
+        parts.push(`移除敌人${eff.n}${eff.id === 'block' ? '点' : '层'}${name}`);
         break;
       }
       case 'upgradeRandomInHand':
@@ -173,8 +173,8 @@ const defs = [
   { id:'TA07', name:'战术观察', cost:1, type:'skill', tag:'basic', rarity:'common', effects:[draw(1)], upgradeEffects:[draw(2)] },
   { id:'TA08', name:'谨慎推进', cost:1, type:'skill', tag:'basic', rarity:'common', effects:[block(4), draw(1)], upgradeEffects:[block(6), draw(1)] },
   { id:'TA09', name:'快速换弹', cost:0, type:'skill', tag:'basic', rarity:'common', effects:[draw(1)], upgradeEffects:[draw(2)] },
-  { id:'TA10', name:'正面突击', cost:2, type:'attack', tag:'basic', rarity:'common', effects:[atk(12)], upgradeEffects:[atk(16)] },
-  { id:'TA11', name:'巩固防线', cost:2, type:'skill', tag:'basic', rarity:'common', effects:[block(10)], upgradeEffects:[block(14)] },
+  { id:'TA10', name:'正面突击', cost:2, type:'attack', tag:'basic', rarity:'common', effects:[atk(8), weak(1)], upgradeEffects:[atk(11), weak(2)] },
+  { id:'TA11', name:'巩固防线', cost:2, type:'skill', tag:'basic', rarity:'common', effects:[block(8), draw(1)], upgradeEffects:[block(11), draw(1)] },
   { id:'TA12', name:'烟墙掩护', cost:1, type:'skill', tag:'basic', rarity:'common', effects:[smoke(3), block(3)], upgradeEffects:[smoke(4), block(4)] },
   { id:'TA13', name:'闪光突破', cost:1, type:'attack', tag:'basic', rarity:'common', effects:[flash(1), atk(4)], upgradeEffects:[flash(2), atk(6)] },
   { id:'TA14', name:'队伍集结', cost:0, type:'skill', tag:'basic', rarity:'common', effects:[block(2)], upgradeEffects:[block(4)] },
@@ -186,18 +186,18 @@ const defs = [
   // Firefight & damage components (14)
   { id:'TA19', name:'精准补枪', cost:1, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(9)], upgradeEffects:[atk(13)] },
   { id:'TA20', name:'双发补枪', cost:2, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(6,2)], upgradeEffects:[atk(8,2)] },
-  { id:'TA21', name:'致命补枪', cost:3, type:'attack', tag:'damage', rarity:'rare', effects:[atk(24)], upgradeEffects:[atk(32)] },
+  { id:'TA21', name:'致命补枪', cost:3, type:'attack', tag:'damage', rarity:'rare', effects:[atk(16), conditional('enemy_smoke_or_flash', atk(10)), draw(1)], upgradeEffects:[atk(20), conditional('enemy_smoke_or_flash', atk(12)), draw(1)] },
   { id:'TA22', name:'破片手雷', cost:1, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(5), vuln(2)], upgradeEffects:[atk(7), vuln(2)] },
-  { id:'TA23', name:'燃烧瓶', cost:2, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(8), exhaustSelf()], exhaust: true, upgradeEffects:[atk(12), exhaustSelf()] },
+  { id:'TA23', name:'燃烧瓶', cost:2, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(14), weak(1), exhaustSelf()], exhaust: true, upgradeEffects:[atk(17), weak(2), exhaustSelf()] },
   { id:'TA24', name:'扫射压制', cost:2, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(5,3)], upgradeEffects:[atk(6,3)] },
   { id:'TA25', name:'爆头一击', cost:2, type:'attack', tag:'damage', rarity:'rare', effects:[atk(18)], upgradeEffects:[atk(24)] },
   { id:'TA26', name:'残局收割', cost:1, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(8), conditional('enemy_smoke', atk(8))], upgradeEffects:[atk(10), conditional('enemy_smoke', atk(10))] },
-  { id:'TA27', name:'穿墙射击', cost:2, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(10)], upgradeEffects:[atk(14)] },
+  { id:'TA27', name:'穿墙射击', cost:2, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(9), draw(1)], upgradeEffects:[atk(12), draw(1)] },
   { id:'TA28', name:'警戒射击', cost:1, type:'attack', tag:'damage', rarity:'common', effects:[atk(7)], upgradeEffects:[atk(10)] },
   { id:'TA29', name:'预瞄点射', cost:1, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(6), block(3)], upgradeEffects:[atk(8), block(4)] },
-  { id:'TA30', name:'反架点', cost:2, type:'attack', tag:'damage', rarity:'rare', effects:[atk(14), exhaustSelf()], exhaust: true, upgradeEffects:[atk(20), exhaustSelf()] },
+  { id:'TA30', name:'反架点', cost:2, type:'attack', tag:'damage', rarity:'rare', effects:[purgeEnemyStatus('block', 12), atk(14), exhaustSelf()], exhaust: true, upgradeEffects:[purgeEnemyStatus('block', 18), atk(17), exhaustSelf()] },
   { id:'TA31', name:'快攻连射', cost:1, type:'attack', tag:'damage', rarity:'common', effects:[atk(4,2)], upgradeEffects:[atk(6,2)] },
-  { id:'TA32', name:'重火力压制', cost:3, type:'attack', tag:'damage', rarity:'rare', effects:[atk(30)], upgradeEffects:[atk(40)] },
+  { id:'TA32', name:'重火力压制', cost:3, type:'attack', tag:'damage', rarity:'rare', effects:[atk(18), weak(2), block(5)], upgradeEffects:[atk(24), weak(2), block(7)] },
 
   // Tactical utility (12)
   { id:'TA33', name:'烟雾弹', cost:1, type:'skill', tag:'utility', rarity:'uncommon', effects:[smoke(4)], upgradeEffects:[smoke(6)] },

@@ -31,6 +31,12 @@ function shuffle(arr, state) {
   }
 }
 
+function shuffledEnemyScript(script, state) {
+  const sequence = script.slice();
+  shuffle(sequence, state);
+  return sequence;
+}
+
 function deepClone(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
@@ -275,7 +281,7 @@ function startBattle(state, node) {
     enemyName: def.name,
     enemyHp: def.hp,
     enemyMaxHp: def.hp,
-    enemyScript: def.script,
+    enemyScript: shuffledEnemyScript(def.script, state),
     enemyScriptIndex: 0,
     enemyIntent: null,
     turn: 1,
@@ -895,9 +901,12 @@ function restAction(state, action) {
 
 function generateEvent(state) {
   const events = [
-    { id: 'ev1', text: '你发现了一处废弃的战术装备。', choices: [{ id: 'take', text: '拿走装备（获得随机遗物）' }, { id: 'leave', text: '离开' }] },
+    { id: 'ev1', text: '你发现了一处废弃的战术装备。', choices: [{ id: 'take', text: '拆走装备（失去6点生命，获得随机遗物）' }, { id: 'leave', text: '离开' }] },
     { id: 'ev2', text: '一位老将提出指导训练。', choices: [{ id: 'train', text: '接受训练（升级一张随机牌）' }, { id: 'skip', text: '拒绝' }] },
-    { id: 'ev3', text: '你找到一个补给箱。', choices: [{ id: 'heal', text: '使用医疗补给（恢复15点生命）' }, { id: 'money', text: '拿走钱（获得50金币）' }] }
+    { id: 'ev3', text: '你找到一个补给箱。', choices: [{ id: 'heal', text: '使用医疗补给（恢复15点生命）' }, { id: 'money', text: '拿走钱（获得50金币）' }] },
+    { id: 'ev4', text: '临时训练赛给了你一次检验新战术的机会。', choices: [{ id: 'scrim', text: '高强度训练（失去8点生命，随机升级一张牌）' }, { id: 'rest', text: '恢复体能（花20金币，回复8点生命）' }] },
+    { id: 'ev5', text: '赞助商提出两份不同的赛季合同。', choices: [{ id: 'cash', text: '密集商务活动（最大生命-4，获得70金币）' }, { id: 'fans', text: '粉丝见面会（花50金币，最大生命+4）' }] },
+    { id: 'ev6', text: '分析师发现了一份旧赛季的战术数据库。', choices: [{ id: 'scout', text: '购买情报（花35金币，获得随机遗物）' }, { id: 'sell', text: '出售情报（失去6点生命，获得30金币）' }] }
   ];
   return events[Math.floor(nextRand(state) * events.length)];
 }
@@ -908,6 +917,7 @@ function eventChoice(state, action) {
   const choice = ev.choices.find(c => c.id === action.choice);
   if (!choice) return '无效选择';
   if (ev.id === 'ev1' && action.choice === 'take') {
+    state.hp = Math.max(1, state.hp - 6);
     grantRandomRelic(state);
   } else if (ev.id === 'ev2' && action.choice === 'train') {
     const candidates = state.deck.filter(c => !c.up && CARDS[c.id]?.upgradeEffects?.length);
@@ -918,6 +928,30 @@ function eventChoice(state, action) {
     state.hp = Math.min(state.hp + 15, state.maxHp);
   } else if (ev.id === 'ev3' && action.choice === 'money') {
     state.money += 50;
+  } else if (ev.id === 'ev4' && action.choice === 'scrim') {
+    state.hp = Math.max(1, state.hp - 8);
+    const candidates = state.deck.filter(c => !c.up && CARDS[c.id]?.upgradeEffects?.length);
+    if (candidates.length) candidates[Math.floor(nextRand(state) * candidates.length)].up = true;
+  } else if (ev.id === 'ev4' && action.choice === 'rest') {
+    if (state.money < 20) return '金币不足';
+    state.money -= 20;
+    state.hp = Math.min(state.maxHp, state.hp + 8);
+  } else if (ev.id === 'ev5' && action.choice === 'cash') {
+    state.maxHp = Math.max(1, state.maxHp - 4);
+    state.hp = Math.min(state.hp, state.maxHp);
+    state.money += 70;
+  } else if (ev.id === 'ev5' && action.choice === 'fans') {
+    if (state.money < 50) return '金币不足';
+    state.money -= 50;
+    state.maxHp += 4;
+    state.hp += 4;
+  } else if (ev.id === 'ev6' && action.choice === 'scout') {
+    if (state.money < 35) return '金币不足';
+    state.money -= 35;
+    grantRandomRelic(state);
+  } else if (ev.id === 'ev6' && action.choice === 'sell') {
+    state.hp = Math.max(1, state.hp - 6);
+    state.money += 30;
   }
   completeNode(state);
   state.phase = 'map';

@@ -6,6 +6,7 @@ import { captureCombatPresentation, animateCombatTransition, clearCombatPresenta
 import { attachCardGesture } from '/shared/card-gesture.js';
 
 const STORAGE_KEY = 'new-demo-run-v1';
+const GUIDE_KEY = 'new-demo-guide-v1-';
 let state = null;
 let previousState = null;
 let selectedCardUid = null;
@@ -91,14 +92,48 @@ function describeCardFull(card) {
     d.text
   ];
   if (d.detail) parts.push(d.detail);
+  if (d.text.includes('烟雾')) parts.push('烟雾：敌方每次命中伤害减少，按层数抵消；敌方回合结束减少1层。');
+  if (d.text.includes('闪光')) parts.push('闪光：敌方下一次命中伤害减少3×层数，触发后移除。');
+  if (d.text.includes('压制')) parts.push('压制：攻击伤害变为原来的75%。');
+  if (d.text.includes('易伤')) parts.push('易伤：受到攻击伤害变为原来的150%。');
   return parts.join('\n');
+}
+
+function guideStrip(phase, message) {
+  if (localStorage.getItem(GUIDE_KEY + phase)) return '';
+  const extra = phase === 'combat' ? '<span class="guide-roles">攻击＝伤害 · 技能＝布防/道具/抽牌 · 能力＝整场生效</span>' : '';
+  return `<aside class="guide-strip" aria-label="新手提示"><span><strong>第一步：</strong>${message}${extra}</span><button type="button" class="guide-dismiss" aria-label="关闭新手提示">知道了 ×</button></aside>`;
+}
+
+function bindGuideStrip(root, phase) {
+  root.querySelector('.guide-dismiss')?.addEventListener('click', () => {
+    localStorage.setItem(GUIDE_KEY + phase, '1');
+    root.querySelector('.guide-strip')?.remove();
+  });
+}
+
+function renderGuideModal() {
+  const modalRoot = document.getElementById('modal-root');
+  modalRoot.innerHTML = `<div class="modal-overlay" id="guide-overlay"><div class="modal quick-guide" role="dialog" aria-modal="true" aria-label="玩法指南">
+    <div class="modal-header"><h2>一分钟学会开赛</h2><button class="btn" id="guide-close">关闭</button></div>
+    <p><strong>目标：</strong>沿赛季路线打过三幕。每场胜利挑一张牌，把初始牌组逐渐改成自己的战术组合。</p>
+    <p><strong>队伍：</strong>突破擅长直接攻击；架点靠布防抵伤；道具协同用烟雾和闪光；调度靠抽牌和能量连招。新手可先选突破。</p>
+    <p><strong>路线：</strong>点亮起的节点前进。⚔ 比赛、☠ 强敌、? 未知、⇄ 补给、✚ 休整、👑 幕末决赛。</p>
+    <p><strong>战斗：</strong>先看敌人下一步意图，再按费用出牌。攻击造成伤害，技能负责布防、道具或抽牌，能力打出后整场生效。点牌再按执行，或拖到战场。</p>
+    <p><strong>回合：</strong>每回合通常有3能量；结束回合时没打出的手牌进入弃牌堆，消耗牌打出后本场不再抽到。布防抵消伤害，回合后清掉。前压/掩护姿态可以切换，但要花1能量。</p>
+  </div></div>`;
+  const overlay = modalRoot.querySelector('#guide-overlay');
+  const close = () => { modalRoot.innerHTML = ''; };
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  modalRoot.querySelector('#guide-close').addEventListener('click', close);
+  modalRoot.querySelector('#guide-close').focus();
 }
 
 function renderHome() {
   const teamsHtml = Object.values(TEAMS).map(t => `
     <div class="team-card ${selectedTeam === t.id ? 'selected' : ''}" data-team="${t.id}" tabindex="0" role="button" aria-pressed="${selectedTeam === t.id}">
       <div class="team-art">${combatArt(t.id, 'ally')}</div>
-      <div class="team-name">${escapeHtml(t.name)}</div>
+      <div class="team-name">${escapeHtml(t.name)}${t.id === 'breach' ? '<small class="rookie-tag">推荐入门</small>' : ''}</div>
       <div class="team-desc">${escapeHtml(t.desc)}</div>
     </div>
   `).join('');
@@ -118,6 +153,7 @@ function renderHome() {
     </section>
     <section class="home-section" id="team-selection">
       <h2 class="setup-title">选择队伍</h2>
+      <p class="setup-hint">先选一套打法，再沿路线打比赛、选卡、组出自己的战术牌组。</p>
       <div class="team-select" role="radiogroup" aria-label="选择初始队伍">
         ${teamsHtml}
       </div>
@@ -130,6 +166,7 @@ function renderHome() {
         <button class="btn" id="btn-continue" ${continueDisabled ? 'disabled' : ''}>继续上局</button>
       </div>
       <nav class="nav-links" aria-label="其他入口">
+        <button class="hero-link" id="btn-guide-home">怎么玩</button>
         <button class="hero-link" id="btn-library">卡牌总览</button>
         <a href="/pvp/">好友PvP</a>
         <a href="/wa/">瓦demo</a>
@@ -195,6 +232,7 @@ function renderHome() {
     showLibrary = true;
     renderLibraryModal();
   });
+  document.getElementById('btn-guide-home').addEventListener('click', renderGuideModal);
 }
 
 function renderGame() {
@@ -208,6 +246,7 @@ function renderGame() {
       <div class="app-title">新demo · 战术试炼</div>
         <div class="app-buttons">
         <button class="btn" id="btn-library">卡牌总览</button>
+        <button class="btn" id="btn-guide">怎么玩</button>
         <button class="btn" id="btn-home">返回首页</button>
       </div>
     </header>
@@ -217,6 +256,7 @@ function renderGame() {
     showLibrary = true;
     renderLibraryModal();
   });
+  document.getElementById('btn-guide').addEventListener('click', renderGuideModal);
   document.getElementById('btn-home').addEventListener('click', () => {
     if (presentationBusy) return;
     clearCombatPresentation();
@@ -279,10 +319,12 @@ function renderMap(root) {
 
   root.innerHTML = `
     <div class="map-container">
+      ${guideStrip('map', '先点亮起的节点开赛。每场胜利后挑一张新牌；路线会分叉，选安全补给还是挑战强敌由你决定。')}
       <div class="map-stage-info">
         <span>幕 ${state.act}：${act.name} · ${act.subtitle}</span>
         <span>HP ${state.hp}/${state.maxHp} · 💰 ${state.money}</span>
       </div>
+      <div class="map-quick-legend" aria-label="路线图标说明">⚔ 比赛　☠ 强敌　? 事件　⇄ 补给　✚ 休整　👑 决赛</div>
       <div class="map-scroll">
         <svg class="map-svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
           ${edgesSvg}
@@ -300,6 +342,7 @@ function renderMap(root) {
       <div id="node-details" class="node-details" aria-live="polite"></div>
     </div>
   `;
+  bindGuideStrip(root, 'map');
 
   const details = root.querySelector('#node-details');
   const showDetails = (node) => {
@@ -369,15 +412,15 @@ function renderMap(root) {
 
 function renderStatuses(statusObj) {
   const mapping = {
-    smoke: { key: 'smoke', desc: '烟雾：敌方每次命中伤害 -1/层，敌方回合结束 -1层' },
-    flash: { key: 'flash', desc: '闪光：敌方下一次命中伤害 -3×层数，触发后消耗全部层数' },
-    weak: { key: 'weak', desc: '压制：攻击伤害 ×0.75' },
-    vuln: { key: 'vuln', desc: '易伤：受到攻击 ×1.5' },
-    block: { key: 'block', desc: '布防：抵消等量伤害' }
+    smoke: { label: '烟雾', desc: '烟雾：敌方每次命中伤害 -1/层，敌方回合结束 -1层' },
+    flash: { label: '闪光', desc: '闪光：敌方下一次命中伤害 -3×层数，触发后消耗全部层数' },
+    weak: { label: '压制', desc: '压制：攻击伤害 ×0.75' },
+    vuln: { label: '易伤', desc: '易伤：受到攻击 ×1.5' },
+    block: { label: '布防', desc: '布防：抵消等量伤害' }
   };
   return Object.entries(statusObj).filter(([k,v]) => v > 0).map(([k,v]) => {
-    const info = mapping[k] || { key: k, desc: `${k}:${v}` };
-    return `<span class="status-chip" tabindex="0" title="${escapeHtml(info.desc)}">${info.key}:${v}</span>`;
+    const info = mapping[k] || { label: k, desc: `${k}:${v}` };
+    return `<span class="status-chip" tabindex="0" title="${escapeHtml(info.desc)}">${info.label}:${v}</span>`;
   }).join('');
 }
 
@@ -428,6 +471,7 @@ function renderCombat(root) {
   };
 
   root.innerHTML = `
+    ${guideStrip('combat', '先看对手意图，再看手牌费用和效果。点牌后“执行战术”，或把牌拖向战场；不想再出牌就结束回合。')}
     <div class="battle" data-presentation-busy="${presentationBusy}">
       <div class="enemy-area">
         <div class="enemy-art-container" data-character-variant="${escapeHtml(b.enemyId)}">${enemyArt}</div>
@@ -472,6 +516,7 @@ function renderCombat(root) {
       </div>
     </div>
   `;
+  bindGuideStrip(root, 'combat');
 
   // attach events
   const enemyBox = document.getElementById('enemy-box');
@@ -503,14 +548,18 @@ function renderCombat(root) {
   root.querySelectorAll('.hand-card.shared-card').forEach(el => {
     el.addEventListener('click', () => {
       if (presentationBusy) return;
+      const handScroll = root.querySelector('#hand-area')?.scrollLeft || 0;
       selectedCardUid = el.dataset.uid;
       renderCombat(root);
+      root.querySelector('#hand-area').scrollLeft = handScroll;
     });
     el.addEventListener('keydown', event => {
       if (presentationBusy || !['Enter',' '].includes(event.key)) return;
       event.preventDefault();event.stopPropagation();
+      const handScroll = root.querySelector('#hand-area')?.scrollLeft || 0;
       selectedCardUid = el.dataset.uid;
       renderCombat(root);
+      root.querySelector('#hand-area').scrollLeft = handScroll;
     });
   });
   const hand = root.querySelector('#hand-area');

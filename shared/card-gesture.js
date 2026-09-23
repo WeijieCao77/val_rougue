@@ -14,6 +14,11 @@ export function attachCardGesture(container, callbacks) {
 
   container.addEventListener('pointermove', event => {
     if (!drag || drag.id !== event.pointerId) return;
+    if (!drag.active && event.pointerType === 'touch' && Math.abs(event.clientX - drag.x) > 8 && Math.abs(event.clientX - drag.x) > Math.abs(event.clientY - drag.y) * 1.2) {
+      if (drag.element.hasPointerCapture(event.pointerId)) drag.element.releasePointerCapture(event.pointerId);
+      drag = null;
+      return;
+    }
     if (!drag.active && Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 8) return;
     if (!drag.active) {
       drag.active = true;

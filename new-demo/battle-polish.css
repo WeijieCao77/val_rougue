@@ -6,6 +6,7 @@
 .battle .preview-panel { max-width:min(440px,100%); overflow-wrap:anywhere; }
 .battle .hand-area { min-width:0; }
 .battle .hand-card .card-name, .battle .hand-card .card-text { overflow-wrap:anywhere; }
+.battle .hand-card.shared-card .card-effect, .battle .hand-card.shared-card .card-effect>span { white-space:normal; }
 @media(min-width:901px) {
   .battle { grid-template-rows: minmax(240px, 36vh) 34px 48px minmax(248px, 1fr); gap:5px; padding:6px 12px; height:calc(100dvh - 62px); }
   .battle .player-area, .battle .enemy-area { justify-content:flex-start; gap:4px; padding:4px; }
@@ -71,8 +72,14 @@
   .battle .hand-area .hand-card.shared-card { width:146px; height:218px; }
 }
 @media(max-width:720px) {
-  .battle .hand-area { min-height:205px; --step:clamp(18px,calc((100vw - 190px)/var(--slots)),67px); }
-  .battle .hand-area .hand-card.shared-card { width:124px; height:177px; bottom:16px; }
+  .battle .hand-area { position:relative; display:flex; align-items:flex-start; gap:9px; min-height:231px; overflow-x:auto; overflow-y:hidden; padding:17px 10px 14px; scroll-snap-type:x proximity; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; }
+  .battle .hand-area .hand-card.shared-card { position:relative; left:auto; bottom:auto; flex:0 0 132px; width:132px; min-width:132px; height:200px; transform:none; scroll-snap-align:start; z-index:1; }
+  .battle .hand-area .hand-card.shared-card:hover:not(.selected),
+  .battle .hand-area .hand-card.shared-card:focus-visible:not(.selected) { transform:translateY(-5px); z-index:2; }
+  .battle .hand-area .hand-card.shared-card.selected { transform:translateY(-7px); z-index:3; }
+  .battle .hand-area .hand-card.shared-card .card-portrait { height:66px; min-height:66px; }
+  .battle .hand-area .hand-card.shared-card .card-effect { font-size:10px; line-height:1.25; }
+  .battle .hand-area .hand-card.shared-card .card-effect>span { -webkit-line-clamp:4; }
 }
 .battle .enemy-turn-banner{position:absolute;z-index:90;left:50%;top:8%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;min-width:180px;padding:12px 24px;border:1px solid #e4ab74;border-radius:9px;background:#251d2bef;box-shadow:0 10px 35px #000a,0 0 28px #bd745577;color:#ffe4c2;pointer-events:none;animation:enemy-turn-in .25s ease-out}
 .battle .enemy-turn-banner strong{font-size:20px;letter-spacing:3px}.battle .enemy-turn-banner span{font-size:11px;color:#cbb2ab}
@@ -83,3 +90,10 @@
 @keyframes enemy-hit{0%,38%{filter:none}50%{filter:brightness(2) sepia(.6)}100%{filter:none}}
 @keyframes enemy-loss-float{from{opacity:0;transform:translate(-50%,10px)}25%{opacity:1}to{opacity:0;transform:translate(-50%,-35px)}}
 .battle{position:relative}.battle .player-box{position:relative}
+.guide-strip{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:10px;width:min(100%,880px);margin:5px auto;padding:7px 10px;border:1px solid #6b948b;border-radius:7px;background:#1c3536;color:#eff6de;font-size:12px;line-height:1.35}
+.guide-strip .guide-roles{display:block;color:#bfded7;margin-top:3px}
+.guide-dismiss{flex:none;border:1px solid #a2bdb2;border-radius:4px;background:#294748;color:#f3f8e7;padding:5px 8px;cursor:pointer;font:inherit}
+.quick-guide{max-width:600px;font-size:14px;line-height:1.5}
+.quick-guide h2{margin:0;font-size:20px}.quick-guide p{margin:9px 0}
+@media(min-width:901px){#game-root:has(>.guide-strip) .battle{height:calc(100dvh - 116px)}}
+@media(max-width:720px){.guide-strip{font-size:11px;margin:3px auto;padding:6px 8px}.guide-dismiss{font-size:10px;padding:4px 5px}.quick-guide{font-size:12px}}

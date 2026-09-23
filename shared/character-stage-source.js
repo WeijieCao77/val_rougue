@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { buildChibiFigure } from './chibi-figure-source.js';
 
 // -----------------------------------------------------------------------------
 // Global model cache (shared geometry/material across instances)
@@ -174,11 +175,12 @@ function hashString(str) {
 // -----------------------------------------------------------------------------
 function createThreeStage(container, side, variant, block) {
   // Renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+  renderer.setPixelRatio(1);
   const initialWidth = container.clientWidth || 200;
   const initialHeight = container.clientHeight || 150;
-  renderer.setSize(initialWidth, initialHeight);
+  const renderSize = (width, height) => renderer.setSize(Math.max(1, Math.round(width * 0.62)), Math.max(1, Math.round(height * 0.62)), false);
+  renderSize(initialWidth, initialHeight);
   renderer.setClearColor(0x000000, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   const canvas = renderer.domElement;
@@ -186,6 +188,7 @@ function createThreeStage(container, side, variant, block) {
   canvas.style.height = '100%';
   canvas.style.display = 'block';
   canvas.style.pointerEvents = 'none';
+  canvas.style.imageRendering = 'pixelated';
   container.appendChild(canvas);
 
   // Loading overlay (SVG placeholder)
@@ -208,7 +211,7 @@ function createThreeStage(container, side, variant, block) {
   // Scene and camera
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, initialWidth / initialHeight || 1.3, 0.1, 100);
-  camera.position.set(0, 1.3, 2.8);
+  camera.position.set(0, 1.18, 2.55);
   camera.lookAt(0, 0.9, 0);
 
   // Lighting
@@ -268,10 +271,12 @@ function createThreeStage(container, side, variant, block) {
         defaultActionName: built.defaultActionName,
         fallbackTransform: built.fallbackTransform || false,
         baseY: charGroup.position.y,
-        baseArmLeftRotZ: 0,
-        baseArmRightRotZ: 0,
-        leftArm: null,
-        rightArm: null,
+        baseArmLeftRotZ: built.leftArm?.rotation.z || 0,
+        baseArmRightRotZ: built.rightArm?.rotation.z || 0,
+        baseArmLeftRotX: built.leftArm?.rotation.x || 0,
+        baseArmRightRotX: built.rightArm?.rotation.x || 0,
+        leftArm: built.leftArm || null,
+        rightArm: built.rightArm || null,
       };
       characters.push({
         group: charGroup,
@@ -322,9 +327,9 @@ function createThreeStage(container, side, variant, block) {
   const applyFallbackPose = (pose, progress) => {
     characters.forEach((char) => {
       const data = char.userData;
-      if (pose.armsUp !== undefined && data.leftArm) {
-        const target = pose.armsUp ? Math.PI / 2 : data.baseArmRightRotZ;
-        data.rightArm.rotation.z = THREE.MathUtils.lerp(data.baseArmRightRotZ, target, progress);
+      if (pose.armsUp !== undefined && data.leftArm && data.rightArm) {
+        data.leftArm.rotation.x = THREE.MathUtils.lerp(data.baseArmLeftRotX, pose.armsUp ? -0.7 : data.baseArmLeftRotX, progress);
+        data.rightArm.rotation.x = THREE.MathUtils.lerp(data.baseArmRightRotX, pose.armsUp ? -1.1 : data.baseArmRightRotX, progress);
       }
       if (pose.jump !== undefined) {
         char.group.position.y = THREE.MathUtils.lerp(0, pose.jump ? 0.3 : 0, progress);
@@ -346,6 +351,8 @@ function createThreeStage(container, side, variant, block) {
       if (data.leftArm) {
         data.leftArm.rotation.z = data.baseArmLeftRotZ;
         data.rightArm.rotation.z = data.baseArmRightRotZ;
+        data.leftArm.rotation.x = data.baseArmLeftRotX;
+        data.rightArm.rotation.x = data.baseArmRightRotX;
       }
     });
     armorIndicators.forEach((ring) => (ring.visible = block));
@@ -456,6 +463,8 @@ function createThreeStage(container, side, variant, block) {
       characters.forEach((char) => {
         if (char.mixer) {
           char.mixer.update(delta);
+        } else if (!currentCue) {
+          char.group.position.y = char.userData.baseY + Math.sin(now * 0.003) * 0.015;
         }
       });
 
@@ -482,7 +491,7 @@ function createThreeStage(container, side, variant, block) {
   // Resize observer
   const resizeObserver = new ResizeObserver(() => {
     if (disposed || !container.clientWidth || !container.clientHeight) return;
-    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderSize(container.clientWidth, container.clientHeight);
     camera.aspect = container.clientWidth / container.clientHeight;
     camera.updateProjectionMatrix();
   });
@@ -561,15 +570,8 @@ function createThreeStage(container, side, variant, block) {
 // Model loading and squad building
 // -----------------------------------------------------------------------------
 async function buildSquadModels(side, variant) {
-  const enemyId = String(variant || 'E01');
-  const selected = side === 'ally'
-    ? { url: '/shared/models/operative-swat.gltf', tintColor: new THREE.Color(0x8bb8ca), scale: 1 }
-    : getEnemyModelSelection(enemyId);
-  const model = cloneModel(await loadModel(selected.url));
-  model.group.scale.setScalar(selected.scale);
-  model.group.rotation.y = side === 'ally' ? -0.22 : 0.22;
-  tintMaterials(model.group, selected.tintColor);
-
+  const model = buildChibiFigure(side, variant);
+  model.group.rotation.y = side === 'ally' ? -0.18 : 0.18;
   return [model];
 }
 
@@ -642,6 +644,10 @@ function cloneAndTintMaterial(originalMat, baseColor, clonedMaterialsSet) {
     clone.userData.isClone = true;
     clonedMaterialsSet.add(clone);
     clone.color.lerp(baseColor, 0.2);
+    clone.flatShading = true;
+    clone.roughness = 1;
+    if (clone.map) clone.map.magFilter = THREE.NearestFilter;
+    clone.needsUpdate = true;
     return clone;
   } else {
     // Already cloned, just re-tint
