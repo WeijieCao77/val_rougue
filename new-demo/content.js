@@ -188,8 +188,8 @@ const defs = [
   { id:'TA07', name:'战术观察', cost:1, type:'skill', tag:'basic', rarity:'common', effects:[draw(1)], upgradeEffects:[draw(2)] },
   { id:'TA08', name:'谨慎推进', cost:1, type:'skill', tag:'basic', rarity:'common', effects:[block(5), draw(2)], upgradeEffects:[block(8), draw(2)] },
   { id:'TA09', name:'快速换弹', cost:0, type:'skill', tag:'basic', rarity:'common', effects:[draw(1)], upgradeEffects:[draw(2)] },
-  { id:'TA10', name:'正面突击', cost:2, type:'attack', tag:'basic', rarity:'common', effects:[atk(8), weak(1)], upgradeEffects:[atk(11), weak(2)] },
-  { id:'TA11', name:'巩固防线', cost:2, type:'skill', tag:'basic', rarity:'uncommon', effects:[weak(2), block(11)], upgradeEffects:[weak(3), block(14)] },
+  { id:'TA10', name:'正面突击', cost:2, type:'attack', tag:'basic', rarity:'common', effects:[atk(11), weak(1)], upgradeEffects:[atk(15), weak(2)] },
+  { id:'TA11', name:'巩固防线', cost:2, type:'skill', tag:'basic', rarity:'uncommon', effects:[weak(2), block(15)], upgradeEffects:[weak(3), block(19)] },
   { id:'TA12', name:'烟墙掩护', cost:1, type:'skill', tag:'basic', rarity:'common', effects:[smoke(3), block(3)], upgradeEffects:[smoke(4), block(4)] },
   { id:'TA13', name:'闪光突破', cost:1, type:'attack', tag:'basic', rarity:'common', effects:[flash(1), atk(4)], upgradeEffects:[flash(2), atk(6)] },
   { id:'TA14', name:'队伍集结', cost:0, type:'skill', tag:'basic', rarity:'common', effects:[block(2)], upgradeEffects:[block(4)] },
@@ -200,30 +200,30 @@ const defs = [
 
   // Firefight & damage components (14)
   { id:'TA19', name:'精准补枪', cost:1, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(9)], upgradeEffects:[atk(13)] },
-  { id:'TA20', name:'双发补枪', cost:2, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(6,2)], upgradeEffects:[atk(8,2)] },
-  { id:'TA21', name:'致命补枪', cost:3, type:'attack', tag:'damage', rarity:'rare', effects:[atk(16), conditional('enemy_smoke_or_flash', atk(10)), draw(1)], upgradeEffects:[atk(20), conditional('enemy_smoke_or_flash', atk(12)), draw(1)] },
+  { id:'TA20', name:'双发补枪', cost:2, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(8,2)], upgradeEffects:[atk(11,2)] },
+  { id:'TA21', name:'致命补枪', cost:3, type:'attack', tag:'damage', rarity:'rare', effects:[atk(21), conditional('enemy_smoke_or_flash', atk(13)), draw(1)], upgradeEffects:[atk(26), conditional('enemy_smoke_or_flash', atk(16)), draw(1)] },
   { id:'TA22', name:'破片手雷', cost:1, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(5), vuln(2)], upgradeEffects:[atk(7), vuln(2)] },
-  { id:'TA23', name:'燃烧瓶', cost:2, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(14), weak(1), exhaustSelf()], exhaust: true, upgradeEffects:[atk(17), weak(2), exhaustSelf()] },
-  { id:'TA24', name:'扫射压制', cost:2, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(5,3)], upgradeEffects:[atk(6,3)] },
-  { id:'TA25', name:'爆头一击', cost:2, type:'attack', tag:'damage', rarity:'rare', effects:[atk(18)], upgradeEffects:[atk(24)] },
+  { id:'TA23', name:'燃烧瓶', cost:2, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(19), weak(1), exhaustSelf()], exhaust: true, upgradeEffects:[atk(23), weak(2), exhaustSelf()] },
+  { id:'TA24', name:'扫射压制', cost:2, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(7,3)], upgradeEffects:[atk(8,3)] },
+  { id:'TA25', name:'爆头一击', cost:2, type:'attack', tag:'damage', rarity:'rare', effects:[atk(24)], upgradeEffects:[atk(32)] },
   { id:'TA26', name:'残局收割', cost:1, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(8), conditional('enemy_smoke', atk(8))], upgradeEffects:[atk(10), conditional('enemy_smoke', atk(10))] },
   { id:'TA27', name:'穿墙射击', cost:1, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(9), draw(1)], upgradeEffects:[atk(10), draw(2)] },
   { id:'TA28', name:'警戒射击', cost:1, type:'attack', tag:'damage', rarity:'common', effects:[atk(7)], upgradeEffects:[atk(10)] },
   { id:'TA29', name:'预瞄点射', cost:1, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(6), block(3)], upgradeEffects:[atk(8), block(4)] },
-  { id:'TA30', name:'反架点', cost:2, type:'attack', tag:'damage', rarity:'rare', effects:[purgeEnemyStatus('block', 12), atk(14), exhaustSelf()], exhaust: true, upgradeEffects:[purgeEnemyStatus('block', 18), atk(17), exhaustSelf()] },
+  { id:'TA30', name:'反架点', cost:2, type:'attack', tag:'damage', rarity:'rare', effects:[purgeEnemyStatus('block', 12), atk(19), exhaustSelf()], exhaust: true, upgradeEffects:[purgeEnemyStatus('block', 18), atk(23), exhaustSelf()] },
   { id:'TA31', name:'快攻连射', cost:1, type:'attack', tag:'damage', rarity:'common', effects:[atk(4,2)], upgradeEffects:[atk(6,2)] },
-  { id:'TA32', name:'重火力压制', cost:3, type:'attack', tag:'damage', rarity:'rare', effects:[atk(18), weak(2), block(5)], upgradeEffects:[atk(24), weak(2), block(7)] },
+  { id:'TA32', name:'重火力压制', cost:3, type:'attack', tag:'damage', rarity:'rare', effects:[atk(23), weak(2), block(7)], upgradeEffects:[atk(31), weak(2), block(9)] },
 
   // Tactical utility (12)
   { id:'TA33', name:'烟雾弹', cost:1, type:'skill', tag:'utility', rarity:'uncommon', effects:[smoke(4)], upgradeEffects:[smoke(6)] },
   { id:'TA34', name:'闪光弹', cost:1, type:'skill', tag:'utility', rarity:'uncommon', effects:[flash(4)], upgradeEffects:[flash(6)] },
   { id:'TA35', name:'侦察无人机', cost:1, type:'skill', tag:'utility', rarity:'uncommon', effects:[draw(2), block(2)], upgradeEffects:[draw(3), block(3)] },
-  { id:'TA36', name:'区域封锁', cost:2, type:'skill', tag:'utility', rarity:'uncommon', effects:[smoke(5), block(5)], upgradeEffects:[smoke(7), block(7)] },
+  { id:'TA36', name:'区域封锁', cost:2, type:'skill', tag:'utility', rarity:'uncommon', effects:[smoke(5), block(7)], upgradeEffects:[smoke(7), block(9)] },
   { id:'TA37', name:'诱饵陷阱', cost:1, type:'skill', tag:'utility', rarity:'uncommon', effects:[vuln(2), block(4)], upgradeEffects:[vuln(3), block(6)] },
   { id:'TA38', name:'信息干扰', cost:1, type:'skill', tag:'utility', rarity:'uncommon', effects:[weak(2), draw(1)], upgradeEffects:[weak(3), draw(1)] },
   { id:'TA39', name:'突破烟雾', cost:1, type:'skill', tag:'utility', rarity:'uncommon', effects:[smoke(2), atk(4)], upgradeEffects:[smoke(3), atk(6)] },
   { id:'TA40', name:'闪光掩护', cost:1, type:'skill', tag:'utility', rarity:'uncommon', effects:[flash(2), block(4)], upgradeEffects:[flash(3), block(6)] },
-  { id:'TA41', name:'烟闪协同', cost:2, type:'attack', tag:'utility', rarity:'rare', effects:[conditional('enemy_smoke_or_flash', atk(12))], upgradeEffects:[conditional('enemy_smoke_or_flash', atk(16))] },
+  { id:'TA41', name:'烟闪协同', cost:2, type:'attack', tag:'utility', rarity:'rare', effects:[conditional('enemy_smoke_or_flash', atk(16))], upgradeEffects:[conditional('enemy_smoke_or_flash', atk(22))] },
   { id:'TA42', name:'战术雷达', cost:0, type:'skill', tag:'utility', rarity:'uncommon', effects:[draw(1), block(1)], upgradeEffects:[draw(2), block(2)] },
   { id:'TA43', name:'道具回收', cost:1, type:'skill', tag:'utility', rarity:'rare', effects:[draw(2), energy(2)], upgradeEffects:[draw(3), energy(2)] },
   { id:'TA44', name:'全息诱饵', cost:1, type:'skill', tag:'utility', rarity:'uncommon', effects:[weak(3)], upgradeEffects:[weak(5)] },
@@ -231,8 +231,8 @@ const defs = [
   // Cover & push stance (8)
   { id:'TA45', name:'进入掩护', cost:1, type:'skill', tag:'stance', rarity:'uncommon', effects:[stanceSwitch(), block(8)], upgradeEffects:[stanceSwitch(), block(12)] },
   { id:'TA46', name:'前压突破', cost:1, type:'attack', tag:'stance', rarity:'uncommon', effects:[stanceSwitch(), atk(8)], upgradeEffects:[stanceSwitch(), atk(12)] },
-  { id:'TA47', name:'掩护烟雾', cost:2, type:'skill', tag:'stance', rarity:'uncommon', effects:[stanceSwitch(), smoke(3), block(4)], upgradeEffects:[stanceSwitch(), smoke(4), block(6)] },
-  { id:'TA48', name:'前压闪光', cost:2, type:'attack', tag:'stance', rarity:'uncommon', effects:[stanceSwitch(), flash(2), atk(6)], upgradeEffects:[stanceSwitch(), flash(3), atk(9)] },
+  { id:'TA47', name:'掩护烟雾', cost:2, type:'skill', tag:'stance', rarity:'uncommon', effects:[stanceSwitch(), smoke(3), block(5)], upgradeEffects:[stanceSwitch(), smoke(4), block(8)] },
+  { id:'TA48', name:'前压闪光', cost:2, type:'attack', tag:'stance', rarity:'uncommon', effects:[stanceSwitch(), flash(2), atk(8)], upgradeEffects:[stanceSwitch(), flash(3), atk(12)] },
   { id:'TA49', name:'阵地巩固', cost:1, type:'skill', tag:'stance', rarity:'rare', effects:[conditional('stance_cover', block(14))], upgradeEffects:[conditional('stance_cover', block(20))] },
   { id:'TA50', name:'突破重围', cost:1, type:'attack', tag:'stance', rarity:'rare', effects:[conditional('stance_push', atk(14))], upgradeEffects:[conditional('stance_push', atk(20))] },
   { id:'TA51', name:'姿态重置', cost:0, type:'skill', tag:'stance', rarity:'common', effects:[stanceSwitch(), draw(1)], upgradeEffects:[stanceSwitch(), draw(2)] },
@@ -253,7 +253,7 @@ const defs = [
   { id:'TA62', name:'布防反击', cost:1, type:'attack', tag:'hybrid', rarity:'uncommon', effects:[atk(7), conditional('prev_played_attack', block(4))], upgradeEffects:[atk(9), conditional('prev_played_attack', block(6))] },
   { id:'TA63', name:'道具补枪', cost:0, type:'attack', tag:'hybrid', rarity:'uncommon', effects:[atk(3), draw(1)], upgradeEffects:[atk(6), draw(1)] },
   { id:'TA64', name:'战术换防', cost:1, type:'skill', tag:'hybrid', rarity:'uncommon', effects:[block(6), stanceSwitch()], upgradeEffects:[block(9), stanceSwitch()] },
-  { id:'TA65', name:'补枪换防', cost:2, type:'attack', tag:'hybrid', rarity:'rare', effects:[atk(10), block(6)], upgradeEffects:[atk(14), block(9)] },
+  { id:'TA65', name:'补枪换防', cost:2, type:'attack', tag:'hybrid', rarity:'rare', effects:[atk(14), block(8)], upgradeEffects:[atk(19), block(12)] },
   { id:'TA66', name:'烟闪循环', cost:1, type:'skill', tag:'hybrid', rarity:'uncommon', effects:[smoke(2), flash(2)], upgradeEffects:[smoke(3), flash(3)] },
   { id:'TA67', name:'姿态补枪', cost:1, type:'attack', tag:'hybrid', rarity:'uncommon', effects:[atk(8), conditional('stance_changed_this_turn', atk(4))], upgradeEffects:[atk(10), conditional('stance_changed_this_turn', atk(6))] },
 
@@ -298,40 +298,40 @@ for(const curse of CURSES)def({id:curse.id,name:curse.name,cost:0,type:'status',
 
 // ----------------------------- Teams -----------------------------
 export const TEAMS = {
-  breach:   { id:'breach', region:'AM', name:'美洲 · 突破', desc:'多段交火与易伤联动。', startingDeck:[['TA01',2],['TA05',1],['TA10',1],['TA19',1],['TA28',1],['TA46',1],['TA02',1],['TA06',1],['TA07',1]] },
+  breach:   { id:'breach', region:'AM', name:'美洲 · 突破', desc:'多段交火与易伤联动。', startingDeck:[['TA01',1],['TA22',1],['TA05',1],['TA10',1],['TA19',1],['TA28',1],['TA46',1],['TA02',2],['TA06',1]] },
   anchor:   { id:'anchor', region:'CN', name:'中国 · 架点', desc:'布防转攻与战术升级。', startingDeck:[['TA02',2],['TA06',1],['TA11',1],['TA45',1],['TA08',1],['TA29',1],['TA65',1],['TA01',1],['TA07',1]] },
-  utility:  { id:'utility', region:'EMEA', name:'EMEA · 道具', desc:'烟闪控场与压制。', startingDeck:[['TA13',1],['TA39',1],['TA60',1],['TA61',1],['TA41',1],['TA04',1],['TA12',1],['TA40',1],['TA66',1],['TA07',1]] },
-  rotation: { id:'rotation', region:'PAC', name:'太平洋 · 调度', desc:'抽牌循环与姿态节奏。', startingDeck:[['TA01',1],['TA05',1],['TA28',1],['TA02',1],['TA08',1],['TA07',1],['TA09',1],['TA42',1],['TA74',1],['TA73',1]] }
+  utility:  { id:'utility', region:'EMEA', name:'EMEA · 道具', desc:'烟闪控场与压制。', startingDeck:[['TA13',1],['TA39',1],['TA60',1],['TA61',1],['TA41',1],['TA02',1],['TA12',1],['TA40',1],['TA66',1],['TA07',1]] },
+  rotation: { id:'rotation', region:'PAC', name:'太平洋 · 调度', desc:'抽牌循环与姿态节奏。', startingDeck:[['TA01',1],['TA05',1],['TA28',1],['TA02',1],['TA08',1],['TA27',1],['TA02',1],['TA42',1],['TA74',1],['TA64',1]] }
 };
 
 // ----------------------------- Enemies (at least 12 distinct teams across acts) -----------------------------
 export const ENEMIES = {
   // Act 1
-  E01: { name:'基础进攻小队', hp:40, script:[[{type:'hit',n:7,times:1}],[{type:'hit',n:9,times:1}],[{type:'block',n:4},{type:'hit',n:7,times:1}]] },
-  E02: { name:'信息压制小队', hp:44, script:[[{type:'hit',n:6,times:1}],[{type:'jam',id:'ST01',n:1},{type:'hit',n:6,times:1}],[{type:'hit',n:10,times:1}]] },
-  E03: { name:'多段突击小队', hp:48, script:[[{type:'hit',n:3,times:3}],[{type:'hit',n:8,times:1}],[{type:'block',n:5},{type:'hit',n:7,times:1}]] },
-  E04: { name:'防守反击小队', hp:46, script:[[{type:'block',n:8},{type:'hit',n:5,times:1}],[{type:'hit',n:12,times:1}],[{type:'jam',id:'ST03',n:1},{type:'hit',n:7,times:1}]] },
-  E05: { name:'纪律控制小队', hp:52, script:[[{type:'weak',n:1}],[{type:'hit',n:10,times:1}],[{type:'block',n:8},{type:'hit',n:8,times:1}]] },
-  EL01:{ name:'高压强敌小队', hp:72, elite:true, script:[[{type:'hit',n:9,times:1},{type:'jam',id:'ST03',n:1}],[{type:'hit',n:4,times:3}],[{type:'block',n:12},{type:'jam',id:'ST02',n:1}]] },
-  B01: { name:'资格赛冠军卫队', hp:110, boss:true, script:[[{type:'weak',n:1},{type:'hit',n:6,times:1}],[{type:'jam',id:'ST02',n:2},{type:'block',n:10}],[{type:'hit',n:4,times:3}],[{type:'hit',n:12,times:1}]] },
+  E01: { name:'基础进攻小队', hp:50, script:[[{type:'hit',n:12,times:1}],[{type:'buff',n:2},{type:'hit',n:7,times:1}],[{type:'block',n:6},{type:'hit',n:9,times:1}]] },
+  E02: { name:'信息压制小队', hp:52, script:[[{type:'hit',n:11,times:1}],[{type:'jam',id:'ST01',n:1},{type:'hit',n:8,times:1}],[{type:'hit',n:14,times:1}]] },
+  E03: { name:'多段突击小队', hp:56, script:[[{type:'hit',n:5,times:3}],[{type:'hit',n:12,times:1}],[{type:'block',n:6},{type:'hit',n:9,times:1}]] },
+  E04: { name:'防守反击小队', hp:56, script:[[{type:'block',n:8},{type:'hit',n:7,times:1}],[{type:'hit',n:16,times:1}],[{type:'jam',id:'ST03',n:1},{type:'hit',n:9,times:1}]] },
+  E05: { name:'纪律控制小队', hp:60, script:[[{type:'weak',n:1},{type:'buff',n:2}],[{type:'hit',n:12,times:1}],[{type:'block',n:8},{type:'hit',n:10,times:1}]] },
+  EL01:{ name:'高压强敌小队', hp:90, elite:true, script:[[{type:'hit',n:13,times:1},{type:'jam',id:'ST03',n:1}],[{type:'hit',n:6,times:3}],[{type:'block',n:12},{type:'buff',n:3}]] },
+  B01: { name:'资格赛冠军卫队', hp:130, boss:true, script:[[{type:'weak',n:1},{type:'hit',n:8,times:1}],[{type:'jam',id:'ST02',n:2},{type:'block',n:12}],[{type:'hit',n:5,times:3}],[{type:'hit',n:14,times:1}],[{type:'buff',n:3},{type:'hit',n:6,times:1}]] },
 
   // Act 2
-  A2_E01: { name:'第二幕基础进攻小队', hp:48, script:[[{type:'hit',n:10,times:1}],[{type:'hit',n:12,times:1}],[{type:'block',n:6},{type:'hit',n:7,times:1}]] },
-  A2_E02: { name:'第二幕信息压制小队', hp:52, script:[[{type:'hit',n:10,times:1}],[{type:'jam',id:'ST04',n:1},{type:'hit',n:8,times:1}],[{type:'hit',n:13,times:1}]] },
-  A2_E03: { name:'第二幕多段突击小队', hp:56, script:[[{type:'hit',n:4,times:3}],[{type:'hit',n:11,times:1}],[{type:'block',n:7},{type:'hit',n:8,times:1}]] },
-  A2_E04: { name:'第二幕防守反击小队', hp:54, script:[[{type:'block',n:11},{type:'hit',n:5,times:1}],[{type:'hit',n:16,times:1}],[{type:'jam',id:'ST03',n:1},{type:'hit',n:9,times:1}]] },
-  A2_E05: { name:'第二幕纪律控制小队', hp:60, script:[[{type:'weak',n:1}],[{type:'hit',n:14,times:1}],[{type:'block',n:9},{type:'hit',n:9,times:1}]] },
-  A2_EL01:{ name:'第二幕强敌小队', hp:72, elite:true, script:[[{type:'hit',n:11,times:1},{type:'jam',id:'ST03',n:1}],[{type:'hit',n:5,times:3}],[{type:'block',n:14},{type:'jam',id:'ST02',n:1}]] },
-  A2_B01:{ name:'晋级赛冠军卫队', hp:110, boss:true, script:[[{type:'weak',n:1},{type:'hit',n:8,times:1}],[{type:'jam',id:'ST02',n:2},{type:'block',n:12}],[{type:'hit',n:5,times:3}],[{type:'hit',n:16,times:1}]] },
+  A2_E01: { name:'第二幕基础进攻小队', hp:72, script:[[{type:'hit',n:14,times:1}],[{type:'buff',n:3},{type:'hit',n:9,times:1}],[{type:'block',n:10},{type:'hit',n:11,times:1}]] },
+  A2_E02: { name:'第二幕信息压制小队', hp:76, script:[[{type:'hit',n:13,times:1}],[{type:'jam',id:'ST04',n:1},{type:'hit',n:10,times:1}],[{type:'hit',n:18,times:1}]] },
+  A2_E03: { name:'第二幕多段突击小队', hp:80, script:[[{type:'hit',n:6,times:3}],[{type:'hit',n:15,times:1}],[{type:'block',n:10},{type:'hit',n:11,times:1}]] },
+  A2_E04: { name:'第二幕防守反击小队', hp:80, script:[[{type:'block',n:14},{type:'hit',n:8,times:1}],[{type:'hit',n:20,times:1}],[{type:'jam',id:'ST03',n:1},{type:'hit',n:12,times:1}]] },
+  A2_E05: { name:'第二幕纪律控制小队', hp:86, script:[[{type:'weak',n:1},{type:'buff',n:3}],[{type:'hit',n:16,times:1}],[{type:'block',n:12},{type:'hit',n:12,times:1}]] },
+  A2_EL01:{ name:'第二幕强敌小队', hp:118, elite:true, script:[[{type:'hit',n:16,times:1},{type:'jam',id:'ST03',n:1}],[{type:'hit',n:7,times:3}],[{type:'block',n:16},{type:'buff',n:3}]] },
+  A2_B01:{ name:'晋级赛冠军卫队', hp:180, boss:true, script:[[{type:'weak',n:1},{type:'hit',n:12,times:1}],[{type:'jam',id:'ST02',n:2},{type:'block',n:16}],[{type:'hit',n:7,times:3}],[{type:'hit',n:20,times:1}],[{type:'buff',n:4},{type:'hit',n:8,times:1}]] },
 
   // Act 3
-  A3_E01: { name:'第三幕基础进攻小队', hp:64, script:[[{type:'hit',n:13,times:1}],[{type:'hit',n:16,times:1}],[{type:'block',n:8},{type:'hit',n:10,times:1}]] },
-  A3_E02: { name:'第三幕信息压制小队', hp:70, script:[[{type:'hit',n:13,times:1}],[{type:'jam',id:'ST05',n:2},{type:'hit',n:11,times:1}],[{type:'hit',n:17,times:1}]] },
-  A3_E03: { name:'第三幕多段突击小队', hp:76, script:[[{type:'hit',n:5,times:3}],[{type:'hit',n:15,times:1}],[{type:'block',n:9},{type:'hit',n:11,times:1}]] },
-  A3_E04: { name:'第三幕防守反击小队', hp:72, script:[[{type:'block',n:14},{type:'hit',n:7,times:1}],[{type:'hit',n:20,times:1}],[{type:'jam',id:'ST03',n:2},{type:'hit',n:12,times:1}]] },
-  A3_E05: { name:'第三幕纪律控制小队', hp:82, script:[[{type:'weak',n:2}],[{type:'hit',n:18,times:1}],[{type:'block',n:12},{type:'hit',n:12,times:1}]] },
-  A3_EL01:{ name:'第三幕强敌小队', hp:96, elite:true, script:[[{type:'hit',n:14,times:1},{type:'jam',id:'ST03',n:2}],[{type:'hit',n:6,times:3}],[{type:'block',n:18},{type:'jam',id:'ST02',n:2}]] },
-  A3_B01:{ name:'总决赛冠军卫队', hp:145, boss:true, script:[[{type:'hit',n:12,times:1},{type:'jam',id:'ST03',n:1}],[{type:'weak',n:1},{type:'hit',n:5,times:3}],[{type:'block',n:16},{type:'jam',id:'ST01',n:2}],[{type:'hit',n:20,times:1}]] }
+  A3_E01: { name:'第三幕基础进攻小队', hp:96, script:[[{type:'hit',n:18,times:1}],[{type:'buff',n:4},{type:'hit',n:12,times:1}],[{type:'block',n:12},{type:'hit',n:14,times:1}]] },
+  A3_E02: { name:'第三幕信息压制小队', hp:100, script:[[{type:'hit',n:17,times:1}],[{type:'jam',id:'ST05',n:2},{type:'hit',n:13,times:1}],[{type:'hit',n:22,times:1}]] },
+  A3_E03: { name:'第三幕多段突击小队', hp:106, script:[[{type:'hit',n:7,times:3}],[{type:'hit',n:19,times:1}],[{type:'block',n:12},{type:'hit',n:14,times:1}]] },
+  A3_E04: { name:'第三幕防守反击小队', hp:104, script:[[{type:'block',n:18},{type:'hit',n:10,times:1}],[{type:'hit',n:25,times:1}],[{type:'jam',id:'ST03',n:2},{type:'hit',n:15,times:1}]] },
+  A3_E05: { name:'第三幕纪律控制小队', hp:112, script:[[{type:'weak',n:2},{type:'buff',n:4}],[{type:'hit',n:21,times:1}],[{type:'block',n:15},{type:'hit',n:15,times:1}]] },
+  A3_EL01:{ name:'第三幕强敌小队', hp:140, elite:true, script:[[{type:'hit',n:20,times:1},{type:'jam',id:'ST03',n:2}],[{type:'hit',n:8,times:3}],[{type:'block',n:20},{type:'buff',n:4}]] },
+  A3_B01:{ name:'总决赛冠军卫队', hp:245, boss:true, script:[[{type:'hit',n:16,times:1},{type:'jam',id:'ST03',n:1}],[{type:'weak',n:1},{type:'hit',n:7,times:3}],[{type:'block',n:20},{type:'jam',id:'ST01',n:2}],[{type:'hit',n:26,times:1}],[{type:'buff',n:5},{type:'hit',n:10,times:1}]] }
 };
 
 // ----------------------------- Relics -----------------------------

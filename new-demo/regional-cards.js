@@ -132,13 +132,13 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "block",
-        "n": 10
+        "n": 14
       }
     ],
     "upgradeEffects": [
       {
         "type": "block",
-        "n": 14
+        "n": 19
       }
     ],
     "exhaust": false,
@@ -288,7 +288,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "block",
-        "n": 8
+        "n": 11
       },
       {
         "type": "draw",
@@ -298,7 +298,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "block",
-        "n": 11
+        "n": 15
       },
       {
         "type": "draw",
@@ -318,13 +318,13 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 13
+        "n": 18
       }
     ],
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 17
+        "n": 23
       }
     ],
     "exhaust": false,
@@ -512,7 +512,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 6
+        "n": 8
       }
     ],
     "upgradeEffects": [
@@ -522,7 +522,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 9
+        "n": 12
       }
     ],
     "exhaust": false,
@@ -634,7 +634,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 8
+        "n": 11
       },
       {
         "type": "vuln",
@@ -644,7 +644,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 11
+        "n": 15
       },
       {
         "type": "vuln",
@@ -811,12 +811,12 @@ export const REGIONAL_CARDS = [
         "condition": "stance_cover",
         "effect": {
           "type": "attack",
-          "n": 10
+          "n": 14
         }
       },
       {
         "type": "block",
-        "n": 5
+        "n": 7
       }
     ],
     "upgradeEffects": [
@@ -825,12 +825,12 @@ export const REGIONAL_CARDS = [
         "condition": "stance_cover",
         "effect": {
           "type": "attack",
-          "n": 14
+          "n": 19
         }
       },
       {
         "type": "block",
-        "n": 7
+        "n": 9
       }
     ],
     "exhaust": false,
@@ -849,7 +849,7 @@ export const REGIONAL_CARDS = [
         "condition": "stance_push",
         "effect": {
           "type": "block",
-          "n": 12
+          "n": 16
         }
       },
       {
@@ -863,7 +863,7 @@ export const REGIONAL_CARDS = [
         "condition": "stance_push",
         "effect": {
           "type": "block",
-          "n": 16
+          "n": 22
         }
       },
       {
@@ -1420,20 +1420,6 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 6
-      },
-      {
-        "type": "conditional",
-        "condition": "prev_played_attack",
-        "effect": {
-          "type": "attack",
-          "n": 6
-        }
-      }
-    ],
-    "upgradeEffects": [
-      {
-        "type": "attack",
         "n": 8
       },
       {
@@ -1442,6 +1428,20 @@ export const REGIONAL_CARDS = [
         "effect": {
           "type": "attack",
           "n": 8
+        }
+      }
+    ],
+    "upgradeEffects": [
+      {
+        "type": "attack",
+        "n": 11
+      },
+      {
+        "type": "conditional",
+        "condition": "prev_played_attack",
+        "effect": {
+          "type": "attack",
+          "n": 11
         }
       }
     ],
@@ -1534,21 +1534,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 10
-      },
-      {
-        "type": "conditional",
-        "condition": "stance_changed_this_turn",
-        "effect": {
-          "type": "attack",
-          "n": 6
-        }
-      }
-    ],
-    "upgradeEffects": [
-      {
-        "type": "attack",
-        "n": 13
+        "n": 14
       },
       {
         "type": "conditional",
@@ -1556,6 +1542,20 @@ export const REGIONAL_CARDS = [
         "effect": {
           "type": "attack",
           "n": 8
+        }
+      }
+    ],
+    "upgradeEffects": [
+      {
+        "type": "attack",
+        "n": 18
+      },
+      {
+        "type": "conditional",
+        "condition": "stance_changed_this_turn",
+        "effect": {
+          "type": "attack",
+          "n": 11
         }
       }
     ],
@@ -1784,14 +1784,14 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 4,
+        "n": 5,
         "times": 3
       }
     ],
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 5,
+        "n": 7,
         "times": 3
       }
     ],
@@ -1808,7 +1808,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 15
+        "n": 20
       },
       {
         "type": "exhaustSelf"
@@ -1817,7 +1817,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 20
+        "n": 27
       },
       {
         "type": "exhaustSelf"
@@ -1836,21 +1836,21 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 8
-      },
-      {
-        "type": "block",
-        "n": 5
-      }
-    ],
-    "upgradeEffects": [
-      {
-        "type": "attack",
         "n": 11
       },
       {
         "type": "block",
         "n": 7
+      }
+    ],
+    "upgradeEffects": [
+      {
+        "type": "attack",
+        "n": 15
+      },
+      {
+        "type": "block",
+        "n": 9
       }
     ],
     "exhaust": false,
@@ -1926,7 +1926,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 7
+        "n": 9
       },
       {
         "type": "smoke",
@@ -1936,7 +1936,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 10
+        "n": 14
       },
       {
         "type": "smoke",
@@ -1956,7 +1956,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 6
+        "n": 8
       },
       {
         "type": "flash",
@@ -1966,7 +1966,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 8
+        "n": 11
       },
       {
         "type": "flash",
@@ -2110,13 +2110,13 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 20
+        "n": 26
       }
     ],
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 26
+        "n": 34
       }
     ],
     "exhaust": false,
@@ -2132,13 +2132,13 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "block",
-        "n": 20
+        "n": 26
       }
     ],
     "upgradeEffects": [
       {
         "type": "block",
-        "n": 26
+        "n": 34
       }
     ],
     "exhaust": false,
@@ -2830,14 +2830,14 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 13,
+        "n": 18,
         "times": 1
       }
     ],
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 17,
+        "n": 23,
         "times": 1
       }
     ],
@@ -3150,23 +3150,23 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 7,
-        "times": 1
-      },
-      {
-        "type": "block",
-        "n": 4
-      }
-    ],
-    "upgradeEffects": [
-      {
-        "type": "attack",
         "n": 9,
         "times": 1
       },
       {
         "type": "block",
-        "n": 6
+        "n": 5
+      }
+    ],
+    "upgradeEffects": [
+      {
+        "type": "attack",
+        "n": 12,
+        "times": 1
+      },
+      {
+        "type": "block",
+        "n": 8
       }
     ],
     "exhaust": false,
@@ -3182,7 +3182,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 10,
+        "n": 14,
         "times": 1
       },
       {
@@ -3194,7 +3194,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 14,
+        "n": 19,
         "times": 1
       },
       {
@@ -3216,14 +3216,14 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 7,
+        "n": 9,
         "times": 2
       }
     ],
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 9,
+        "n": 12,
         "times": 2
       }
     ],
@@ -3240,7 +3240,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 4,
+        "n": 5,
         "times": 3
       },
       {
@@ -3252,7 +3252,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 5,
+        "n": 7,
         "times": 3
       },
       {
@@ -3621,7 +3621,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 4
+        "n": 5
       },
       {
         "type": "draw",
@@ -3636,7 +3636,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 6
+        "n": 8
       },
       {
         "type": "draw",
@@ -3661,7 +3661,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 4
+        "n": 5
       },
       {
         "type": "draw",
@@ -3676,7 +3676,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 6
+        "n": 8
       },
       {
         "type": "draw",
@@ -3992,7 +3992,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 4
+        "n": 5
       }
     ],
     "upgradeEffects": [
@@ -4002,7 +4002,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 6
+        "n": 8
       }
     ],
     "exhaust": false,
@@ -4018,7 +4018,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 8,
+        "n": 11,
         "times": 1
       },
       {
@@ -4028,13 +4028,13 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 4
+        "n": 5
       }
     ],
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 10,
+        "n": 14,
         "times": 1
       },
       {
@@ -4044,7 +4044,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 6
+        "n": 8
       }
     ],
     "exhaust": false,
@@ -4060,7 +4060,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 15,
+        "n": 20,
         "times": 1
       },
       {
@@ -4076,7 +4076,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 20,
+        "n": 26,
         "times": 1
       },
       {
@@ -4164,21 +4164,21 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "heal",
-        "n": 8
+        "n": 11
       },
       {
         "type": "block",
-        "n": 5
+        "n": 7
       }
     ],
     "upgradeEffects": [
       {
         "type": "heal",
-        "n": 12
+        "n": 16
       },
       {
         "type": "block",
-        "n": 8
+        "n": 11
       }
     ],
     "exhaust": false,
@@ -4562,22 +4562,6 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 3,
-        "times": 5
-      },
-      {
-        "type": "conditional",
-        "condition": "prev_played_attack",
-        "effect": {
-          "type": "attack",
-          "n": 2,
-          "times": 1
-        }
-      }
-    ],
-    "upgradeEffects": [
-      {
-        "type": "attack",
         "n": 4,
         "times": 5
       },
@@ -4587,6 +4571,22 @@ export const REGIONAL_CARDS = [
         "effect": {
           "type": "attack",
           "n": 3,
+          "times": 1
+        }
+      }
+    ],
+    "upgradeEffects": [
+      {
+        "type": "attack",
+        "n": 5,
+        "times": 5
+      },
+      {
+        "type": "conditional",
+        "condition": "prev_played_attack",
+        "effect": {
+          "type": "attack",
+          "n": 4,
           "times": 1
         }
       }
@@ -4604,14 +4604,14 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 3,
+        "n": 4,
         "times": 5
       }
     ],
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 4,
+        "n": 5,
         "times": 5
       }
     ],
@@ -4628,7 +4628,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 8,
+        "n": 11,
         "times": 1
       },
       {
@@ -4643,7 +4643,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 10,
+        "n": 14,
         "times": 1
       },
       {
@@ -4668,7 +4668,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 12,
+        "n": 16,
         "times": 1
       },
       {
@@ -4678,7 +4678,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 4
+        "n": 5
       },
       {
         "type": "draw",
@@ -4688,7 +4688,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 16,
+        "n": 21,
         "times": 1
       },
       {
@@ -4698,7 +4698,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 6
+        "n": 8
       },
       {
         "type": "draw",
@@ -4718,11 +4718,11 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "heal",
-        "n": 6
+        "n": 8
       },
       {
         "type": "block",
-        "n": 4
+        "n": 5
       },
       {
         "type": "exhaustSelf"
@@ -4731,11 +4731,11 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "heal",
-        "n": 9
+        "n": 12
       },
       {
         "type": "block",
-        "n": 6
+        "n": 8
       },
       {
         "type": "exhaustSelf"
@@ -4792,7 +4792,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 5
+        "n": 7
       }
     ],
     "upgradeEffects": [
@@ -4806,7 +4806,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 8
+        "n": 10
       }
     ],
     "exhaust": false,
@@ -5931,7 +5931,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 6
+        "n": 8
       }
     ],
     "upgradeEffects": [
@@ -5944,7 +5944,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 8
+        "n": 11
       }
     ],
     "exhaust": false,
@@ -5967,7 +5967,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "attack",
-        "n": 6
+        "n": 8
       }
     ],
     "upgradeEffects": [
@@ -5980,7 +5980,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "attack",
-        "n": 9
+        "n": 12
       }
     ],
     "exhaust": false,
@@ -6308,7 +6308,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 5
+        "n": 7
       },
       {
         "type": "draw",
@@ -6322,7 +6322,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 7
+        "n": 9
       },
       {
         "type": "draw",
@@ -6346,7 +6346,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 5
+        "n": 7
       },
       {
         "type": "draw",
@@ -6360,7 +6360,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 7
+        "n": 9
       },
       {
         "type": "draw",
@@ -6418,14 +6418,14 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 6
+        "n": 8
       },
       {
         "type": "conditional",
         "condition": "enemy_smoke",
         "effect": {
           "type": "attack",
-          "n": 6
+          "n": 8
         }
       },
       {
@@ -6436,14 +6436,14 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 8
+        "n": 11
       },
       {
         "type": "conditional",
         "condition": "enemy_smoke",
         "effect": {
           "type": "attack",
-          "n": 8
+          "n": 11
         }
       },
       {
@@ -6464,14 +6464,14 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 6
+        "n": 8
       },
       {
         "type": "conditional",
         "condition": "enemy_flash",
         "effect": {
           "type": "attack",
-          "n": 6
+          "n": 8
         }
       },
       {
@@ -6482,14 +6482,14 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 8
+        "n": 11
       },
       {
         "type": "conditional",
         "condition": "enemy_flash",
         "effect": {
           "type": "attack",
-          "n": 8
+          "n": 11
         }
       },
       {
@@ -6510,7 +6510,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 14
+        "n": 19
       },
       {
         "type": "weak",
@@ -6523,7 +6523,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 17
+        "n": 23
       },
       {
         "type": "weak",
@@ -6546,21 +6546,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 18
-      },
-      {
-        "type": "weak",
-        "n": 2
-      },
-      {
-        "type": "block",
-        "n": 5
-      }
-    ],
-    "upgradeEffects": [
-      {
-        "type": "attack",
-        "n": 24
+        "n": 23
       },
       {
         "type": "weak",
@@ -6569,6 +6555,20 @@ export const REGIONAL_CARDS = [
       {
         "type": "block",
         "n": 7
+      }
+    ],
+    "upgradeEffects": [
+      {
+        "type": "attack",
+        "n": 31
+      },
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "block",
+        "n": 9
       }
     ],
     "exhaust": false,
@@ -6584,7 +6584,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 18,
+        "n": 23,
         "times": 1
       },
       {
@@ -6599,7 +6599,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 24,
+        "n": 31,
         "times": 1
       },
       {
@@ -6627,7 +6627,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 5
+        "n": 7
       },
       {
         "type": "draw",
@@ -6643,7 +6643,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 8
+        "n": 10
       },
       {
         "type": "draw",
@@ -6666,7 +6666,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "block",
-        "n": 12
+        "n": 16
       },
       {
         "type": "smoke",
@@ -6680,7 +6680,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "block",
-        "n": 16
+        "n": 21
       },
       {
         "type": "smoke",
@@ -6930,7 +6930,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 5,
+        "n": 7,
         "times": 2
       },
       {
@@ -6941,7 +6941,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 7,
+        "n": 9,
         "times": 2
       },
       {
@@ -6967,7 +6967,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "attack",
-        "n": 7
+        "n": 9
       }
     ],
     "upgradeEffects": [
@@ -6978,7 +6978,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "attack",
-        "n": 9
+        "n": 12
       }
     ],
     "exhaust": false,
@@ -7172,14 +7172,14 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 5
+        "n": 7
       },
       {
         "type": "conditional",
         "condition": "enemy_smoke_or_flash",
         "effect": {
           "type": "attack",
-          "n": 10
+          "n": 14
         }
       },
       {
@@ -7194,14 +7194,14 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 7
+        "n": 9
       },
       {
         "type": "conditional",
         "condition": "enemy_smoke_or_flash",
         "effect": {
           "type": "attack",
-          "n": 14
+          "n": 19
         }
       },
       {
@@ -7256,14 +7256,14 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 10
+        "n": 13
       },
       {
         "type": "conditional",
         "condition": "enemy_smoke_or_flash",
         "effect": {
           "type": "attack",
-          "n": 12
+          "n": 16
         }
       },
       {
@@ -7274,14 +7274,14 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 12
+        "n": 16
       },
       {
         "type": "conditional",
         "condition": "enemy_smoke_or_flash",
         "effect": {
           "type": "attack",
-          "n": 16
+          "n": 21
         }
       },
       {
@@ -7310,7 +7310,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 6
+        "n": 8
       }
     ],
     "upgradeEffects": [
@@ -7324,7 +7324,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 8
+        "n": 10
       }
     ],
     "exhaust": false,
@@ -7394,23 +7394,23 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 5,
+        "n": 7,
         "times": 1
       },
       {
         "type": "block",
-        "n": 5
+        "n": 7
       }
     ],
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 6,
+        "n": 8,
         "times": 1
       },
       {
         "type": "block",
-        "n": 6
+        "n": 8
       }
     ],
     "exhaust": false,
@@ -7426,14 +7426,14 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 4,
+        "n": 5,
         "times": 2
       }
     ],
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 5,
+        "n": 7,
         "times": 2
       }
     ],
@@ -7681,7 +7681,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 6
+        "n": 8
       },
       {
         "type": "weak",
@@ -7691,7 +7691,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 8
+        "n": 11
       },
       {
         "type": "weak",
@@ -7777,7 +7777,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 10
+        "n": 14
       },
       {
         "type": "vuln",
@@ -7787,7 +7787,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 13
+        "n": 18
       },
       {
         "type": "vuln",
@@ -7867,13 +7867,13 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 12
+        "n": 16
       }
     ],
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 16
+        "n": 22
       }
     ],
     "exhaust": false,
@@ -7889,14 +7889,14 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 5,
+        "n": 7,
         "times": 2
       }
     ],
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 6,
+        "n": 8,
         "times": 2
       }
     ],
@@ -8035,7 +8035,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 5
+        "n": 7
       }
     ],
     "upgradeEffects": [
@@ -8045,7 +8045,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 7
+        "n": 9
       }
     ],
     "exhaust": false,
@@ -8184,7 +8184,7 @@ export const REGIONAL_CARDS = [
         "condition": "enemy_smoke_or_flash",
         "effect": {
           "type": "attack",
-          "n": 10,
+          "n": 14,
           "times": 1
         }
       },
@@ -8199,7 +8199,7 @@ export const REGIONAL_CARDS = [
         "condition": "enemy_smoke_or_flash",
         "effect": {
           "type": "attack",
-          "n": 14,
+          "n": 19,
           "times": 1
         }
       },
@@ -8392,7 +8392,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 6
+        "n": 8
       }
     ],
     "upgradeEffects": [
@@ -8405,7 +8405,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "block",
-        "n": 8
+        "n": 11
       }
     ],
     "exhaust": false,
@@ -8428,7 +8428,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "attack",
-        "n": 5,
+        "n": 7,
         "times": 1
       }
     ],
@@ -8442,7 +8442,7 @@ export const REGIONAL_CARDS = [
       },
       {
         "type": "attack",
-        "n": 8,
+        "n": 11,
         "times": 1
       }
     ],
@@ -8787,23 +8787,23 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 8,
-        "times": 1
-      },
-      {
-        "type": "block",
-        "n": 5
-      }
-    ],
-    "upgradeEffects": [
-      {
-        "type": "attack",
         "n": 11,
         "times": 1
       },
       {
         "type": "block",
         "n": 7
+      }
+    ],
+    "upgradeEffects": [
+      {
+        "type": "attack",
+        "n": 15,
+        "times": 1
+      },
+      {
+        "type": "block",
+        "n": 9
       }
     ],
     "exhaust": false,
@@ -9349,7 +9349,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "block",
-        "n": 18
+        "n": 23
       },
       {
         "type": "upgradeAllInCombatDeck"
@@ -9358,7 +9358,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "block",
-        "n": 24
+        "n": 31
       },
       {
         "type": "upgradeAllInCombatDeck"
@@ -9561,7 +9561,7 @@ export const REGIONAL_CARDS = [
     "effects": [
       {
         "type": "attack",
-        "n": 6,
+        "n": 8,
         "times": 3
       },
       {
@@ -9572,7 +9572,7 @@ export const REGIONAL_CARDS = [
     "upgradeEffects": [
       {
         "type": "attack",
-        "n": 7,
+        "n": 9,
         "times": 3
       },
       {

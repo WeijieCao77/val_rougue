@@ -414,7 +414,8 @@ function renderStatuses(statusObj) {
     flash: { label: '闪光', desc: '闪光：敌方下一次命中伤害 -3×层数，触发后消耗全部层数' },
     weak: { label: '压制', desc: '压制：攻击伤害 ×0.75' },
     vuln: { label: '易伤', desc: '易伤：受到攻击 ×1.5' },
-    block: { label: '布防', desc: '布防：抵消等量伤害' }
+    block: { label: '布防', desc: '布防：抵消等量伤害' },
+    strength: { label: '火力', desc: '火力：敌方每次命中伤害 +层数，本场持续' }
   };
   return Object.entries(statusObj).filter(([k,v]) => v > 0).map(([k,v]) => {
     const info = mapping[k] || { label: k, desc: `${k}:${v}` };

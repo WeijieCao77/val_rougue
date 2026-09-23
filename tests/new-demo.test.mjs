@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS } from '../new-demo/content.js';
+import * as engine from '../new-demo/engine.js';
 import { createRun, act, legalActions, categoryUpgradeQuote } from '../new-demo/engine.js';
 import { buildMap } from '../new-demo/season-map.js';
 
@@ -160,7 +161,7 @@ test('source-anchored abilities retain block and scale every attack or defense',
   state = createTestBattle({handCards:['TA85','TA24'], enemyHp:50, energy:3});
   state = playCardById(state, 'TA85');
   state = playCardById(state, 'TA24');
-  assert.equal(state.battle.enemyHp, 29); // (5 + 2 firepower) × 3 hits
+  assert.equal(state.battle.enemyHp, 23); // (7 + 2 firepower) × 3 hits
 
   state = createTestBattle({handCards:['TA85','TA85','TA05'], enemyHp:30, energy:3});
   state.battle.hand[1].up = true;
@@ -281,11 +282,11 @@ test('opponent intent order varies by seed and remains replayable', () => {
 test('expensive cards trade raw damage for tactical effects', () => {
   let s = createTestBattle({ handCards:['TA30'], enemyHp:50, enemyStatuses:{block:12}, energy:3 });
   s = playCardById(s, 'TA30');
-  assert.equal(s.battle.enemyHp, 36, 'counter-angle strips guard before damage');
+  assert.equal(s.battle.enemyHp, 31, 'counter-angle strips guard before damage');
   assert.equal(s.battle.exhaustPile.length, 1);
   s = createTestBattle({ handCards:['TA21'], enemyHp:60, enemyStatuses:{smoke:1}, drawPile:['TA01'], energy:3 });
   s = playCardById(s, 'TA21');
-  assert.equal(s.battle.enemyHp, 34, 'smoke setup adds ten damage');
+  assert.equal(s.battle.enemyHp, 26, 'smoke setup adds thirteen damage');
   assert.equal(s.battle.hand.length, 1, 'high cost payoff also cycles a card');
 });
 
@@ -590,4 +591,32 @@ test('shop removal restrictions: cannot remove last attack or make deck <=5', ()
   state3.shop = { cards: [] };
   const removeRes2 = act(state3, { type: 'remove', uid: 'x1' });
   assert(removeRes2.error, 'should not allow removal when deck size <=5');
+});
+
+test('enemy firepower buffs persist, raise later hits, and show in the intent', () => {
+  let s = createTestBattle({ enemyIntent: [{ type: 'buff', n: 3 }], stance: 'cover' });
+  s.battle.enemyScript = [[{ type: 'hit', n: 10, times: 2 }]];
+  const hpBefore = s.hp;
+  s = act(s, { type: 'end' }).state;
+  assert.equal(s.battle.statuses.enemy.strength, 3);
+  assert.equal(s.hp, hpBefore, 'a buff turn deals no damage');
+  const { describeIntent } = engine;
+  assert.equal(describeIntent(s), '攻击13×2');
+  s = act(s, { type: 'end' }).state;
+  assert.equal(s.hp, hpBefore - 26);
+});
+
+test('a turn stops offering plays once the per-turn play cap is reached', () => {
+  const s = createTestBattle({ handCards: ['TA05'] });
+  s.battle.playsThisTurn = 40;
+  assert.deepEqual(legalActions(s).filter(a => a.type === 'play'), []);
+});
+
+test('intent preview counts a same-turn buff before the hit it strengthens', () => {
+  const s = createTestBattle({ enemyIntent: [{ type: 'buff', n: 2 }, { type: 'hit', n: 7, times: 1 }] });
+  assert.equal(engine.describeIntent(s), '强化火力+2，攻击9×1');
+  const hpBefore = s.hp;
+  s.battle.enemyScript = [[{ type: 'block', n: 1 }]];
+  const after = act(s, { type: 'end' }).state;
+  assert.equal(after.hp, hpBefore - 9);
 });

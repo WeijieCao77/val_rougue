@@ -105,7 +105,7 @@ export function legalActions(state) {
       if (c.id in STATUS_CARDS) continue;
       const def = CARDS[c.id];
       const cost = c.up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost;
-      if (b.energy >= cost) actions.push({ type: 'play', uid: c.uid });
+      if (b.energy >= cost && b.playsThisTurn < MAX_PLAYS_PER_TURN) actions.push({ type: 'play', uid: c.uid });
     }
     if (b.energy >= 1 && !b.stanceSwitchUsedThisTurn) actions.push({ type: 'stance' });
     actions.push({ type: 'end' });
@@ -199,8 +199,11 @@ export function observe(state) {
 export function describeIntent(state) {
   if (state.phase !== 'combat' || !state.battle?.enemyIntent) return null;
   const parts = [];
+  // Actions resolve in order, so a buff listed first already raises the hit after it.
+  let strength = state.battle.statuses.enemy.strength || 0;
   for (const act of state.battle.enemyIntent) {
-    if (act.type === 'hit') parts.push(`攻击${act.n}×${act.times}`);
+    if (act.type === 'hit') parts.push(`攻击${act.n + strength}×${act.times}`);
+    else if (act.type === 'buff') { strength += act.n; parts.push(`强化火力+${act.n}`); }
     else if (act.type === 'block') parts.push(`布防${act.n}`);
     else if (act.type === 'jam') parts.push(`施加${act.id}`);
     else if (act.type === 'weak') parts.push(`施加虚弱${act.n}`);
@@ -599,7 +602,7 @@ function dealDamageToEnemy(state, dmg) {
 
 function dealDamageToPlayer(state, baseDamage) {
   const b = state.battle;
-  let dmg = baseDamage;
+  let dmg = baseDamage + (b.statuses.enemy.strength || 0);
   // Push stance bonus to incoming damage: +2 raw damage per hit before smoke/flash/block
   if (b.stance === 'push') {
     dmg += 2;
@@ -750,6 +753,9 @@ function executeEnemyTurn(state) {
       }
     } else if (action.type === 'weak') {
       b.statuses.player.weak = (b.statuses.player.weak || 0) + action.n;
+    } else if (action.type === 'buff') {
+      // Permanent for this fight: every later hit gains this much damage.
+      b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + action.n;
     }
   }
 }
