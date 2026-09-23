@@ -80,6 +80,9 @@
 .map-node.kind-boss .map-glyph{font-size:21px}
 .map-node .map-choice-label { fill:#eff4ff; font-size:13px; font-weight:700; text-anchor:middle; paint-order:stroke; stroke:#141824; stroke-width:3px; pointer-events:none; }
 .map-node.available .map-choice-label { fill:#eff4ff; }
+.map-node.available .map-choice-label { opacity:0; transition:opacity .15s ease; }
+.map-node.available:hover .map-choice-label,
+.map-node.available:focus .map-choice-label { opacity:1; }
 
 .map-node.available circle {
   fill: #89b4fa;
