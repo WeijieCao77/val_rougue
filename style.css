@@ -603,3 +603,322 @@ dialog{color:var(--ink);border:1px solid #a99567;border-radius:8px;background:li
 .cfx-title{padding:6px 14px;background:#102127e6;border:1px solid #b8cfbf55;border-radius:4px;font-size:14px;letter-spacing:2px}
 /* Let Web Animations move the card instead of the old !important reset. */
 .card-flight{transform:none}
+
+/* Cover page styles, scoped to body.home-mode */
+
+body.home-mode {
+  background: #0c1319;
+  min-height: 100dvh;
+  margin: 0;
+}
+
+body.home-mode .cover-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* First screen: hero cover */
+body.home-mode .cover-hero {
+  position: relative;
+  width: 100%;
+  min-height: 92dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+body.home-mode .cover-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+body.home-mode .cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8,12,16,0.15) 0%, rgba(8,12,16,0.35) 80%, rgba(8,12,16,0.75) 100%);
+  z-index: 1;
+}
+
+body.home-mode .cover-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 20px 16px;
+  max-width: 90%;
+  color: #f5e6bf;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+}
+
+body.home-mode .cover-content .eyebrow {
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: #d6b56d;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+body.home-mode .cover-content h1 {
+  font-family: Georgia, 'SimSun', serif;
+  font-size: clamp(42px, 12vw, 96px);
+  letter-spacing: 8px;
+  margin: 0 0 12px;
+  line-height: 1.1;
+  color: #fff0c4;
+  text-shadow: 0 4px 18px rgba(0,0,0,0.8);
+  text-indent: 8px;
+}
+
+body.home-mode .cover-sub {
+  font-size: clamp(13px, 3vw, 18px);
+  letter-spacing: 2px;
+  color: #b9c4bc;
+  margin: 0 0 22px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+
+body.home-mode .cover-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+body.home-mode .cover-actions .primary {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 16px;
+  letter-spacing: 1px;
+  background: linear-gradient(#806944, #50432c);
+  border: 1px solid #c5a363;
+  color: #fff1c8;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+body.home-mode .cover-actions .primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+}
+
+body.home-mode .cover-actions .primary:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+/* Second screen: setup options */
+body.home-mode .cover-setup {
+  width: 100%;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 16px 40px;
+  background: #0c1319;
+}
+
+body.home-mode .setup-title {
+  font-size: 14px;
+  letter-spacing: 4px;
+  color: #d6b56d;
+  text-transform: uppercase;
+  margin: 0 0 18px;
+}
+
+body.home-mode .region-picker {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto 18px;
+}
+
+body.home-mode .region-tabs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+body.home-mode .region-tab {
+  flex: 1 1 110px;
+  min-width: 100px;
+  padding: 9px 8px;
+  font-size: 13px;
+  background: transparent;
+  border: 1px solid #5c6b68;
+  color: #c9d2c6;
+  border-radius: 4px;
+}
+
+body.home-mode .region-tab small {
+  display: block;
+  font-size: 9px;
+  color: #899e98;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+body.home-mode .region-tab.active {
+  background: #314740;
+  border-color: #c6b178;
+  color: #ffe9b1;
+}
+
+body.home-mode .region-tab.active small {
+  color: #d8c48f;
+}
+
+body.home-mode .region-note {
+  font-size: 10px;
+  color: #819189;
+  margin-top: 8px;
+  text-align: center;
+}
+
+body.home-mode .seed-label {
+  font-size: 10px;
+  color: #7e9090;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 9px;
+  width: 100%;
+  max-width: 360px;
+}
+
+body.home-mode .seed-label input {
+  min-width: 0;
+  flex: 1;
+  background: #101c22;
+  border: 1px solid #3c4d50;
+  color: #c3ceca;
+  padding: 7px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+body.home-mode .button-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+body.home-mode .text-button,
+body.home-mode a.text-button {
+  background: transparent;
+  box-shadow: none;
+  border-color: transparent;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: #8e9d9e;
+  text-decoration: none;
+  display: inline-block;
+}
+
+body.home-mode .text-button:hover,
+body.home-mode a.text-button:hover {
+  color: #d6b56d;
+  border-color: transparent;
+}
+
+body.home-mode .title-note {
+  font-size: 10px;
+  color: #677c7e;
+  margin-top: 20px;
+  text-align: center;
+}
+
+body.home-mode .warning {
+  padding: 10px;
+  text-align: center;
+  background: #582f2c;
+  color: #ef9b80;
+  width: 100%;
+  max-width: 420px;
+  margin-top: 12px;
+}
+
+body.home-mode .cover-footer {
+  font-size: 10px;
+  color: #4a5a5c;
+  letter-spacing: 1px;
+  margin-top: 24px;
+  text-align: center;
+}
+
+/* Mobile 390px adjustments */
+@media (max-width: 390px) {
+  body.home-mode .cover-content {
+    padding: 16px 12px;
+  }
+  body.home-mode .cover-content h1 {
+    font-size: 38px;
+    letter-spacing: 4px;
+    text-indent: 4px;
+  }
+  body.home-mode .cover-content .eyebrow {
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+  body.home-mode .cover-sub {
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+  body.home-mode .cover-actions {
+    max-width: 220px;
+    gap: 8px;
+  }
+  body.home-mode .cover-actions .primary {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  body.home-mode .cover-hero {
+    min-height: 88dvh;
+  }
+  body.home-mode .cover-setup {
+    padding: 20px 12px 30px;
+  }
+  body.home-mode .region-tab {
+    flex-basis: 100px;
+    min-width: 90px;
+    padding: 7px 6px;
+    font-size: 11px;
+  }
+  body.home-mode .region-tab small {
+    font-size: 8px;
+  }
+  body.home-mode .seed-label {
+    max-width: 280px;
+    gap: 8px;
+  }
+  body.home-mode .button-row {
+    gap: 8px;
+  }
+}
+
+/* Prevent horizontal overflow */
+body.home-mode .cover-screen,
+body.home-mode .cover-hero,
+body.home-mode .cover-setup,
+body.home-mode .region-picker,
+body.home-mode .button-row {
+  max-width: 100%;
+}
+
+body.home-mode img {
+  max-width: 100%;
+  height: auto;
+}

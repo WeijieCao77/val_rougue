@@ -55,6 +55,6 @@ for (const file of modules) {
 
 await writeFile(new URL('app.js', root), output.join('\n'));
 await writeFile(new URL('style.css', root),
-  (await read('base-style.css')) + '\n' + (await read('season-ui.css')) + '\n' + (await read('weapon-style.css')) + '\n' + (await read('art-style.css')) + '\n' + (await read('combat-fx.css'))
+  (await read('base-style.css')) + '\n' + (await read('season-ui.css')) + '\n' + (await read('weapon-style.css')) + '\n' + (await read('art-style.css')) + '\n' + (await read('combat-fx.css')) + '\n' + (await read('cover-wa.css'))
 );
 console.log('Browser assets built.');

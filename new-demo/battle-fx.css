@@ -1,0 +1,92 @@
+/* battle-fx.css - dedicated FX layer styles */
+.new-fx-layer {
+  pointer-events: none;
+  z-index: 9999;
+}
+.new-fx-node {
+  position: absolute;
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform, opacity;
+}
+/* Damage numbers */
+.fx-damage,
+.damage-text {
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 4px #000, 0 0 8px #000, 0 0 12px #000, 2px 2px 2px rgba(0,0,0,0.8);
+  -webkit-text-stroke: 1px rgba(0,0,0,0.7);
+  white-space: nowrap;
+}
+.block-text,
+.status-text,
+.stance-text,
+.victory-text,
+.reduced-hint {
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 4px #000, 0 0 8px #000, 0 0 12px #000, 2px 2px 2px rgba(0,0,0,0.8);
+  -webkit-text-stroke: 1px rgba(0,0,0,0.7);
+  white-space: nowrap;
+}
+/* Block shield */
+.block-aura,
+.enemy-block-aura {
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, rgba(45,212,191,0.6), rgba(20,90,80,0.8));
+  clip-path: polygon(50% 0%, 85% 15%, 100% 50%, 85% 85%, 50% 100%, 15% 85%, 0% 50%, 15% 15%);
+  box-shadow: 0 0 20px rgba(45,212,191,0.8), 0 0 40px rgba(45,212,191,0.5);
+}
+/* Smoke cloud */
+.smoke-cloud {
+  width: 160px;
+  height: 100px;
+  background: radial-gradient(ellipse at center, rgba(156,163,175,0.9) 0%, rgba(107,114,128,0.7) 40%, rgba(55,65,81,0.3) 100%);
+  border-radius: 80% 70% 60% 50% / 70% 60% 50% 40%;
+  filter: blur(8px);
+}
+/* Power aura */
+.power-aura {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,193,7,0.9) 0%, rgba(255,87,34,0.6) 50%, transparent 100%);
+}
+/* Flash star */
+.flash-star {
+  width: 60px;
+  height: 60px;
+  background: #fff;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  filter: drop-shadow(0 0 10px rgba(255,193,7,0.9));
+}
+/* Reduced motion hint */
+.reduced-hint {
+  background: rgba(0,0,0,0.7);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 20px;
+}
+/* Draw card placeholder */
+.draw-card {
+  background: #0d7377;
+  border: 2px solid #ffb703;
+  border-radius: 6px;
+}
+/* Impact ring */
+.impact-ring {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.9);
+}
+/* Impact particle */
+.impact-particle {
+  width: 8px;
+  height: 8px;
+  background-color: #ffd166;
+  border-radius: 50%;
+}

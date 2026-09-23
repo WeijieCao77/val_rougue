@@ -19,6 +19,9 @@ function cancelSession(session) {
   if (session.animations) {
     session.animations.forEach(anim => { try { anim.cancel(); } catch(e){} });
   }
+  if (session.timers) {
+    session.timers.forEach(timer => { try { clearTimeout(timer); } catch(e){} });
+  }
   if (session.cleanupTimer) clearTimeout(session.cleanupTimer);
   if (session.root && session.root.parentNode) session.root.parentNode.removeChild(session.root);
   if (session.removeVisibilityHandler) session.removeVisibilityHandler();
@@ -94,10 +97,22 @@ function createFx(session, kind, {x, y, text='', className='', scale=1, duration
   session.animations.push(anim);
 }
 
-function animateCardFlight(session, clone, from, to, targetScale=0.2, duration=500, delay=0, kind = 'card-flight') {
+// Enhanced card flight with arc and impact handling.
+function animateCardFlight(session, clone, from, to, options = {}) {
   if (!session || session.done || session !== currentSession) return;
+  const {
+    duration = 450,
+    delay = 0,
+    targetScale = 0.25,
+    arcHeight = 120,
+    impactKind = 'card-flight',
+    impactTarget = null,
+    impactFx = null,
+    onComplete = null,
+    kind = 'card-flight'
+  } = options;
+
   clone.style.position = 'absolute';
-  // Use width/height from the clone's bounding rect or fallback to 60x84
   const width = parseFloat(clone.style.width) || 60;
   const height = parseFloat(clone.style.height) || 84;
   clone.style.left = (from.x - width / 2) + 'px';
@@ -105,41 +120,124 @@ function animateCardFlight(session, clone, from, to, targetScale=0.2, duration=5
   clone.style.pointerEvents = 'none';
   clone.style.zIndex = '9999';
   clone.dataset.fxKind = kind;
-  // For exhaust, wrap in an indicator or set data attr on parent? We set on clone itself.
   session.root.appendChild(clone);
+
   const dx = to.x - from.x;
   const dy = to.y - from.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  const midX = from.x + dx / 2;
+  const midY = from.y + dy / 2 - (arcHeight || Math.max(60, dist * 0.2));
+
   const keyframes = [
-    { transform: 'translate(0,0) scale(1)', opacity: 1, offset: 0 },
-    { transform: `translate(${dx}px, ${dy}px) scale(${targetScale})`, opacity: 0.8, offset: 1 }
+    { transform: 'translate(0px, 0px) scale(1)', opacity: 1, offset: 0 },
+    { transform: `translate(${dx/2}px, ${dy/2 - arcHeight}px) scale(1.2)`, opacity: 1, offset: 0.5, easing: 'ease-out' },
+    { transform: `translate(${dx}px, ${dy}px) scale(${targetScale})`, opacity: 0.9, offset: 1 }
   ];
-  const anim = clone.animate(keyframes, { duration, delay, easing: 'ease-in', fill: 'forwards' });
-  session.animations.push(anim);
+
+  // Create timeline with card flight
+  const flightAnim = clone.animate(keyframes, { duration, delay, easing: 'ease-in-out', fill: 'forwards' });
+  session.animations.push(flightAnim);
+
+  // Impact effect at end of flight
+  const impactTime = delay + duration;
+  const impactCallback = () => {
+    if (session.done || session !== currentSession) return;
+    if (impactTarget) {
+      // Impact specific visual: ring, particles, shake
+      const ring = document.createElement('div');
+      ring.className = 'new-fx-node impact-ring';
+      ring.dataset.fxKind = impactKind === 'attack' ? 'attack-impact' : impactKind === 'block' ? 'block-impact' : 'impact';
+      ring.style.position = 'absolute';
+      ring.style.left = (impactTarget.x - 30) + 'px';
+      ring.style.top = (impactTarget.y - 30) + 'px';
+      ring.style.width = '60px';
+      ring.style.height = '60px';
+      ring.style.borderRadius = '50%';
+      ring.style.border = '3px solid rgba(255,255,255,0.9)';
+      ring.style.pointerEvents = 'none';
+      ring.style.zIndex = '9999';
+      session.root.appendChild(ring);
+      const ringAnim = ring.animate([
+        { transform: 'scale(0)', opacity: 1 },
+        { transform: 'scale(2.5)', opacity: 0 }
+      ], { duration: 350, easing: 'ease-out', fill: 'forwards' });
+      session.animations.push(ringAnim);
+
+      // Particles
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const speed = 30 + Math.random() * 30;
+        const tx = Math.cos(angle) * speed;
+        const ty = Math.sin(angle) * speed;
+        const particle = document.createElement('div');
+        particle.className = 'new-fx-node impact-particle';
+        particle.dataset.fxKind = 'impact-particle';
+        particle.style.position = 'absolute';
+        particle.style.left = (impactTarget.x - 4) + 'px';
+        particle.style.top = (impactTarget.y - 4) + 'px';
+        particle.style.width = '8px';
+        particle.style.height = '8px';
+        particle.style.backgroundColor = '#ffd166';
+        particle.style.borderRadius = '50%';
+        particle.style.pointerEvents = 'none';
+        particle.style.zIndex = '9999';
+        session.root.appendChild(particle);
+        const particleAnim = particle.animate([
+          { transform: 'translate(0,0) scale(1)', opacity: 1 },
+          { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+        ], { duration: 400, easing: 'ease-out', fill: 'forwards' });
+        session.animations.push(particleAnim);
+      }
+
+      // Shake target element (if DOM element exists)
+      const targetInfo = session.targetEls?.find(info => info.impactTarget === impactTarget.id);
+      if (targetInfo && targetInfo.el) {
+        const shakeAnim = targetInfo.el.animate([
+          { transform: 'translateX(0)' },
+          { transform: 'translateX(-5px)' },
+          { transform: 'translateX(5px)' },
+          { transform: 'translateX(-3px)' },
+          { transform: 'translateX(3px)' },
+          { transform: 'translateX(0)' }
+        ], { duration: 200, easing: 'ease-in-out' });
+        session.animations.push(shakeAnim);
+      }
+    }
+    if (impactFx && typeof impactFx === 'function') {
+      impactFx(session);
+    }
+    if (onComplete) {
+      const rect = clone.getBoundingClientRect();
+      const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      flightAnim.cancel();
+      clone.style.transform = 'none';
+      onComplete(center);
+    }
+  };
+
+  // Schedule impact callback
+  const impactTimer = setTimeout(impactCallback, impactTime);
+  session.timers.push(impactTimer);
 }
 
 export async function animateCombatTransition(prevState, nextState, action, capture) {
-  // Requirement: must call clearCombatPresentation() at start
   clearCombatPresentation();
   const prev = prevState;
-  // Ensure next has battle, merging with previous battle to avoid null battle
   const next = {
     ...nextState,
-    battle: nextState.battle || {
-      ...prev.battle,
-      hand: [],
-      exhaustPile: [],
-      statuses: prev.battle.statuses,
-    },
+    battle: nextState.battle || { ...prev.battle, hand: [], exhaustPile: [], statuses: prev.battle.statuses },
   };
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const session = {
     id: ++sessionCounter,
     root: document.createElement('div'),
     animations: [],
+    timers: [],
     done: false,
     cleanupTimer: null,
     removeVisibilityHandler: null,
     resolve: null,
+    targetEls: []
   };
   session.root.className = 'new-fx-layer';
   session.root.style.position = 'fixed';
@@ -153,22 +251,19 @@ export async function animateCombatTransition(prevState, nextState, action, capt
   currentSession = session;
   addVisibilityHandler(session);
 
-  const promise = new Promise(resolve => {
-    session.resolve = resolve;
-  });
+  // Store references to actual target elements for shaking if needed
+  session.targetEls = [
+    { el: document.getElementById('enemy-box'), impactTarget: 'enemy' },
+    { el: document.getElementById('player-box'), impactTarget: 'player' }
+  ].filter(x => x.el);
 
-  // Set cleanup timer immediately (850ms default), will be adjusted for reduced motion
+  const promise = new Promise(resolve => { session.resolve = resolve; });
+
   session.cleanupTimer = setTimeout(() => {
     cancelSession(session);
-  }, 850);
+  }, reducedMotion ? 80 : 1100);
 
   if (reducedMotion) {
-    // Clear previous timer and set shorter 80ms
-    clearTimeout(session.cleanupTimer);
-    session.cleanupTimer = setTimeout(() => {
-      cancelSession(session);
-    }, 80);
-
     createFx(session, 'stance', {
       x: capture.playerBox.x, y: capture.playerBox.y - 50,
       text: '动画简化', className: 'reduced-hint',
@@ -193,92 +288,177 @@ export async function animateCombatTransition(prevState, nextState, action, capt
     const isExhaust = playedCard && next.battle.exhaustPile.some(c => c.uid === playedCard.uid);
     const flyTarget = isExhaust ? ep : dcp;
 
-    if (capture.playedCardClone) {
-      const flightKind = isExhaust ? 'exhaust' : 'discard';
-      const flightMarker = document.createElement('span');
-      flightMarker.dataset.fxKind = 'card-flight';
-      session.root.append(flightMarker);
-      animateCardFlight(session, capture.playedCardClone, capture.playedCardStart, flyTarget, 0.3, 500, 0, flightKind);
-    }
-
-    let damage = 0;
+    // Determine card type
     let isAttack = false;
+    let isDefensive = false; // block or skill that targets self
+    let isOther = false;
     if (playedCard && CARDS[playedCard.id]) {
       const def = CARDS[playedCard.id];
       if (def.type && def.type.includes('attack')) {
         isAttack = true;
-        damage = Math.max(0, prev.battle.enemyHp - next.battle.enemyHp);
+      } else if (def.type && (def.type.includes('block') || def.type.includes('skill') || def.type.includes('power'))) {
+        isDefensive = true;
+      } else {
+        isOther = true;
       }
     }
+
+    // For attack: card flies to enemy, then to discard/exhaust
     if (isAttack) {
+      if (capture.playedCardClone) {
+        const flightKind = isExhaust ? 'exhaust' : 'discard';
+        animateCardFlight(session, capture.playedCardClone, capture.playedCardStart, eb, {
+          duration: 400,
+          delay: 0,
+          targetScale: 0.6,
+          arcHeight: Math.max(80, Math.abs(eb.y - capture.playedCardStart.y) * 0.3 + 60),
+          impactKind: 'attack',
+          impactTarget: { x: eb.x, y: eb.y, id: 'enemy' },
+          kind: 'attack-flight',
+          onComplete: currentCenter => {
+            // Then animate to discard/exhaust
+            animateCardFlight(session, capture.playedCardClone, currentCenter, flyTarget, {
+              duration: 250,
+              targetScale: 0.2,
+              arcHeight: 40,
+              kind: flightKind,
+              impactKind: 'discard',
+              impactTarget: flyTarget
+            });
+          }
+        });
+      }
+      // Additional attack line
       const dx = eb.x - pb.x;
       const dy = eb.y - pb.y;
       const dist = Math.sqrt(dx*dx + dy*dy);
       const angle = Math.atan2(dy, dx) * 180 / Math.PI;
       const line = document.createElement('div');
+      line.className = 'new-fx-node';
       line.dataset.fxKind = 'attack';
       line.style.position = 'absolute';
       line.style.left = pb.x + 'px';
       line.style.top = pb.y + 'px';
       line.style.width = dist + 'px';
-      line.style.height = '3px';
-      line.style.background = 'rgba(255,193,7,0.8)';
+      line.style.height = '2px';
+      line.style.background = 'rgba(255,193,7,0.6)';
       line.style.transformOrigin = '0 50%';
       line.style.transform = `rotate(${angle}deg)`;
       line.style.pointerEvents = 'none';
       session.root.appendChild(line);
       const lineAnim = line.animate([
         { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 },
-        { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 1, offset: 0.3 },
-        { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0.8, offset: 0.7 },
+        { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0.8, offset: 0.4 },
+        { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0.2, offset: 0.7 },
         { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 }
-      ], { duration: 500, easing: 'ease-out', fill: 'forwards' });
+      ], { duration: 450, easing: 'ease-out', fill: 'forwards' });
       session.animations.push(lineAnim);
 
-      createFx(session, 'damage', {
-        x: eb.x, y: eb.y - 20,
-        text: `-${damage}`,
-        className: 'fx-damage',
-        duration: 400, delay: 100,
-        keyframes: [
-          { transform: 'translateY(0)', opacity: 1 },
-          { transform: 'translateY(-30px)', opacity: 0 }
-        ]
-      });
-    }
-
-    let blockGain = 0;
-    let isBlock = false;
-    if (playedCard && CARDS[playedCard.id]) {
-      const def = CARDS[playedCard.id];
-      if (def.type && (def.type.includes('block') || def.type.includes('skill'))) {
-        isBlock = true;
-        blockGain = Math.max(0, next.battle.playerBlock - prev.battle.playerBlock);
+      // Damage number
+      const damage = Math.max(0, prev.battle.enemyHp - next.battle.enemyHp);
+      if (damage > 0) {
+        createFx(session, 'damage', {
+          x: eb.x, y: eb.y - 30,
+          text: `-${damage}`,
+          className: 'fx-damage',
+          duration: 500, delay: 400,
+          keyframes: [
+            { transform: 'translateY(0)', opacity: 1 },
+            { transform: 'translateY(-40px)', opacity: 0 }
+          ]
+        });
       }
     }
-    if (isBlock) {
-      createFx(session, 'block', {
-        x: pb.x, y: pb.y - 40,
-        text: `+${blockGain} 布防`,
-        className: 'fx-text block-text',
-        duration: 400, delay: 100,
-        keyframes: [
-          { transform: 'translateY(0)', opacity: 1 },
-          { transform: 'translateY(-40px)', opacity: 0 }
-        ]
-      });
-      createFx(session, 'block', {
-        x: pb.x, y: pb.y,
-        className: 'block-aura',
-        scale: 0.5,
-        duration: 300, delay: 50,
-        keyframes: [
-          { transform: 'scale(0.5)', opacity: 0.8 },
-          { transform: 'scale(1.2)', opacity: 0 }
-        ]
-      });
+
+    // For defensive (block/skill/power): card flies to player box, then to discard/exhaust
+    else if (isDefensive) {
+      if (capture.playedCardClone) {
+        const flightKind = isExhaust ? 'exhaust' : 'discard';
+        animateCardFlight(session, capture.playedCardClone, capture.playedCardStart, pb, {
+          duration: 400,
+          delay: 0,
+          targetScale: 0.6,
+          arcHeight: Math.max(80, Math.abs(pb.y - capture.playedCardStart.y) * 0.3 + 60),
+          impactKind: 'block',
+          impactTarget: { x: pb.x, y: pb.y, id: 'player' },
+          kind: 'block-flight',
+          onComplete: currentCenter => {
+            animateCardFlight(session, capture.playedCardClone, currentCenter, flyTarget, {
+              duration: 250,
+              targetScale: 0.2,
+              arcHeight: 40,
+              kind: flightKind,
+              impactKind: 'discard',
+              impactTarget: flyTarget
+            });
+          }
+        });
+      }
+      // Block effect
+      const blockGain = Math.max(0, next.battle.playerBlock - prev.battle.playerBlock);
+      if (blockGain > 0) {
+        createFx(session, 'block', {
+          x: pb.x, y: pb.y - 40,
+          text: `+${blockGain} 布防`,
+          className: 'fx-text block-text',
+          duration: 500, delay: 400,
+          keyframes: [
+            { transform: 'translateY(0)', opacity: 1 },
+            { transform: 'translateY(-40px)', opacity: 0 }
+          ]
+        });
+        createFx(session, 'block', {
+          x: pb.x, y: pb.y,
+          className: 'block-aura',
+          scale: 0.5,
+          duration: 400, delay: 350,
+          keyframes: [
+            { transform: 'scale(0.5)', opacity: 0.8 },
+            { transform: 'scale(1.3)', opacity: 0 }
+          ]
+        });
+      }
+      // Power-specific flash
+      if (playedCard && CARDS[playedCard.id]?.type === 'power') {
+        createFx(session, 'power', {
+          x: pb.x, y: pb.y,
+          className: 'power-aura',
+          scale: 0.5,
+          duration: 400, delay: 350,
+          keyframes: [
+            { transform: 'scale(0.5)', opacity: 0.8 },
+            { transform: 'scale(1.5)', opacity: 0 }
+          ]
+        });
+      }
     }
 
+    // For other card types (rare), fly to enemy? Or just discard? For now, treat as defensive target player.
+    else if (isOther) {
+      if (capture.playedCardClone) {
+        const flightKind = isExhaust ? 'exhaust' : 'discard';
+        animateCardFlight(session, capture.playedCardClone, capture.playedCardStart, pb, {
+          duration: 400,
+          targetScale: 0.6,
+          arcHeight: 100,
+          impactKind: 'generic',
+          impactTarget: { x: pb.x, y: pb.y, id: 'player' },
+          kind: 'card-flight',
+          onComplete: currentCenter => {
+            animateCardFlight(session, capture.playedCardClone, currentCenter, flyTarget, {
+              duration: 250,
+              targetScale: 0.2,
+              arcHeight: 40,
+              kind: flightKind,
+              impactKind: 'discard',
+              impactTarget: flyTarget
+            });
+          }
+        });
+      }
+    }
+
+    // Enemy status effects with new animation
     const enemyStatusKeys = ['smoke', 'flash', 'weak', 'vuln', 'block'];
     for (const key of enemyStatusKeys) {
       const prevVal = prev.battle.statuses.enemy[key] || 0;
@@ -287,16 +467,16 @@ export async function animateCombatTransition(prevState, nextState, action, capt
         if (key === 'smoke') {
           createFx(session, 'smoke', {
             x: eb.x, y: eb.y, className: 'smoke-cloud',
-            duration: 400, delay: 100,
+            duration: 500, delay: 300,
             keyframes: [
               { transform: 'scale(0.2)', opacity: 0.8 },
-              { transform: 'scale(1.5)', opacity: 0 }
+              { transform: 'scale(1.8)', opacity: 0 }
             ]
           });
         } else if (key === 'flash') {
           createFx(session, 'flash', {
-            x: eb.x, y: eb.y, text: '', className: 'flash-star',
-            duration: 300, delay: 0,
+            x: eb.x, y: eb.y, className: 'flash-star',
+            duration: 400, delay: 250,
             keyframes: [
               { transform: 'scale(0)', opacity: 1 },
               { transform: 'scale(1.5)', opacity: 0 }
@@ -305,48 +485,51 @@ export async function animateCombatTransition(prevState, nextState, action, capt
         } else if (key === 'weak' || key === 'vuln') {
           createFx(session, 'power', {
             x: eb.x, y: eb.y - 30, text: key === 'weak' ? '压制' : '易伤', className: 'status-text',
-            duration: 300, delay: 100,
+            duration: 400, delay: 300,
             keyframes: [
               { transform: 'translateY(0)', opacity: 1 },
-              { transform: 'translateY(-20px)', opacity: 0 }
+              { transform: 'translateY(-25px)', opacity: 0 }
             ]
           });
         } else if (key === 'block') {
           createFx(session, 'block', {
             x: eb.x, y: eb.y, className: 'enemy-block-aura',
-            scale: 0.5, duration: 300, delay: 50,
+            scale: 0.5, duration: 400, delay: 300,
             keyframes: [
               { transform: 'scale(0.5)', opacity: 0.8 },
-              { transform: 'scale(1.1)', opacity: 0 }
+              { transform: 'scale(1.2)', opacity: 0 }
             ]
           });
         }
       }
     }
 
+    // Player status effects similar? Not needed for now.
+
     if (prev.battle.stance !== next.battle.stance) {
       createFx(session, 'stance', {
         x: pb.x, y: pb.y,
         className: 'stance-aura',
         scale: 0.5,
-        duration: 400, delay: 50,
+        duration: 500, delay: 100,
         keyframes: [
           { transform: 'scale(0.5)', opacity: 0.8 },
-          { transform: 'scale(1.2)', opacity: 0 }
+          { transform: 'scale(1.3)', opacity: 0 }
         ]
       });
       createFx(session, 'stance', {
         x: pb.x, y: pb.y - 30,
         text: next.battle.stance === 'cover' ? '掩护' : '前压',
         className: 'stance-text',
-        duration: 400, delay: 50,
+        duration: 500, delay: 100,
         keyframes: [
           { transform: 'translateY(0)', opacity: 1 },
-          { transform: 'translateY(-30px)', opacity: 0 }
+          { transform: 'translateY(-35px)', opacity: 0 }
         ]
       });
     }
 
+    // Draw effects
     const prevUids = new Set(prev.battle.hand.map(c => c.uid));
     const nextUids = new Set(next.battle.hand.map(c => c.uid));
     const newUids = [...nextUids].filter(uid => !prevUids.has(uid));
@@ -365,7 +548,6 @@ export async function animateCombatTransition(prevState, nextState, action, capt
       cardEl.style.left = (dp.x - 30) + 'px';
       cardEl.style.top = (dp.y - 42) + 'px';
       cardEl.style.pointerEvents = 'none';
-      cardEl.dataset.fxKind = 'draw';
       session.root.appendChild(cardEl);
       const anim = cardEl.animate([
         { transform: 'translate(0,0) scale(0.5)', opacity: 0.5 },
@@ -374,54 +556,64 @@ export async function animateCombatTransition(prevState, nextState, action, capt
       session.animations.push(anim);
     }
 
+    // End turn: fly remaining hand cards to discard
     if (action && action.type === 'end') {
       capture.handCardClones.forEach((item, index) => {
-        animateCardFlight(session, item.clone, item.center, dcp, 0.2, 400, index * 30);
+        animateCardFlight(session, item.clone, item.center, dcp, {
+          duration: 300,
+          delay: index * 40,
+          targetScale: 0.2,
+          arcHeight: 60,
+          kind: 'discard'
+        });
       });
       const playerDamage = Math.max(0, prev.hp - next.hp);
       if (playerDamage > 0) {
+        // Enemy attack line
         const dx = pb.x - eb.x;
         const dy = pb.y - eb.y;
         const dist = Math.sqrt(dx*dx + dy*dy);
         const angle = Math.atan2(dy, dx) * 180 / Math.PI;
         const line = document.createElement('div');
+        line.className = 'new-fx-node';
         line.dataset.fxKind = 'attack';
         line.style.position = 'absolute';
         line.style.left = eb.x + 'px';
         line.style.top = eb.y + 'px';
         line.style.width = dist + 'px';
-        line.style.height = '3px';
-        line.style.background = 'rgba(255,193,7,0.8)';
+        line.style.height = '2px';
+        line.style.background = 'rgba(255,87,34,0.7)';
         line.style.transformOrigin = '0 50%';
         line.style.transform = `rotate(${angle}deg)`;
         line.style.pointerEvents = 'none';
         session.root.appendChild(line);
         const lineAnim = line.animate([
           { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 },
-          { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 1, offset: 0.3 },
-          { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0.8, offset: 0.7 },
+          { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0.8, offset: 0.4 },
+          { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0.2, offset: 0.7 },
           { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 }
-        ], { duration: 500, delay: 200, easing: 'ease-out', fill: 'forwards' });
+        ], { duration: 500, delay: 300, easing: 'ease-out', fill: 'forwards' });
         session.animations.push(lineAnim);
         createFx(session, 'damage', {
-          x: pb.x, y: pb.y - 20,
+          x: pb.x, y: pb.y - 30,
           text: `-${playerDamage}`,
           className: 'damage-text',
-          duration: 400, delay: 300,
+          duration: 500, delay: 500,
           keyframes: [
             { transform: 'translateY(0)', opacity: 1 },
-            { transform: 'translateY(-30px)', opacity: 0 }
+            { transform: 'translateY(-40px)', opacity: 0 }
           ]
         });
       }
     }
 
+    // Victory effect
     if (next.battle.enemyHp <= 0 && prev.battle.enemyHp > 0) {
       createFx(session, 'victory', {
         x: window.innerWidth/2, y: window.innerHeight/2,
         text: '胜利！',
         className: 'victory-text',
-        duration: 600, delay: 200,
+        duration: 700, delay: 300,
         keyframes: [
           { transform: 'scale(0.5)', opacity: 0 },
           { transform: 'scale(1)', opacity: 1, offset: 0.5 },
@@ -432,14 +624,13 @@ export async function animateCombatTransition(prevState, nextState, action, capt
         x: window.innerWidth/2, y: window.innerHeight/2,
         className: 'power-aura',
         scale: 0.5,
-        duration: 400, delay: 200,
+        duration: 500, delay: 300,
         keyframes: [
           { transform: 'scale(0.5)', opacity: 0.8 },
           { transform: 'scale(1.5)', opacity: 0 }
         ]
       });
     }
-
   }
 
   return promise;

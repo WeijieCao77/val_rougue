@@ -1,0 +1,613 @@
+/* battle-redesign.css - 重新设计战斗页面布局、视觉和手牌交互样式
+   最后加载以覆盖旧样式；不改变DOM结构和JS逻辑 */
+
+/* ========== 桌面端（≥901px）的战斗界面重设计 ========== */
+@media (min-width: 901px) {
+  /* 战斗容器：全屏网格，上半场为角色区，下半场为手牌区 */
+  .battle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: minmax(150px, 40vh) auto auto auto;
+    gap: 0.8rem;
+    padding: 0.8rem;
+    height: calc(100vh - 80px); /* 减去 header 高度，避免溢出 */
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* 上半场左侧：玩家区域 */
+  .player-area {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 0;
+    background: rgba(10, 14, 19, 0.4);
+    border-radius: 12px;
+    padding: 0.5rem;
+  }
+
+  /* 上半场右侧：敌人区域 */
+  .enemy-area {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 0;
+    background: rgba(10, 14, 19, 0.4);
+    border-radius: 12px;
+    padding: 0.5rem;
+  }
+
+  /* 角色 SVG 容器：固定高度，保持角色在100-150px范围 */
+  .ally-art-container,
+  .enemy-art-container {
+    width: 100%;
+    max-width: 300px;
+    height: 130px; /* 固定高度，保证中距离角色大小 */
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1px solid var(--border-bright);
+    background: var(--panel-dark);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+  .ally-art-container svg,
+  .enemy-art-container svg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  /* 角色姓名与状态盒子：紧凑，不压过手牌 */
+  .enemy-box,
+  .player-box {
+    max-width: 300px;
+    width: 100%;
+    padding: 0.6rem;
+    font-size: 0.85rem;
+    background: rgba(26, 35, 48, 0.7);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--border-bright);
+    border-radius: 8px;
+  }
+  .enemy-name,
+  .player-name {
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+  }
+  .enemy-hp,
+  .player-hp {
+    font-size: 0.9rem;
+  }
+  .hp-bar {
+    height: 6px;
+  }
+
+  /* 意图与状态放在角色盒子下方，保持可见 */
+  .intent {
+    padding: 0.4rem;
+    font-size: 0.8rem;
+    margin-top: 0.2rem;
+  }
+
+  /* 牌堆显示：位于角色区下方，横向排列，可见但不抢眼 */
+  .pile-display {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.6rem;
+    z-index: 2;
+    background: rgba(12, 15, 20, 0.6);
+    backdrop-filter: blur(4px);
+    padding: 0.4rem;
+    border-radius: 8px;
+    margin: 0 auto;
+    width: fit-content;
+  }
+  .pile-btn {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.8rem;
+    min-width: 100px;
+  }
+
+  /* 动作按钮：紧贴手牌上缘 */
+  .battle-actions {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.6rem;
+    z-index: 2;
+    padding: 0.3rem 0;
+    margin-top: -0.4rem; /* 轻微上移，与手牌视觉相连 */
+  }
+  .battle-actions .btn {
+    font-size: 0.9rem;
+    padding: 0.5rem 1.2rem;
+  }
+
+  /* 手牌区域：占据下半屏至少40%视觉权重 */
+  .hand-area {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 0.6rem;
+    padding: 0.5rem 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(10, 14, 19, 0.8) 100%);
+    border-radius: 12px;
+    min-height: 0;
+    perspective: 800px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-bright) transparent;
+  }
+
+  /* 手牌卡片：尺寸加大，真实卡片质感 */
+  .hand-card {
+    width: 160px;
+    height: 250px;
+    flex: 0 0 160px;
+    position: relative;
+    background: linear-gradient(145deg, #2a2f3a, #1e232c);
+    border: 2px solid #c0a86a;
+    border-radius: 8px;
+    padding: 0.5rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s, border-color 0.2s;
+    transform-origin: bottom center;
+    overflow: hidden;
+  }
+  .hand-card::before {
+    content: '';
+    position: absolute;
+    top: -3px; left: -3px; right: -3px; bottom: -3px;
+    border: 1px solid rgba(192,168,106,0.5);
+    border-radius: 10px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .hand-card:hover {
+    transform: translateY(-20px) rotate(0deg) scale(1.05);
+    z-index: 10;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4), 0 0 12px rgba(45,212,191,0.4);
+  }
+  .hand-card.selected {
+    border-color: var(--amber);
+    box-shadow: 0 0 15px var(--amber-glow), 0 0 30px rgba(245, 158, 11, 0.3);
+    transform: translateY(-25px) rotate(0deg) scale(1.08);
+    z-index: 11;
+  }
+
+  /* 扇形旋转：默认各卡不同角度，悬停/选中归零 */
+  .hand-card:not(:hover):not(.selected) {
+    transform: rotate(var(--fan-rotation, 0deg));
+  }
+  .hand-card:nth-child(1) { --fan-rotation: -8deg; }
+  .hand-card:nth-child(2) { --fan-rotation: -6deg; }
+  .hand-card:nth-child(3) { --fan-rotation: -4deg; }
+  .hand-card:nth-child(4) { --fan-rotation: -2deg; }
+  .hand-card:nth-child(5) { --fan-rotation: 0deg; }
+  .hand-card:nth-child(6) { --fan-rotation: 2deg; }
+  .hand-card:nth-child(7) { --fan-rotation: 4deg; }
+  .hand-card:nth-child(8) { --fan-rotation: 6deg; }
+  .hand-card:nth-child(9) { --fan-rotation: 8deg; }
+  .hand-card:nth-child(n+10) { --fan-rotation: 0deg; }
+
+  /* 卡牌内部元素 */
+  .hand-card .card-art {
+    width: 100%;
+    height: 95px;
+    border-radius: 4px 4px 0 0;
+    margin: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid #c0a86a;
+  }
+  .hand-card .card-art svg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .hand-card .card-cost {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 26px;
+    height: 26px;
+    background: radial-gradient(circle, #ffd700, #b8860b);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 0 4px rgba(0,0,0,0.7);
+    z-index: 2;
+  }
+  .hand-card .card-name {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0.4rem 0 0.2rem;
+    text-align: center;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--mint); /* 保持高亮 */
+  }
+  .hand-card .card-type {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+    margin-bottom: 0.2rem;
+  }
+  .hand-card .card-text {
+    font-size: 0.75rem;
+    line-height: 1.3;
+    max-height: 5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    margin: 0 0.3rem;
+    color: var(--text);
+  }
+
+  /* 禁用状态：半透明，但保持可读 */
+  .hand-card.not-playable {
+    opacity: 0.5;
+    filter: grayscale(20%);
+  }
+
+  /* 拖拽幽灵样式 */
+  .drag-ghost {
+    background: rgba(26, 35, 48, 0.9);
+    border: 2px solid var(--amber);
+    border-radius: 8px;
+    padding: 0.5rem;
+    box-shadow: 0 0 20px var(--amber-glow);
+    transform: translate(-50%, -50%);
+    display: none;
+    color: var(--text);
+    font-weight: 700;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    position: fixed;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* 确保动作按钮和牌堆不遮挡手牌 */
+  .battle-actions,
+  .pile-display {
+    position: relative;
+    z-index: 5;
+  }
+  .hand-area {
+    z-index: 4;
+  }
+}
+
+/* ========== 中等屏幕（601px - 900px）适配 ========== */
+@media (max-width: 900px) and (min-width: 601px) {
+  .battle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto auto;
+    gap: 0.8rem;
+    padding: 0.8rem;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .enemy-area { grid-column: 2; grid-row: 1; }
+  .player-area { grid-column: 1; grid-row: 1; }
+  .pile-display { grid-column: 1 / -1; grid-row: 2; }
+  .battle-actions { grid-column: 1 / -1; grid-row: 3; }
+  .hand-area { grid-column: 1 / -1; grid-row: 4; }
+  .ally-art-container,
+  .enemy-art-container {
+    width: 100%;
+    height: clamp(120px, 25vw, 150px);
+  }
+  .hand-card {
+    width: 150px;
+    height: 235px;
+  }
+}
+
+/* ========== 手机端（≤600px）优化，重点 390x844 ========== */
+@media (max-width: 600px) {
+  .battle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto auto auto;
+    gap: 0.4rem;
+    padding: 0.4rem;
+    width: 100%;
+    min-width: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: auto;
+    min-height: 0;
+    padding-bottom: 1rem;
+  }
+
+  /* 上半部分左右并排：玩家与敌人 */
+  .player-area,
+  .enemy-area {
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    padding: 0.2rem;
+  }
+  .player-area { grid-column: 1; }
+  .enemy-area { grid-column: 2; }
+
+  /* 头像缩小但保留 */
+  .ally-art-container,
+  .enemy-art-container {
+    width: 100%;
+    height: 100px;
+    overflow: hidden;
+    border-radius: 6px;
+    border: 1px solid var(--border-bright);
+    background: var(--panel-dark);
+  }
+  .ally-art-container svg,
+  .enemy-art-container svg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  /* 角色盒子：紧凑，字体小 */
+  .enemy-box,
+  .player-box {
+    padding: 0.4rem;
+    font-size: 0.7rem;
+    text-align: center;
+    background: rgba(26, 35, 48, 0.8);
+    border: 1px solid var(--border-bright);
+    border-radius: 6px;
+  }
+  .enemy-name,
+  .player-name {
+    font-size: 0.9rem;
+    line-height: 1.2;
+    margin-bottom: 0.1rem;
+  }
+  .enemy-hp,
+  .player-hp {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+  }
+  .hp-bar {
+    height: 4px;
+    flex: 1;
+  }
+  .intent {
+    padding: 0.25rem;
+    font-size: 0.7rem;
+    margin-top: 0.2rem;
+  }
+
+  /* 行动按钮：第2行，全宽 */
+  .battle-actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.2rem;
+  }
+  .battle-actions .btn {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  /* 牌堆显示：第3行，小巧 */
+  .pile-display {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.2rem;
+    flex-wrap: wrap;
+  }
+  .pile-btn {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    min-width: 80px;
+  }
+
+  /* 手牌：第4行，全宽底部横向滑动 */
+  .hand-area {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 0.4rem;
+    align-items: flex-start;
+    padding: 0.2rem 0;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    max-height: none;
+  }
+  .hand-card {
+    width: 130px;
+    height: 220px;
+    flex: 0 0 130px;
+    position: relative;
+    background: linear-gradient(145deg, #2a2f3a, #1e232c);
+    border: 2px solid #c0a86a;
+    border-radius: 6px;
+    padding: 0.4rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    transition: transform 0.1s;
+    transform-origin: bottom center;
+    scroll-snap-align: start;
+  }
+  .hand-card:hover {
+    transform: translateY(-6px) rotate(0deg) scale(1.02);
+    z-index: 5;
+  }
+  .hand-card.selected {
+    border-color: var(--amber);
+    box-shadow: 0 0 10px var(--amber-glow);
+    transform: translateY(-8px) scale(1.05);
+    z-index: 5;
+  }
+  .hand-card .card-art {
+    width: 100%;
+    height: 75px;
+    border-radius: 4px 4px 0 0;
+    margin: 0;
+    overflow: hidden;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid #c0a86a;
+  }
+  .hand-card .card-cost {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 22px;
+    height: 22px;
+    background: radial-gradient(circle, #ffd700, #b8860b);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    font-weight: bold;
+    font-size: 12px;
+    box-shadow: 0 0 3px rgba(0,0,0,0.6);
+    z-index: 2;
+  }
+  .hand-card .card-name {
+    font-size: 13px;
+    line-height: 1.2;
+    margin: 0.3rem 0;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--mint);
+  }
+  .hand-card .card-text {
+    font-size: 0.7rem;
+    line-height: 1.2;
+    max-height: 3.5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text);
+  }
+
+  /* 清除旧规则中可能造成的溢出 */
+  .battle > * {
+    min-width: 0;
+  }
+
+  /* 确保手牌区域不遮挡动作按钮 */
+  .battle-actions,
+  .pile-display {
+    position: relative;
+    z-index: 5;
+  }
+  .hand-area {
+    z-index: 4;
+  }
+}
+
+/* ========== 超小屏（≤390px）进一步微调 ========== */
+@media (max-width: 390px) {
+  .battle {
+    gap: 0.3rem;
+    padding: 0.3rem;
+  }
+  .ally-art-container,
+  .enemy-art-container {
+    height: 80px;
+  }
+  .enemy-name,
+  .player-name {
+    font-size: 0.8rem;
+  }
+  .hand-card {
+    width: 110px;
+    height: 200px;
+    flex-basis: 110px;
+  }
+  .hand-card .card-art {
+    height: 65px;
+  }
+  .hand-card .card-name {
+    font-size: 12px;
+  }
+  .hand-card .card-text {
+    font-size: 0.65rem;
+  }
+}
+
+/* ========== 全局安全与动画尊重 ========== */
+@media (prefers-reduced-motion: reduce) {
+  .hand-card,
+  .hand-card:hover,
+  .hand-card.selected,
+  .hand-card:not(:hover):not(.selected) {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+  /* 移除悬浮位移，仅用边框和阴影表示 */
+  .hand-card:hover {
+    box-shadow: 0 0 8px rgba(45, 212, 191, 0.4);
+  }
+  .hand-card.selected {
+    box-shadow: 0 0 10px var(--amber-glow);
+  }
+}
+
+/* 确保所有尺寸稳定，无意外缩放 */
+.hand-card {
+  box-sizing: border-box;
+}
+.ally-art-container,
+.enemy-art-container {
+  box-sizing: border-box;
+}

@@ -8,6 +8,7 @@ const assets = new Map([
   ['/index.html', ['index.html', 'text/html; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8']],
+  ['/cover-wa.webp', ['cover-wa.webp', 'image/webp']],
   ['/art-gallery.html', ['art-gallery.html', 'text/html; charset=utf-8']],
   ['/pvp/', ['online/index.html', 'text/html; charset=utf-8']],
   ['/pvp/client.js', ['online/client.js', 'text/javascript; charset=utf-8']],
@@ -23,6 +24,10 @@ const assets = new Map([
   ['/new/art.js', ['new-demo/art.js', 'text/javascript; charset=utf-8']],
   ['/new/fx.js', ['new-demo/fx.js', 'text/javascript; charset=utf-8']],
   ['/new/presentation.css', ['new-demo/presentation.css', 'text/css; charset=utf-8']],
+  ['/new/cover.css', ['new-demo/cover.css', 'text/css; charset=utf-8']],
+  ['/new/battle-redesign.css', ['new-demo/battle-redesign.css', 'text/css; charset=utf-8']],
+  ['/new/battle-fx.css', ['new-demo/battle-fx.css', 'text/css; charset=utf-8']],
+  ['/new/cover.webp', ['new-demo/cover.webp', 'image/webp']],
   ['/new/style.css', ['new-demo/style.css', 'text/css; charset=utf-8']],
   ['/new/season-map.js', ['new-demo/season-map.js', 'text/javascript; charset=utf-8']],
 ]);

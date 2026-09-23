@@ -107,33 +107,42 @@ function renderHome() {
   const hasSaved = !!saved;
 
   document.getElementById('app').innerHTML = `
-    <header class="app-header">
-      <div class="app-title">新demo · 战术试炼</div>
-        <div class="app-buttons">
-        <button class="btn" id="btn-library">卡牌总览</button>
+    <div class="hero-cover">
+      <img class="hero-bg" src="/new/cover.webp" alt="" />
+      <div class="hero-content">
+        <h1 class="hero-title">战术试炼</h1>
+        <p class="hero-tagline">一支队伍，75种战术，三段赛程</p>
+        <div class="hero-actions">
+          <button class="btn hero-btn primary" id="btn-new">开始新局${hasSaved ? '（覆盖当前存档）' : ''}</button>
+          <button class="btn hero-btn" id="btn-continue" ${continueDisabled ? 'disabled' : ''}>继续上局</button>
+        </div>
+        <div class="hero-nav">
+          <a href="#team-selection" class="hero-link">选择队伍</a>
+          <button class="hero-link" id="btn-library">卡牌总览</button>
+        </div>
       </div>
-    </header>
-    <main class="home">
-      <h1>一支队伍，75种战术，三段赛程</h1>
-      <p class="tagline">面向喜欢烟闪、补枪、回防、残局的FPS玩家</p>
+    </div>
+    <main class="home-section" id="team-selection">
       <div class="team-select" role="radiogroup" aria-label="选择初始队伍">
         ${teamsHtml}
       </div>
-      <div>
+      <div class="seed-control">
         <label for="seed-input">种子：</label>
         <input type="text" id="seed-input" class="seed-input" placeholder="留空为随机" value="${escapeHtml(seedInputValue)}" />
       </div>
       <div class="home-actions">
-        <button class="btn primary" id="btn-new">新局${hasSaved ? '（覆盖当前存档）' : ''}</button>
-        <button class="btn" id="btn-continue" ${continueDisabled ? 'disabled' : ''}>继续上局</button>
+        <button class="btn primary" id="btn-new-secondary">开始新局${hasSaved ? '（覆盖当前存档）' : ''}</button>
+        <button class="btn" id="btn-continue-secondary" ${continueDisabled ? 'disabled' : ''}>继续上局</button>
       </div>
       <div class="nav-links">
         <a href="/pvp/">好友PvP</a>
         <a href="/">瓦demo</a>
       </div>
+      <div class="credit">猪之家出品</div>
     </main>
   `;
 
+  // 事件绑定
   document.querySelectorAll('.team-card').forEach(el => {
     el.addEventListener('click', () => {
       selectedTeam = el.dataset.team;
@@ -148,11 +157,12 @@ function renderHome() {
     });
   });
 
-  document.getElementById('seed-input').addEventListener('input', e => {
+  const seedInput = document.getElementById('seed-input');
+  seedInput.addEventListener('input', e => {
     seedInputValue = e.target.value;
   });
 
-  document.getElementById('btn-new').addEventListener('click', () => {
+  function startNewGame() {
     if (loadState()) {
       const confirmOverwrite = window.confirm('开始新局将覆盖当前存档，确定？');
       if (!confirmOverwrite) return;
@@ -162,16 +172,21 @@ function renderHome() {
     saveState();
     selectedCardUid = null;
     renderGame();
-  });
+  }
 
-  document.getElementById('btn-continue').addEventListener('click', () => {
+  function continueGame() {
     const saved = loadState();
     if (saved) {
       state = saved;
       selectedCardUid = null;
       renderGame();
     }
-  });
+  }
+
+  document.getElementById('btn-new').addEventListener('click', startNewGame);
+  document.getElementById('btn-new-secondary').addEventListener('click', startNewGame);
+  document.getElementById('btn-continue').addEventListener('click', continueGame);
+  document.getElementById('btn-continue-secondary').addEventListener('click', continueGame);
 
   document.getElementById('btn-library').addEventListener('click', () => {
     showLibrary = true;

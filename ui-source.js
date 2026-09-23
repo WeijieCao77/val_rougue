@@ -51,7 +51,39 @@ function card(c,options={}){const t=CARDS[c.id];return `<article tabindex="0" da
 function heading(kicker,title,text=''){return `<div class="section-heading"><div class="eyebrow">${kicker}</div><h2 tabindex="-1" id="page-title">${title}</h2>${text?`<p>${text}</p>`:''}</div>`;}
 function home(){
  const regions=Object.values(REGIONS);
- return `<main class="title-screen"><div class="title-mark">${icon('boss')}</div><div class="eyebrow">四大赛区 · 卡牌肉鸽</div><h1>瓦demo · 登峰赛季</h1><p class="title-sub">把这支队伍，带到赛季最后一场。</p><div class="region-picker"><div class="region-tabs">${regions.map(r=>`<button class="region-tab ${region===r.id?'active':''}" data-ui="set-region-${r.id}">${esc(r.name)}<small>${esc(r.tagline)}</small></button>`).join('')}</div><p class="region-note">${esc(regions.find(r=>r.id===region).tagline)} / 18 名选手 / 三幕完整征程</p></div><div class="title-menu">${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}${ui('确认开赛','start-season','primary')}<label class="seed-label">赛季种子<input id="seed" placeholder="留空，每局随机" maxlength="80" value="${esc(seedInput)}" autocomplete="off"></label><div class="button-row">${ui('游戏规则','rules','text-button')}${ui('卡牌总览','library','text-button')}<a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a><a class="text-button" href="/pvp/">好友PvP</a>${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="text-button" href="/new/">新demo</a>` : ''}</div></div><p class="title-note">四大赛区 · 72 张选手牌 · 三幕 × 11 站</p>${saveError?`<p class="warning">${esc(saveError)}</p>`:''}<span class="build-tag">D0.2.0 / 战斗动效 07</span></main>`;
+ return `<main class="cover-screen">
+ <section class="cover-hero" aria-label="游戏封面">
+   <img src="/cover-wa.webp" alt="登峰赛季游戏封面：赛区地图与角色集结" class="cover-img">
+   <div class="cover-overlay"></div>
+   <div class="cover-content">
+     <div class="eyebrow">四大赛区 · 卡牌肉鸽</div>
+     <h1>登峰赛季</h1>
+     <p class="cover-sub">把这支队伍，带到赛季最后一场。</p>
+     <div class="cover-actions">
+       ${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}
+       ${ui('确认开赛','start-season','primary')}
+     </div>
+   </div>
+ </section>
+ <section class="cover-setup" id="cover-setup">
+   <h2 class="setup-title">选择赛区</h2>
+   <div class="region-picker">
+     <div class="region-tabs">${regions.map(r=>`<button class="region-tab ${region===r.id?'active':''}" data-ui="set-region-${r.id}">${esc(r.name)}<small>${esc(r.tagline)}</small></button>`).join('')}</div>
+     <p class="region-note">${esc(regions.find(r=>r.id===region).tagline)} / 18 名选手 / 三幕完整征程</p>
+   </div>
+   <label class="seed-label">赛季种子<input id="seed" placeholder="留空，每局随机" maxlength="80" value="${esc(seedInput)}" autocomplete="off"></label>
+   <div class="button-row">
+     ${ui('游戏规则','rules','text-button')}
+     ${ui('卡牌总览','library','text-button')}
+     <a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a>
+     <a class="text-button" href="/pvp/">好友PvP</a>
+     ${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="text-button" href="/new/">新demo</a>` : ''}
+   </div>
+   <p class="title-note">四大赛区 · 72 张选手牌 · 三幕 × 11 站</p>
+   ${saveError?`<p class="warning">${esc(saveError)}</p>`:''}
+   <footer class="cover-footer">猪之家出品</footer>
+ </section>
+</main>`;
 }
 function header(){
  const actInfo=state.mode==='season'?ACTS[state.act-1]:null;
