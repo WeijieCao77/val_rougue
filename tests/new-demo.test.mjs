@@ -93,10 +93,10 @@ function totalBattleCards(battle) {
 
 // ----------------------------- Tests -----------------------------
 
-test('content: 87 unique permanent cards and 3 status cards', () => {
-  assert.equal(CARD_IDS.length, 87);
-  assert.equal(new Set(CARD_IDS).size, 87);
-  assert.equal(Object.keys(STATUS_CARDS).length, 3);
+test('content: 87 shared plus four 75-card regional pools and 19 afflictions', () => {
+  assert.equal(CARD_IDS.length, 387);
+  assert.equal(new Set(CARD_IDS).size, 387);
+  assert.equal(Object.keys(STATUS_CARDS).length, 19);
   for (const id of CARD_IDS) {
     const c = CARDS[id];
     assert(c, `missing card ${id}`);

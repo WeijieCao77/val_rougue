@@ -17,13 +17,13 @@ test('every card and enemy has a real, local, decodable image format',async()=>{
   else assert.ok(bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))||bytes[0]===255&&bytes[1]===216||bytes.toString('ascii',8,12)==='WEBP');
   if(CARDS[id]?.player)hashes.push(createHash('sha256').update(bytes).digest('hex'));
  }
- assert.equal(hashes.length,72);assert.equal(new Set(hashes).size,72,'No repeated stock silhouette or accidental duplicate photos');
+ assert.equal(hashes.length,200);assert.equal(new Set(hashes).size,200,'No repeated portrait or concept art');
  assert.equal(new Set(['B01','A2_B01','A3_B01'].map(id=>ENEMY_ART[id].path)).size,3);
 });
 
 test('portrait provenance matches player names and art markup cannot become an action',async()=>{
  const sources=JSON.parse(await readFile(new URL('../assets/player-sources.json',import.meta.url),'utf8'));
  for(const a of sources.players){assert.equal(a.status,'ok');assert.equal(a.profileName.toLowerCase(),CARDS[a.id].name.toLowerCase());assert.match(a.profileUrl,/^https:\/\/www\.vlr\.gg\/player\/\d+\//);assert.match(a.sourceUrl,/^https:\/\/(owcdn\.net|wx3\.sinaimg\.cn)\//);}
- for(const id of Object.keys(CARDS)){const html=cardArtwork(id);assert.match(html,/<img /);assert.doesNotMatch(html,/data-action|onclick|https?:/);assert.match(html,/draggable="false"/);if(CARDS[id].player)assert.match(artCredit(id),/照片：/);}
+ for(const id of Object.keys(CARDS)){const html=cardArtwork(id);assert.match(html,/<img /);assert.doesNotMatch(html,/data-action|onclick|https?:/);assert.match(html,/draggable="false"/);if(CARDS[id].player)assert.match(artCredit(id),CARD_ART[id].kind==='photo'?/照片：/:/概念头像，非选手本人肖像/);}
  for(const id of Object.keys(ENEMIES))assert.match(opponentArtwork(id),/<img /);
 });

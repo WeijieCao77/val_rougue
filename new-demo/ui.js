@@ -199,11 +199,16 @@ function renderHome() {
       const confirmOverwrite = window.confirm('开始新局将覆盖当前存档，确定？');
       if (!confirmOverwrite) return;
     }
-    const seed = crypto.randomUUID();
-    state = createRun(seed, selectedTeam);
-    saveState();
-    selectedCardUid = null;
-    renderGame();
+    try {
+      const seed = crypto.randomUUID();
+      state = createRun(seed, selectedTeam);
+      saveState();
+      selectedCardUid = null;
+      renderGame();
+    } catch (error) {
+      console.error('Start failed', error);
+      showNotice(`开赛失败：${error.message}`);
+    }
   }
 
   function continueGame() {
@@ -854,6 +859,7 @@ function renderLibraryModal() {
   let filterType = '';
   let filterTag = '';
   let filterCost = '';
+  let filterRegion = '';
 
   function closeLibrary() {
     modalRoot.innerHTML = '';
@@ -895,6 +901,7 @@ function renderLibraryModal() {
         if (filterType && c.type !== filterType) return false;
         if (filterTag && c.tag !== filterTag) return false;
         if (filterCost !== '' && c.cost !== parseInt(filterCost)) return false;
+        if (filterRegion && (c.region||'shared') !== filterRegion) return false;
         return true;
       });
       count = filtered.length;
@@ -918,11 +925,11 @@ function renderLibraryModal() {
       const statusCards = Object.values(STATUS_CARDS);
       count = statusCards.length;
       html = statusCards.map(c => {
-        const tooltip = `${escapeHtml(c.name)} [状态]\n${escapeHtml(c.text)}`;
+        const tooltip = `${escapeHtml(c.name)} [${c.curse?'诅咒':'状态'}]\n${escapeHtml(c.text)}`;
         return `<div class="library-card status-card" data-tooltip="${tooltip}" tabindex="0">
           <div class="card-art">${cardArt(c.id)}</div>
           <div class="name">${escapeHtml(c.name)}</div>
-          <div class="meta">状态 · 不可打出（不属于${CARD_IDS.length}张永久卡池）</div>
+          <div class="meta">${c.curse?'全赛区共享诅咒 · 跨比赛保留':'比赛状态 · 战后消失'} · 不计入${CARD_IDS.length}张可选牌</div>
           <div class="card-text">${escapeHtml(c.text)}</div>
         </div>`;
       }).join('');
@@ -949,12 +956,15 @@ function renderLibraryModal() {
     filterType = '';
     filterTag = '';
     filterCost = '';
+    filterRegion = '';
     const typeSelect = document.getElementById('filter-type');
     const tagSelect = document.getElementById('filter-tag');
     const costSelect = document.getElementById('filter-cost');
+    const regionSelect = document.getElementById('filter-region');
     if (typeSelect) typeSelect.value = '';
     if (tagSelect) tagSelect.value = '';
     if (costSelect) costSelect.value = '';
+    if (regionSelect) regionSelect.value = '';
     document.querySelectorAll('.library-tab').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.tab === tab);
       btn.setAttribute('aria-selected', btn.dataset.tab === tab ? 'true' : 'false');
@@ -979,6 +989,9 @@ function renderLibraryModal() {
           <button class="library-tab" role="tab" aria-selected="false" data-tab="relic">遗物 (${Object.keys(RELICS).length})</button>
         </div>
         <div id="filter-row" class="filter-row">
+          <select id="filter-region" class="filter-select" aria-label="筛选赛区">
+            <option value="">全部赛区与共享</option><option value="shared">共享牌 (${CARD_IDS.filter(id=>!CARDS[id].region).length})</option><option value="CN">中国 (75)</option><option value="AM">美洲 (75)</option><option value="EMEA">EMEA (75)</option><option value="PAC">太平洋 (75)</option>
+          </select>
           <select id="filter-type" class="filter-select">
             <option value="">全部类型</option>
             <option value="attack">攻击</option>
@@ -1023,6 +1036,10 @@ function renderLibraryModal() {
   });
   document.getElementById('filter-cost').addEventListener('change', (e) => {
     filterCost = e.target.value;
+    renderContent();
+  });
+  document.getElementById('filter-region').addEventListener('change', (e) => {
+    filterRegion = e.target.value;
     renderContent();
   });
 

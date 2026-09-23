@@ -1,5 +1,6 @@
 import {VERSION,CARDS,PLAYER_IDS,SKINS,ENEMIES,START,effects,cardName,REGIONS} from './content.js';
 import {buildMap,availableNodes} from './season-map.js';
+import {CURSES,CURSE_RULES,EXTRA_STATUS_RULES} from './afflictions.js';
 export const clone = x => structuredClone(x);
 const log = (s,text) => s.logs.push({node:s.node,turn:s.battle?.turn||0,text});
 export function random(s) { let x=s.rng; x^=x<<13; x^=x>>>17; x^=x<<5; s.rng=x>>>0; return s.rng/4294967296; }
@@ -15,6 +16,7 @@ export const SEASON_EVENTS = {
   scrim:{label:'训练赛',desc:'支付20资金回复15%声望，或冒风险失去8声望换35资金。',options:{safe:'支付训练（-20资金，回复15%）',risk:'冒险（-8声望，+35资金）'}},
   training:{label:'特训',desc:'支付40升级一名选手，或免费升级但获得磨合不足。',options:{paid:'付费训练（-40）',risky:'鲁莽训练（免费但+磨合不足）'}},
   rally:{label:'动员',desc:'支付60移除一个诅咒并回复15%声望，或获得100资金但获得两个舆论压力。',options:{cleanse:'净化（-60资金，移除诅咒+回复）',sponsor:'接受赞助（+100资金，+2舆论压力）'}}
+  ,risk:{label:'高风险合作',desc:'领取90资金并加入一张随机俱乐部隐患，或谢绝。',options:{accept:'接受合作',skip:'谢绝'}}
 };
 export function offers(s,weights=[15,60,20,5],number=3,excluded=[]) {
  const result=[];
@@ -49,9 +51,19 @@ function powerTotal(b,key){return b.powers.flatMap(effects).filter(e=>e.key===ke
 export function drawCards(s,n) {
  const b=s.battle;
  for(let i=0;i<n;i++) {
+  if(s.phase!=='combat')break;
   if(b.hand.length>=10){log(s,'手牌已满：停止本次剩余抽牌。');break;}
   if(!b.draw.length){if(!b.discard.length)break;b.draw=shuffle(s,b.discard);b.discard=[];log(s,'抽牌堆耗尽：弃牌堆洗回抽牌堆。');}
   const c=b.draw.shift();b.hand.push(c);log(s,`抽到 ${cardName(c)}。`);
+  const rule=CURSE_RULES[c.id]||EXTRA_STATUS_RULES[c.id];
+  if(rule?.trigger==='onDrawLoseEnergy'){b.energy=Math.max(0,b.energy-rule.n);log(s,`${rule.name}：行动点 -${rule.n}。`);}
+  if(rule?.trigger==='onDrawWeak'){b.weak+=rule.n;log(s,`${rule.name}：自身压制 +${rule.n}。`);}
+  if(rule?.trigger==='onDrawVuln'){b.vulnerable=(b.vulnerable||0)+rule.n;log(s,`${rule.name}：自身易伤 +${rule.n}。`);}
+  if(rule?.trigger==='onDrawLoseHp'){s.hp=Math.max(0,s.hp-rule.n);log(s,`${rule.name}：声望 -${rule.n}。`);if(!s.hp){lose(s,rule.name);break;}}
+  if(rule?.trigger==='onDrawDiscard')for(let j=0;j<rule.n;j++){
+   const choices=b.hand.filter(card=>card.uid!==c.uid);if(!choices.length)break;
+   const target=choices[Math.floor(random(s)*choices.length)];b.hand.splice(b.hand.findIndex(card=>card.uid===target.uid),1);b.discard.push(target);log(s,`${rule.name}：${cardName(target)} 弃入弃牌堆。`);
+  }
  }
 }
 function beginTurn(s) {
@@ -127,6 +139,7 @@ function play(s,uid) {
  if(t.player)b.roleCounts[t.role]=(b.roleCounts[t.role]||0)+1;
  let bonus=t.player&&t.role==='决斗'&&first?powerTotal(b,'duel'):0;
  const wasWeak=b.enemyWeak>0;log(s,`打出 ${cardName(c)}，支付 ${t.cost} 行动点。`);
+ for(const held of b.hand){const rule=CURSE_RULES[held.id];if(rule?.trigger==='onPlayLoseHp'){s.hp=Math.max(0,s.hp-rule.n);log(s,`${rule.name}：声望 -${rule.n}。`);if(!s.hp){lose(s,rule.name);b.resolving=null;return;}}}
  for(const e of effects(c)) {
   if(e.type==='hit')for(let i=0;i<e.times;i++){
    strike(s,damage(e.n+bonus+(e.ifWeak&&wasWeak?e.ifWeak:0),b.weak>0,b.enemyVulnerable>0));bonus=0;
@@ -150,14 +163,14 @@ function play(s,uid) {
 }
 function endTurn(s) {
  const b=s.battle;
- for(const c of b.hand.filter(c=>c.id==='CU02')){s.hp=Math.max(0,s.hp-2);log(s,'舆论压力：直接失去 2 声望。');if(!s.hp){lose(s,'舆论压力耗尽声望');return;}}
+ for(const c of b.hand){const rule=CURSE_RULES[c.id];if(rule?.trigger==='endTurnLoseHp'){s.hp=Math.max(0,s.hp-rule.n);log(s,`${rule.name}：直接失去 ${rule.n} 声望。`);if(!s.hp){lose(s,`${rule.name}耗尽声望`);return;}}}
  for(const c of b.hand){if(['temporary','exhaustEnd'].includes(CARDS[c.id].zone)){b.exhaust.push(c);log(s,`${cardName(c)} 在回合末消耗。`);}else b.discard.push(c);}
  b.hand=[];b.weak=Math.max(0,b.weak-1);b.enemyBlock=0;
  log(s,`对手行动：${intentText(s)}。`);
  for(const e of intent(s)) {
   if(e.type==='hit')for(let i=0;i<e.times;i++){
-   const absorbed=Math.min(b.block,e.n);b.block-=absorbed;s.hp=Math.max(0,s.hp-e.n+absorbed);
-   log(s,`对手攻击 ${e.n}：格挡抵消 ${absorbed}，失去 ${e.n-absorbed} 声望（剩余 ${s.hp}）。`);
+   const incoming=b.vulnerable>0?Math.floor(e.n*1.5):e.n,absorbed=Math.min(b.block,incoming);b.block-=absorbed;s.hp=Math.max(0,s.hp-incoming+absorbed);
+   log(s,`对手攻击 ${incoming}：格挡抵消 ${absorbed}，失去 ${incoming-absorbed} 声望（剩余 ${s.hp}）。`);
    if(!s.hp){lose(s,'比赛失利');return;}
   }
   if(e.type==='block'){b.enemyBlock+=e.n;log(s,`对手获得 ${e.n} 格挡。`);}
@@ -165,6 +178,7 @@ function endTurn(s) {
   if(e.type==='jam')for(let i=0;i<e.n;i++){b.discard.push(instance(s,e.id));log(s,`${CARDS[e.id].name} 加入弃牌堆。`);}
  }
  b.enemyWeak=Math.max(0,b.enemyWeak-1);b.enemyVulnerable=Math.max(0,b.enemyVulnerable-1);
+ if(b.vulnerable)b.vulnerable=Math.max(0,b.vulnerable-1);
  b.intent++;if(b.intent===ENEMIES[b.enemy].script.length){b.intent=0;b.cycles++;if(ENEMIES[b.enemy].boss)log(s,`Boss 完成一轮意图，之后每段攻击基础值 +${ENEMIES[b.enemy].growth??2}（累计 +${b.cycles*(ENEMIES[b.enemy].growth??2)}）。`);}
  beginTurn(s);
 }
@@ -212,7 +226,7 @@ function finishRewardSeason(s) {
 }
 export function removalReason(s,uid) {
  const c=s.deck.find(c=>c.uid===uid);if(!c)return '未找到这张牌';
- if(!CARDS[c.id].player)return c.id.startsWith('CU')?'':'此类牌不能永久移除';
+ if(!CARDS[c.id].trainable)return c.id.startsWith('CU')?'':'此类牌不能永久移除';
  const rest=s.deck.filter(c=>c.uid!==uid&&CARDS[c.id].player);
  if(rest.length<5)return '至少保留 5 张选手牌';
  if(!rest.some(c=>effects(c).some(e=>e.type==='hit')))return '至少保留 1 张能直接攻击的选手牌';return '';
@@ -253,12 +267,12 @@ function perform(s,a) {
  case 'leaveShop':requirePhase('shop');advance(s);break;
  case 'activity':requirePhase('activity');
   if(a.choice==='fans'){const n=healAmount(s);if(n<=0)throw Error('声望已满');s.hp+=n;log(s,`粉丝见面会：恢复最大声望的 30%，实际 +${n} 声望。`);advance(s);}
-  else if(a.choice==='upgrade'){if(!s.deck.some(c=>CARDS[c.id].player&&!c.up))throw Error('没有可训练的选手牌');s.phase='upgrade';}
+  else if(a.choice==='upgrade'){if(!s.deck.some(c=>CARDS[c.id].trainable&&!c.up))throw Error('没有可训练的牌');s.phase='upgrade';}
   else if(a.choice==='cleanse'){if(!s.deck.some(c=>c.id.startsWith('CU')))throw Error('没有俱乐部隐患');s.phase='cleanse';}
   else if(a.choice==='skip'){log(s,'跳过俱乐部活动。');advance(s);}else throw Error('未知活动');break;
  case 'activityBack':requirePhase('upgrade','cleanse');s.phase='activity';break;
  case 'upgrade':requirePhase('upgrade');{
-  const c=s.deck.find(c=>c.uid===a.uid);if(!c||!CARDS[c.id].player||c.up)throw Error('此牌不能升级');c.up=true;log(s,`训练完成：${cardName(c)}（${c.uid}）。`);advance(s);break;}
+  const c=s.deck.find(c=>c.uid===a.uid);if(!c||!CARDS[c.id].trainable||c.up)throw Error('此牌不能升级');c.up=true;log(s,`训练完成：${cardName(c)}（${c.uid}）。`);advance(s);break;}
  case 'cleanse':requirePhase('cleanse');{
   const c=s.deck.find(c=>c.uid===a.uid);if(!c||!c.id.startsWith('CU'))throw Error('只能移除俱乐部隐患');s.deck=s.deck.filter(c=>c.uid!==a.uid);log(s,`团建：永久移除 ${cardName(c)}。`);advance(s);break;}
  case 'chooseNode':{
@@ -304,7 +318,7 @@ function perform(s,a) {
     break;
    case 'training':
     if(a.choice==='paid'||a.choice==='risky'){
-     if(!s.deck.some(c=>CARDS[c.id].player&&!c.up))throw Error('没有可训练选手');if(a.choice==='paid'&&s.money<40)throw Error('资金不足');
+     if(!s.deck.some(c=>CARDS[c.id].trainable&&!c.up))throw Error('没有可训练牌');if(a.choice==='paid'&&s.money<40)throw Error('资金不足');
      s.pendingEvent=a.choice; s.phase='eventUpgrade';
     } else throw Error('未知选项');
     break;
@@ -317,13 +331,16 @@ function perform(s,a) {
      s.money+=100; s.deck.push(instance(s,'CU02')); s.deck.push(instance(s,'CU02')); log(s,'动员赞助：资金 +100，加入两个舆论压力。'); advanceSeason(s);
     } else throw Error('未知选项');
     break;
+   case 'risk':
+    if(a.choice==='accept'){const curse=CURSES[2+Math.floor(random(s)*(CURSES.length-2))];s.money+=90;s.deck.push(instance(s,curse.id));log(s,`高风险合作：资金 +90，加入 ${curse.name}。`);advanceSeason(s);}else throw Error('未知选项');
+    break;
    default: throw Error('未知事件');
   }
   break;}
  case 'eventUpgrade':{
   requirePhase('eventUpgrade');
   const pending=s.pendingEvent; if(!pending) throw Error('无待处理事件');
-  const c=s.deck.find(c=>c.uid===a.uid); if(!c||!CARDS[c.id].player||c.up) throw Error('此牌不能升级');
+  const c=s.deck.find(c=>c.uid===a.uid); if(!c||!CARDS[c.id].trainable||c.up) throw Error('此牌不能升级');
   if(pending==='paid'){ if(s.money<40) throw Error('资金不足'); s.money-=40; }
   c.up=true; if(pending==='risky') s.deck.push(instance(s,'CU01'));
   log(s,`特训完成：${cardName(c)}。`);
@@ -366,7 +383,7 @@ export function preview(s,uid) {
  const newLogs=copy.logs.slice(s.logs.length);return {energy:after.energy,damage:before.enemyHp-after.enemyHp,enemyBlock:before.enemyBlock-after.enemyBlock,block:after.block-before.block,draw:newLogs.filter(l=>l.text.startsWith('抽到 ')).length,shuffle:newLogs.some(l=>l.text==='抽牌堆耗尽：弃牌堆洗回抽牌堆。'),wins:copy.phase!=='combat'};
 }
 function startSeasonEvent(s) {
- const pool = ['sponsor','trial','scrim'];
+ const pool = ['sponsor','trial','scrim','risk'];
  if (s.act===2) pool.push('training');
  if (s.act===3) pool.push('rally');
  let fresh = pool.filter(id=>!s.seenEvents.includes(id));
@@ -389,13 +406,14 @@ export function legalActions(s) {
    if(id){
     actions.push({type:'seasonEvent',choice:'skip'});
     if(id==='sponsor') actions.push({type:'seasonEvent',choice:'accept'});
+    if(id==='risk') actions.push({type:'seasonEvent',choice:'accept'});
     if(id==='trial'&&s.eventOffers.length) actions.push({type:'seasonEvent',choice:'accept'});
     if(id==='scrim'){
      if(s.money>=20 && s.hp<s.maxHp) actions.push({type:'seasonEvent',choice:'safe'});
      if(s.hp>8) actions.push({type:'seasonEvent',choice:'risk'});
     }
     if(id==='training'){
-     if(s.deck.some(c=>CARDS[c.id].player&&!c.up)){
+     if(s.deck.some(c=>CARDS[c.id].trainable&&!c.up)){
       if(s.money>=40) actions.push({type:'seasonEvent',choice:'paid'});
       actions.push({type:'seasonEvent',choice:'risky'});
      }
@@ -418,18 +436,18 @@ export function legalActions(s) {
  }
  if(s.phase==='activity'){
   if(healAmount(s)>0)actions.push({type:'activity',choice:'fans'});
-  if(s.deck.some(c=>CARDS[c.id].player&&!c.up))actions.push({type:'activity',choice:'upgrade'});
+  if(s.deck.some(c=>CARDS[c.id].trainable&&!c.up))actions.push({type:'activity',choice:'upgrade'});
   if(s.deck.some(c=>c.id.startsWith('CU')))actions.push({type:'activity',choice:'cleanse'});actions.push({type:'activity',choice:'skip'});
  }
  if(s.phase==='upgrade'||s.phase==='cleanse'){
-  for(const c of s.deck)if(s.phase==='upgrade'?CARDS[c.id].player&&!c.up:c.id.startsWith('CU'))actions.push({type:s.phase,uid:c.uid});actions.push({type:'activityBack'});
+  for(const c of s.deck)if(s.phase==='upgrade'?CARDS[c.id].trainable&&!c.up:c.id.startsWith('CU'))actions.push({type:s.phase,uid:c.uid});actions.push({type:'activityBack'});
  }
  if(s.mode==='season' && s.phase==='map'){
   for(const n of availableNodes(s)) actions.push({type:'chooseNode',key:n.key});
  }
  if(s.mode==='season' && s.phase==='intermission') actions.push({type:'nextAct'});
  if(s.mode==='season' && s.phase==='eventUpgrade'){
-  for(const c of s.deck) if(CARDS[c.id].player&&!c.up) actions.push({type:'eventUpgrade',uid:c.uid});
+  for(const c of s.deck) if(CARDS[c.id].trainable&&!c.up) actions.push({type:'eventUpgrade',uid:c.uid});
   actions.push({type:'eventBack'});
  }
  if(s.mode==='season' && s.phase==='eventCleanse'){

@@ -1,5 +1,7 @@
 // new-demo/content.js
 // Tactical action pool with all effects described from structured data.
+import { REGIONAL_CARDS } from './regional-cards.js';
+import { CURSES, EXTRA_STATUSES } from '../afflictions.js';
 
 export const CARDS = {};
 export const CARD_IDS = [];
@@ -283,18 +285,23 @@ const defs = [
 ];
 
 defs.forEach(c => def(c));
+for (const card of REGIONAL_CARDS) def(card);
+export const REGION_CARD_IDS = Object.fromEntries(['CN','AM','EMEA','PAC'].map(region => [region, REGIONAL_CARDS.filter(card => card.region === region).map(card => card.id)]));
+export const SHARED_CARD_IDS = defs.map(card => card.id);
 
 // ----------------------------- Status cards -----------------------------
 def({ id:'ST01', name:'失误', cost:0, type:'status', tag:'status', rarity:'common', text:'不可打出。弃掉时受到1点伤害', effects:[] });
 def({ id:'ST02', name:'犹豫', cost:0, type:'status', tag:'status', rarity:'common', text:'不可打出。弃掉时受到2点伤害', effects:[] });
 def({ id:'ST03', name:'暴露', cost:0, type:'status', tag:'status', rarity:'common', text:'不可打出。弃掉时受到3点伤害', effects:[] });
+for(const status of EXTRA_STATUSES)def({id:status.id,name:status.name,cost:0,type:'status',tag:'status',rarity:'common',text:status.text,effects:[]});
+for(const curse of CURSES)def({id:curse.id,name:curse.name,cost:0,type:'status',tag:'curse',rarity:'common',curse:true,text:curse.text+' 跨比赛保留，直到永久移除。',effects:[]});
 
 // ----------------------------- Teams -----------------------------
 export const TEAMS = {
-  breach:   { id:'breach',   name:'突破',  desc:'初始牌组倾向高攻击与前压。', startingDeck:[['TA01',2],['TA05',1],['TA10',1],['TA19',1],['TA28',1],['TA46',1],['TA02',1],['TA06',1],['TA07',1]] },
-  anchor:   { id:'anchor',   name:'架点',  desc:'初始牌组倾向布防与掩护。', startingDeck:[['TA02',2],['TA06',1],['TA11',1],['TA45',1],['TA08',1],['TA29',1],['TA65',1],['TA01',1],['TA07',1]] },
-  utility:  { id:'utility',  name:'道具协同', desc:'初始牌组倾向烟雾闪光配合。', startingDeck:[['TA13',1],['TA39',1],['TA60',1],['TA61',1],['TA41',1],['TA04',1],['TA12',1],['TA40',1],['TA66',1],['TA07',1]] },
-  rotation: { id:'rotation', name:'调度',  desc:'初始牌组倾向抽牌与能量。', startingDeck:[['TA01',1],['TA05',1],['TA28',1],['TA02',1],['TA08',1],['TA07',1],['TA09',1],['TA42',1],['TA74',1],['TA73',1]] }
+  breach:   { id:'breach', region:'AM', name:'美洲 · 突破', desc:'多段交火与易伤联动。', startingDeck:[['TA01',2],['TA05',1],['TA10',1],['TA19',1],['TA28',1],['TA46',1],['TA02',1],['TA06',1],['TA07',1]] },
+  anchor:   { id:'anchor', region:'CN', name:'中国 · 架点', desc:'布防转攻与战术升级。', startingDeck:[['TA02',2],['TA06',1],['TA11',1],['TA45',1],['TA08',1],['TA29',1],['TA65',1],['TA01',1],['TA07',1]] },
+  utility:  { id:'utility', region:'EMEA', name:'EMEA · 道具', desc:'烟闪控场与压制。', startingDeck:[['TA13',1],['TA39',1],['TA60',1],['TA61',1],['TA41',1],['TA04',1],['TA12',1],['TA40',1],['TA66',1],['TA07',1]] },
+  rotation: { id:'rotation', region:'PAC', name:'太平洋 · 调度', desc:'抽牌循环与姿态节奏。', startingDeck:[['TA01',1],['TA05',1],['TA28',1],['TA02',1],['TA08',1],['TA07',1],['TA09',1],['TA42',1],['TA74',1],['TA73',1]] }
 };
 
 // ----------------------------- Enemies (at least 12 distinct teams across acts) -----------------------------
@@ -310,7 +317,7 @@ export const ENEMIES = {
 
   // Act 2
   A2_E01: { name:'第二幕基础进攻小队', hp:48, script:[[{type:'hit',n:10,times:1}],[{type:'hit',n:12,times:1}],[{type:'block',n:6},{type:'hit',n:7,times:1}]] },
-  A2_E02: { name:'第二幕信息压制小队', hp:52, script:[[{type:'hit',n:10,times:1}],[{type:'jam',id:'ST01',n:1},{type:'hit',n:8,times:1}],[{type:'hit',n:13,times:1}]] },
+  A2_E02: { name:'第二幕信息压制小队', hp:52, script:[[{type:'hit',n:10,times:1}],[{type:'jam',id:'ST04',n:1},{type:'hit',n:8,times:1}],[{type:'hit',n:13,times:1}]] },
   A2_E03: { name:'第二幕多段突击小队', hp:56, script:[[{type:'hit',n:4,times:3}],[{type:'hit',n:11,times:1}],[{type:'block',n:7},{type:'hit',n:8,times:1}]] },
   A2_E04: { name:'第二幕防守反击小队', hp:54, script:[[{type:'block',n:11},{type:'hit',n:5,times:1}],[{type:'hit',n:16,times:1}],[{type:'jam',id:'ST03',n:1},{type:'hit',n:9,times:1}]] },
   A2_E05: { name:'第二幕纪律控制小队', hp:60, script:[[{type:'weak',n:1}],[{type:'hit',n:14,times:1}],[{type:'block',n:9},{type:'hit',n:9,times:1}]] },
@@ -319,7 +326,7 @@ export const ENEMIES = {
 
   // Act 3
   A3_E01: { name:'第三幕基础进攻小队', hp:64, script:[[{type:'hit',n:13,times:1}],[{type:'hit',n:16,times:1}],[{type:'block',n:8},{type:'hit',n:10,times:1}]] },
-  A3_E02: { name:'第三幕信息压制小队', hp:70, script:[[{type:'hit',n:13,times:1}],[{type:'jam',id:'ST01',n:2},{type:'hit',n:11,times:1}],[{type:'hit',n:17,times:1}]] },
+  A3_E02: { name:'第三幕信息压制小队', hp:70, script:[[{type:'hit',n:13,times:1}],[{type:'jam',id:'ST05',n:2},{type:'hit',n:11,times:1}],[{type:'hit',n:17,times:1}]] },
   A3_E03: { name:'第三幕多段突击小队', hp:76, script:[[{type:'hit',n:5,times:3}],[{type:'hit',n:15,times:1}],[{type:'block',n:9},{type:'hit',n:11,times:1}]] },
   A3_E04: { name:'第三幕防守反击小队', hp:72, script:[[{type:'block',n:14},{type:'hit',n:7,times:1}],[{type:'hit',n:20,times:1}],[{type:'jam',id:'ST03',n:2},{type:'hit',n:12,times:1}]] },
   A3_E05: { name:'第三幕纪律控制小队', hp:82, script:[[{type:'weak',n:2}],[{type:'hit',n:18,times:1}],[{type:'block',n:12},{type:'hit',n:12,times:1}]] },
@@ -348,7 +355,7 @@ export function describe(card) {
   const c = CARDS[card.id] || STATUS_CARDS[card.id] || card;
   const typeMap = { attack:'攻击', skill:'技能', power:'能力', status:'状态' };
   const rarityMap = { common:'普通', uncommon:'罕见', rare:'稀有' };
-  const tagMap = { basic:'基础通用', damage:'交火输出', utility:'战术道具', stance:'掩护前压', core:'构筑核心', hybrid:'混搭连接', response:'应对调度', status:'特殊' };
+  const tagMap = { basic:'基础通用', damage:'交火输出', utility:'战术道具', stance:'掩护前压', core:'构筑核心', hybrid:'混搭连接', response:'应对调度', status:'特殊', curse:'俱乐部隐患' };
   const parts = [];
   parts.push(c.name);
   parts.push(`[${c.cost}费 ${typeMap[c.type]||c.type} ${tagMap[c.tag]||c.tag} ${rarityMap[c.rarity]||c.rarity}${c.exhaust?' 消耗':''}${c.upgradeEffects?.length?' 可升级':''}]`);

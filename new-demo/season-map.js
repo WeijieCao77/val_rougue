@@ -1,5 +1,10 @@
 // season-map.js
+import { generateRoute } from '../shared-route-generator.js';
 // Pure ES module for act metadata, enemy configs, and deterministic map generation.
+// This is a project-specific adaptation inspired by Slay the Spire's map structure,
+// not a clone of its exact generator. It uses a seeded PRNG (FNV-1a + sfc32) to
+// create reproducible maps with branching paths, guaranteed room types, and
+// non-crossing edges.
 
 export const ACTS = [
   { id: 1, name: '资格赛', bossName: '第一次大师赛', subtitle: '常规赛' },
@@ -25,63 +30,46 @@ export const EXTRA_ENEMIES = {
   A3_B01: { name: '冠军赛', hp: 145, boss: true, script: [ [ { type: 'hit', n: 12, times: 1 }, { type: 'jam', id: 'ST03', n: 1 } ], [ { type: 'weak', n: 1 }, { type: 'hit', n: 5, times: 3 } ], [ { type: 'block', n: 16 }, { type: 'jam', id: 'ST01', n: 2 } ], [ { type: 'hit', n: 20, times: 1 } ] ], growth: 3 }
 };
 
-function seeded(text){let a=2166136261;for(const c of text)a=Math.imul(a^c.charCodeAt(0),16777619);return ()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
-const names={battle:'常规比赛',elite:'高压强敌',event:'未知事件',shop:'战术补给',rest:'战术休整'};
-export function buildMap(seed,act){
- if(![1,2,3].includes(act))throw Error('未知赛段');
- const random=seeded(`${seed}|map|${act}`),pick=a=>a[Math.floor(random()*a.length)],nodes=[],edges=[],layers=[];
- const prefix=act===1?'':`A${act}_`;
- for(let step=1;step<=11;step++){
-  const count=step===11?1:step===1?3:3+Math.floor(random()*2),layer=[];
-  for(let lane=0;lane<count;lane++){
-   const kind=step===11?'boss':step===10?'rest':[1,3,7].includes(step)?'battle':pick(['battle','battle','event','shop','rest',...(step>=4?['elite']:[])]);
-   const x=count===1?50:count===3?18+lane*32:12+lane*76/3;
-   const n={key:`a${act}-r${step}-c${lane}`,step,lane,x:x+(count===1?0:(random()-.5)*3),y:94-(step-1)*8.8,kind,name:names[kind]||ACTS[act-1].bossName};
-   layer.push(n);nodes.push(n);
-  }
-  layers.push(layer);
- }
- const connect=(a,b)=>{if(!edges.some(e=>e.from===a.key&&e.to===b.key))edges.push({from:a.key,to:b.key});};
- for(let row=0;row<10;row++){
-  const prev=layers[row],next=layers[row+1];
-  if(next.length===1){for(const p of prev)connect(p,next[0]);continue;}
-  const nearest=(n,list)=>list.reduce((best,x)=>Math.abs(x.x-n.x)<Math.abs(best.x-n.x)?x:best,list[0]);
-  for(const p of prev)connect(p,nearest(p,next));
-  for(const n of next)connect(nearest(n,prev),n);
-  const candidates=prev.flatMap(p=>next.filter(n=>Math.abs(p.x-n.x)<38).map(n=>[p,n]));
-  for(let i=candidates.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[candidates[i],candidates[j]]=[candidates[j],candidates[i]];}
-  let added=0;
-  for(const [p,n] of candidates){
-   if(edges.some(e=>e.from===p.key&&e.to===n.key))continue;
-   const crosses=edges.filter(e=>prev.some(a=>a.key===e.from)).some(e=>{const a=prev.find(a=>a.key===e.from),b=next.find(b=>b.key===e.to);return (p.x-a.x)*(n.x-b.x)<0;});
-   if(!crosses){connect(p,n);added++;if(added>=(random()<.55?1:2))break;}
-  }
- }
- const byKey=new Map(nodes.map(n=>[n.key,n]));
- // Each act has a guaranteed event, shop and elite, but their rows and lanes vary by seed.
- const usedRows=new Set();
- for(const {kind,rows} of [{kind:'event',rows:[1,2,3]},{kind:'shop',rows:[3,4,5,6]},{kind:'elite',rows:[5,6,7,8]}]){
-  const options=rows.filter(row=>!usedRows.has(row)).flatMap(row=>layers[row].filter(n=>{
-   const parents=edges.filter(e=>e.to===n.key).map(e=>byKey.get(e.from));
-   return !parents.some(p=>p.kind===kind);
-  }).map(n=>({row,n})));
-  const chosen=pick(options);
-  chosen.n.kind=kind;
-  usedRows.add(chosen.row);
- }
- for(const n of nodes){
-  const parents=edges.filter(e=>e.to===n.key).map(e=>byKey.get(e.from));
-  if(['elite','shop','rest'].includes(n.kind)&&n.step!==10&&parents.some(p=>p.kind===n.kind))n.kind='battle';
-  if(n.kind==='battle'){
-   const ids=n.step===1?['E01']:n.step<=3?['E01','E02']:['E01','E02','E03','E04','E05'];
-   const fresh=ids.filter(id=>!parents.some(p=>p.enemy===prefix+id));n.enemy=prefix+pick(fresh.length?fresh:ids);
-  }else if(n.kind==='elite')n.enemy=prefix+'EL01';else if(n.kind==='boss')n.enemy=prefix+'B01';
-  n.name=n.kind==='boss'?ACTS[act-1].bossName:n.kind==='battle'?({'E01':'基础进攻','E02':'信息压制','E03':'多段突击','E04':'防守反击','E05':'纪律控制'}[n.enemy.replace(/^A[23]_/, '')]):names[n.kind];
- }
- return {act,nodes,edges,starts:layers[0].map(n=>n.key),bossId:layers[10][0].key};
+// Seeded PRNG: FNV-1a hash to initialize sfc32 generator.
+const roomNames = { battle: '常规比赛', elite: '高压强敌', event: '未知事件', shop: "战术补给", rest: "战术休整" };
+const battleNames = { E01: '基础进攻', E02: '信息压制', E03: '多段突击', E04: '防守反击', E05: '纪律控制' };
+function choice(seed, values) {
+  let hash = 2166136261;
+  for (const char of String(seed)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  return values[(hash >>> 0) % values.length];
 }
-export function availableNodes(s){
- if(s?.mode!=='season'||s.phase!=='map')return [];
- const keys=s.currentNode===null?s.map.starts:s.map.edges.filter(e=>e.from===s.currentNode).map(e=>e.to);
- return s.map.nodes.filter(n=>keys.includes(n.key)&&!s.completed.includes(n.key));
+export function buildMap(seed, act) {
+  if (![1, 2, 3].includes(act)) throw Error('未知赛段');
+  const map = generateRoute(seed, act);
+  const actKey = key => `a${act}-${key}`;
+  for (const node of map.nodes) node.key = actKey(node.key);
+  for (const edge of map.edges) { edge.from = actKey(edge.from); edge.to = actKey(edge.to); }
+  map.starts = map.starts.map(actKey);
+  map.bossId = actKey(map.bossId);
+  const byKey = new Map(map.nodes.map(node => [node.key, node]));
+  const prefix = act === 1 ? '' : 'A' + act + '_';
+  for (const node of map.nodes) {
+    if (node.kind === 'battle') {
+      const ids = node.step <= 2 ? ['E01'] : node.step === 3 ? ['E01', 'E02'] : ['E01', 'E02', 'E03', 'E04', 'E05'];
+      const parents = map.edges.filter(edge => edge.to === node.key).map(edge => byKey.get(edge.from));
+      const fresh = ids.filter(id => !parents.some(parent => parent.enemy === prefix + id));
+      const id = choice(seed + '|' + act + '|' + node.key + '|enemy', fresh.length ? fresh : ids);
+      node.enemy = prefix + id;
+      node.name = battleNames[id];
+    } else if (node.kind === 'elite') {
+      node.enemy = prefix + 'EL01';
+      node.name = roomNames.elite;
+    } else if (node.kind === 'boss') {
+      node.enemy = prefix + 'B01';
+      node.name = ACTS[act - 1].bossName;
+    } else {
+      node.name = roomNames[node.kind];
+    }
+  }
+  return { act, ...map };
+}
+export function availableNodes(s) {
+  if (s?.mode !== 'season' || s.phase !== 'map') return [];
+  const keys = s.currentNode === null ? s.map.starts : s.map.edges.filter(e => e.from === s.currentNode).map(e => e.to);
+  return s.map.nodes.filter(n => keys.includes(n.key) && !s.completed.includes(n.key));
 }

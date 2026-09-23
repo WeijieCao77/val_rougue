@@ -1906,8 +1906,7550 @@ const REGIONAL_TACTICS={
 return {REGIONS,REGIONAL_ROWS,REGIONAL_TACTICS};
 })();
 const module1=(()=>{
+// Generated from reviewed DeepSeek card drafts; roster aliases sourced from a 2026-season public snapshot.
+const EXPANSION_ROWS = [
+  [
+    "CN19",
+    "Jieni7",
+    "决斗",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 8,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 10,
+        "times": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN20",
+    "cb",
+    "哨位",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 7
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 10
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN21",
+    "FengF",
+    "控场",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "block",
+        "n": 4
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN22",
+    "Viva",
+    "先锋",
+    0,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN23",
+    "deLb",
+    "自由人",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "CN24",
+    "nephh",
+    "决斗",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 10,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 12,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN25",
+    "whzy",
+    "哨位",
+    2,
+    [
+      {
+        "type": "block",
+        "n": 10
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 12
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN26",
+    "Knight",
+    "控场",
+    0,
+    [
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "CN27",
+    "rushia",
+    "先锋",
+    2,
+    [
+      {
+        "type": "draw",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 4
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN28",
+    "bud",
+    "自由人",
+    1,
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 3
+      }
+    ],
+    "power"
+  ],
+  [
+    "CN29",
+    "Nicc",
+    "决斗",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN30",
+    "Flex1n",
+    "哨位",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 5
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 6
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN31",
+    "Akeman",
+    "控场",
+    1,
+    [
+      {
+        "type": "vulnerable",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 4
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "CN32",
+    "sScary",
+    "先锋",
+    1,
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN33",
+    "Setrod",
+    "自由人",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 8,
+        "times": 1
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 10,
+        "times": 1
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN34",
+    "happywei",
+    "决斗",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN35",
+    "NoMan",
+    "哨位",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 6
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 8
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN36",
+    "Lysoar",
+    "控场",
+    2,
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 3
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "CN37",
+    "WsLeo",
+    "先锋",
+    1,
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 3
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN38",
+    "HeiB",
+    "自由人",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 8,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN39",
+    "OBONE",
+    "决斗",
+    3,
+    [
+      {
+        "type": "hit",
+        "n": 18,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 22,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN40",
+    "GuanG",
+    "哨位",
+    2,
+    [
+      {
+        "type": "block",
+        "n": 12
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 14
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN41",
+    "Ezeir",
+    "控场",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 3
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "CN42",
+    "Green",
+    "先锋",
+    3,
+    [
+      {
+        "type": "draw",
+        "n": 5
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 7
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN43",
+    "jkuro",
+    "自由人",
+    1,
+    [
+      {
+        "type": "power",
+        "key": "init",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "init",
+        "n": 3
+      }
+    ],
+    "power"
+  ],
+  [
+    "CN44",
+    "stew",
+    "决斗",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 11,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 13,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN45",
+    "zhe",
+    "哨位",
+    0,
+    [
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 5
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN46",
+    "coconut",
+    "控场",
+    1,
+    [
+      {
+        "type": "vulnerable",
+        "n": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "CN47",
+    "kklin",
+    "先锋",
+    1,
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN48",
+    "Spring",
+    "自由人",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 7,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 8,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN49",
+    "jowa",
+    "决斗",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1,
+        "ifWeak": 5
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1,
+        "ifWeak": 8
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CN50",
+    "qiutiaN",
+    "哨位",
+    3,
+    [
+      {
+        "type": "block",
+        "n": 18
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 22
+      },
+      {
+        "type": "draw",
+        "n": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT01",
+    "快速部署",
+    "战术",
+    0,
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT02",
+    "稳固防线",
+    "战术",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 8
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 12
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT03",
+    "协同攻击",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 1
+      },
+      {
+        "type": "block",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 8,
+        "times": 1
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT04",
+    "弱点打击",
+    "战术",
+    2,
+    [
+      {
+        "type": "vulnerable",
+        "n": 3
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 4
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT05",
+    "压制火力",
+    "战术",
+    2,
+    [
+      {
+        "type": "weak",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 4
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "CNT06",
+    "战术过牌",
+    "战术",
+    2,
+    [
+      {
+        "type": "draw",
+        "n": 3
+      },
+      {
+        "type": "block",
+        "n": 5
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 4
+      },
+      {
+        "type": "block",
+        "n": 6
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT07",
+    "护甲补给",
+    "战术",
+    1,
+    [
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    [
+      {
+        "type": "token",
+        "id": "TK02"
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT08",
+    "情报优势",
+    "战术",
+    0,
+    [
+      {
+        "type": "block",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 4
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "CNT09",
+    "佯攻诱敌",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT10",
+    "阵地巩固",
+    "战术",
+    2,
+    [
+      {
+        "type": "block",
+        "n": 12
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 15
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT11",
+    "突袭斩首",
+    "战术",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 13,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 16,
+        "times": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT12",
+    "全面压制",
+    "战术",
+    2,
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 3
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "CNT13",
+    "快速休整",
+    "战术",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 4
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 5
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT14",
+    "火力覆盖",
+    "战术",
+    3,
+    [
+      {
+        "type": "hit",
+        "n": 15,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 19,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT15",
+    "团队协作",
+    "战术",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 4
+      },
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 5
+      },
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT16",
+    "战略撤退",
+    "战术",
+    0,
+    [
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 5
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "CNT17",
+    "信息封锁",
+    "战术",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "block",
+        "n": 5
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT18",
+    "破釜沉舟",
+    "战术",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 9,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 11,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT19",
+    "连环计",
+    "战术",
+    1,
+    [
+      {
+        "type": "vulnerable",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "CNT20",
+    "火力侦察",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT21",
+    "铁壁合围",
+    "战术",
+    3,
+    [
+      {
+        "type": "block",
+        "n": 16
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 20
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT22",
+    "游击战术",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT23",
+    "心理战",
+    "战术",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "CNT24",
+    "资源调度",
+    "战术",
+    2,
+    [
+      {
+        "type": "draw",
+        "n": 3
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 4
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "CNT25",
+    "斩首行动",
+    "战术",
+    3,
+    [
+      {
+        "type": "hit",
+        "n": 20,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 25,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM19",
+    "valyn",
+    "控场",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "block",
+        "n": 5
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM20",
+    "trent",
+    "先锋",
+    1,
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM21",
+    "jawgemo",
+    "决斗",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM22",
+    "Kyu",
+    "控场",
+    0,
+    [
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 4
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM23",
+    "johnqt",
+    "哨位",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 4
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 6
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM24",
+    "N4RRATE",
+    "决斗",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM25",
+    "cortezia",
+    "自由人",
+    2,
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 2
+      },
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 3
+      },
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      }
+    ],
+    "power"
+  ],
+  [
+    "AM26",
+    "reduxx",
+    "哨位",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 3
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 3
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM27",
+    "Verno",
+    "先锋",
+    1,
+    [
+      {
+        "type": "vulnerable",
+        "n": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM28",
+    "Mazino",
+    "控场",
+    2,
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "block",
+        "n": 5
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "block",
+        "n": 8
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM29",
+    "Saadhak",
+    "自由人",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM30",
+    "Dantedeu5",
+    "决斗",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM31",
+    "silentzz",
+    "哨位",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 4
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 5
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM32",
+    "Sato",
+    "先锋",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 2,
+        "times": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 2,
+        "times": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM33",
+    "blowz",
+    "控场",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "hit",
+        "n": 2,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "hit",
+        "n": 2,
+        "times": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM34",
+    "Neon",
+    "决斗",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 3
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM35",
+    "spikeziN",
+    "自由人",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM36",
+    "PxS",
+    "控场",
+    2,
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 3
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM37",
+    "cauanzin",
+    "先锋",
+    1,
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM38",
+    "pANcada",
+    "哨位",
+    2,
+    [
+      {
+        "type": "block",
+        "n": 10
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 14
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM39",
+    "lukxo",
+    "决斗",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM40",
+    "Virtyy",
+    "自由人",
+    1,
+    [
+      {
+        "type": "power",
+        "key": "init",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "init",
+        "n": 5
+      }
+    ],
+    "power"
+  ],
+  [
+    "AM41",
+    "Darker",
+    "控场",
+    0,
+    [
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "AM42",
+    "C0M",
+    "先锋",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM43",
+    "bao",
+    "哨位",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 3
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 4
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM44",
+    "dgzin",
+    "决斗",
+    3,
+    [
+      {
+        "type": "hit",
+        "n": 8,
+        "times": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 10,
+        "times": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM45",
+    "okeanos",
+    "自由人",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 2,
+        "times": 1
+      },
+      {
+        "type": "block",
+        "n": 4
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 2,
+        "times": 1
+      },
+      {
+        "type": "block",
+        "n": 7
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM46",
+    "supamen",
+    "控场",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM47",
+    "Ethan",
+    "先锋",
+    1,
+    [
+      {
+        "type": "vulnerable",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM48",
+    "mada",
+    "决斗",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 7,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 7,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM49",
+    "brawk",
+    "哨位",
+    2,
+    [
+      {
+        "type": "block",
+        "n": 8
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 10
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AM50",
+    "skuba",
+    "自由人",
+    1,
+    [
+      {
+        "type": "power",
+        "key": "extraDraw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "extraDraw",
+        "n": 2
+      }
+    ],
+    "power"
+  ],
+  [
+    "AMT01",
+    "双线夹击",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT02",
+    "破绽侦察",
+    "战术",
+    0,
+    [
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "AMT03",
+    "闪击先锋",
+    "战术",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT04",
+    "聚火集射",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 2,
+        "times": 3
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT05",
+    "烟雾推进",
+    "战术",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 4
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 6
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT06",
+    "侦察无人机",
+    "战术",
+    2,
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT07",
+    "防守协同",
+    "战术",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 3
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 4
+      },
+      {
+        "type": "block",
+        "n": 4
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT08",
+    "快速换弹",
+    "战术",
+    0,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT09",
+    "破甲射击",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT10",
+    "包夹战术",
+    "战术",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 3
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT11",
+    "陷阱布置",
+    "战术",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT12",
+    "预判闪避",
+    "战术",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 5
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 7
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT13",
+    "火力侦察",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT14",
+    "协同压制",
+    "战术",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT15",
+    "经济管理",
+    "战术",
+    1,
+    [
+      {
+        "type": "power",
+        "key": "energy",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "energy",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "power"
+  ],
+  [
+    "AMT16",
+    "诱敌深入",
+    "战术",
+    1,
+    [
+      {
+        "type": "vulnerable",
+        "n": 1
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT17",
+    "多重标记",
+    "战术",
+    1,
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT18",
+    "突击路线",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 2,
+        "times": 2
+      },
+      {
+        "type": "block",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 2,
+        "times": 2
+      },
+      {
+        "type": "block",
+        "n": 4
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT19",
+    "交叉火力",
+    "战术",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 2,
+        "times": 3
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 2,
+        "times": 3
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT20",
+    "后撤防守",
+    "战术",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 6
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 8
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT21",
+    "信息优势",
+    "战术",
+    2,
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "power",
+        "key": "init",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "power",
+        "key": "init",
+        "n": 3
+      }
+    ],
+    "power"
+  ],
+  [
+    "AMT22",
+    "远程狙击",
+    "战术",
+    3,
+    [
+      {
+        "type": "hit",
+        "n": 12,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 15,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT23",
+    "包围网",
+    "战术",
+    2,
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT24",
+    "爆发输出",
+    "战术",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 9,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 11,
+        "times": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "AMT25",
+    "能量循环",
+    "战术",
+    2,
+    [
+      {
+        "type": "power",
+        "key": "energy",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "energy",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "power"
+  ],
+  [
+    "EU19",
+    "Jamppi",
+    "决斗",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1,
+        "ifWeak": true
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 1,
+        "ifWeak": true
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU20",
+    "Sayonara",
+    "决斗",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 8,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 10,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU21",
+    "PROFEK",
+    "哨位",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 5
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 7
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU22",
+    "UNFAKE",
+    "哨位",
+    0,
+    [
+      {
+        "type": "block",
+        "n": 4
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 6
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU23",
+    "kamo",
+    "决斗",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU24",
+    "MiniBoo",
+    "先锋",
+    1,
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 3
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "EU25",
+    "purp0",
+    "控场",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "block",
+        "n": 5
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU26",
+    "wayne",
+    "自由人",
+    3,
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 5
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 7
+      }
+    ],
+    "power"
+  ],
+  [
+    "EU27",
+    "ComeBack",
+    "决斗",
+    0,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU28",
+    "MrFaliN",
+    "控场",
+    2,
+    [
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU29",
+    "qRaxs",
+    "先锋",
+    3,
+    [
+      {
+        "type": "hit",
+        "n": 12,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 15,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 4
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU30",
+    "yetujey",
+    "哨位",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 4
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 6
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU31",
+    "xeus",
+    "决斗",
+    3,
+    [
+      {
+        "type": "hit",
+        "n": 14,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 16,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU32",
+    "ATA KAPTAN",
+    "控场",
+    0,
+    [
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "EU33",
+    "KROSTALY",
+    "自由人",
+    2,
+    [
+      {
+        "type": "power",
+        "key": "init",
+        "n": 3
+      },
+      {
+        "type": "block",
+        "n": 4
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "init",
+        "n": 4
+      },
+      {
+        "type": "block",
+        "n": 6
+      }
+    ],
+    "power"
+  ],
+  [
+    "EU34",
+    "baha",
+    "先锋",
+    1,
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "hit",
+        "n": 2,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU35",
+    "Veqaj",
+    "哨位",
+    2,
+    [
+      {
+        "type": "block",
+        "n": 12
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 16
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU36",
+    "Rosé",
+    "决斗",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 2,
+        "ifWeak": true
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 2,
+        "ifWeak": true
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU37",
+    "umu7",
+    "自由人",
+    1,
+    [
+      {
+        "type": "power",
+        "key": "extraDraw",
+        "n": 1
+      },
+      {
+        "type": "block",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "extraDraw",
+        "n": 2
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    "power"
+  ],
+  [
+    "EU38",
+    "Loita",
+    "控场",
+    1,
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 3
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU39",
+    "starxo",
+    "先锋",
+    0,
+    [
+      {
+        "type": "vulnerable",
+        "n": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "EU40",
+    "Minny",
+    "决斗",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU41",
+    "bipo",
+    "自由人",
+    3,
+    [
+      {
+        "type": "power",
+        "key": "energy",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "energy",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "power"
+  ],
+  [
+    "EU42",
+    "GLYPH",
+    "控场",
+    2,
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 3
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU43",
+    "Cloud",
+    "哨位",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 5
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 8
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU44",
+    "westside",
+    "决斗",
+    0,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU45",
+    "ara",
+    "先锋",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU46",
+    "Flickless",
+    "控场",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "block",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 3
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "EU47",
+    "GRUBINHO",
+    "先锋",
+    2,
+    [
+      {
+        "type": "vulnerable",
+        "n": 3
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 4
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU48",
+    "Shao",
+    "决斗",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 10,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 12,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU49",
+    "hiro",
+    "哨位",
+    0,
+    [
+      {
+        "type": "block",
+        "n": 4
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 6
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EU50",
+    "Filu",
+    "自由人",
+    2,
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 4
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 5
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "power"
+  ],
+  [
+    "EUT01",
+    "开局压制",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT02",
+    "防守反击",
+    "战术",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 4
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 6
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT03",
+    "信息侦察",
+    "战术",
+    1,
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "block",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT04",
+    "弱点突袭",
+    "战术",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 8,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 10,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT05",
+    "削弱阵线",
+    "战术",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 3
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT06",
+    "护盾加固",
+    "战术",
+    2,
+    [
+      {
+        "type": "block",
+        "n": 12
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 16
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT07",
+    "先手布局",
+    "战术",
+    1,
+    [
+      {
+        "type": "power",
+        "key": "init",
+        "n": 3
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "init",
+        "n": 4
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "power"
+  ],
+  [
+    "EUT08",
+    "决斗强化",
+    "战术",
+    1,
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 3
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 4
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "power"
+  ],
+  [
+    "EUT09",
+    "能量管理",
+    "战术",
+    3,
+    [
+      {
+        "type": "power",
+        "key": "energy",
+        "n": 1
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "energy",
+        "n": 2
+      },
+      {
+        "type": "block",
+        "n": 5
+      }
+    ],
+    "power"
+  ],
+  [
+    "EUT10",
+    "额外抽牌",
+    "战术",
+    2,
+    [
+      {
+        "type": "power",
+        "key": "extraDraw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "extraDraw",
+        "n": 2
+      }
+    ],
+    "power"
+  ],
+  [
+    "EUT11",
+    "快速突进",
+    "战术",
+    0,
+    [
+      {
+        "type": "hit",
+        "n": 2,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT12",
+    "稳固防守",
+    "战术",
+    0,
+    [
+      {
+        "type": "block",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 4
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT13",
+    "双重打击",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 2,
+        "ifWeak": true
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 2,
+        "ifWeak": true
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT14",
+    "易伤标记",
+    "战术",
+    1,
+    [
+      {
+        "type": "vulnerable",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 4
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "EUT15",
+    "虚弱诅咒",
+    "战术",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 4
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "EUT16",
+    "战利品",
+    "战术",
+    1,
+    [
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    [
+      {
+        "type": "token",
+        "id": "TK01"
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT17",
+    "防御工事",
+    "战术",
+    1,
+    [
+      {
+        "type": "token",
+        "id": "TK02"
+      },
+      {
+        "type": "block",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "token",
+        "id": "TK02"
+      },
+      {
+        "type": "block",
+        "n": 4
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT18",
+    "全面攻势",
+    "战术",
+    3,
+    [
+      {
+        "type": "hit",
+        "n": 12,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 3
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 15,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 4
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT19",
+    "铁壁反击",
+    "战术",
+    2,
+    [
+      {
+        "type": "block",
+        "n": 8
+      },
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 10
+      },
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT20",
+    "资源循环",
+    "战术",
+    1,
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT21",
+    "致命弱点",
+    "战术",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 7,
+        "times": 1,
+        "ifWeak": true
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 8,
+        "times": 1,
+        "ifWeak": true
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT22",
+    "战术撤退",
+    "战术",
+    0,
+    [
+      {
+        "type": "block",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 3
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT23",
+    "压制射击",
+    "战术",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 7,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "EUT24",
+    "战术觉醒",
+    "战术",
+    3,
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 4
+      },
+      {
+        "type": "power",
+        "key": "init",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 5
+      },
+      {
+        "type": "power",
+        "key": "init",
+        "n": 3
+      }
+    ],
+    "power"
+  ],
+  [
+    "EUT25",
+    "绝地反击",
+    "战术",
+    3,
+    [
+      {
+        "type": "hit",
+        "n": 10,
+        "times": 1
+      },
+      {
+        "type": "block",
+        "n": 6
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 12,
+        "times": 1
+      },
+      {
+        "type": "block",
+        "n": 8
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA19",
+    "free1ng",
+    "决斗",
+    0,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA20",
+    "Hermes",
+    "决斗",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1,
+        "ifWeak": true
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 7,
+        "times": 1,
+        "ifWeak": true
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA21",
+    "stax",
+    "控场",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "block",
+        "n": 3
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA22",
+    "carpe",
+    "自由人",
+    1,
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 1
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 2
+      },
+      {
+        "type": "block",
+        "n": 4
+      }
+    ],
+    "power"
+  ],
+  [
+    "PA23",
+    "iZu",
+    "先锋",
+    0,
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "PA24",
+    "Meteor",
+    "决斗",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 8,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 10,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA25",
+    "BuZz",
+    "决斗",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 2,
+        "ifWeak": true
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 2,
+        "ifWeak": true
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA26",
+    "Lakia",
+    "控场",
+    2,
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 3
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA27",
+    "Ash",
+    "哨位",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 5
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 7
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA28",
+    "ZynX",
+    "先锋",
+    1,
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA29",
+    "Rb",
+    "自由人",
+    2,
+    [
+      {
+        "type": "power",
+        "key": "init",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "init",
+        "n": 3
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "power"
+  ],
+  [
+    "PA30",
+    "Francis",
+    "哨位",
+    0,
+    [
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 4
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "PA31",
+    "Xross",
+    "控场",
+    1,
+    [
+      {
+        "type": "vulnerable",
+        "n": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA32",
+    "Ivy",
+    "先锋",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA33",
+    "SSeeS",
+    "决斗",
+    3,
+    [
+      {
+        "type": "hit",
+        "n": 15,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 18,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA34",
+    "akame",
+    "先锋",
+    1,
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      },
+      {
+        "type": "block",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA35",
+    "Caedye",
+    "控场",
+    0,
+    [
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA36",
+    "yatsuka",
+    "自由人",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      },
+      {
+        "type": "block",
+        "n": 5
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "block",
+        "n": 6
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA37",
+    "Leviathan",
+    "决斗",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 10,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 12,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA38",
+    "killua",
+    "先锋",
+    1,
+    [
+      {
+        "type": "vulnerable",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA39",
+    "Primmie",
+    "决斗",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 1
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA40",
+    "thyy",
+    "哨位",
+    2,
+    [
+      {
+        "type": "block",
+        "n": 10
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 12
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA41",
+    "crazyguy",
+    "自由人",
+    1,
+    [
+      {
+        "type": "power",
+        "key": "extraDraw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "extraDraw",
+        "n": 2
+      }
+    ],
+    "power"
+  ],
+  [
+    "PA42",
+    "monyet",
+    "决斗",
+    0,
+    [
+      {
+        "type": "hit",
+        "n": 2,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA43",
+    "Kushy",
+    "控场",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 3
+      },
+      {
+        "type": "weak",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA44",
+    "naTz",
+    "哨位",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 3
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 4
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA45",
+    "kellyS",
+    "先锋",
+    1,
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "block",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "block",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA46",
+    "Sylvan",
+    "控场",
+    2,
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 3
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA47",
+    "TenTen",
+    "决斗",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 8,
+        "times": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 9,
+        "times": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA48",
+    "BerserX",
+    "自由人",
+    3,
+    [
+      {
+        "type": "power",
+        "key": "energy",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "energy",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "power"
+  ],
+  [
+    "PA49",
+    "JessieVash",
+    "哨位",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 6
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 8
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PA50",
+    "xavi8k",
+    "先锋",
+    1,
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 3
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT01",
+    "快攻节奏",
+    "战术",
+    0,
+    [
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "PAT02",
+    "固守阵地",
+    "战术",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 4
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 6
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT03",
+    "弱点暴露",
+    "战术",
+    1,
+    [
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 3
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "PAT04",
+    "能量涌动",
+    "战术",
+    1,
+    [
+      {
+        "type": "power",
+        "key": "energy",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "energy",
+        "n": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "power"
+  ],
+  [
+    "PAT05",
+    "压制火力",
+    "战术",
+    2,
+    [
+      {
+        "type": "hit",
+        "n": 6,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 8,
+        "times": 1
+      },
+      {
+        "type": "weak",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT06",
+    "侦察突袭",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT07",
+    "防线加固",
+    "战术",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 5
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 7
+      },
+      {
+        "type": "weak",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT08",
+    "弱点打击",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT09",
+    "快速布局",
+    "战术",
+    0,
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT10",
+    "控场节奏",
+    "战术",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 3
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT11",
+    "决斗强化",
+    "战术",
+    1,
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "duel",
+        "n": 3
+      }
+    ],
+    "power"
+  ],
+  [
+    "PAT12",
+    "先手压制",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 2
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT13",
+    "能量汲取",
+    "战术",
+    1,
+    [
+      {
+        "type": "power",
+        "key": "energy",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "power",
+        "key": "energy",
+        "n": 1
+      },
+      {
+        "type": "block",
+        "n": 3
+      }
+    ],
+    "power"
+  ],
+  [
+    "PAT14",
+    "防御反击",
+    "战术",
+    2,
+    [
+      {
+        "type": "block",
+        "n": 8
+      },
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 10
+      },
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT15",
+    "信息优势",
+    "战术",
+    1,
+    [
+      {
+        "type": "draw",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 4
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT16",
+    "精确打击",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 5,
+        "times": 1
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 7,
+        "times": 1
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT17",
+    "全面压制",
+    "战术",
+    3,
+    [
+      {
+        "type": "hit",
+        "n": 12,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 15,
+        "times": 1
+      },
+      {
+        "type": "vulnerable",
+        "n": 3
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT18",
+    "稳固防守",
+    "战术",
+    0,
+    [
+      {
+        "type": "block",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 4
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT19",
+    "战术撤退",
+    "战术",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 3
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 4
+      },
+      {
+        "type": "draw",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT20",
+    "弱点连锁",
+    "战术",
+    2,
+    [
+      {
+        "type": "vulnerable",
+        "n": 3
+      }
+    ],
+    [
+      {
+        "type": "vulnerable",
+        "n": 4
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "PAT21",
+    "资源调度",
+    "战术",
+    1,
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 2
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      },
+      {
+        "type": "token",
+        "id": "TK02"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT22",
+    "双重干扰",
+    "战术",
+    1,
+    [
+      {
+        "type": "weak",
+        "n": 2
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    [
+      {
+        "type": "weak",
+        "n": 3
+      },
+      {
+        "type": "vulnerable",
+        "n": 2
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT23",
+    "高能爆发",
+    "战术",
+    3,
+    [
+      {
+        "type": "hit",
+        "n": 20,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 24,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT24",
+    "防守阵型",
+    "战术",
+    1,
+    [
+      {
+        "type": "block",
+        "n": 6
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    [
+      {
+        "type": "block",
+        "n": 8
+      },
+      {
+        "type": "token",
+        "id": "TK01"
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT25",
+    "快攻连携",
+    "战术",
+    0,
+    [
+      {
+        "type": "hit",
+        "n": 3,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 4,
+        "times": 1
+      },
+      {
+        "type": "draw",
+        "n": 1
+      }
+    ],
+    "discard"
+  ]
+];
+const EXPANSION_TACTICS = {
+  "CN19": {
+    "title": "粉碎打击",
+    "scene": "正面交锋，一击制胜",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN20": {
+    "title": "壁垒防守",
+    "scene": "坚固防线，稳如磐石",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN21": {
+    "title": "扰乱节奏",
+    "scene": "打乱对手的部署",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN22": {
+    "title": "快速侦察",
+    "scene": "疾风过境，掌握先机",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN23": {
+    "title": "破绽制造",
+    "scene": "找出对手弱点并重击",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN24": {
+    "title": "蓄势猛击",
+    "scene": "以力破巧，重击对手",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN25": {
+    "title": "防御阵地",
+    "scene": "构建坚实的防线",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN26": {
+    "title": "威慑气息",
+    "scene": "令对手陷入弱势",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN27": {
+    "title": "情报链",
+    "scene": "洞悉战局，获得手牌",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN28": {
+    "title": "决斗之魂",
+    "scene": "提升决斗伤害",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN29": {
+    "title": "双连击",
+    "scene": "快速两击，压制对手",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN30": {
+    "title": "战术坚守",
+    "scene": "防守同时补充手牌",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN31": {
+    "title": "弱点暴露",
+    "scene": "让对手破绽百出",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN32": {
+    "title": "先手制衡",
+    "scene": "获得手牌并削弱对手",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN33": {
+    "title": "战利品",
+    "scene": "攻击后获得护甲",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN34": {
+    "title": "突袭",
+    "scene": "快速出击，先发制人",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN35": {
+    "title": "防守反击",
+    "scene": "防守后削弱对手",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN36": {
+    "title": "战术分析",
+    "scene": "找出破绽并补充手牌",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN37": {
+    "title": "侦察压制",
+    "scene": "快速侦察，掌控节奏",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN38": {
+    "title": "借势攻击",
+    "scene": "利用对手弱势出击",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN39": {
+    "title": "毁灭重击",
+    "scene": "倾尽全力，击碎敌阵",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN40": {
+    "title": "铜墙铁壁",
+    "scene": "构建不可撼动的防线",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN41": {
+    "title": "连环削弱",
+    "scene": "大幅降低对手攻势",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN42": {
+    "title": "战场掌控",
+    "scene": "获得大量手牌",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN43": {
+    "title": "先发制人",
+    "scene": "提升初始优势",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN44": {
+    "title": "击溃打击",
+    "scene": "攻击同时削弱对手",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN45": {
+    "title": "基础防御",
+    "scene": "简易防护，抵御攻击",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN46": {
+    "title": "状态控制",
+    "scene": "削弱并暴露对手弱点",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN47": {
+    "title": "破绽侦察",
+    "scene": "过牌同时暴露弱点",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN48": {
+    "title": "灵巧战术",
+    "scene": "攻击后补充手牌",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN49": {
+    "title": "乘虚而入",
+    "scene": "对手虚弱时造成额外伤害",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CN50": {
+    "title": "终极堡垒",
+    "scene": "坚固防御，逆转战局",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "CNT01": {
+    "title": "前哨战",
+    "scene": "快速进入战斗阵型",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT02": {
+    "title": "铁壁",
+    "scene": "提升防守韧性",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT03": {
+    "title": "攻守兼备",
+    "scene": "同步进攻与防御",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT04": {
+    "title": "破甲战术",
+    "scene": "集中暴露对手破绽",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT05": {
+    "title": "火力封锁",
+    "scene": "压制对手使其乏力",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT06": {
+    "title": "情报搜集",
+    "scene": "侦察获得额外手牌",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT07": {
+    "title": "装备升级",
+    "scene": "获得护甲并补充防御",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT08": {
+    "title": "侦察收益",
+    "scene": "掌握先机并削弱对手",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT09": {
+    "title": "战术欺骗",
+    "scene": "诱使对手失衡",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT10": {
+    "title": "深沟高垒",
+    "scene": "构筑持久防线",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT11": {
+    "title": "闪电突击",
+    "scene": "对目标发动猛攻",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT12": {
+    "title": "双重施压",
+    "scene": "同时削弱并暴露弱点",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT13": {
+    "title": "战地修复",
+    "scene": "防守并补充资源",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT14": {
+    "title": "地毯轰炸",
+    "scene": "大规模攻击并暴露弱点",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT15": {
+    "title": "同步行动",
+    "scene": "团队配合攻防",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT16": {
+    "title": "避实就虚",
+    "scene": "撤退中构筑防御",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT17": {
+    "title": "静默战术",
+    "scene": "封锁信息并防御",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT18": {
+    "title": "背水一战",
+    "scene": "舍命攻击并补充手牌",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT19": {
+    "title": "计谋连锁",
+    "scene": "设下圈套并获取情报",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT20": {
+    "title": "试探攻击",
+    "scene": "攻击并侦察敌情",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT21": {
+    "title": "铜墙铁壁",
+    "scene": "全方位防御并压制",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT22": {
+    "title": "机动战",
+    "scene": "灵活进攻并补充手牌",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT23": {
+    "title": "攻心为上",
+    "scene": "使对手自我怀疑",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT24": {
+    "title": "后勤补给",
+    "scene": "调动资源获取卡牌",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "CNT25": {
+    "title": "决胜一击",
+    "scene": "致命打击并补充手牌",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AM19": {
+    "title": "节奏调度",
+    "scene": "对局中快速调整资源。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM20": {
+    "title": "侦察突袭",
+    "scene": "获取信息后迅速开火。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM21": {
+    "title": "破防强攻",
+    "scene": "制造破绽后追击。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM22": {
+    "title": "先手压制",
+    "scene": "开局限制对手行动。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM23": {
+    "title": "稳固阵线",
+    "scene": "建立防御并补充资源。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM24": {
+    "title": "爆发连击",
+    "scene": "连续命中并削弱对手。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM25": {
+    "title": "格斗意志",
+    "scene": "提升后续决斗伤害。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM26": {
+    "title": "防守反击",
+    "scene": "抵挡攻击并标记破绽。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM27": {
+    "title": "弱点标记",
+    "scene": "揭示敌方弱点。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM28": {
+    "title": "区域封锁",
+    "scene": "大范围限制并保护自己。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM29": {
+    "title": "游走打击",
+    "scene": "灵活移动并补充手牌。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM30": {
+    "title": "单点爆发",
+    "scene": "集中火力输出。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM31": {
+    "title": "静默守护",
+    "scene": "稳固防线并补充资源。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM32": {
+    "title": "连续试探",
+    "scene": "多次轻击寻找机会。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM33": {
+    "title": "控场压制",
+    "scene": "削弱敌人同时造成伤害。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM34": {
+    "title": "三段突进",
+    "scene": "快速三连击。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM35": {
+    "title": "打击联动",
+    "scene": "命中后施加易伤。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM36": {
+    "title": "战术破绽",
+    "scene": "寻找破绽并补给。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM37": {
+    "title": "情报勘探",
+    "scene": "收集信息并建立防线。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM38": {
+    "title": "铜墙铁壁",
+    "scene": "强力防御姿态。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM39": {
+    "title": "火力侦察",
+    "scene": "攻击并观察局势。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM40": {
+    "title": "先手优势",
+    "scene": "获得初始行动力。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM41": {
+    "title": "暗影战术",
+    "scene": "暗中削弱并标记敌人。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM42": {
+    "title": "协同进击",
+    "scene": "双发配合命中。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM43": {
+    "title": "守护壁垒",
+    "scene": "建立防御并弱化敌人。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM44": {
+    "title": "终极压制",
+    "scene": "巨大伤害并附加易伤。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM45": {
+    "title": "攻守兼备",
+    "scene": "输出同时保持防护。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM46": {
+    "title": "支援控制",
+    "scene": "削弱敌人并保护队友。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM47": {
+    "title": "精准侦察",
+    "scene": "侦察并揭示弱点。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM48": {
+    "title": "致命瞄准",
+    "scene": "高伤一枪并补充卡牌。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM49": {
+    "title": "反击准备",
+    "scene": "防守并诱导敌人失误。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AM50": {
+    "title": "持续补给",
+    "scene": "每回合额外抽牌。",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "AMT01": {
+    "title": "夹击火力",
+    "scene": "从两侧同时开火。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT02": {
+    "title": "发现弱点",
+    "scene": "快速分析敌方缺陷。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT03": {
+    "title": "快速突袭",
+    "scene": "先手打击并补充手牌。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT04": {
+    "title": "集中火力",
+    "scene": "密集弹幕覆盖。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT05": {
+    "title": "隐蔽行动",
+    "scene": "借助遮蔽接近并削弱敌人。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT06": {
+    "title": "空中侦察",
+    "scene": "获取战场情报。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT07": {
+    "title": "双重防线",
+    "scene": "队友互相掩护。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT08": {
+    "title": "紧急补给",
+    "scene": "快速补充资源。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT09": {
+    "title": "穿透打击",
+    "scene": "命中并削弱防御。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT10": {
+    "title": "多方围攻",
+    "scene": "从多个角度打击。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT11": {
+    "title": "战场陷阱",
+    "scene": "预先设伏削弱对手。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT12": {
+    "title": "灵活走位",
+    "scene": "躲避敌方攻击。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT13": {
+    "title": "火力试探",
+    "scene": "攻击同时收集情报。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT14": {
+    "title": "联合施压",
+    "scene": "集火并削弱敌人。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT15": {
+    "title": "资源优化",
+    "scene": "提升后续能量收益。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT16": {
+    "title": "设伏反打",
+    "scene": "引诱敌人并准备反击。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT17": {
+    "title": "弱点标记",
+    "scene": "大范围揭示弱点。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT18": {
+    "title": "进攻掩护",
+    "scene": "推进同时保持防护。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT19": {
+    "title": "覆盖射击",
+    "scene": "密集火力并标记破绽。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT20": {
+    "title": "稳固撤退",
+    "scene": "边撤边补充资源。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT21": {
+    "title": "情报掌控",
+    "scene": "获取信息并调整行动顺序。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT22": {
+    "title": "精准狙击",
+    "scene": "远距离高伤并标记。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT23": {
+    "title": "封锁敌路",
+    "scene": "包围并削弱敌人。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT24": {
+    "title": "集中爆发",
+    "scene": "短时间高伤害。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "AMT25": {
+    "title": "能量回收",
+    "scene": "提升能量并抽牌。",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EU19": {
+    "title": "精准压制",
+    "scene": "快速出击，令对手难以反击",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU20": {
+    "title": "破绽突袭",
+    "scene": "重击弱点，让敌人暴露更多破绽",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU21": {
+    "title": "防线构筑",
+    "scene": "巩固防守并补充手牌资源",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU22": {
+    "title": "快速布防",
+    "scene": "短暂格挡并稳定阵型",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU23": {
+    "title": "游走奇袭",
+    "scene": "边打边补充资源，持续施压",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU24": {
+    "title": "双重干扰",
+    "scene": "同时削弱敌人攻防",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU25": {
+    "title": "拖延战术",
+    "scene": "降低敌方威胁并保护自己",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU26": {
+    "title": "意识超载",
+    "scene": "决斗能力大幅提升",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU27": {
+    "title": "归零一击",
+    "scene": "轻巧但致命的起手",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU28": {
+    "title": "战术崩解",
+    "scene": "全面削弱敌人并洞察先机",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU29": {
+    "title": "破阵猛攻",
+    "scene": "高伤害并施加易伤，撕开裂口",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU30": {
+    "title": "坚壁清野",
+    "scene": "巩固防御并削弱敌方",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU31": {
+    "title": "狂暴连击",
+    "scene": "巨大伤害并补充大量手牌",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU32": {
+    "title": "先发制人",
+    "scene": "开局即削弱敌人",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU33": {
+    "title": "先手布局",
+    "scene": "提升先手并保护自己",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU34": {
+    "title": "侦察补给",
+    "scene": "获得更多手牌并建立防御",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU35": {
+    "title": "绝对防线",
+    "scene": "钢铁般的防守",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU36": {
+    "title": "精准剥析",
+    "scene": "若目标虚弱则造成额外连击",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU37": {
+    "title": "情报优势",
+    "scene": "每回合额外抽牌",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU38": {
+    "title": "布局瓦解",
+    "scene": "双向削弱敌人",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU39": {
+    "title": "试探攻击",
+    "scene": "让敌人暴露弱点",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU40": {
+    "title": "锐利突刺",
+    "scene": "造成伤害并削弱敌人",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU41": {
+    "title": "能量涌动",
+    "scene": "提升能量并补充手牌",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU42": {
+    "title": "迷雾笼罩",
+    "scene": "削弱敌人并补充手牌",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU43": {
+    "title": "稳固盾墙",
+    "scene": "可靠的防御",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU44": {
+    "title": "侧翼突袭",
+    "scene": "快速造成伤害",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU45": {
+    "title": "破绽打击",
+    "scene": "攻击并制造易伤",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU46": {
+    "title": "扰乱节奏",
+    "scene": "强力削弱敌人",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU47": {
+    "title": "标记弱点",
+    "scene": "重度易伤并补充资源",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU48": {
+    "title": "破壁重击",
+    "scene": "重击并让敌人易伤",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU49": {
+    "title": "应急格挡",
+    "scene": "低费高效防御",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EU50": {
+    "title": "战斗本能",
+    "scene": "提升决斗并抽牌",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "EUT01": {
+    "title": "开局压制",
+    "scene": "主动出击并削弱对手",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT02": {
+    "title": "防守反击",
+    "scene": "先稳固防守再反击",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT03": {
+    "title": "信息侦察",
+    "scene": "获取情报并构筑防线",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT04": {
+    "title": "弱点突袭",
+    "scene": "全力打击要害",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT05": {
+    "title": "削弱阵线",
+    "scene": "全面降低敌方战力",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT06": {
+    "title": "护盾加固",
+    "scene": "构筑铁壁防御",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT07": {
+    "title": "先手布局",
+    "scene": "占据先机",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT08": {
+    "title": "决斗强化",
+    "scene": "增强单挑能力",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT09": {
+    "title": "能量管理",
+    "scene": "获得额外能量",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT10": {
+    "title": "额外抽牌",
+    "scene": "每回合获得更多手牌",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT11": {
+    "title": "快速突进",
+    "scene": "零费造成伤害",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT12": {
+    "title": "稳固防守",
+    "scene": "零费获得格挡",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT13": {
+    "title": "双重打击",
+    "scene": "连续两次攻击",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT14": {
+    "title": "易伤标记",
+    "scene": "施加大量易伤",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT15": {
+    "title": "虚弱诅咒",
+    "scene": "强力削弱敌人",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT16": {
+    "title": "战利品",
+    "scene": "获得一枚攻击令牌",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT17": {
+    "title": "防御工事",
+    "scene": "获得防御令牌并格挡",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT18": {
+    "title": "全面攻势",
+    "scene": "高伤易伤并补充手牌",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT19": {
+    "title": "铁壁反击",
+    "scene": "防御同时造成伤害",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT20": {
+    "title": "资源循环",
+    "scene": "快速补充手牌",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT21": {
+    "title": "致命弱点",
+    "scene": "虚弱敌人后精准打击",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT22": {
+    "title": "战术撤退",
+    "scene": "零费格挡并抽牌",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT23": {
+    "title": "压制射击",
+    "scene": "攻击并强力削弱",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT24": {
+    "title": "战术觉醒",
+    "scene": "同时提升决斗与先手",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "EUT25": {
+    "title": "绝地反击",
+    "scene": "高伤高防并补充资源",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PA19": {
+    "title": "破局迅击",
+    "scene": "疾影突入先手",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA20": {
+    "title": "疾风连携",
+    "scene": "快速突刺后调整",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA21": {
+    "title": "节奏压制",
+    "scene": "削弱对手并稳住阵脚",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA22": {
+    "title": "决斗嗅觉",
+    "scene": "敏锐捕捉战机",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA23": {
+    "title": "战场侦察",
+    "scene": "情报优先",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA24": {
+    "title": "陨星重击",
+    "scene": "势大力沉的一击",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA25": {
+    "title": "蜂刺连击",
+    "scene": "快速两次打击",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA26": {
+    "title": "全面压制",
+    "scene": "控制战场节奏",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA27": {
+    "title": "灰烬壁垒",
+    "scene": "稳固防守并蓄势",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA28": {
+    "title": "先机布线",
+    "scene": "侦察并布置资源",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA29": {
+    "title": "先手布局",
+    "scene": "抢占开局优势",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA30": {
+    "title": "应急格挡",
+    "scene": "快速防御",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA31": {
+    "title": "双重施压",
+    "scene": "同时削弱攻防",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA32": {
+    "title": "缠绕突袭",
+    "scene": "攻击并限制对手",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA33": {
+    "title": "终局压制",
+    "scene": "重击并暴露破绽",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA34": {
+    "title": "洞察先机",
+    "scene": "快速补充手牌",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA35": {
+    "title": "即时削弱",
+    "scene": "瞬间降低威胁",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA36": {
+    "title": "攻守兼备",
+    "scene": "灵活应对",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA37": {
+    "title": "巨兽冲击",
+    "scene": "强力单体打击",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA38": {
+    "title": "弱点标记",
+    "scene": "侦察并暴露破绽",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA39": {
+    "title": "精准突袭",
+    "scene": "攻击并获取资源",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA40": {
+    "title": "坚壁清野",
+    "scene": "稳固防守并补充手牌",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA41": {
+    "title": "疯狂抽牌",
+    "scene": "持续补充资源",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA42": {
+    "title": "灵猴骚扰",
+    "scene": "轻击并调整",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA43": {
+    "title": "绵密控制",
+    "scene": "防守并干扰",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA44": {
+    "title": "防御工事",
+    "scene": "巩固防线",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA45": {
+    "title": "侦察防御",
+    "scene": "信息与保护并存",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA46": {
+    "title": "森林之咒",
+    "scene": "全面削弱敌人",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA47": {
+    "title": "双重打击",
+    "scene": "连续两次重击",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA48": {
+    "title": "狂战核心",
+    "scene": "能量激发",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA49": {
+    "title": "守护反击",
+    "scene": "防守并削弱",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PA50": {
+    "title": "侦察干扰",
+    "scene": "补充手牌并削弱",
+    "origin": "赛区战术 · 游戏化设定",
+    "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
+  },
+  "PAT01": {
+    "title": "快攻节奏",
+    "scene": "迅速调整手牌",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT02": {
+    "title": "固守阵地",
+    "scene": "稳固防线",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT03": {
+    "title": "弱点暴露",
+    "scene": "标记敌方破绽",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT04": {
+    "title": "能量涌动",
+    "scene": "激发潜能",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT05": {
+    "title": "压制火力",
+    "scene": "攻击并削弱",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT06": {
+    "title": "侦察突袭",
+    "scene": "先手攻击",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT07": {
+    "title": "防线加固",
+    "scene": "防守并反击",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT08": {
+    "title": "弱点打击",
+    "scene": "攻击并暴露弱点",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT09": {
+    "title": "快速布局",
+    "scene": "补充资源",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT10": {
+    "title": "控场节奏",
+    "scene": "削弱并补充",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT11": {
+    "title": "决斗强化",
+    "scene": "提升攻击能力",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT12": {
+    "title": "先手压制",
+    "scene": "连续快攻",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT13": {
+    "title": "能量汲取",
+    "scene": "获取能量并防御",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT14": {
+    "title": "防御反击",
+    "scene": "防守后进攻",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT15": {
+    "title": "信息优势",
+    "scene": "大量补充手牌",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT16": {
+    "title": "精确打击",
+    "scene": "攻击并生成资源",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT17": {
+    "title": "全面压制",
+    "scene": "重击并扩大优势",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT18": {
+    "title": "稳固防守",
+    "scene": "快速防御",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT19": {
+    "title": "战术撤退",
+    "scene": "防守并调整",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT20": {
+    "title": "弱点连锁",
+    "scene": "重度标记",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT21": {
+    "title": "资源调度",
+    "scene": "补充多种资源",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT22": {
+    "title": "双重干扰",
+    "scene": "同时削弱攻防",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT23": {
+    "title": "高能爆发",
+    "scene": "巨额单次伤害",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT24": {
+    "title": "防守阵型",
+    "scene": "增强防御",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  },
+  "PAT25": {
+    "title": "快攻连携",
+    "scene": "快速攻击并补充",
+    "origin": "赛区战术",
+    "note": "赛区战术牌；不代表任何真实选手。"
+  }
+};
+
+return {EXPANSION_ROWS,EXPANSION_TACTICS};
+})();
+const module2=(()=>{
+// Shared PvE afflictions. The names and triggers are this game's adaptation,
+// not a claim that Slay the Spire uses these exact effects or acquisition rates.
+const CURSES = [
+ {id:'CU01',name:'磨合不足',trigger:'unplayable',n:0,text:'不能打出。占用抽牌与牌组空间。'},
+ {id:'CU02',name:'舆论压力',trigger:'endTurnLoseHp',n:2,text:'回合末仍在手中：失去 2 声望／生命。'},
+ {id:'CU03',name:'赞助干预',trigger:'onDrawLoseEnergy',n:1,text:'抽到时失去 1 行动点／能量。'},
+ {id:'CU04',name:'合同纠纷',trigger:'onDrawDiscard',n:1,text:'抽到时随机弃掉另一张手牌。'},
+ {id:'CU05',name:'媒体围堵',trigger:'onDrawWeak',n:1,text:'抽到时自身获得 1 回合压制。'},
+ {id:'CU06',name:'赛程重压',trigger:'onDrawLoseHp',n:2,text:'抽到时直接失去 2 声望／生命。'},
+ {id:'CU07',name:'信息暴露',trigger:'onDrawVuln',n:1,text:'抽到时自身获得 1 回合易伤。'},
+ {id:'CU08',name:'战术泄露',trigger:'unplayable',n:0,text:'不能打出。占用抽牌与牌组空间。'},
+ {id:'CU09',name:'心理阴影',trigger:'onPlayLoseHp',n:1,text:'留在手中时，每打出另一张牌失去 1 声望／生命。'},
+ {id:'CU10',name:'疲劳复发',trigger:'endTurnLoseHp',n:1,text:'回合末仍在手中：失去 1 声望／生命。'},
+ {id:'CU11',name:'设备故障',trigger:'onDrawLoseEnergy',n:1,text:'抽到时失去 1 行动点／能量。'},
+ {id:'CU12',name:'队内分歧',trigger:'onDrawDiscard',n:2,text:'抽到时随机弃掉至多 2 张其他手牌。'},
+ {id:'CU13',name:'训练失序',trigger:'onDrawWeak',n:2,text:'抽到时自身获得 2 回合压制。'},
+ {id:'CU14',name:'禁赛风险',trigger:'onDrawLoseHp',n:4,text:'抽到时直接失去 4 声望／生命。'}
+];
+const CURSE_RULES=Object.fromEntries(CURSES.map(c=>[c.id,c]));
+const EXTRA_STATUSES=[
+ {id:'ST04',name:'能量泄漏',trigger:'onDrawLoseEnergy',n:1,text:'抽到时失去 1 行动点／能量；本场临时。'},
+ {id:'ST05',name:'干扰脉冲',trigger:'onDrawDiscard',n:1,text:'抽到时随机弃掉另一张手牌；本场临时。'}
+];
+const EXTRA_STATUS_RULES=Object.fromEntries(EXTRA_STATUSES.map(c=>[c.id,c]));
+
+return {CURSES,CURSE_RULES,EXTRA_STATUSES,EXTRA_STATUS_RULES};
+})();
+const module3=(()=>{
+// Seeded, seven-lane route topology shared by both demos. Room weights are this
+// game's own tuning; this is not Slay the Spire's exact map generator.
+const hash = value => {
+  let h = 2166136261;
+  for (const char of String(value)) h = Math.imul(h ^ char.charCodeAt(0), 16777619);
+  return h >>> 0;
+};
+const randomFrom = seed => {
+  let a = hash(seed);
+  return () => {
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t ^= t + Math.imul(t ^ t >>> 7, 61 | t);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+};
+const shuffle = (items, random) => {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+};
+const key = (step, lane) => `r${step}c${lane}`;
+const crosses = (left, right) => left.fromLane < right.fromLane && left.toLane > right.toLane || left.fromLane > right.fromLane && left.toLane < right.toLane;
+
+function topology(random) {
+  const starts = shuffle([0, 1, 2, 3, 4, 5, 6], random).slice(0, 4).sort((a, b) => a - b);
+  const walkers = shuffle([...starts, starts[Math.floor(random() * 4)], starts[Math.floor(random() * 4)]], random);
+  const rows = Array.from({ length: 16 }, () => new Set());
+  const edges = new Map();
+  for (let walker = 0; walker < walkers.length; walker++) {
+    let lane = walkers[walker];
+    rows[1].add(lane);
+    for (let step = 1; step < 15; step++) {
+      const existing = [...edges.values()].filter(e => e.step === step);
+      const choices = shuffle([lane - 1, lane, lane + 1].filter(next => next >= 0 && next <= 6), random)
+        .filter(next => !existing.some(e => crosses(e, { fromLane: lane, toLane: next })));
+      const next = choices[0]; // Staying in the same lane is always a valid fallback.
+      rows[step + 1].add(next);
+      const edge = { from: key(step, lane), to: key(step + 1, next), step, fromLane: lane, toLane: next };
+      edges.set(`${edge.from}>${edge.to}`, edge);
+      lane = next;
+    }
+  }
+  // Add short alternative connections between existing paths. No new node is
+  // introduced, so every visible node remains part of a start-to-boss walk.
+  for (let step = 1; step < 15; step++) {
+    const candidates = shuffle([...rows[step]].flatMap(fromLane => [...rows[step + 1]]
+      .filter(toLane => Math.abs(fromLane - toLane) <= 1)
+      .map(toLane => ({ from: key(step, fromLane), to: key(step + 1, toLane), step, fromLane, toLane }))), random);
+    for (const candidate of candidates) {
+      if (edges.has(`${candidate.from}>${candidate.to}`)) continue;
+      if ([...edges.values()].some(e => e.step === step && crosses(e, candidate))) continue;
+      if (random() < 0.42) edges.set(`${candidate.from}>${candidate.to}`, candidate);
+    }
+  }
+  const widths = rows.slice(1).map(row => row.size);
+  if (widths.some(width => width < 3 || width > 6) || Math.max(...widths) < 5 || new Set(widths).size < 2) return null;
+  const graphEdges = [...edges.values()].map(({ from, to }) => ({ from, to }));
+  for (const lane of rows[15]) graphEdges.push({ from: key(15, lane), to: 'boss' });
+  const outgoing = new Map(), incoming = new Map();
+  for (const { from, to } of graphEdges) {
+    outgoing.set(from, (outgoing.get(from) || 0) + 1);
+    incoming.set(to, (incoming.get(to) || 0) + 1);
+  }
+  const branches = [...outgoing].filter(([node, count]) => node !== 'boss' && count > 1).length;
+  const merges = [...incoming].filter(([node, count]) => node !== 'boss' && count > 1).length;
+  if (branches < 3 || merges < 1) return null;
+  return { rows, starts: starts.map(lane => key(1, lane)), edges: graphEdges };
+}
+
+function assignRooms(nodes, edges, random) {
+  const byKey = new Map(nodes.map(node => [node.key, node]));
+  const inbound = new Map(nodes.map(node => [node.key, []]));
+  const outbound = new Map(nodes.map(node => [node.key, []]));
+  for (const edge of edges) {
+    inbound.get(edge.to).push(byKey.get(edge.from));
+    outbound.get(edge.from).push(byKey.get(edge.to));
+  }
+  const weights = [['battle', 0.54], ['event', 0.17], ['shop', 0.10], ['rest', 0.09], ['elite', 0.10]];
+  for (const node of nodes) {
+    if (node.step <= 2) { node.kind = 'battle'; continue; }
+    if (node.step === 15) { node.kind = 'rest'; continue; }
+    if (node.step === 16) { node.kind = 'boss'; continue; }
+    const allowed = weights.filter(([kind]) => !['elite', 'shop', 'rest'].includes(kind) || !inbound.get(node.key).some(parent => parent.kind === kind));
+    const total = allowed.reduce((sum, [, weight]) => sum + weight, 0);
+    let ticket = random() * total;
+    node.kind = allowed.find(([, weight]) => (ticket -= weight) < 0)?.[0] || 'battle';
+  }
+  for (const kind of ['event', 'shop', 'elite']) {
+    while (nodes.filter(node => node.kind === kind).length < 2) {
+      const candidates = nodes.filter(node => node.step >= 3 && node.step <= 14 && node.kind === 'battle'
+        && !inbound.get(node.key).some(parent => parent.kind === kind)
+        && !outbound.get(node.key).some(child => child.kind === kind));
+      if (!candidates.length) return false;
+      shuffle(candidates, random)[0].kind = kind;
+    }
+  }
+  return true;
+}
+
+function generateRoute(seed, act) {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const random = randomFrom(`${seed}|${act}|route|${attempt}`);
+    const shape = topology(random);
+    if (!shape) continue;
+    const nodes = [];
+    for (let step = 1; step <= 15; step++) for (const lane of [...shape.rows[step]].sort((a, b) => a - b)) {
+      nodes.push({ key: key(step, lane), step, lane, x: 8 + lane * 14, y: 94 - (step - 1) * 88 / 15, kind: 'battle', name: '' });
+    }
+    nodes.push({ key: 'boss', step: 16, lane: 3, x: 50, y: 6, kind: 'boss', name: '' });
+    if (!assignRooms(nodes, shape.edges, random)) continue;
+    return { nodes, edges: shape.edges, starts: shape.starts, bossId: 'boss' };
+  }
+  throw Error('无法生成符合路线约束的地图');
+}
+
+return {generateRoute};
+})();
+const module4=(()=>{
 // season-map.js
+const { generateRoute } = module3;
 // Pure ES module for act metadata, enemy configs, and deterministic map generation.
+// This is a project-specific adaptation inspired by Slay the Spire's map structure,
+// not a clone of its exact generator. It uses a seeded PRNG (FNV-1a + sfc32) to
+// create reproducible maps with branching paths, guaranteed room types, and
+// non-crossing edges.
 
 const ACTS = [
   {
@@ -1934,7 +9476,7 @@ const ACTS = [
 const EXTRA_ENEMIES = {
   // Act 2 normal enemies
   A2_E01: { name: '第二幕基础进攻', hp: 48, script: [ [ { type: 'hit', n: 10, times: 1 } ], [ { type: 'hit', n: 12, times: 1 } ], [ { type: 'block', n: 6 }, { type: 'hit', n: 7, times: 1 } ] ], growth: 0 },
-  A2_E02: { name: '第二幕信息压制', hp: 52, script: [ [ { type: 'hit', n: 10, times: 1 } ], [ { type: 'jam', id: 'ST01', n: 1 }, { type: 'hit', n: 8, times: 1 } ], [ { type: 'hit', n: 13, times: 1 } ] ], growth: 0 },
+  A2_E02: { name: '第二幕信息压制', hp: 52, script: [ [ { type: 'hit', n: 10, times: 1 } ], [ { type: 'jam', id: 'ST04', n: 1 }, { type: 'hit', n: 8, times: 1 } ], [ { type: 'hit', n: 13, times: 1 } ] ], growth: 0 },
   A2_E03: { name: '第二幕多段突击', hp: 56, script: [ [ { type: 'hit', n: 4, times: 3 } ], [ { type: 'hit', n: 11, times: 1 } ], [ { type: 'block', n: 7 }, { type: 'hit', n: 8, times: 1 } ] ], growth: 0 },
   A2_E04: { name: '第二幕防守反击', hp: 54, script: [ [ { type: 'block', n: 11 }, { type: 'hit', n: 5, times: 1 } ], [ { type: 'hit', n: 16, times: 1 } ], [ { type: 'jam', id: 'ST03', n: 1 }, { type: 'hit', n: 9, times: 1 } ] ], growth: 0 },
   A2_E05: { name: '第二幕纪律控制', hp: 60, script: [ [ { type: 'weak', n: 1 } ], [ { type: 'hit', n: 14, times: 1 } ], [ { type: 'block', n: 9 }, { type: 'hit', n: 9, times: 1 } ] ], growth: 0 },
@@ -1943,7 +9485,7 @@ const EXTRA_ENEMIES = {
 
   // Act 3 normal enemies
   A3_E01: { name: '第三幕基础进攻', hp: 64, script: [ [ { type: 'hit', n: 13, times: 1 } ], [ { type: 'hit', n: 16, times: 1 } ], [ { type: 'block', n: 8 }, { type: 'hit', n: 10, times: 1 } ] ], growth: 0 },
-  A3_E02: { name: '第三幕信息压制', hp: 70, script: [ [ { type: 'hit', n: 13, times: 1 } ], [ { type: 'jam', id: 'ST01', n: 2 }, { type: 'hit', n: 11, times: 1 } ], [ { type: 'hit', n: 17, times: 1 } ] ], growth: 0 },
+  A3_E02: { name: '第三幕信息压制', hp: 70, script: [ [ { type: 'hit', n: 13, times: 1 } ], [ { type: 'jam', id: 'ST05', n: 2 }, { type: 'hit', n: 11, times: 1 } ], [ { type: 'hit', n: 17, times: 1 } ] ], growth: 0 },
   A3_E03: { name: '第三幕多段突击', hp: 76, script: [ [ { type: 'hit', n: 5, times: 3 } ], [ { type: 'hit', n: 15, times: 1 } ], [ { type: 'block', n: 9 }, { type: 'hit', n: 11, times: 1 } ] ], growth: 0 },
   A3_E04: { name: '第三幕防守反击', hp: 72, script: [ [ { type: 'block', n: 14 }, { type: 'hit', n: 7, times: 1 } ], [ { type: 'hit', n: 20, times: 1 } ], [ { type: 'jam', id: 'ST03', n: 2 }, { type: 'hit', n: 12, times: 1 } ] ], growth: 0 },
   A3_E05: { name: '第三幕纪律控制', hp: 82, script: [ [ { type: 'weak', n: 2 } ], [ { type: 'hit', n: 18, times: 1 } ], [ { type: 'block', n: 12 }, { type: 'hit', n: 12, times: 1 } ] ], growth: 0 },
@@ -1951,68 +9493,58 @@ const EXTRA_ENEMIES = {
   A3_B01: { name: '冠军赛', hp: 145, boss: true, script: [ [ { type: 'hit', n: 12, times: 1 }, { type: 'jam', id: 'ST03', n: 1 } ], [ { type: 'weak', n: 1 }, { type: 'hit', n: 5, times: 3 } ], [ { type: 'block', n: 16 }, { type: 'jam', id: 'ST01', n: 2 } ], [ { type: 'hit', n: 20, times: 1 } ] ], growth: 3 }
 };
 
-function seeded(text){let a=2166136261;for(const c of text)a=Math.imul(a^c.charCodeAt(0),16777619);return ()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
-const names={battle:'常规比赛',elite:'高压强敌',event:'未知事件',shop:'转会市场',rest:'俱乐部活动'};
-function buildMap(seed,act){
- if(![1,2,3].includes(act))throw Error('未知赛段');
- const random=seeded(`${seed}|map|${act}`),pick=a=>a[Math.floor(random()*a.length)],nodes=[],edges=[],layers=[];
- const prefix=act===1?'':`A${act}_`;
- // Sorted layers and monotone edges produce crossings only at actual junction nodes.
- for(let step=1;step<=11;step++){
-  const count=step===11?1:step===1?3:3+Math.floor(random()*2),layer=[];
-  for(let lane=0;lane<count;lane++){
-   const kind=step===11?'boss':step===10?'rest':[1,3,7].includes(step)?'battle':pick(['battle','battle','event','shop','rest',...(step>=4?['elite']:[])]);
-   const x=count===1?50:count===3?18+lane*32:12+lane*76/3;
-   const n={key:`a${act}-r${step}-c${lane}`,step,lane,x:x+(count===1?0:(random()-.5)*3),y:94-(step-1)*8.8,kind,name:names[kind]||ACTS[act-1].bossName};
-   layer.push(n);nodes.push(n);
-  }
-  layers.push(layer);
- }
- const connect=(a,b)=>{if(!edges.some(e=>e.from===a.key&&e.to===b.key))edges.push({from:a.key,to:b.key});};
- for(let row=0;row<10;row++){
-  const prev=layers[row],next=layers[row+1];
-  if(next.length===1){for(const p of prev)connect(p,next[0]);continue;}
-  // Nearest-neighbour backbone covers every node in both directions.
-  const nearest=(n,list)=>list.reduce((best,x)=>Math.abs(x.x-n.x)<Math.abs(best.x-n.x)?x:best,list[0]);
-  for(const p of prev)connect(p,nearest(p,next));
-  for(const n of next)connect(nearest(n,prev),n);
-  const candidates=prev.flatMap(p=>next.filter(n=>Math.abs(p.x-n.x)<38).map(n=>[p,n]));
-  // Fisher-Yates shuffling, not random array sorting.
-  for(let i=candidates.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[candidates[i],candidates[j]]=[candidates[j],candidates[i]];}
-  let added=0;
-  for(const [p,n] of candidates){
-   if(edges.some(e=>e.from===p.key&&e.to===n.key))continue;
-   const crosses=edges.filter(e=>prev.some(a=>a.key===e.from)).some(e=>{const a=prev.find(a=>a.key===e.from),b=next.find(b=>b.key===e.to);return (p.x-a.x)*(n.x-b.x)<0;});
-   if(!crosses){connect(p,n);added++;if(added>=(random()<.55?1:2))break;}
-  }
- }
- // Ensure the whole map offers each useful room type, without forcing every path through it.
- layers[1][Math.floor(random()*layers[1].length)].kind='event';
- layers[3][Math.floor(random()*layers[3].length)].kind='shop';
- layers[5][Math.floor(random()*layers[5].length)].kind='elite';
- const byKey=new Map(nodes.map(n=>[n.key,n]));
- for(const n of nodes){
-  const parents=edges.filter(e=>e.to===n.key).map(e=>byKey.get(e.from));
-  if(['elite','shop','rest'].includes(n.kind)&&n.step!==10&&parents.some(p=>p.kind===n.kind))n.kind='battle';
-  if(n.kind==='battle'){
-   const ids=n.step===1?['E01']:n.step<=3?['E01','E02']:['E01','E02','E03','E04','E05'];
-   const fresh=ids.filter(id=>!parents.some(p=>p.enemy===prefix+id));n.enemy=prefix+pick(fresh.length?fresh:ids);
-  }else if(n.kind==='elite')n.enemy=prefix+'EL01';else if(n.kind==='boss')n.enemy=prefix+'B01';
-  n.name=n.kind==='boss'?ACTS[act-1].bossName:n.kind==='battle'?({'E01':'基础进攻','E02':'信息压制','E03':'多段突击','E04':'防守反击','E05':'纪律控制'}[n.enemy.replace(/^A[23]_/, '')]):names[n.kind];
- }
- return {act,nodes,edges,starts:layers[0].map(n=>n.key),bossId:layers[10][0].key};
+// Seeded PRNG: FNV-1a hash to initialize sfc32 generator.
+const roomNames = { battle: '常规比赛', elite: '高压强敌', event: '未知事件', shop: "转会市场", rest: "俱乐部活动" };
+const battleNames = { E01: '基础进攻', E02: '信息压制', E03: '多段突击', E04: '防守反击', E05: '纪律控制' };
+function choice(seed, values) {
+  let hash = 2166136261;
+  for (const char of String(seed)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  return values[(hash >>> 0) % values.length];
 }
-function availableNodes(s){
- if(s?.mode!=='season'||s.phase!=='map')return [];
- const keys=s.currentNode===null?s.map.starts:s.map.edges.filter(e=>e.from===s.currentNode).map(e=>e.to);
- return s.map.nodes.filter(n=>keys.includes(n.key)&&!s.completed.includes(n.key));
+function buildMap(seed, act) {
+  if (![1, 2, 3].includes(act)) throw Error('未知赛段');
+  const map = generateRoute(seed, act);
+  const actKey = key => `a${act}-${key}`;
+  for (const node of map.nodes) node.key = actKey(node.key);
+  for (const edge of map.edges) { edge.from = actKey(edge.from); edge.to = actKey(edge.to); }
+  map.starts = map.starts.map(actKey);
+  map.bossId = actKey(map.bossId);
+  const byKey = new Map(map.nodes.map(node => [node.key, node]));
+  const prefix = act === 1 ? '' : 'A' + act + '_';
+  for (const node of map.nodes) {
+    if (node.kind === 'battle') {
+      const ids = node.step <= 2 ? ['E01'] : node.step === 3 ? ['E01', 'E02'] : ['E01', 'E02', 'E03', 'E04', 'E05'];
+      const parents = map.edges.filter(edge => edge.to === node.key).map(edge => byKey.get(edge.from));
+      const fresh = ids.filter(id => !parents.some(parent => parent.enemy === prefix + id));
+      const id = choice(seed + '|' + act + '|' + node.key + '|enemy', fresh.length ? fresh : ids);
+      node.enemy = prefix + id;
+      node.name = battleNames[id];
+    } else if (node.kind === 'elite') {
+      node.enemy = prefix + 'EL01';
+      node.name = roomNames.elite;
+    } else if (node.kind === 'boss') {
+      node.enemy = prefix + 'B01';
+      node.name = ACTS[act - 1].bossName;
+    } else {
+      node.name = roomNames[node.kind];
+    }
+  }
+  return { act, ...map };
+}
+function availableNodes(s) {
+  if (s?.mode !== 'season' || s.phase !== 'map') return [];
+  const keys = s.currentNode === null ? s.map.starts : s.map.edges.filter(e => e.from === s.currentNode).map(e => e.to);
+  return s.map.nodes.filter(n => keys.includes(n.key) && !s.completed.includes(n.key));
 }
 
 return {ACTS,EXTRA_ENEMIES,buildMap,availableNodes};
 })();
-const module2=(()=>{
+const module5=(()=>{
 const { REGIONS, REGIONAL_ROWS, REGIONAL_TACTICS } = module0;
-const { EXTRA_ENEMIES } = module1;
+const { EXPANSION_ROWS, EXPANSION_TACTICS } = module1;
+const { CURSES, CURSE_RULES, EXTRA_STATUSES, EXTRA_STATUS_RULES } = module2;
+const { EXTRA_ENEMIES } = module4;
+
 
 const VERSION = 'D0.1.0';
 // Effects are shared by rules, descriptions and previews. Player roles are design assignments.
@@ -2046,17 +9578,27 @@ const rows = [
   ['ST03','疲劳','比赛干扰',null,[]],
   ['CU01','磨合不足','俱乐部隐患',null,[]],
   ['CU02','舆论压力','俱乐部隐患',null,[]],
+  ...CURSES.slice(2).map(c=>[c.id,c.name,'俱乐部隐患',null,[]]),
+  ...EXTRA_STATUSES.map(c=>[c.id,c.name,'比赛干扰',null,[],null,c.id==='ST04'?'exhaustEnd':'discard']),
   ['TK01','补枪','临时行动',0,[hit(3)],null,'temporary'],
   ['TK02','临时部署','临时行动',0,[block(3)],null,'temporary'],
 ];
-const CARDS = Object.fromEntries([...rows,...REGIONAL_ROWS].map(([id,name,role,cost,effects,upgraded,zone='discard']) =>
-  [id,{id,name,role,cost,effects,upgraded,zone,player:/^(CN|AM|EU|PA)\d{2}$/.test(id)}]
+for(const region of Object.values(REGIONS)){
+ const prefix={CN:'CN',AM:'AM',EMEA:'EU',PAC:'PA'}[region.id];
+ region.pool.push(...EXPANSION_ROWS.filter(row=>row[0].startsWith(prefix)&&!row[0].startsWith(prefix+'T')).map(row=>row[0]));
+ region.pool.push(...EXPANSION_ROWS.filter(row=>row[0].startsWith(prefix+'T')).map(row=>row[0]));
+}
+const CARDS = Object.fromEntries([...rows,...REGIONAL_ROWS,...EXPANSION_ROWS].map(([id,name,role,cost,effects,upgraded,zone='discard']) =>
+  [id,{id,name,role,cost,effects,upgraded,zone,player:/^(CN|AM|EU|PA)\d{2}$/.test(id),trainable:/^(CN|AM|EU|PA)(\d{2}|T\d{2})$/.test(id)}]
 ));
 const PLAYER_IDS = rows.filter(r=>r[0].startsWith('CN')).map(r=>r[0]);
 // Presentation only: these motifs never add rules or identify a player's real agent pool.
 // Every number still comes from effects(); all source/adaptation notes are player-readable.
 const TACTICS = {
  ...REGIONAL_TACTICS,
+ ...EXPANSION_TACTICS,
+ ...Object.fromEntries(CURSES.slice(2).map(c=>[c.id,{title:c.name,scene:c.text,origin:'赛季风险 · 原创适配',note:'全赛区共享隐患；只由风险事件加入，不能从普通奖励获得。'}])),
+ ...Object.fromEntries(EXTRA_STATUSES.map(c=>[c.id,{title:c.name,scene:c.text,origin:'比赛干扰 · 原创适配',note:'临时状态仅在本场战斗生效，赛后移除。'}])),
  CN01:{title:'抢线点射',scene:'准星先到拐角，第一枪抢到身位。',origin:'枪法 · 抢线',verbs:{hit:'抢线开枪'},note:'通用枪法场景；不额外获得首杀奖励。'},
  CN02:{title:'拉枪接力',scene:'一人拉开枪线，队友跟上补枪。',origin:'配合 · 补枪',verbs:{hit:'拉出交火',token:'留下补枪机会'},note:'补枪需另打生成的临时牌，不会自动追加伤害。'},
  CN03:{title:'首枪破点',scene:'准星停在头线，迎着枪声打开缺口。',origin:'枪法 · 突破',verbs:{hit:'抢下首轮交火'},note:'首枪是战术名称；任何回合都能打出，不要求本回合第一张。'},
@@ -2106,9 +9648,11 @@ function effects(card) { return card.up ? CARDS[card.id].upgraded : CARDS[card.i
 function cardName(card) { return CARDS[card.id].name + (card.up?' +':''); }
 // Short face text and full hover text use the same effects, including upgrades.
 function compactLines(card) {
+ if(CURSE_RULES[card.id])return ['不能打出',CURSE_RULES[card.id].text];
+ if(EXTRA_STATUS_RULES[card.id])return ['不能打出',EXTRA_STATUS_RULES[card.id].text];
  const special={ST01:['不能打出'],ST02:['打出以清除此牌'],ST03:['不能打出','本场循环'],CU01:['不能打出','跨比赛保留'],CU02:['不能打出','留手至回合末：','直接失去 2 声望']};
  if(special[card.id])return special[card.id];
- return effects(card).flatMap(e=>{
+ const lines=effects(card).flatMap(e=>{
   if(e.type==='hit')return [`伤害 ${e.n}${e.times>1?` × ${e.times}`:''}`,...(e.ifWeak?[`对手有压制：基础伤害 +${e.ifWeak}`]:[])];
   if(e.type==='block')return [`布防 ${e.n}`];
   if(e.type==='weak')return [`对手压制 ${e.n} 回合`];
@@ -2121,6 +9665,7 @@ function compactLines(card) {
   if(e.key==='extraDraw')return [`额外抽 ${e.n} 张`];
   return [];
  });
+ return lines.length<=3?lines:[lines[0],lines[1],lines.slice(2).join(' · ')];
 }
 function cardKeywords(card) {
  const t=CARDS[card.id],list=[],es=effects(card)||[];
@@ -2137,6 +9682,8 @@ function cardKeywords(card) {
 }
 function describe(card) {
  const t=CARDS[card.id];
+ if(CURSE_RULES[card.id])return CURSE_RULES[card.id].text+' 跨比赛保留，直到永久移除。';
+ if(EXTRA_STATUS_RULES[card.id])return EXTRA_STATUS_RULES[card.id].text;
  const special={ST01:'不能打出。占用抽牌；回合结束时消耗。',ST02:'打出以调整身位，然后消耗。未打出则进入弃牌堆。',ST03:'不能打出。弃掉后继续参与本场洗牌。赛后移除。',CU01:'不能打出。跨比赛留在牌组，直到永久移除。',CU02:'不能打出。回合末仍在手中：直接失去 2 声望，布防无效。跨比赛保留。'};
  if(special[card.id]) return special[card.id];
  const text=effects(card).map(e=>{
@@ -2151,11 +9698,12 @@ function describe(card) {
  return text + (t.zone==='exhaust'?'。打出后消耗。':t.zone==='temporary'?'。打出或回合末消耗。':t.zone==='power'?'。能力：本场持续生效，不再洗回。':'。');
 }
 
-return {VERSION,CARDS,PLAYER_IDS,TACTICS,displayText,SKINS,ENEMIES,ROUTE,START,effects,cardName,compactLines,cardKeywords,describe,REGIONS};
+return {VERSION,CARDS,PLAYER_IDS,TACTICS,displayText,SKINS,ENEMIES,ROUTE,START,effects,cardName,compactLines,cardKeywords,describe,REGIONS,CURSE_RULES};
 })();
-const module3=(()=>{
-const { VERSION, CARDS, PLAYER_IDS, SKINS, ENEMIES, START, effects, cardName, REGIONS } = module2;
-const { buildMap, availableNodes } = module1;
+const module6=(()=>{
+const { VERSION, CARDS, PLAYER_IDS, SKINS, ENEMIES, START, effects, cardName, REGIONS } = module5;
+const { buildMap, availableNodes } = module4;
+const { CURSES, CURSE_RULES, EXTRA_STATUS_RULES } = module2;
 const clone = x => structuredClone(x);
 const log = (s,text) => s.logs.push({node:s.node,turn:s.battle?.turn||0,text});
 function random(s) { let x=s.rng; x^=x<<13; x^=x>>>17; x^=x<<5; s.rng=x>>>0; return s.rng/4294967296; }
@@ -2171,6 +9719,7 @@ const SEASON_EVENTS = {
   scrim:{label:'训练赛',desc:'支付20资金回复15%声望，或冒风险失去8声望换35资金。',options:{safe:'支付训练（-20资金，回复15%）',risk:'冒险（-8声望，+35资金）'}},
   training:{label:'特训',desc:'支付40升级一名选手，或免费升级但获得磨合不足。',options:{paid:'付费训练（-40）',risky:'鲁莽训练（免费但+磨合不足）'}},
   rally:{label:'动员',desc:'支付60移除一个诅咒并回复15%声望，或获得100资金但获得两个舆论压力。',options:{cleanse:'净化（-60资金，移除诅咒+回复）',sponsor:'接受赞助（+100资金，+2舆论压力）'}}
+  ,risk:{label:'高风险合作',desc:'领取90资金并加入一张随机俱乐部隐患，或谢绝。',options:{accept:'接受合作',skip:'谢绝'}}
 };
 function offers(s,weights=[15,60,20,5],number=3,excluded=[]) {
  const result=[];
@@ -2205,9 +9754,19 @@ function powerTotal(b,key){return b.powers.flatMap(effects).filter(e=>e.key===ke
 function drawCards(s,n) {
  const b=s.battle;
  for(let i=0;i<n;i++) {
+  if(s.phase!=='combat')break;
   if(b.hand.length>=10){log(s,'手牌已满：停止本次剩余抽牌。');break;}
   if(!b.draw.length){if(!b.discard.length)break;b.draw=shuffle(s,b.discard);b.discard=[];log(s,'抽牌堆耗尽：弃牌堆洗回抽牌堆。');}
   const c=b.draw.shift();b.hand.push(c);log(s,`抽到 ${cardName(c)}。`);
+  const rule=CURSE_RULES[c.id]||EXTRA_STATUS_RULES[c.id];
+  if(rule?.trigger==='onDrawLoseEnergy'){b.energy=Math.max(0,b.energy-rule.n);log(s,`${rule.name}：行动点 -${rule.n}。`);}
+  if(rule?.trigger==='onDrawWeak'){b.weak+=rule.n;log(s,`${rule.name}：自身压制 +${rule.n}。`);}
+  if(rule?.trigger==='onDrawVuln'){b.vulnerable=(b.vulnerable||0)+rule.n;log(s,`${rule.name}：自身易伤 +${rule.n}。`);}
+  if(rule?.trigger==='onDrawLoseHp'){s.hp=Math.max(0,s.hp-rule.n);log(s,`${rule.name}：声望 -${rule.n}。`);if(!s.hp){lose(s,rule.name);break;}}
+  if(rule?.trigger==='onDrawDiscard')for(let j=0;j<rule.n;j++){
+   const choices=b.hand.filter(card=>card.uid!==c.uid);if(!choices.length)break;
+   const target=choices[Math.floor(random(s)*choices.length)];b.hand.splice(b.hand.findIndex(card=>card.uid===target.uid),1);b.discard.push(target);log(s,`${rule.name}：${cardName(target)} 弃入弃牌堆。`);
+  }
  }
 }
 function beginTurn(s) {
@@ -2283,6 +9842,7 @@ function play(s,uid) {
  if(t.player)b.roleCounts[t.role]=(b.roleCounts[t.role]||0)+1;
  let bonus=t.player&&t.role==='决斗'&&first?powerTotal(b,'duel'):0;
  const wasWeak=b.enemyWeak>0;log(s,`打出 ${cardName(c)}，支付 ${t.cost} 行动点。`);
+ for(const held of b.hand){const rule=CURSE_RULES[held.id];if(rule?.trigger==='onPlayLoseHp'){s.hp=Math.max(0,s.hp-rule.n);log(s,`${rule.name}：声望 -${rule.n}。`);if(!s.hp){lose(s,rule.name);b.resolving=null;return;}}}
  for(const e of effects(c)) {
   if(e.type==='hit')for(let i=0;i<e.times;i++){
    strike(s,damage(e.n+bonus+(e.ifWeak&&wasWeak?e.ifWeak:0),b.weak>0,b.enemyVulnerable>0));bonus=0;
@@ -2306,14 +9866,14 @@ function play(s,uid) {
 }
 function endTurn(s) {
  const b=s.battle;
- for(const c of b.hand.filter(c=>c.id==='CU02')){s.hp=Math.max(0,s.hp-2);log(s,'舆论压力：直接失去 2 声望。');if(!s.hp){lose(s,'舆论压力耗尽声望');return;}}
+ for(const c of b.hand){const rule=CURSE_RULES[c.id];if(rule?.trigger==='endTurnLoseHp'){s.hp=Math.max(0,s.hp-rule.n);log(s,`${rule.name}：直接失去 ${rule.n} 声望。`);if(!s.hp){lose(s,`${rule.name}耗尽声望`);return;}}}
  for(const c of b.hand){if(['temporary','exhaustEnd'].includes(CARDS[c.id].zone)){b.exhaust.push(c);log(s,`${cardName(c)} 在回合末消耗。`);}else b.discard.push(c);}
  b.hand=[];b.weak=Math.max(0,b.weak-1);b.enemyBlock=0;
  log(s,`对手行动：${intentText(s)}。`);
  for(const e of intent(s)) {
   if(e.type==='hit')for(let i=0;i<e.times;i++){
-   const absorbed=Math.min(b.block,e.n);b.block-=absorbed;s.hp=Math.max(0,s.hp-e.n+absorbed);
-   log(s,`对手攻击 ${e.n}：格挡抵消 ${absorbed}，失去 ${e.n-absorbed} 声望（剩余 ${s.hp}）。`);
+   const incoming=b.vulnerable>0?Math.floor(e.n*1.5):e.n,absorbed=Math.min(b.block,incoming);b.block-=absorbed;s.hp=Math.max(0,s.hp-incoming+absorbed);
+   log(s,`对手攻击 ${incoming}：格挡抵消 ${absorbed}，失去 ${incoming-absorbed} 声望（剩余 ${s.hp}）。`);
    if(!s.hp){lose(s,'比赛失利');return;}
   }
   if(e.type==='block'){b.enemyBlock+=e.n;log(s,`对手获得 ${e.n} 格挡。`);}
@@ -2321,6 +9881,7 @@ function endTurn(s) {
   if(e.type==='jam')for(let i=0;i<e.n;i++){b.discard.push(instance(s,e.id));log(s,`${CARDS[e.id].name} 加入弃牌堆。`);}
  }
  b.enemyWeak=Math.max(0,b.enemyWeak-1);b.enemyVulnerable=Math.max(0,b.enemyVulnerable-1);
+ if(b.vulnerable)b.vulnerable=Math.max(0,b.vulnerable-1);
  b.intent++;if(b.intent===ENEMIES[b.enemy].script.length){b.intent=0;b.cycles++;if(ENEMIES[b.enemy].boss)log(s,`Boss 完成一轮意图，之后每段攻击基础值 +${ENEMIES[b.enemy].growth??2}（累计 +${b.cycles*(ENEMIES[b.enemy].growth??2)}）。`);}
  beginTurn(s);
 }
@@ -2368,7 +9929,7 @@ function finishRewardSeason(s) {
 }
 function removalReason(s,uid) {
  const c=s.deck.find(c=>c.uid===uid);if(!c)return '未找到这张牌';
- if(!CARDS[c.id].player)return c.id.startsWith('CU')?'':'此类牌不能永久移除';
+ if(!CARDS[c.id].trainable)return c.id.startsWith('CU')?'':'此类牌不能永久移除';
  const rest=s.deck.filter(c=>c.uid!==uid&&CARDS[c.id].player);
  if(rest.length<5)return '至少保留 5 张选手牌';
  if(!rest.some(c=>effects(c).some(e=>e.type==='hit')))return '至少保留 1 张能直接攻击的选手牌';return '';
@@ -2409,12 +9970,12 @@ function perform(s,a) {
  case 'leaveShop':requirePhase('shop');advance(s);break;
  case 'activity':requirePhase('activity');
   if(a.choice==='fans'){const n=healAmount(s);if(n<=0)throw Error('声望已满');s.hp+=n;log(s,`粉丝见面会：恢复最大声望的 30%，实际 +${n} 声望。`);advance(s);}
-  else if(a.choice==='upgrade'){if(!s.deck.some(c=>CARDS[c.id].player&&!c.up))throw Error('没有可训练的选手牌');s.phase='upgrade';}
+  else if(a.choice==='upgrade'){if(!s.deck.some(c=>CARDS[c.id].trainable&&!c.up))throw Error('没有可训练的牌');s.phase='upgrade';}
   else if(a.choice==='cleanse'){if(!s.deck.some(c=>c.id.startsWith('CU')))throw Error('没有俱乐部隐患');s.phase='cleanse';}
   else if(a.choice==='skip'){log(s,'跳过俱乐部活动。');advance(s);}else throw Error('未知活动');break;
  case 'activityBack':requirePhase('upgrade','cleanse');s.phase='activity';break;
  case 'upgrade':requirePhase('upgrade');{
-  const c=s.deck.find(c=>c.uid===a.uid);if(!c||!CARDS[c.id].player||c.up)throw Error('此牌不能升级');c.up=true;log(s,`训练完成：${cardName(c)}（${c.uid}）。`);advance(s);break;}
+  const c=s.deck.find(c=>c.uid===a.uid);if(!c||!CARDS[c.id].trainable||c.up)throw Error('此牌不能升级');c.up=true;log(s,`训练完成：${cardName(c)}（${c.uid}）。`);advance(s);break;}
  case 'cleanse':requirePhase('cleanse');{
   const c=s.deck.find(c=>c.uid===a.uid);if(!c||!c.id.startsWith('CU'))throw Error('只能移除俱乐部隐患');s.deck=s.deck.filter(c=>c.uid!==a.uid);log(s,`团建：永久移除 ${cardName(c)}。`);advance(s);break;}
  case 'chooseNode':{
@@ -2460,7 +10021,7 @@ function perform(s,a) {
     break;
    case 'training':
     if(a.choice==='paid'||a.choice==='risky'){
-     if(!s.deck.some(c=>CARDS[c.id].player&&!c.up))throw Error('没有可训练选手');if(a.choice==='paid'&&s.money<40)throw Error('资金不足');
+     if(!s.deck.some(c=>CARDS[c.id].trainable&&!c.up))throw Error('没有可训练牌');if(a.choice==='paid'&&s.money<40)throw Error('资金不足');
      s.pendingEvent=a.choice; s.phase='eventUpgrade';
     } else throw Error('未知选项');
     break;
@@ -2473,13 +10034,16 @@ function perform(s,a) {
      s.money+=100; s.deck.push(instance(s,'CU02')); s.deck.push(instance(s,'CU02')); log(s,'动员赞助：资金 +100，加入两个舆论压力。'); advanceSeason(s);
     } else throw Error('未知选项');
     break;
+   case 'risk':
+    if(a.choice==='accept'){const curse=CURSES[2+Math.floor(random(s)*(CURSES.length-2))];s.money+=90;s.deck.push(instance(s,curse.id));log(s,`高风险合作：资金 +90，加入 ${curse.name}。`);advanceSeason(s);}else throw Error('未知选项');
+    break;
    default: throw Error('未知事件');
   }
   break;}
  case 'eventUpgrade':{
   requirePhase('eventUpgrade');
   const pending=s.pendingEvent; if(!pending) throw Error('无待处理事件');
-  const c=s.deck.find(c=>c.uid===a.uid); if(!c||!CARDS[c.id].player||c.up) throw Error('此牌不能升级');
+  const c=s.deck.find(c=>c.uid===a.uid); if(!c||!CARDS[c.id].trainable||c.up) throw Error('此牌不能升级');
   if(pending==='paid'){ if(s.money<40) throw Error('资金不足'); s.money-=40; }
   c.up=true; if(pending==='risky') s.deck.push(instance(s,'CU01'));
   log(s,`特训完成：${cardName(c)}。`);
@@ -2522,7 +10086,7 @@ function preview(s,uid) {
  const newLogs=copy.logs.slice(s.logs.length);return {energy:after.energy,damage:before.enemyHp-after.enemyHp,enemyBlock:before.enemyBlock-after.enemyBlock,block:after.block-before.block,draw:newLogs.filter(l=>l.text.startsWith('抽到 ')).length,shuffle:newLogs.some(l=>l.text==='抽牌堆耗尽：弃牌堆洗回抽牌堆。'),wins:copy.phase!=='combat'};
 }
 function startSeasonEvent(s) {
- const pool = ['sponsor','trial','scrim'];
+ const pool = ['sponsor','trial','scrim','risk'];
  if (s.act===2) pool.push('training');
  if (s.act===3) pool.push('rally');
  let fresh = pool.filter(id=>!s.seenEvents.includes(id));
@@ -2545,13 +10109,14 @@ function legalActions(s) {
    if(id){
     actions.push({type:'seasonEvent',choice:'skip'});
     if(id==='sponsor') actions.push({type:'seasonEvent',choice:'accept'});
+    if(id==='risk') actions.push({type:'seasonEvent',choice:'accept'});
     if(id==='trial'&&s.eventOffers.length) actions.push({type:'seasonEvent',choice:'accept'});
     if(id==='scrim'){
      if(s.money>=20 && s.hp<s.maxHp) actions.push({type:'seasonEvent',choice:'safe'});
      if(s.hp>8) actions.push({type:'seasonEvent',choice:'risk'});
     }
     if(id==='training'){
-     if(s.deck.some(c=>CARDS[c.id].player&&!c.up)){
+     if(s.deck.some(c=>CARDS[c.id].trainable&&!c.up)){
       if(s.money>=40) actions.push({type:'seasonEvent',choice:'paid'});
       actions.push({type:'seasonEvent',choice:'risky'});
      }
@@ -2574,18 +10139,18 @@ function legalActions(s) {
  }
  if(s.phase==='activity'){
   if(healAmount(s)>0)actions.push({type:'activity',choice:'fans'});
-  if(s.deck.some(c=>CARDS[c.id].player&&!c.up))actions.push({type:'activity',choice:'upgrade'});
+  if(s.deck.some(c=>CARDS[c.id].trainable&&!c.up))actions.push({type:'activity',choice:'upgrade'});
   if(s.deck.some(c=>c.id.startsWith('CU')))actions.push({type:'activity',choice:'cleanse'});actions.push({type:'activity',choice:'skip'});
  }
  if(s.phase==='upgrade'||s.phase==='cleanse'){
-  for(const c of s.deck)if(s.phase==='upgrade'?CARDS[c.id].player&&!c.up:c.id.startsWith('CU'))actions.push({type:s.phase,uid:c.uid});actions.push({type:'activityBack'});
+  for(const c of s.deck)if(s.phase==='upgrade'?CARDS[c.id].trainable&&!c.up:c.id.startsWith('CU'))actions.push({type:s.phase,uid:c.uid});actions.push({type:'activityBack'});
  }
  if(s.mode==='season' && s.phase==='map'){
   for(const n of availableNodes(s)) actions.push({type:'chooseNode',key:n.key});
  }
  if(s.mode==='season' && s.phase==='intermission') actions.push({type:'nextAct'});
  if(s.mode==='season' && s.phase==='eventUpgrade'){
-  for(const c of s.deck) if(CARDS[c.id].player&&!c.up) actions.push({type:'eventUpgrade',uid:c.uid});
+  for(const c of s.deck) if(CARDS[c.id].trainable&&!c.up) actions.push({type:'eventUpgrade',uid:c.uid});
   actions.push({type:'eventBack'});
  }
  if(s.mode==='season' && s.phase==='eventCleanse'){
@@ -2602,9 +10167,9 @@ function observe(s) {
 
 return {clone,random,shuffle,instance,SEASON_EVENTS,offers,createRun,createSeason,startBattle,drawCards,damage,intent,intentText,canPlay,removalReason,healAmount,act,replay,preview,legalActions,observe};
 })();
-const module4=(()=>{
+const module7=(()=>{
 // Presentation-only routing. The underlying seeded game and its replays are unchanged.
-const { availableNodes } = module1;
+const { availableNodes } = module4;
 
 const layout = [
  ['n1',1,'基础试训','battle',48,91],['n2',2,'信息压制','battle',39,81],
@@ -2667,7 +10232,7 @@ function restoreScreen(s,meta){
 
 return {branchChoice,routeNodes,mapEntry,nextScreen,restoreScreen};
 })();
-const module5=(()=>{
+const module8=(()=>{
 // Generated by tools/build-art.mjs from reviewed source manifests.
 const CARD_ART={
   "CN01": {
@@ -2784,37 +10349,128 @@ const CARD_ART={
   "ST01": {
     "path": "assets/special/ST01.svg",
     "name": "信息干扰",
-    "kind": "illustration"
+    "kind": "illustration",
+    "concept": false
   },
   "ST02": {
     "path": "assets/special/ST02.svg",
     "name": "节奏受阻",
-    "kind": "illustration"
+    "kind": "illustration",
+    "concept": false
   },
   "ST03": {
     "path": "assets/special/ST03.svg",
     "name": "疲劳",
-    "kind": "illustration"
+    "kind": "illustration",
+    "concept": false
   },
   "CU01": {
     "path": "assets/special/CU01.svg",
     "name": "磨合不足",
-    "kind": "illustration"
+    "kind": "illustration",
+    "concept": false
   },
   "CU02": {
     "path": "assets/special/CU02.svg",
     "name": "舆论压力",
-    "kind": "illustration"
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU03": {
+    "path": "assets/special/CU03.svg",
+    "name": "赞助干预",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU04": {
+    "path": "assets/special/CU04.svg",
+    "name": "合同纠纷",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU05": {
+    "path": "assets/special/CU05.svg",
+    "name": "媒体围堵",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU06": {
+    "path": "assets/special/CU06.svg",
+    "name": "赛程重压",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU07": {
+    "path": "assets/special/CU07.svg",
+    "name": "信息暴露",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU08": {
+    "path": "assets/special/CU08.svg",
+    "name": "战术泄露",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU09": {
+    "path": "assets/special/CU09.svg",
+    "name": "心理阴影",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU10": {
+    "path": "assets/special/CU10.svg",
+    "name": "疲劳复发",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU11": {
+    "path": "assets/special/CU11.svg",
+    "name": "设备故障",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU12": {
+    "path": "assets/special/CU12.svg",
+    "name": "队内分歧",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU13": {
+    "path": "assets/special/CU13.svg",
+    "name": "训练失序",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU14": {
+    "path": "assets/special/CU14.svg",
+    "name": "禁赛风险",
+    "kind": "illustration",
+    "concept": false
+  },
+  "ST04": {
+    "path": "assets/special/ST04.svg",
+    "name": "能量泄漏",
+    "kind": "illustration",
+    "concept": false
+  },
+  "ST05": {
+    "path": "assets/special/ST05.svg",
+    "name": "干扰脉冲",
+    "kind": "illustration",
+    "concept": false
   },
   "TK01": {
     "path": "assets/special/TK01.svg",
     "name": "补枪",
-    "kind": "illustration"
+    "kind": "illustration",
+    "concept": false
   },
   "TK02": {
     "path": "assets/special/TK02.svg",
     "name": "临时部署",
-    "kind": "illustration"
+    "kind": "illustration",
+    "concept": false
   },
   "AM01": {
     "path": "assets/players/AM01.png",
@@ -3139,6 +10795,1374 @@ const CARD_ART={
     "profileUrl": "https://www.vlr.gg/player/9803/d4v41",
     "name": "d4v41",
     "kind": "photo"
+  },
+  "CN19": {
+    "path": "assets/players/CN19.svg",
+    "name": "Jieni7",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN20": {
+    "path": "assets/players/CN20.svg",
+    "name": "cb",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN21": {
+    "path": "assets/players/CN21.svg",
+    "name": "FengF",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN22": {
+    "path": "assets/players/CN22.svg",
+    "name": "Viva",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN23": {
+    "path": "assets/players/CN23.svg",
+    "name": "deLb",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN24": {
+    "path": "assets/players/CN24.svg",
+    "name": "nephh",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN25": {
+    "path": "assets/players/CN25.svg",
+    "name": "whzy",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN26": {
+    "path": "assets/players/CN26.svg",
+    "name": "Knight",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN27": {
+    "path": "assets/players/CN27.svg",
+    "name": "rushia",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN28": {
+    "path": "assets/players/CN28.svg",
+    "name": "bud",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN29": {
+    "path": "assets/players/CN29.svg",
+    "name": "Nicc",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN30": {
+    "path": "assets/players/CN30.svg",
+    "name": "Flex1n",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN31": {
+    "path": "assets/players/CN31.svg",
+    "name": "Akeman",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN32": {
+    "path": "assets/players/CN32.svg",
+    "name": "sScary",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN33": {
+    "path": "assets/players/CN33.svg",
+    "name": "Setrod",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN34": {
+    "path": "assets/players/CN34.svg",
+    "name": "happywei",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN35": {
+    "path": "assets/players/CN35.svg",
+    "name": "NoMan",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN36": {
+    "path": "assets/players/CN36.svg",
+    "name": "Lysoar",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN37": {
+    "path": "assets/players/CN37.svg",
+    "name": "WsLeo",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN38": {
+    "path": "assets/players/CN38.svg",
+    "name": "HeiB",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN39": {
+    "path": "assets/players/CN39.svg",
+    "name": "OBONE",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN40": {
+    "path": "assets/players/CN40.svg",
+    "name": "GuanG",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN41": {
+    "path": "assets/players/CN41.svg",
+    "name": "Ezeir",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN42": {
+    "path": "assets/players/CN42.svg",
+    "name": "Green",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN43": {
+    "path": "assets/players/CN43.svg",
+    "name": "jkuro",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN44": {
+    "path": "assets/players/CN44.svg",
+    "name": "stew",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN45": {
+    "path": "assets/players/CN45.svg",
+    "name": "zhe",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN46": {
+    "path": "assets/players/CN46.svg",
+    "name": "coconut",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN47": {
+    "path": "assets/players/CN47.svg",
+    "name": "kklin",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN48": {
+    "path": "assets/players/CN48.svg",
+    "name": "Spring",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN49": {
+    "path": "assets/players/CN49.svg",
+    "name": "jowa",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN50": {
+    "path": "assets/players/CN50.svg",
+    "name": "qiutiaN",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CNT01": {
+    "path": "assets/special/CNT01.svg",
+    "name": "快速部署",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT02": {
+    "path": "assets/special/CNT02.svg",
+    "name": "稳固防线",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT03": {
+    "path": "assets/special/CNT03.svg",
+    "name": "协同攻击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT04": {
+    "path": "assets/special/CNT04.svg",
+    "name": "弱点打击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT05": {
+    "path": "assets/special/CNT05.svg",
+    "name": "压制火力",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT06": {
+    "path": "assets/special/CNT06.svg",
+    "name": "战术过牌",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT07": {
+    "path": "assets/special/CNT07.svg",
+    "name": "护甲补给",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT08": {
+    "path": "assets/special/CNT08.svg",
+    "name": "情报优势",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT09": {
+    "path": "assets/special/CNT09.svg",
+    "name": "佯攻诱敌",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT10": {
+    "path": "assets/special/CNT10.svg",
+    "name": "阵地巩固",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT11": {
+    "path": "assets/special/CNT11.svg",
+    "name": "突袭斩首",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT12": {
+    "path": "assets/special/CNT12.svg",
+    "name": "全面压制",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT13": {
+    "path": "assets/special/CNT13.svg",
+    "name": "快速休整",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT14": {
+    "path": "assets/special/CNT14.svg",
+    "name": "火力覆盖",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT15": {
+    "path": "assets/special/CNT15.svg",
+    "name": "团队协作",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT16": {
+    "path": "assets/special/CNT16.svg",
+    "name": "战略撤退",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT17": {
+    "path": "assets/special/CNT17.svg",
+    "name": "信息封锁",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT18": {
+    "path": "assets/special/CNT18.svg",
+    "name": "破釜沉舟",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT19": {
+    "path": "assets/special/CNT19.svg",
+    "name": "连环计",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT20": {
+    "path": "assets/special/CNT20.svg",
+    "name": "火力侦察",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT21": {
+    "path": "assets/special/CNT21.svg",
+    "name": "铁壁合围",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT22": {
+    "path": "assets/special/CNT22.svg",
+    "name": "游击战术",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT23": {
+    "path": "assets/special/CNT23.svg",
+    "name": "心理战",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT24": {
+    "path": "assets/special/CNT24.svg",
+    "name": "资源调度",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT25": {
+    "path": "assets/special/CNT25.svg",
+    "name": "斩首行动",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AM19": {
+    "path": "assets/players/AM19.svg",
+    "name": "valyn",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM20": {
+    "path": "assets/players/AM20.svg",
+    "name": "trent",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM21": {
+    "path": "assets/players/AM21.svg",
+    "name": "jawgemo",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM22": {
+    "path": "assets/players/AM22.svg",
+    "name": "Kyu",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM23": {
+    "path": "assets/players/AM23.svg",
+    "name": "johnqt",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM24": {
+    "path": "assets/players/AM24.svg",
+    "name": "N4RRATE",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM25": {
+    "path": "assets/players/AM25.svg",
+    "name": "cortezia",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM26": {
+    "path": "assets/players/AM26.svg",
+    "name": "reduxx",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM27": {
+    "path": "assets/players/AM27.svg",
+    "name": "Verno",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM28": {
+    "path": "assets/players/AM28.svg",
+    "name": "Mazino",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM29": {
+    "path": "assets/players/AM29.svg",
+    "name": "Saadhak",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM30": {
+    "path": "assets/players/AM30.svg",
+    "name": "Dantedeu5",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM31": {
+    "path": "assets/players/AM31.svg",
+    "name": "silentzz",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM32": {
+    "path": "assets/players/AM32.svg",
+    "name": "Sato",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM33": {
+    "path": "assets/players/AM33.svg",
+    "name": "blowz",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM34": {
+    "path": "assets/players/AM34.svg",
+    "name": "Neon",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM35": {
+    "path": "assets/players/AM35.svg",
+    "name": "spikeziN",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM36": {
+    "path": "assets/players/AM36.svg",
+    "name": "PxS",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM37": {
+    "path": "assets/players/AM37.svg",
+    "name": "cauanzin",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM38": {
+    "path": "assets/players/AM38.svg",
+    "name": "pANcada",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM39": {
+    "path": "assets/players/AM39.svg",
+    "name": "lukxo",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM40": {
+    "path": "assets/players/AM40.svg",
+    "name": "Virtyy",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM41": {
+    "path": "assets/players/AM41.svg",
+    "name": "Darker",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM42": {
+    "path": "assets/players/AM42.svg",
+    "name": "C0M",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM43": {
+    "path": "assets/players/AM43.svg",
+    "name": "bao",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM44": {
+    "path": "assets/players/AM44.svg",
+    "name": "dgzin",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM45": {
+    "path": "assets/players/AM45.svg",
+    "name": "okeanos",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM46": {
+    "path": "assets/players/AM46.svg",
+    "name": "supamen",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM47": {
+    "path": "assets/players/AM47.svg",
+    "name": "Ethan",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM48": {
+    "path": "assets/players/AM48.svg",
+    "name": "mada",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM49": {
+    "path": "assets/players/AM49.svg",
+    "name": "brawk",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM50": {
+    "path": "assets/players/AM50.svg",
+    "name": "skuba",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AMT01": {
+    "path": "assets/special/AMT01.svg",
+    "name": "双线夹击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT02": {
+    "path": "assets/special/AMT02.svg",
+    "name": "破绽侦察",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT03": {
+    "path": "assets/special/AMT03.svg",
+    "name": "闪击先锋",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT04": {
+    "path": "assets/special/AMT04.svg",
+    "name": "聚火集射",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT05": {
+    "path": "assets/special/AMT05.svg",
+    "name": "烟雾推进",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT06": {
+    "path": "assets/special/AMT06.svg",
+    "name": "侦察无人机",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT07": {
+    "path": "assets/special/AMT07.svg",
+    "name": "防守协同",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT08": {
+    "path": "assets/special/AMT08.svg",
+    "name": "快速换弹",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT09": {
+    "path": "assets/special/AMT09.svg",
+    "name": "破甲射击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT10": {
+    "path": "assets/special/AMT10.svg",
+    "name": "包夹战术",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT11": {
+    "path": "assets/special/AMT11.svg",
+    "name": "陷阱布置",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT12": {
+    "path": "assets/special/AMT12.svg",
+    "name": "预判闪避",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT13": {
+    "path": "assets/special/AMT13.svg",
+    "name": "火力侦察",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT14": {
+    "path": "assets/special/AMT14.svg",
+    "name": "协同压制",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT15": {
+    "path": "assets/special/AMT15.svg",
+    "name": "经济管理",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT16": {
+    "path": "assets/special/AMT16.svg",
+    "name": "诱敌深入",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT17": {
+    "path": "assets/special/AMT17.svg",
+    "name": "多重标记",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT18": {
+    "path": "assets/special/AMT18.svg",
+    "name": "突击路线",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT19": {
+    "path": "assets/special/AMT19.svg",
+    "name": "交叉火力",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT20": {
+    "path": "assets/special/AMT20.svg",
+    "name": "后撤防守",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT21": {
+    "path": "assets/special/AMT21.svg",
+    "name": "信息优势",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT22": {
+    "path": "assets/special/AMT22.svg",
+    "name": "远程狙击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT23": {
+    "path": "assets/special/AMT23.svg",
+    "name": "包围网",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT24": {
+    "path": "assets/special/AMT24.svg",
+    "name": "爆发输出",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT25": {
+    "path": "assets/special/AMT25.svg",
+    "name": "能量循环",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EU19": {
+    "path": "assets/players/EU19.svg",
+    "name": "Jamppi",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU20": {
+    "path": "assets/players/EU20.svg",
+    "name": "Sayonara",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU21": {
+    "path": "assets/players/EU21.svg",
+    "name": "PROFEK",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU22": {
+    "path": "assets/players/EU22.svg",
+    "name": "UNFAKE",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU23": {
+    "path": "assets/players/EU23.svg",
+    "name": "kamo",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU24": {
+    "path": "assets/players/EU24.svg",
+    "name": "MiniBoo",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU25": {
+    "path": "assets/players/EU25.svg",
+    "name": "purp0",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU26": {
+    "path": "assets/players/EU26.svg",
+    "name": "wayne",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU27": {
+    "path": "assets/players/EU27.svg",
+    "name": "ComeBack",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU28": {
+    "path": "assets/players/EU28.svg",
+    "name": "MrFaliN",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU29": {
+    "path": "assets/players/EU29.svg",
+    "name": "qRaxs",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU30": {
+    "path": "assets/players/EU30.svg",
+    "name": "yetujey",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU31": {
+    "path": "assets/players/EU31.svg",
+    "name": "xeus",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU32": {
+    "path": "assets/players/EU32.svg",
+    "name": "ATA KAPTAN",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU33": {
+    "path": "assets/players/EU33.svg",
+    "name": "KROSTALY",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU34": {
+    "path": "assets/players/EU34.svg",
+    "name": "baha",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU35": {
+    "path": "assets/players/EU35.svg",
+    "name": "Veqaj",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU36": {
+    "path": "assets/players/EU36.svg",
+    "name": "Rosé",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU37": {
+    "path": "assets/players/EU37.svg",
+    "name": "umu7",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU38": {
+    "path": "assets/players/EU38.svg",
+    "name": "Loita",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU39": {
+    "path": "assets/players/EU39.svg",
+    "name": "starxo",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU40": {
+    "path": "assets/players/EU40.svg",
+    "name": "Minny",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU41": {
+    "path": "assets/players/EU41.svg",
+    "name": "bipo",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU42": {
+    "path": "assets/players/EU42.svg",
+    "name": "GLYPH",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU43": {
+    "path": "assets/players/EU43.svg",
+    "name": "Cloud",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU44": {
+    "path": "assets/players/EU44.svg",
+    "name": "westside",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU45": {
+    "path": "assets/players/EU45.svg",
+    "name": "ara",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU46": {
+    "path": "assets/players/EU46.svg",
+    "name": "Flickless",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU47": {
+    "path": "assets/players/EU47.svg",
+    "name": "GRUBINHO",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU48": {
+    "path": "assets/players/EU48.svg",
+    "name": "Shao",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU49": {
+    "path": "assets/players/EU49.svg",
+    "name": "hiro",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU50": {
+    "path": "assets/players/EU50.svg",
+    "name": "Filu",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EUT01": {
+    "path": "assets/special/EUT01.svg",
+    "name": "开局压制",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT02": {
+    "path": "assets/special/EUT02.svg",
+    "name": "防守反击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT03": {
+    "path": "assets/special/EUT03.svg",
+    "name": "信息侦察",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT04": {
+    "path": "assets/special/EUT04.svg",
+    "name": "弱点突袭",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT05": {
+    "path": "assets/special/EUT05.svg",
+    "name": "削弱阵线",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT06": {
+    "path": "assets/special/EUT06.svg",
+    "name": "护盾加固",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT07": {
+    "path": "assets/special/EUT07.svg",
+    "name": "先手布局",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT08": {
+    "path": "assets/special/EUT08.svg",
+    "name": "决斗强化",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT09": {
+    "path": "assets/special/EUT09.svg",
+    "name": "能量管理",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT10": {
+    "path": "assets/special/EUT10.svg",
+    "name": "额外抽牌",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT11": {
+    "path": "assets/special/EUT11.svg",
+    "name": "快速突进",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT12": {
+    "path": "assets/special/EUT12.svg",
+    "name": "稳固防守",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT13": {
+    "path": "assets/special/EUT13.svg",
+    "name": "双重打击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT14": {
+    "path": "assets/special/EUT14.svg",
+    "name": "易伤标记",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT15": {
+    "path": "assets/special/EUT15.svg",
+    "name": "虚弱诅咒",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT16": {
+    "path": "assets/special/EUT16.svg",
+    "name": "战利品",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT17": {
+    "path": "assets/special/EUT17.svg",
+    "name": "防御工事",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT18": {
+    "path": "assets/special/EUT18.svg",
+    "name": "全面攻势",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT19": {
+    "path": "assets/special/EUT19.svg",
+    "name": "铁壁反击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT20": {
+    "path": "assets/special/EUT20.svg",
+    "name": "资源循环",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT21": {
+    "path": "assets/special/EUT21.svg",
+    "name": "致命弱点",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT22": {
+    "path": "assets/special/EUT22.svg",
+    "name": "战术撤退",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT23": {
+    "path": "assets/special/EUT23.svg",
+    "name": "压制射击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT24": {
+    "path": "assets/special/EUT24.svg",
+    "name": "战术觉醒",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT25": {
+    "path": "assets/special/EUT25.svg",
+    "name": "绝地反击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PA19": {
+    "path": "assets/players/PA19.svg",
+    "name": "free1ng",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA20": {
+    "path": "assets/players/PA20.svg",
+    "name": "Hermes",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA21": {
+    "path": "assets/players/PA21.svg",
+    "name": "stax",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA22": {
+    "path": "assets/players/PA22.svg",
+    "name": "carpe",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA23": {
+    "path": "assets/players/PA23.svg",
+    "name": "iZu",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA24": {
+    "path": "assets/players/PA24.svg",
+    "name": "Meteor",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA25": {
+    "path": "assets/players/PA25.svg",
+    "name": "BuZz",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA26": {
+    "path": "assets/players/PA26.svg",
+    "name": "Lakia",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA27": {
+    "path": "assets/players/PA27.svg",
+    "name": "Ash",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA28": {
+    "path": "assets/players/PA28.svg",
+    "name": "ZynX",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA29": {
+    "path": "assets/players/PA29.svg",
+    "name": "Rb",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA30": {
+    "path": "assets/players/PA30.svg",
+    "name": "Francis",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA31": {
+    "path": "assets/players/PA31.svg",
+    "name": "Xross",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA32": {
+    "path": "assets/players/PA32.svg",
+    "name": "Ivy",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA33": {
+    "path": "assets/players/PA33.svg",
+    "name": "SSeeS",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA34": {
+    "path": "assets/players/PA34.svg",
+    "name": "akame",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA35": {
+    "path": "assets/players/PA35.svg",
+    "name": "Caedye",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA36": {
+    "path": "assets/players/PA36.svg",
+    "name": "yatsuka",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA37": {
+    "path": "assets/players/PA37.svg",
+    "name": "Leviathan",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA38": {
+    "path": "assets/players/PA38.svg",
+    "name": "killua",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA39": {
+    "path": "assets/players/PA39.svg",
+    "name": "Primmie",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA40": {
+    "path": "assets/players/PA40.svg",
+    "name": "thyy",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA41": {
+    "path": "assets/players/PA41.svg",
+    "name": "crazyguy",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA42": {
+    "path": "assets/players/PA42.svg",
+    "name": "monyet",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA43": {
+    "path": "assets/players/PA43.svg",
+    "name": "Kushy",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA44": {
+    "path": "assets/players/PA44.svg",
+    "name": "naTz",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA45": {
+    "path": "assets/players/PA45.svg",
+    "name": "kellyS",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA46": {
+    "path": "assets/players/PA46.svg",
+    "name": "Sylvan",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA47": {
+    "path": "assets/players/PA47.svg",
+    "name": "TenTen",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA48": {
+    "path": "assets/players/PA48.svg",
+    "name": "BerserX",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA49": {
+    "path": "assets/players/PA49.svg",
+    "name": "JessieVash",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA50": {
+    "path": "assets/players/PA50.svg",
+    "name": "xavi8k",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PAT01": {
+    "path": "assets/special/PAT01.svg",
+    "name": "快攻节奏",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT02": {
+    "path": "assets/special/PAT02.svg",
+    "name": "固守阵地",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT03": {
+    "path": "assets/special/PAT03.svg",
+    "name": "弱点暴露",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT04": {
+    "path": "assets/special/PAT04.svg",
+    "name": "能量涌动",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT05": {
+    "path": "assets/special/PAT05.svg",
+    "name": "压制火力",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT06": {
+    "path": "assets/special/PAT06.svg",
+    "name": "侦察突袭",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT07": {
+    "path": "assets/special/PAT07.svg",
+    "name": "防线加固",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT08": {
+    "path": "assets/special/PAT08.svg",
+    "name": "弱点打击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT09": {
+    "path": "assets/special/PAT09.svg",
+    "name": "快速布局",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT10": {
+    "path": "assets/special/PAT10.svg",
+    "name": "控场节奏",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT11": {
+    "path": "assets/special/PAT11.svg",
+    "name": "决斗强化",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT12": {
+    "path": "assets/special/PAT12.svg",
+    "name": "先手压制",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT13": {
+    "path": "assets/special/PAT13.svg",
+    "name": "能量汲取",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT14": {
+    "path": "assets/special/PAT14.svg",
+    "name": "防御反击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT15": {
+    "path": "assets/special/PAT15.svg",
+    "name": "信息优势",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT16": {
+    "path": "assets/special/PAT16.svg",
+    "name": "精确打击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT17": {
+    "path": "assets/special/PAT17.svg",
+    "name": "全面压制",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT18": {
+    "path": "assets/special/PAT18.svg",
+    "name": "稳固防守",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT19": {
+    "path": "assets/special/PAT19.svg",
+    "name": "战术撤退",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT20": {
+    "path": "assets/special/PAT20.svg",
+    "name": "弱点连锁",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT21": {
+    "path": "assets/special/PAT21.svg",
+    "name": "资源调度",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT22": {
+    "path": "assets/special/PAT22.svg",
+    "name": "双重干扰",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT23": {
+    "path": "assets/special/PAT23.svg",
+    "name": "高能爆发",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT24": {
+    "path": "assets/special/PAT24.svg",
+    "name": "防守阵型",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT25": {
+    "path": "assets/special/PAT25.svg",
+    "name": "快攻连携",
+    "kind": "illustration",
+    "concept": false
   }
 };
 const ENEMY_ART={
@@ -3314,7 +12338,7 @@ const ENEMY_ART={
 
 return {CARD_ART,ENEMY_ART};
 })();
-const module6=(()=>{
+const module9=(()=>{
 const escape=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function weaponFrame(a,mode='battle'){
  if(!/^assets\/opponents\/[a-z0-9-]+\.png$/.test(a?.path||'')||!/^#[a-f0-9]{6}$/i.test(a.accent||'')||!/^[a-z0-9]+$/.test(a.skinId||''))return '';
@@ -3325,9 +12349,9 @@ function weaponFrame(a,mode='battle'){
 
 return {weaponFrame};
 })();
-const module7=(()=>{
-const { CARD_ART, ENEMY_ART } = module5;
-const { weaponFrame } = module6;
+const module10=(()=>{
+const { CARD_ART, ENEMY_ART } = module8;
+const { weaponFrame } = module9;
 const escape=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const localPath=p=>/^assets\/(players|special|opponents)\/[A-Za-z0-9_-]+\.(png|jpg|webp|svg)$/.test(p||'');
 function cardArtwork(id){
@@ -3342,12 +12366,12 @@ function artCredit(id){
  const a=CARD_ART[id];
  if(!a)return '';
  const link=a.photoPage||a.profileUrl;
- return a.kind==='photo'&&/^https:\/\/(www\.vlr\.gg\/player\/\d+\/|www\.sina\.cn\/news\/detail\/\d+\.html)/.test(link||'')?`<p class="art-credit">选手照片：<a href="${escape(link)}" target="_blank" rel="noopener noreferrer">${escape(a.photoCredit||a.name+' · VLR 资料页')}</a></p>`:'<p class="art-credit">配图：原创战术插画。</p>';
+ return a.kind==='photo'&&/^https:\/\/(www\.vlr\.gg\/player\/\d+\/|www\.sina\.cn\/news\/detail\/\d+\.html)/.test(link||'')?`<p class="art-credit">选手照片：<a href="${escape(link)}" target="_blank" rel="noopener noreferrer">${escape(a.photoCredit||a.name+' · VLR 资料页')}</a></p>`:a.concept?'<p class="art-credit">原创概念头像，非选手本人肖像。</p>':'<p class="art-credit">配图：原创战术插画。</p>';
 }
 
 return {cardArtwork,opponentArtwork,artCredit};
 })();
-const module8=(()=>{
+const module11=(()=>{
 // combat-events.js
 function combatEvents(before, after, action) {
   if (!before || !after || !action) return [];
@@ -3438,7 +12462,7 @@ function combatEvents(before, after, action) {
 
 return {combatEvents};
 })();
-const module9=(()=>{
+const module12=(()=>{
 // combat-fx.js
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let fxContainer = null;
@@ -3780,8 +12804,8 @@ window.addEventListener('scroll', cleanupCombatFx, true);
 
 return {clearCombatFx,captureCombatStage,playCombatFx,cleanupCombatFx};
 })();
-const module10=(()=>{
-const { createSeason:createOriginalSeason, act:originalAct, clone, legalActions:originalLegalActions } = module3;
+const module13=(()=>{
+const { createSeason:createOriginalSeason, act:originalAct, clone, legalActions:originalLegalActions } = module6;
 
 const WA_VERSION = 'wa-1';
 
@@ -3899,7 +12923,7 @@ function waLegalActions(state) {
 
 return {createWaSeason,extractCheckpoints,waAct,waLegalActions};
 })();
-const module11=(()=>{
+const module14=(()=>{
 // wa-online.js - browser helper for online PvP integration.
 // Plain named exports only; supports bundler expectations.
 
@@ -4197,20 +13221,20 @@ async function syncWaCheckpoint(state, notify = () => {}) {
 
 return {loadAccount,saveAccount,getPendingProofCache,setPendingProofCache,clearPendingProofCache,apiFetch,apiCreateAccount,apiGetAccount,apiClaimArchive,apiResolvePending,apiCreateRoom,apiJoinRoom,apiGetRoom,apiReady,apiAction,apiLeaveRoom,buildRunFromSeason,syncWaCheckpoint};
 })();
-const module12=(()=>{
-const { cardArtwork, opponentArtwork, artCredit } = module7;
-const { combatEvents } = module8;
-const { clearCombatFx, captureCombatStage, playCombatFx } = module9;
-const { VERSION, CARDS, SKINS, ENEMIES, describe, cardName, effects, TACTICS, displayText, compactLines, cardKeywords, REGIONS } = module2;
-const { createRun, canPlay, preview, intent, intentText, healAmount, removalReason, observe } = module3;
-const { createWaSeason, waAct:act, waLegalActions:legalActions } = module10;
-const { syncWaCheckpoint } = module11;
+const module15=(()=>{
+const { cardArtwork, opponentArtwork, artCredit } = module10;
+const { combatEvents } = module11;
+const { clearCombatFx, captureCombatStage, playCombatFx } = module12;
+const { VERSION, CARDS, SKINS, ENEMIES, describe, cardName, effects, TACTICS, displayText, compactLines, cardKeywords, REGIONS, CURSE_RULES } = module5;
+const { createRun, canPlay, preview, intent, intentText, healAmount, removalReason, observe } = module6;
+const { createWaSeason, waAct:act, waLegalActions:legalActions } = module13;
+const { syncWaCheckpoint } = module14;
 const createSeason=(seed,tutorial,region)=>createWaSeason(seed,tutorial,region,crypto.randomUUID());
-const { routeNodes, mapEntry, nextScreen, restoreScreen } = module4;
-const { ACTS, availableNodes } = module1;
+const { routeNodes, mapEntry, nextScreen, restoreScreen } = module7;
+const { ACTS, availableNodes } = module4;
 const app=document.querySelector('#app'),dialog=document.querySelector('#dialog'),modal=document.querySelector('#dialog-content');
 const SAVE='bao-yi-ba-D0.1-save',SEASON_SAVE='peak-season-D0.2-save',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view',LEGACY_VIEW='bao-yi-ba-view-legacy';
-let state=null,atHome=true,hints=true,saveError='',saved=null,screen='map',selected=null,echo=null,dragging=null,pointerDrag=null,suppressClick=false,region='CN',seedInput='',turnAnimating=false;
+let state=null,atHome=true,hints=true,saveError='',saved=null,screen='map',selected=null,echo=null,dragging=null,pointerDrag=null,suppressClick=false,region='CN',turnAnimating=false;
 let libraryFilter='all',libraryRegionFilter='all';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function loadSave(key,legacy=false){try{const raw=localStorage.getItem(key);if(!raw)return null;const s=JSON.parse(raw);if(!s||!Array.isArray(s.deck)||!Array.isArray(s.actions)||!Number.isInteger(s.rev)||!s.phase)return null;if(legacy){if(s.version!==VERSION)return null;return s;}if(s.version!=='D0.2.0'||s.mode!=='season'||!REGIONS[s.region]||!s.map||!Array.isArray(s.map.nodes)||!Array.isArray(s.map.edges)||!Array.isArray(s.completed)||![1,2,3].includes(s.act))return null;return s;}catch{return null;}}
@@ -4269,9 +13293,8 @@ function home(){
    <h2 class="setup-title">选择赛区</h2>
    <div class="region-picker">
      <div class="region-tabs">${regions.map(r=>`<button class="region-tab ${region===r.id?'active':''}" data-ui="set-region-${r.id}">${esc(r.name)}<small>${esc(r.tagline)}</small></button>`).join('')}</div>
-     <p class="region-note">${esc(regions.find(r=>r.id===region).tagline)} / 18 名选手 / 三幕完整征程</p>
+     <p class="region-note">${esc(regions.find(r=>r.id===region).tagline)} / 50 名选手 · 25 张战术 / 三幕征程</p>
    </div>
-   <label class="seed-label">赛季种子<input id="seed" placeholder="留空，每局随机" maxlength="80" value="${esc(seedInput)}" autocomplete="off"></label>
    <div class="setup-start">${ui('确认开赛','start-season','primary')}</div>
    <div class="button-row">
      ${ui('游戏规则','rules','text-button')}
@@ -4281,7 +13304,7 @@ function home(){
      <a class="text-button" href="/">选择版本</a>
      ${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="text-button" href="/new/">新demo</a>` : ''}
    </div>
-   <p class="title-note">四大赛区 · 72 张选手牌 · 三幕 × 11 站</p>
+   <p class="title-note">四大赛区 · 300 张赛区牌 · 三幕 × 16 站</p>
    ${saveError?`<p class="warning">${esc(saveError)}</p>`:''}
    <footer class="cover-footer">猪之家出品</footer>
  </section>
@@ -4308,7 +13331,7 @@ function seasonRoute(){
  const done=nodes.filter(n=>n.status==='visited').length;
  const lines=s.map.edges.map(e=>{const a=lookup.get(e.from),b=lookup.get(e.to),taken=a.status==='visited'&&(b.status==='visited'||resume&&b.key===s.currentNode);return `<path class="${taken?'taken':a.key===s.currentNode&&b.status==='current'?'available':''}" d="M ${a.x*7} ${a.y*10} C ${a.x*7} ${(a.y-4)*10}, ${b.x*7} ${(b.y+4)*10}, ${b.x*7} ${b.y*10}"/>`;});
  const itinerary=`<ol class="season-itinerary">${ACTS.map(a=>`<li class="${a.id===s.act?'active':a.id<s.act?'complete':''}"><b>${a.id<s.act?'✓':a.id}</b><span>${a.name}<small>${a.bossName}</small></span></li>`).join('')}</ol>`;
- return `<main class="map-screen season-map"><aside class="map-intro"><div class="eyebrow">ACT ${['I','II','III'][s.act-1]} / ${esc(REGIONS[s.region].name)}</div><h1>${info.name}</h1>${itinerary}<div class="map-progress"><b>${done}</b><span> / 11 站完成</span></div><div class="map-legend">${[['battle','比赛'],['elite','强敌'],['event','未知事件'],['shop','转会市场'],['rest','俱乐部活动'],['boss','世界赛']].map(([k,t])=>`<span>${icon(k)}${t}</span>`).join('')}</div><p class="map-instruction">${resume?'比赛与奖励尚未完成，可查看后续路线，再返回当前节点。':s.currentNode===null?'三个起点任选其一。之后只能沿连线向上前进。':'沿连线选择下一站。分叉会改变接下来的比赛和补强机会。'}</p>${s.phase!=='map'?ui(s.phase==='intermission'?'查看晋级与下一幕':s.phase==='result'?'查看赛季结算':'返回当前节点','return-room','primary'):''}</aside><div class="map-scroll"><div class="map-board season-board"><div class="map-watermark">ASCEND</div><svg class="map-paths" viewBox="0 0 700 1000" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes.map(n=>`<div class="map-stop ${n.status} kind-${n.kind}" style="left:${n.x}%;top:${n.y}%"><button data-map="${n.key}" ${n.status==='current'?'':'disabled'} aria-label="${n.status==='current'?(resume?'返回':'进入'):n.status==='visited'?'已完成':n.status==='bypassed'?'未选择':'未解锁'}：第 ${n.step} 站 ${esc(n.name)}">${icon(n.kind)}${n.status==='visited'?'<span class="visited-check">✓</span>':''}</button><span class="node-label">${esc(n.name)}</span>${n.status==='current'?`<small class="here-label">${resume?'正在进行':'可选下一站'}</small>`:''}</div>`).join('')}</div></div><aside class="map-current"><span class="eyebrow">赛季已走过 ${s.node} / 33 站</span><h3>${s.phase==='intermission'?'世界赛晋级':s.phase==='result'?'赛季结束':resume?'完成当前节点':`可选 ${choices.length} 条路线`}</h3><p>本幕终点：${info.bossName}。<br>强敌提供皮肤；俱乐部活动可恢复声望或训练；市场可招募与移除牌。</p><p>节点内容与连线随赛季种子生成。已进入的节点不会因刷新而改变。</p>${s.phase!=='map'?ui('返回当前进度','return-room','secondary'):''}</aside></main>`;
+ return `<main class="map-screen season-map"><aside class="map-intro"><div class="eyebrow">ACT ${['I','II','III'][s.act-1]} / ${esc(REGIONS[s.region].name)}</div><h1>${info.name}</h1>${itinerary}<div class="map-progress"><b>${done}</b><span> / 16 站完成</span></div><div class="map-legend">${[['battle','比赛'],['elite','强敌'],['event','未知事件'],['shop','转会市场'],['rest','俱乐部活动'],['boss','世界赛']].map(([k,t])=>`<span>${icon(k)}${t}</span>`).join('')}</div><p class="map-instruction">${resume?'比赛与奖励尚未完成，可查看后续路线，再返回当前节点。':s.currentNode===null?'四个起点任选其一。之后只能沿连线向上前进。':'沿连线选择下一站。分叉会改变接下来的比赛和补强机会。'}</p>${s.phase!=='map'?ui(s.phase==='intermission'?'查看晋级与下一幕':s.phase==='result'?'查看赛季结算':'返回当前节点','return-room','primary'):''}</aside><div class="map-scroll"><div class="map-board season-board"><div class="map-watermark">ASCEND</div><svg class="map-paths" viewBox="0 0 700 1000" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes.map(n=>`<div class="map-stop ${n.status} kind-${n.kind}" style="left:${n.x}%;top:${n.y}%"><button data-map="${n.key}" ${n.status==='current'?'':'disabled'} aria-label="${n.status==='current'?(resume?'返回':'进入'):n.status==='visited'?'已完成':n.status==='bypassed'?'未选择':'未解锁'}：第 ${n.step} 站 ${esc(n.name)}">${icon(n.kind)}${n.status==='visited'?'<span class="visited-check">✓</span>':''}</button><span class="node-label">${esc(n.name)}</span>${n.status==='current'?`<small class="here-label">${resume?'正在进行':'可选下一站'}</small>`:''}</div>`).join('')}</div></div><aside class="map-current"><span class="eyebrow">赛季已走过 ${s.node} / 48 站</span><h3>${s.phase==='intermission'?'世界赛晋级':s.phase==='result'?'赛季结束':resume?'完成当前节点':`可选 ${choices.length} 条路线`}</h3><p>本幕终点：${info.bossName}。<br>强敌提供皮肤；俱乐部活动可恢复声望或训练；市场可招募与移除牌。</p><p>节点内容与连线随赛季种子生成。已进入的节点不会因刷新而改变。</p>${s.phase!=='map'?ui('返回当前进度','return-room','secondary'):''}</aside></main>`;
 }
 function targetOf(c){return effects(c).some(e=>['hit','weak','vulnerable'].includes(e.type))?'enemy':'self';}
 function handCard(c,i,n){const t=CARDS[c.id],reason=canPlay(state,c.uid),offset=i-(n-1)/2;return `<button class="hand-card role-${t.player?t.role:t.id.slice(0,2)} ${reason?'unplayable':''} ${c.up?'upgraded':''}" data-card-id="${c.id}" data-card-up="${!!c.up}" data-select="${c.uid}" draggable="false" style="--offset:${offset};--tilt:${offset*(n>6?1.6:3)}deg;--bend:${Math.abs(offset)*Math.abs(offset)*1.8}px;--order:${i}" aria-label="选择 ${esc(cardName(c))} · ${esc(TACTICS[c.id].title)}，${t.role}，${t.cost===null?'不能打出':t.cost+' 行动点'}，${esc(describe(c))}"><span class="card-face">${face(c)}</span><span class="card-key">${(i+1)%10}</span>${reason?`<span class="card-unavailable">${esc(reason)}</span>`:''}</button>`;}
@@ -4318,7 +13341,7 @@ function fighter(which){
  return `<section data-drop-target="${which}" class="fighter ${own?'ally':'enemy'}">${!own?`<div class="intent-bubble"><small>对手意图</small><strong>${displayText(intentText(state))}</strong>${e.boss?`<span>长战增伤 +${b.cycles*growth}</span>`:''}</div>`:'<div class="team-label">'+(state.region||'CN')+'俱乐部</div>'}<button class="combat-target" data-target="${which}" aria-label="${own?'我方俱乐部':'对手队伍'}，可作为出牌目标">${own?`<span class="crest">${icon('shield')}<b>${state.region||'CN'}</b></span>`:opponentArtwork(b.enemy)}<span class="target-caption">${own?'施放到我方':'施放到对手'}</span></button><h2>${own?(REGIONS[state.region]?.name||'新锐')+'俱乐部':e.name}</h2><div class="life-row"><span class="shield-value" title="布防：陷阱、墙与阻滞提供的伤害抵消；下次己方回合开始清空。" aria-label="布防 ${block}">${icon('shield')}<small>布防</small> ${block}</span><div class="life-bar ${own?'own':''}"><i style="width:${hp/max*100}%"></i><span>${hp} / ${max} ${own?'声望':'防线'}</span></div></div><div class="statuses">${own?(b.weak?`<span>压制 ${b.weak}</span>`:''):`${b.enemyWeak?`<span>压制 ${b.enemyWeak}</span>`:''}${b.enemyVulnerable?`<span>易伤 ${b.enemyVulnerable}</span>`:''}`}</div>${own?`<div class="active-powers">${b.powers.map(c=>`<span title="${esc(describe(c))}">${icon('power')}${esc(cardName(c))}</span>`).join('')}</div>`:''}</section>`;
 }
 function battle(){
- const b=state.battle,incoming=intent(state).filter(a=>a.type==='hit').reduce((n,a)=>n+a.n*a.times,0),hurt=Math.max(0,incoming-b.block),curse=b.hand.filter(c=>c.id==='CU02').length*2;
+ const b=state.battle,incoming=intent(state).filter(a=>a.type==='hit').reduce((n,a)=>n+a.n*a.times*(b.vulnerable>0?1.5:1),0),hurt=Math.max(0,Math.floor(incoming)-b.block),curse=b.hand.reduce((n,c)=>n+(CURSE_RULES[c.id]?.trigger==='endTurnLoseHp'?CURSE_RULES[c.id].n:0),0);
  const actInfo=state.mode==='season'?ACTS[state.act-1]:null;
  const battleLabel=state.mode==='season'?`第 ${state.act} 赛段 · ${actInfo?.name||''} ${actInfo?.bossName||''}`:'第 '+(state.wins+1)+' 场 / 6';
  const growth=ENEMIES[b.enemy]?.growth??2;
@@ -4342,8 +13365,8 @@ function between(){
  if(s.phase==='branch')return `${heading('赛程选择','为下一场，做一次准备。','两条路线只能选择一条。')}<div class="choices">${choice('转会市场','三名选手可供购买；也可花 50 资金永久移除一张牌。当前资金 '+s.money+'。','前往转会市场',{type:'branch',choice:'shop'})}${choice('俱乐部活动','粉丝见面会恢复声望、训练升级一张牌，或团建移除隐患。三选一。','安排俱乐部活动',{type:'branch',choice:'activity'})}</div>`;
  if(s.phase==='opponent')return `${heading('挑战选择','稳步晋级，还是争取更多？','强敌会带来更高压力，但能奖励一件本赛季皮肤。')}<div class="choices">${choice('防守反击队 · 普通','38 防线，擅长布防与反击。胜利获得 20 资金和一次招募。','选择普通比赛',{type:'opponent',id:'E04'})}${choice('高压强敌队 · 强敌','54 防线，多段攻击，并塞入疲劳与节奏受阻。胜利获得 35 资金、招募和一件皮肤。','挑战强敌',{type:'opponent',id:'EL01'})}</div>`;
  if(s.phase==='shop')return `${heading('转会市场','用资金，调整你的牌组。','招募与移除可以组合进行；离开后不能返回。')}<div class="cards reward-cards">${s.shop.slots.map((id,slot)=>id?card({id,up:false},{label:`${[40,65,90][slot]} 资金 · 招募`,action:{type:'buy',slot},disabled:s.money<[40,65,90][slot]?'资金不足':''}):'<article class="card sold"><h3>该货位已空</h3><p>没有其他候选，不会刷新。</p></article>').join('')}</div><div class="shop-service"><div><h3>转会离队 · 永久移除一张牌</h3><p>50 资金，每个市场限一次。可移除选手或隐患；至少保留 5 张选手牌及一张直接攻击牌。</p></div>${ui(s.shop.removed?'本次服务已使用':'选择移除对象','remove-target','secondary',s.shop.removed||s.money<50?'disabled':'')}</div>${s.money<50&&!s.shop.removed?'<p class="muted">移除服务需要 50 资金。</p>':''}<div class="page-footer">${button('离开市场，继续赛程 →',{type:'leaveShop'})}</div>`;
- if(s.phase==='activity')return `${heading('俱乐部活动','比赛之外，也有取舍。','选择一项活动，然后继续赛程。')}<div class="choices">${choice('粉丝见面会',`恢复最大声望的 30%，向上取整。当前 ${s.hp}/${s.maxHp} → ${s.hp+healAmount(s)}/${s.maxHp}，实际恢复 ${healAmount(s)}。`,'举办粉丝见面会',{type:'activity',choice:'fans'},s.hp===s.maxHp?'声望已满':'')}${choice('训练','升级一张选手牌。费用不变，只改变这张牌的效果。','选择训练对象',{type:'activity',choice:'upgrade'},!s.deck.some(c=>CARDS[c.id].player&&!c.up)?'没有可升级选手':'')}${choice('团建','永久移除一张俱乐部隐患。可以处理磨合不足或舆论压力。','处理俱乐部隐患',{type:'activity',choice:'cleanse'},!s.deck.some(c=>c.id.startsWith('CU'))?'没有俱乐部隐患':'')}${s.waVersion ? choice('体能集训', `提升体能上限：最大声望与当前声望各 +6。当前 ${s.hp}/${s.maxHp} → ${s.hp+6}/${s.maxHp+6}。消耗本次休整机会。`,'开始集训',{type:'activity',choice:'toughness'}) : ''}</div>${button('跳过活动 →',{type:'activity',choice:'skip'},'secondary')}`;
- if(s.phase==='upgrade'||s.phase==='cleanse')return `${heading('俱乐部活动',s.phase==='upgrade'?'选择一张牌，进行训练。':'解决一项俱乐部隐患。',s.phase==='upgrade'?'展示升级前后效果；同名选手的其他牌不会一起升级。':'这张隐患将永久离开本次赛季牌组。')}<div class="cards">${s.deck.filter(c=>s.phase==='upgrade'?CARDS[c.id].player&&!c.up:c.id.startsWith('CU')).map(c=>card(c,{instance:true,upgrade:s.phase==='upgrade',label:s.phase==='upgrade'?'训练这张牌':'永久移除此隐患',action:{type:s.phase,uid:c.uid}})).join('')}</div><div class="page-footer">${button('返回活动选择',{type:'activityBack'},'secondary')}</div>`;
+ if(s.phase==='activity')return `${heading('俱乐部活动','比赛之外，也有取舍。','选择一项活动，然后继续赛程。')}<div class="choices">${choice('粉丝见面会',`恢复最大声望的 30%，向上取整。当前 ${s.hp}/${s.maxHp} → ${s.hp+healAmount(s)}/${s.maxHp}，实际恢复 ${healAmount(s)}。`,'举办粉丝见面会',{type:'activity',choice:'fans'},s.hp===s.maxHp?'声望已满':'')}${choice('训练','升级一张选手或战术牌。费用不变，只改变这张牌的效果。','选择训练对象',{type:'activity',choice:'upgrade'},!s.deck.some(c=>CARDS[c.id].trainable&&!c.up)?'没有可升级选手':'')}${choice('团建','永久移除一张俱乐部隐患。可以处理磨合不足或舆论压力。','处理俱乐部隐患',{type:'activity',choice:'cleanse'},!s.deck.some(c=>c.id.startsWith('CU'))?'没有俱乐部隐患':'')}${s.waVersion ? choice('体能集训', `提升体能上限：最大声望与当前声望各 +6。当前 ${s.hp}/${s.maxHp} → ${s.hp+6}/${s.maxHp+6}。消耗本次休整机会。`,'开始集训',{type:'activity',choice:'toughness'}) : ''}</div>${button('跳过活动 →',{type:'activity',choice:'skip'},'secondary')}`;
+ if(s.phase==='upgrade'||s.phase==='cleanse')return `${heading('俱乐部活动',s.phase==='upgrade'?'选择一张牌，进行训练。':'解决一项俱乐部隐患。',s.phase==='upgrade'?'展示升级前后效果；同名选手的其他牌不会一起升级。':'这张隐患将永久离开本次赛季牌组。')}<div class="cards">${s.deck.filter(c=>s.phase==='upgrade'?CARDS[c.id].trainable&&!c.up:c.id.startsWith('CU')).map(c=>card(c,{instance:true,upgrade:s.phase==='upgrade',label:s.phase==='upgrade'?'训练这张牌':'永久移除此隐患',action:{type:s.phase,uid:c.uid}})).join('')}</div><div class="page-footer">${button('返回活动选择',{type:'activityBack'},'secondary')}</div>`;
  if(s.phase==='result')return `<section class="result">${heading(s.outcome==='win'?'首幕通关':s.outcome==='loss'?'赛季结束':'本次试玩结束',s.outcome==='win'?'大师赛冠军，属于你的俱乐部。':s.outcome==='loss'?'声望耗尽，俱乐部暂别赛场。':'调整思路，再来一局。',s.outcome==='win'?'你已走完第一款 Demo 的完整流程。后两幕尚未制作，现在可以回顾牌组与记录。':'试着调整进攻、防守和招募的取舍。每次赛季都从全新的初始牌组开始。')}<div class="result-stats"><span><strong>${s.wins} / 6</strong>场比赛获胜</span><span><strong>${s.hp} / ${s.maxHp}</strong>剩余声望</span><span><strong>${s.deck.length}</strong>张赛季牌</span></div><div class="button-row">${ui('再开一个赛季','home','primary')}${ui('查看最终牌组','deck')}${ui('导出本局记录','export')}</div><p class="muted">种子：${esc(s.seed)} · ${s.actions.length} 次操作 · ${VERSION}</p></section>`;
  return '';
 }
@@ -4351,7 +13374,7 @@ function seasonEventRoom(){
  const s=state;
  if(s.phase==='eventUpgrade'||s.phase==='eventCleanse'){
   const training=s.phase==='eventUpgrade',paid=s.pendingEvent==='paid';
-  return `${heading('赛程外的机会',training?'选择训练对象':'整顿团队',training?(paid?'确认时支付 40 资金，升级这一个选手实例。':'确认时升级一个选手实例，并加入一张磨合不足。'):'确认时支付 60 资金，移除一张隐患并恢复最大声望的 15%。')}<div class="cards">${s.deck.filter(c=>training?CARDS[c.id].player&&!c.up:c.id.startsWith('CU')).map(c=>card(c,{instance:true,upgrade:training,label:training?'确认训练':'确认整顿',action:{type:s.phase,uid:c.uid}})).join('')}</div>${button('返回事件，不支付费用',{type:'eventBack'},'secondary')}`;
+  return `${heading('赛程外的机会',training?'选择训练对象':'整顿团队',training?(paid?'确认时支付 40 资金，升级这一个选手实例。':'确认时升级一个选手实例，并加入一张磨合不足。'):'确认时支付 60 资金，移除一张隐患并恢复最大声望的 15%。')}<div class="cards">${s.deck.filter(c=>training?CARDS[c.id].trainable&&!c.up:c.id.startsWith('CU')).map(c=>card(c,{instance:true,upgrade:training,label:training?'确认训练':'确认整顿',action:{type:s.phase,uid:c.uid}})).join('')}</div>${button('返回事件，不支付费用',{type:'eventBack'},'secondary')}`;
  }
  const option=(title,text,label,choiceKey,disabled='')=>choice(title,text,label,{type:'seasonEvent',choice:choiceKey},disabled);
  const skip=button('谢绝，继续赛程 →',{type:'seasonEvent',choice:'skip'},'secondary');
@@ -4359,8 +13382,9 @@ function seasonEventRoom(){
  if(s.eventId==='sponsor'){title='商业邀约';desc='一次曝光机会，也可能把额外压力带进俱乐部。';options=option('接受合作','资金 +70，牌组加入一张舆论压力。回合末仍在手中时失去 2 声望。','接受邀约','accept');}
  if(s.eventId==='trial'){title='紧急试训';desc='候选已经到场，返回查看不会更换名单。';options=option('试训补强','三名候选中招募一名，同时加入不能打出的磨合不足。','查看候选','accept',!s.eventOffers?.length?'无可招募选手':'');}
  if(s.eventId==='scrim'){title='训练赛邀约';desc='今天投入资源恢复状态，还是接一场高强度商业训练赛？';options=option('轻量公开训练',`支付 20 资金，恢复最大声望的 15%，实际 +${healAmount(s,.15)}。`,'安排公开训练','safe',s.money<20?'资金不足':s.hp===s.maxHp?'声望已满':'')+option('高强度商业训练','失去 8 声望，获得 35 资金。声望不足时不能参加。','参加商业训练','risk',s.hp<=8?'至少需要 9 声望':'');}
- if(s.eventId==='training'){title='训练安排';desc='为接下来的大师赛强化一张选手牌。';const noTarget=!s.deck.some(c=>CARDS[c.id].player&&!c.up);options=option('常规强化','支付 40 资金，升级一张选手牌。选好目标后才扣费。','选择强化对象','paid',noTarget?'无可升级选手':s.money<40?'资金不足':'')+option('加练试验','免费升级一张选手牌，但加入一张磨合不足。','选择加练对象','risky',noTarget?'无可升级选手':'');}
+ if(s.eventId==='training'){title='训练安排';desc='为接下来的大师赛强化一张选手牌。';const noTarget=!s.deck.some(c=>CARDS[c.id].trainable&&!c.up);options=option('常规强化','支付 40 资金，升级一张选手或战术牌。选好目标后才扣费。','选择强化对象','paid',noTarget?'无可升级选手':s.money<40?'资金不足':'')+option('加练试验','免费升级一张选手或战术牌，但加入一张磨合不足。','选择加练对象','risky',noTarget?'无可升级选手':'');}
  if(s.eventId==='rally'){title='赛前动员';desc='冠军赛临近，整理团队状态或争取最后一笔赞助。';options=option('整顿团队',`支付 60 资金，移除一张俱乐部隐患，并恢复最大声望的 15%（至多 ${healAmount(s,.15)}）。`,'选择处理的隐患','cleanse',s.money<60?'资金不足':!s.deck.some(c=>c.id.startsWith('CU'))?'没有俱乐部隐患':'')+option('商业动员','获得 100 资金，同时加入两张舆论压力。','接受商业动员','sponsor');}
+ if(s.eventId==='risk'){title='高风险合作';desc='一笔可观的资金，但合同会带来一张随机俱乐部隐患。';options=option('接受合作','获得 90 资金；从 12 种额外隐患中随机加入 1 张。','接受合作','accept');}
  return `${heading('未知事件 · 已揭晓',title,desc)}<div class="choices">${options}</div><div class="page-footer">${skip}</div>`;
 }
 function render(){
@@ -4419,11 +13443,12 @@ function commit(action){
 }
 function showModal(title,html){hideCardTip();modal.innerHTML=`<h2 tabindex="-1">${title}</h2>${html}`;if(!dialog.open)dialog.showModal();modal.querySelector('h2').focus({preventScroll:true});dialog.scrollTop=0;}
 function showCards(title,cards,note=''){showModal(title,`${note?`<p>${note}</p>`:''}<div class="cards modal-cards">${cards.map(c=>card(c,{instance:!!c.uid})).join('')}</div>`);}
-function libraryEntry(id){const f=TACTICS[id];return `<div class="library-entry">${card({id,up:false},{upgrade:CARDS[id].player})}<details><summary>战术说明与出处</summary>${artCredit(id)}<p>${esc(f.note)}</p>${f.source?`<a href="${esc(f.source)}" target="_blank" rel="noopener noreferrer">查看参考来源</a>`:'<p>原创比赛／团队场景。</p>'}</details></div>`;}
+function libraryEntry(id){const f=TACTICS[id];return `<div class="library-entry">${card({id,up:false},{upgrade:CARDS[id].trainable})}<details><summary>战术说明与出处</summary>${artCredit(id)}<p>${esc(f.note)}</p>${f.source?`<a href="${esc(f.source)}" target="_blank" rel="noopener noreferrer">查看参考来源</a>`:'<p>原创比赛／团队场景。</p>'}</details></div>`;}
 
 function showCardOverview(){
   const totalNonSkin=Object.keys(CARDS).length;
   const playerIds=Object.keys(CARDS).filter(id=>CARDS[id].player);
+  const tacticIds=Object.keys(CARDS).filter(id=>/^(CN|AM|EU|PA)T\d{2}$/.test(id));
   const playerCount=playerIds.length;
   const stIds=Object.keys(CARDS).filter(id=>id.startsWith('ST'));
   const cuIds=Object.keys(CARDS).filter(id=>id.startsWith('CU'));
@@ -4433,6 +13458,7 @@ function showCardOverview(){
   const filterLabels={
     all:`全部卡牌 (${totalNonSkin})`,
     players:`选手牌 (${playerCount})`,
+    tactics:`赛区战术 (${tacticIds.length})`,
     st:`比赛干扰 (${stIds.length})`,
     cu:`俱乐部隐患 (${cuIds.length})`,
     tk:`临时行动 (${tkIds.length})`,
@@ -4440,9 +13466,9 @@ function showCardOverview(){
   };
   const tabsHtml=Object.entries(filterLabels).map(([key,label])=>ui(label,`library-${key}`,libraryFilter===key?'primary':'secondary')).join('');
   let regionTabsHtml='';
-  if(libraryFilter==='players'){
+  if(libraryFilter==='players'||libraryFilter==='tactics'){
     const regionPoolCounts = Object.values(REGIONS).map(r => {
-      const count = REGIONS[r.id].pool.filter(id => CARDS[id] && CARDS[id].player).length;
+      const count = REGIONS[r.id].pool.filter(id => CARDS[id] && (libraryFilter==='players'?CARDS[id].player:id.includes('T'))).length;
       return `${r.name} (${count})`;
     });
     regionTabsHtml=`<div class="region-filter-tabs">${ui('全部赛区','library-region-all',libraryRegionFilter==='all'?'primary':'secondary')}${Object.values(REGIONS).map((r,i)=>ui(regionPoolCounts[i],`library-region-${r.id}`,libraryRegionFilter===r.id?'primary':'secondary')).join('')}</div>`;
@@ -4458,6 +13484,7 @@ function showCardOverview(){
     switch(libraryFilter){
       case 'all': ids=Object.keys(CARDS); break;
       case 'players': ids=playerIds; if(libraryRegionFilter!=='all') ids=ids.filter(id=>REGIONS[libraryRegionFilter].pool.includes(id)); break;
+      case 'tactics': ids=tacticIds; if(libraryRegionFilter!=='all') ids=ids.filter(id=>REGIONS[libraryRegionFilter].pool.includes(id)); break;
       case 'st': ids=stIds; break;
       case 'cu': ids=cuIds; break;
       case 'tk': ids=tkIds; break;
@@ -4469,13 +13496,13 @@ function showCardOverview(){
   showModal('卡牌总览',`${infoHtml}<div class="overview-tabs">${tabsHtml}</div>${regionTabsHtml}${contentHtml}`);
 }
 function start(tutorial,selectedRegion){
- const seed=document.querySelector('#seed')?.value.trim()||`season-${crypto.randomUUID()}`;
+ const seed=`season-${crypto.randomUUID()}`;
  state=createSeason(seed,tutorial,selectedRegion||region);
  atHome=false;screen='map';selected=null;echo=null;dialog.close();persist();notice('选择路线图上发亮的节点，开始第一场比赛。');render();
 }
-function startLegacy(tutorial){const seed=document.querySelector('#seed')?.value.trim()||`season-${Date.now()}`;state=createRun(seed,tutorial);atHome=false;screen='map';selected=null;echo=null;dialog.close();persist();notice('选择路线图上发亮的节点，开始第一场比赛。');render();}
+function startLegacy(tutorial){const seed=`season-${crypto.randomUUID()}`;state=createRun(seed,tutorial);atHome=false;screen='map';selected=null;echo=null;dialog.close();persist();notice('选择路线图上发亮的节点，开始第一场比赛。');render();}
 function handleUI(name){
- if(name.startsWith('set-region-')){region=name.slice('set-region-'.length);seedInput=document.querySelector('#seed')?.value||seedInput;document.querySelectorAll('.region-tab').forEach(el=>el.classList.toggle('active',el.dataset.ui===name));const note=document.querySelector('.region-note');if(note)note.textContent=`${REGIONS[region].tagline} / 18 名选手 / 三幕完整征程`;return;}
+ if(name.startsWith('set-region-')){region=name.slice('set-region-'.length);document.querySelectorAll('.region-tab').forEach(el=>el.classList.toggle('active',el.dataset.ui===name));const note=document.querySelector('.region-note');if(note)note.textContent=`${REGIONS[region].tagline} / 50 名选手 · 25 张战术 / 三幕征程`;return;}
  if(name==='start-season'){
   if(saved&&saved.mode==='season'&&saved.phase!=='result'){
    showModal('开始新赛季',`<p>新赛季会覆盖当前的登峰赛季进度。</p><p>旧版存档会保留。</p><div class="button-row">${ui('确认开赛','confirm-season','primary')}${ui('继续上次赛季','continue')}</div>`);
@@ -4509,7 +13536,7 @@ function handleUI(name){
  if(name==='deselect'){selected=null;refreshSelection();return;}
  if(name==='card-detail'){
   const c=state?.battle?.hand.find(c=>c.uid===selected);
-  if(c){const f=TACTICS[c.id];showModal(cardName(c)+' · '+f.title,`<div class="card-detail">${card(c,{upgrade:CARDS[c.id].player&&!c.up})}<div><p class="detail-scene">${esc(f.scene)}</p><p><strong>${esc(f.origin)}</strong></p><p>${esc(f.note)}</p><p>选手与技能搭配为本游戏的战术设定。</p>${artCredit(c.id)}${f.source?`<a href="${esc(f.source)}" target="_blank" rel="noopener noreferrer">查看技能／赛事出处</a>`:''}</div></div>`);}
+  if(c){const f=TACTICS[c.id];showModal(cardName(c)+' · '+f.title,`<div class="card-detail">${card(c,{upgrade:CARDS[c.id].trainable&&!c.up})}<div><p class="detail-scene">${esc(f.scene)}</p><p><strong>${esc(f.origin)}</strong></p><p>${esc(f.note)}</p><p>选手与技能搭配为本游戏的战术设定；赛区战术牌为原创设计。</p>${artCredit(c.id)}${f.source?`<a href="${esc(f.source)}" target="_blank" rel="noopener noreferrer">查看技能／赛事出处</a>`:''}</div></div>`);}
   return;
  }
  if(name==='deck'){showCards('赛季牌组',state.deck,'同名牌是不同的行动机会；实例编号用于区分升级。比赛干扰和临时行动不进入赛季牌组。');return;}
@@ -4552,7 +13579,7 @@ function handleUI(name){
  }
  if(name==='hide-hints'){hints=false;try{localStorage.setItem(HINTS,'off');}catch{}render();return;}
  if(name==='rules'){
-  showModal('赛季规则',`<div class="rules"><p><strong>目标：</strong>对手防线降到 0 就赢得比赛；自己的声望降到 0，赛季失败。</p><p><strong>每回合：</strong>3 行动点、抽 5 张。按费用出牌，结束回合后对手按公开意图行动。资金与行动点是两种资源。</p><p><strong>布防：</strong>绊线、减速、墙体与掩护的共同收益；每点抵消 1 点攻击伤害。先抵消攻击，下个自己的回合开始清空。对手布防在对手下次行动开始时清空。</p><p><strong>牌堆：</strong>打出的普通牌进入弃牌堆；结束回合时，所有未打出的手牌也进入弃牌堆，不留到下回合。注明回合末消耗的牌改入消耗区。下回合重新抽 5 张，并结算额外抽牌能力；需要抽牌而抽牌堆为空时，将弃牌堆洗成新的抽牌堆。手牌最多 10 张。</p><p><strong>消耗：</strong>写着“打出后消耗”的牌，效果结算后进入消耗区，不进入弃牌堆，本场不再抽到；未打出时仍正常弃置，除非另写“回合末消耗”。消耗不等于永久删除，赛季牌组中的原牌下场恢复。临时牌和比赛干扰在赛后消失。</p><p><strong>能力：</strong>自由人牌打出后持续本场，不再洗回；多张可叠加，只影响之后的触发。</p><p><strong>压制：</strong>攻击伤害 ×0.75。<strong>易伤：</strong>受到攻击 ×1.5。每段伤害分别向下取整；回合数在受影响一方行动结束后减少。</p><p><strong>战术场景：</strong>卡上的特工技能转译成上述卡牌规则。腐坏逼退以压制结算，闪光接枪窗口以易伤结算；不另加持续伤害、硬控或隐藏触发。选牌后点“详解”可看说明。</p><p><strong>五个位置：</strong>决斗进攻，哨位布防，控场压制，先锋配合与抽牌，自由人建立持续能力。</p><p><strong>俱乐部活动：</strong>粉丝见面会恢复最大声望的 30%（向上取整、至多满声望）；训练升级一张选手牌；团建移除一张隐患。每节点只能选一项。</p><p><strong>招募：</strong>可跳过。相同选手最多三张，升级前后合并计算。</p><p><strong>登峰赛季：</strong>四个赛区、三个赛段。每赛段 11 站，包含分支路线。前两幕 Boss 胜利各奖励 50 资金与未拥有的皮肤选择；皮肤已集齐则改得 20 资金。之后晋级宣传恢复最大声望的 30%。冠军赛获胜即为赛季胜利。</p><p>选手头像暂用占位图。游玩无需联网，也不消耗模型额度。</p></div>`);return;
+  showModal('赛季规则',`<div class="rules"><p><strong>目标：</strong>对手防线降到 0 就赢得比赛；自己的声望降到 0，赛季失败。</p><p><strong>每回合：</strong>3 行动点、抽 5 张。按费用出牌，结束回合后对手按公开意图行动。资金与行动点是两种资源。</p><p><strong>布防：</strong>绊线、减速、墙体与掩护的共同收益；每点抵消 1 点攻击伤害。先抵消攻击，下个自己的回合开始清空。对手布防在对手下次行动开始时清空。</p><p><strong>牌堆：</strong>打出的普通牌进入弃牌堆；结束回合时，所有未打出的手牌也进入弃牌堆，不留到下回合。注明回合末消耗的牌改入消耗区。下回合重新抽 5 张，并结算额外抽牌能力；需要抽牌而抽牌堆为空时，将弃牌堆洗成新的抽牌堆。手牌最多 10 张。</p><p><strong>消耗：</strong>写着“打出后消耗”的牌，效果结算后进入消耗区，不进入弃牌堆，本场不再抽到；未打出时仍正常弃置，除非另写“回合末消耗”。消耗不等于永久删除，赛季牌组中的原牌下场恢复。临时牌和比赛干扰在赛后消失。</p><p><strong>能力：</strong>自由人牌打出后持续本场，不再洗回；多张可叠加，只影响之后的触发。</p><p><strong>压制：</strong>攻击伤害 ×0.75。<strong>易伤：</strong>受到攻击 ×1.5。每段伤害分别向下取整；回合数在受影响一方行动结束后减少。</p><p><strong>战术场景：</strong>卡上的特工技能转译成上述卡牌规则。腐坏逼退以压制结算，闪光接枪窗口以易伤结算；不另加持续伤害、硬控或隐藏触发。选牌后点“详解”可看说明。</p><p><strong>五个位置：</strong>决斗进攻，哨位布防，控场压制，先锋配合与抽牌，自由人建立持续能力。</p><p><strong>俱乐部活动：</strong>粉丝见面会恢复最大声望的 30%（向上取整、至多满声望）；训练升级一张选手或战术牌；团建移除一张隐患。每节点只能选一项。</p><p><strong>招募：</strong>可跳过。相同选手最多三张，升级前后合并计算。</p><p><strong>登峰赛季：</strong>四个赛区、三个赛段。每赛段 16 站，包含分支路线。前两幕 Boss 胜利各奖励 50 资金与未拥有的皮肤选择；皮肤已集齐则改得 20 资金。之后晋级宣传恢复最大声望的 30%。冠军赛获胜即为赛季胜利。</p><p>选手头像暂用占位图。游玩无需联网，也不消耗模型额度。</p></div>`);return;
  }
  if(name==='menu'){
   showModal('赛季菜单',`<p>当前种子：${esc(state.seed)} · ${state.mode==='season'?'D0.2.0':VERSION}${state.mode==='season'?' · '+esc(state.region):''}</p><div class="stack">${ui('导出本局记录','export')}${ui('返回开始页（保留进度）','home')}${state.phase!=='result'?ui('放弃本次赛季…','abandon','danger-button'):''}</div>`);return;

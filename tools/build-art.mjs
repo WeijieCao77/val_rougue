@@ -6,10 +6,23 @@ const players=JSON.parse(await readFile(new URL('assets/player-sources.json',roo
 const opponents=JSON.parse(await readFile(new URL('assets/opponent-sources.json',root),'utf8'));
 const weapons=JSON.parse(await readFile(new URL('assets/weapon-sources.json',root),'utf8')).selections;
 const cards={};
+const xml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+const palette={CN:['#d8a86e','#273f5a'],AM:['#f07a63','#362b56'],EU:['#a18be8','#29395c'],PA:['#65d4bf','#224052']};
+function conceptArt(c){
+ const prefix=c.id.startsWith('EMEA')?'EU':c.id.slice(0,2),[light,dark]=palette[prefix]||['#b7caa0','#2b3e45'];
+ const isPlayer=c.player,mark=isPlayer?'◈':'✦';
+ const motif=isPlayer?`<path d="M162 270c8-61 37-96 89-96s81 35 89 96v54H162z" fill="${dark}" stroke="${light}" stroke-width="8"/><circle cx="251" cy="132" r="62" fill="#d9ba99" stroke="${light}" stroke-width="7"/><path d="M190 130c4-65 110-87 124-7-25-16-53-41-79-32-14 19-33 28-45 39z" fill="${dark}"/><path d="M222 143h12m37 0h12" stroke="#1f2e38" stroke-width="6" stroke-linecap="round"/>`:`<path d="M105 257l68-98 51 42 77-104 97 129-47 34-47-63-70 91-56-43-48 63z" fill="none" stroke="${light}" stroke-width="20" stroke-linejoin="round"/><circle cx="327" cy="99" r="29" fill="${light}"/>`;
+ return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 340"><defs><linearGradient id="b" x2="1" y2="1"><stop stop-color="${dark}"/><stop offset="1" stop-color="#101820"/></linearGradient></defs><rect width="500" height="340" fill="url(#b)"/><path d="M0 257L500 132M0 307L500 182" stroke="${light}" stroke-opacity=".18" stroke-width="2"/>${motif}<text x="24" y="42" fill="${light}" font-family="sans-serif" font-size="28" font-weight="700">${xml(mark)} ${xml(prefix)}</text><text x="250" y="316" text-anchor="middle" fill="#f3eee3" font-family="sans-serif" font-size="21" font-weight="700">${xml(c.name)}</text></svg>`;
+}
 for(const c of Object.values(CARDS)){
  const p=players.find(p=>p.id===c.id);
- if(c.player&&(!p||p.status!=='ok'||p.name!==c.name))throw Error(`Missing verified portrait ${c.id}`);
- cards[c.id]=c.player?{path:p.path,profileUrl:p.profileUrl,name:c.name,kind:'photo',photoPage:p.photoPage,photoCredit:p.photoCredit,fit:p.fit}:{path:`assets/special/${c.id}.svg`,name:c.name,kind:'illustration'};
+ if(p&&(!c.player||p.status!=='ok'||p.name!==c.name))throw Error(`Portrait provenance mismatch ${c.id}`);
+ if(c.player&&p)cards[c.id]={path:p.path,profileUrl:p.profileUrl,name:c.name,kind:'photo',photoPage:p.photoPage,photoCredit:p.photoCredit,fit:p.fit};
+ else {
+  const path=c.player?`assets/players/${c.id}.svg`:`assets/special/${c.id}.svg`;
+  try{await access(new URL(path,root));}catch{await writeFile(new URL(path,root),conceptArt(c));}
+  cards[c.id]={path,name:c.name,kind:'illustration',concept:!!c.player};
+ }
 }
 const archetypes={rush:'冲锋枪 · 快攻',intel:'消音步枪 · 扫描',twin:'双枪 · 连击',wall:'霰弹枪 · 壁垒',control:'重机枪 · 封锁',elite:'狙击枪 · 锁定',master1:'金白晶体 · 大师赛',master2:'幽紫能量 · 大师赛',champion:'龙焰 · 冠军赛'};
 const enemies={};
@@ -28,8 +41,8 @@ const tile=(path,title,caption,link='')=>`<figure><img class="${path.endsWith('C
 const concepts=[['master1','A · 皮肤武器展示','枪械细节清楚，制作成本低；比较像商店展品。'],['master1','B · 枪械与皮肤能量','本轮采用。轮廓、能量和配色共同表现敌人打法。'],['array','C · 战队武器阵列','整队主题更明显；小屏下武器细节容易拥挤。']];
 const weaponTile=(a,title,caption,mode='battle')=>`<figure class="weapon-tile">${weaponFrame(a,mode)}<figcaption><b>${esc(title)}</b><small>${esc(caption)}</small></figcaption></figure>`;
 const arrayTile=`<figure class="weapon-tile"><div class="weapon-array">${['rush','intel','control','elite','master1'].map((id,i)=>{const w=weapons.find(x=>x.id===id);return `<img src="/${w.path}" alt="${esc(w.skinName)}" style="--i:${i}">`;}).join('')}</div><figcaption><b>C · 战队武器阵列</b><small>整队主题更明显；小屏下细节容易拥挤。</small></figcaption></figure>`;
-let body=`<header><a href="/">← 返回游戏</a><p>登峰赛季 / ART DIRECTION 06</p><h1>选手上场，枪械成为对手。</h1><p>72 张选手照片 · 7 张战术插画 · 9 类武器对手，覆盖三幕 21 场对手配置。</p><nav><a href="#concepts">对手方向</a>${Object.values(REGIONS).map(r=>`<a href="#${r.id}">${r.name}</a>`).join('')}<a href="#special">特殊牌</a><a href="#enemies">全部对手</a></nav></header><section id="concepts"><h2>三种方向，放在一起比较</h2><p>使用真实无畏契约枪械皮肤素材，叠加本作的能量与战术效果。照片与武器均随游戏本地加载。</p><div class="concepts">${weaponTile(enemies.B01,concepts[0][1],concepts[0][2],'display')}${weaponTile(enemies.B01,concepts[1][1],concepts[1][2])}${arrayTile}</div></section>`;
-for(const r of Object.values(REGIONS))body+=`<section id="${r.id}"><h2>${r.name} · 18 位选手</h2><div class="portraits">${r.pool.map(id=>tile(cards[id].path,cards[id].name,`${id} / ${CARDS[id].role}`,cards[id].photoPage||cards[id].profileUrl)).join('')}</div></section>`;
+let body=`<header><a href="/">← 返回游戏</a><p>登峰赛季 / ART DIRECTION 06</p><h1>选手上场，枪械成为对手。</h1><p>原有选手使用已核对来源的照片；新增选手暂用原创概念头像，明确不代表本人形象。</p><nav><a href="#concepts">对手方向</a>${Object.values(REGIONS).map(r=>`<a href="#${r.id}">${r.name}</a>`).join('')}<a href="#special">特殊牌</a><a href="#enemies">全部对手</a></nav></header><section id="concepts"><h2>三种方向，放在一起比较</h2><p>照片与概念画均随游戏本地加载。</p><div class="concepts">${weaponTile(enemies.B01,concepts[0][1],concepts[0][2],'display')}${weaponTile(enemies.B01,concepts[1][1],concepts[1][2])}${arrayTile}</div></section>`;
+for(const r of Object.values(REGIONS))body+=`<section id="${r.id}"><h2>${r.name} · 50 位选手</h2><div class="portraits">${r.pool.filter(id=>CARDS[id].player).map(id=>tile(cards[id].path,cards[id].name,`${id} / ${CARDS[id].role}`,cards[id].photoPage||cards[id].profileUrl)).join('')}</div></section>`;
 body+=`<section id="special"><h2>特殊牌也有各自的场景</h2><div class="special">${Object.values(CARDS).filter(c=>!c.player).map(c=>tile(cards[c.id].path,c.name,c.role)).join('')}</div></section>`;
 body+=`<section id="enemies"><h2>三幕对手图鉴</h2><p>同一战术原型跨幕共用一幅画；三个世界赛 Boss 使用独立造型。形象不改变伤害、状态或意图规则。</p><div class="enemies">${Object.entries(enemies).sort(([a],[b])=>{const rank=x=>x.startsWith('A2')?2:x.startsWith('A3')?3:1;return rank(a)-rank(b)||a.localeCompare(b);}).map(([id,a])=>weaponTile(a,a.name,`${id} / ${a.skinName}`)).join('')}</div></section><footer>照片来源可逐张查看；特殊牌插画与武器特效由 DeepSeek 参与制作，经过审核与接入。枪械目录来源：<a href="https://valorant-api.com/" target="_blank" rel="noopener noreferrer">Valorant-API</a>。本游戏为粉丝原型，未获 Riot Games 背书。</footer>`;
 const weaponCss=await readFile(new URL('weapon-style.css',root),'utf8'),artCss=await readFile(new URL('art-style.css',root),'utf8');

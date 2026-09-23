@@ -9,6 +9,9 @@ const root = new URL('../', import.meta.url);
 const read = f => readFile(new URL(f, root), 'utf8');
 const modules = [
   'regions.js',
+  'regional-expansion.js',
+  'afflictions.js',
+  'shared-route-generator.js',
   'season-map.js',
   'content.js',
   'engine.js',

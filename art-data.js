@@ -114,37 +114,128 @@ export const CARD_ART={
   "ST01": {
     "path": "assets/special/ST01.svg",
     "name": "信息干扰",
-    "kind": "illustration"
+    "kind": "illustration",
+    "concept": false
   },
   "ST02": {
     "path": "assets/special/ST02.svg",
     "name": "节奏受阻",
-    "kind": "illustration"
+    "kind": "illustration",
+    "concept": false
   },
   "ST03": {
     "path": "assets/special/ST03.svg",
     "name": "疲劳",
-    "kind": "illustration"
+    "kind": "illustration",
+    "concept": false
   },
   "CU01": {
     "path": "assets/special/CU01.svg",
     "name": "磨合不足",
-    "kind": "illustration"
+    "kind": "illustration",
+    "concept": false
   },
   "CU02": {
     "path": "assets/special/CU02.svg",
     "name": "舆论压力",
-    "kind": "illustration"
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU03": {
+    "path": "assets/special/CU03.svg",
+    "name": "赞助干预",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU04": {
+    "path": "assets/special/CU04.svg",
+    "name": "合同纠纷",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU05": {
+    "path": "assets/special/CU05.svg",
+    "name": "媒体围堵",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU06": {
+    "path": "assets/special/CU06.svg",
+    "name": "赛程重压",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU07": {
+    "path": "assets/special/CU07.svg",
+    "name": "信息暴露",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU08": {
+    "path": "assets/special/CU08.svg",
+    "name": "战术泄露",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU09": {
+    "path": "assets/special/CU09.svg",
+    "name": "心理阴影",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU10": {
+    "path": "assets/special/CU10.svg",
+    "name": "疲劳复发",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU11": {
+    "path": "assets/special/CU11.svg",
+    "name": "设备故障",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU12": {
+    "path": "assets/special/CU12.svg",
+    "name": "队内分歧",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU13": {
+    "path": "assets/special/CU13.svg",
+    "name": "训练失序",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CU14": {
+    "path": "assets/special/CU14.svg",
+    "name": "禁赛风险",
+    "kind": "illustration",
+    "concept": false
+  },
+  "ST04": {
+    "path": "assets/special/ST04.svg",
+    "name": "能量泄漏",
+    "kind": "illustration",
+    "concept": false
+  },
+  "ST05": {
+    "path": "assets/special/ST05.svg",
+    "name": "干扰脉冲",
+    "kind": "illustration",
+    "concept": false
   },
   "TK01": {
     "path": "assets/special/TK01.svg",
     "name": "补枪",
-    "kind": "illustration"
+    "kind": "illustration",
+    "concept": false
   },
   "TK02": {
     "path": "assets/special/TK02.svg",
     "name": "临时部署",
-    "kind": "illustration"
+    "kind": "illustration",
+    "concept": false
   },
   "AM01": {
     "path": "assets/players/AM01.png",
@@ -469,6 +560,1374 @@ export const CARD_ART={
     "profileUrl": "https://www.vlr.gg/player/9803/d4v41",
     "name": "d4v41",
     "kind": "photo"
+  },
+  "CN19": {
+    "path": "assets/players/CN19.svg",
+    "name": "Jieni7",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN20": {
+    "path": "assets/players/CN20.svg",
+    "name": "cb",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN21": {
+    "path": "assets/players/CN21.svg",
+    "name": "FengF",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN22": {
+    "path": "assets/players/CN22.svg",
+    "name": "Viva",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN23": {
+    "path": "assets/players/CN23.svg",
+    "name": "deLb",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN24": {
+    "path": "assets/players/CN24.svg",
+    "name": "nephh",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN25": {
+    "path": "assets/players/CN25.svg",
+    "name": "whzy",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN26": {
+    "path": "assets/players/CN26.svg",
+    "name": "Knight",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN27": {
+    "path": "assets/players/CN27.svg",
+    "name": "rushia",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN28": {
+    "path": "assets/players/CN28.svg",
+    "name": "bud",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN29": {
+    "path": "assets/players/CN29.svg",
+    "name": "Nicc",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN30": {
+    "path": "assets/players/CN30.svg",
+    "name": "Flex1n",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN31": {
+    "path": "assets/players/CN31.svg",
+    "name": "Akeman",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN32": {
+    "path": "assets/players/CN32.svg",
+    "name": "sScary",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN33": {
+    "path": "assets/players/CN33.svg",
+    "name": "Setrod",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN34": {
+    "path": "assets/players/CN34.svg",
+    "name": "happywei",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN35": {
+    "path": "assets/players/CN35.svg",
+    "name": "NoMan",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN36": {
+    "path": "assets/players/CN36.svg",
+    "name": "Lysoar",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN37": {
+    "path": "assets/players/CN37.svg",
+    "name": "WsLeo",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN38": {
+    "path": "assets/players/CN38.svg",
+    "name": "HeiB",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN39": {
+    "path": "assets/players/CN39.svg",
+    "name": "OBONE",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN40": {
+    "path": "assets/players/CN40.svg",
+    "name": "GuanG",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN41": {
+    "path": "assets/players/CN41.svg",
+    "name": "Ezeir",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN42": {
+    "path": "assets/players/CN42.svg",
+    "name": "Green",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN43": {
+    "path": "assets/players/CN43.svg",
+    "name": "jkuro",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN44": {
+    "path": "assets/players/CN44.svg",
+    "name": "stew",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN45": {
+    "path": "assets/players/CN45.svg",
+    "name": "zhe",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN46": {
+    "path": "assets/players/CN46.svg",
+    "name": "coconut",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN47": {
+    "path": "assets/players/CN47.svg",
+    "name": "kklin",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN48": {
+    "path": "assets/players/CN48.svg",
+    "name": "Spring",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN49": {
+    "path": "assets/players/CN49.svg",
+    "name": "jowa",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CN50": {
+    "path": "assets/players/CN50.svg",
+    "name": "qiutiaN",
+    "kind": "illustration",
+    "concept": true
+  },
+  "CNT01": {
+    "path": "assets/special/CNT01.svg",
+    "name": "快速部署",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT02": {
+    "path": "assets/special/CNT02.svg",
+    "name": "稳固防线",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT03": {
+    "path": "assets/special/CNT03.svg",
+    "name": "协同攻击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT04": {
+    "path": "assets/special/CNT04.svg",
+    "name": "弱点打击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT05": {
+    "path": "assets/special/CNT05.svg",
+    "name": "压制火力",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT06": {
+    "path": "assets/special/CNT06.svg",
+    "name": "战术过牌",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT07": {
+    "path": "assets/special/CNT07.svg",
+    "name": "护甲补给",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT08": {
+    "path": "assets/special/CNT08.svg",
+    "name": "情报优势",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT09": {
+    "path": "assets/special/CNT09.svg",
+    "name": "佯攻诱敌",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT10": {
+    "path": "assets/special/CNT10.svg",
+    "name": "阵地巩固",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT11": {
+    "path": "assets/special/CNT11.svg",
+    "name": "突袭斩首",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT12": {
+    "path": "assets/special/CNT12.svg",
+    "name": "全面压制",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT13": {
+    "path": "assets/special/CNT13.svg",
+    "name": "快速休整",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT14": {
+    "path": "assets/special/CNT14.svg",
+    "name": "火力覆盖",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT15": {
+    "path": "assets/special/CNT15.svg",
+    "name": "团队协作",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT16": {
+    "path": "assets/special/CNT16.svg",
+    "name": "战略撤退",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT17": {
+    "path": "assets/special/CNT17.svg",
+    "name": "信息封锁",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT18": {
+    "path": "assets/special/CNT18.svg",
+    "name": "破釜沉舟",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT19": {
+    "path": "assets/special/CNT19.svg",
+    "name": "连环计",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT20": {
+    "path": "assets/special/CNT20.svg",
+    "name": "火力侦察",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT21": {
+    "path": "assets/special/CNT21.svg",
+    "name": "铁壁合围",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT22": {
+    "path": "assets/special/CNT22.svg",
+    "name": "游击战术",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT23": {
+    "path": "assets/special/CNT23.svg",
+    "name": "心理战",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT24": {
+    "path": "assets/special/CNT24.svg",
+    "name": "资源调度",
+    "kind": "illustration",
+    "concept": false
+  },
+  "CNT25": {
+    "path": "assets/special/CNT25.svg",
+    "name": "斩首行动",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AM19": {
+    "path": "assets/players/AM19.svg",
+    "name": "valyn",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM20": {
+    "path": "assets/players/AM20.svg",
+    "name": "trent",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM21": {
+    "path": "assets/players/AM21.svg",
+    "name": "jawgemo",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM22": {
+    "path": "assets/players/AM22.svg",
+    "name": "Kyu",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM23": {
+    "path": "assets/players/AM23.svg",
+    "name": "johnqt",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM24": {
+    "path": "assets/players/AM24.svg",
+    "name": "N4RRATE",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM25": {
+    "path": "assets/players/AM25.svg",
+    "name": "cortezia",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM26": {
+    "path": "assets/players/AM26.svg",
+    "name": "reduxx",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM27": {
+    "path": "assets/players/AM27.svg",
+    "name": "Verno",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM28": {
+    "path": "assets/players/AM28.svg",
+    "name": "Mazino",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM29": {
+    "path": "assets/players/AM29.svg",
+    "name": "Saadhak",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM30": {
+    "path": "assets/players/AM30.svg",
+    "name": "Dantedeu5",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM31": {
+    "path": "assets/players/AM31.svg",
+    "name": "silentzz",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM32": {
+    "path": "assets/players/AM32.svg",
+    "name": "Sato",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM33": {
+    "path": "assets/players/AM33.svg",
+    "name": "blowz",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM34": {
+    "path": "assets/players/AM34.svg",
+    "name": "Neon",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM35": {
+    "path": "assets/players/AM35.svg",
+    "name": "spikeziN",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM36": {
+    "path": "assets/players/AM36.svg",
+    "name": "PxS",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM37": {
+    "path": "assets/players/AM37.svg",
+    "name": "cauanzin",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM38": {
+    "path": "assets/players/AM38.svg",
+    "name": "pANcada",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM39": {
+    "path": "assets/players/AM39.svg",
+    "name": "lukxo",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM40": {
+    "path": "assets/players/AM40.svg",
+    "name": "Virtyy",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM41": {
+    "path": "assets/players/AM41.svg",
+    "name": "Darker",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM42": {
+    "path": "assets/players/AM42.svg",
+    "name": "C0M",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM43": {
+    "path": "assets/players/AM43.svg",
+    "name": "bao",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM44": {
+    "path": "assets/players/AM44.svg",
+    "name": "dgzin",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM45": {
+    "path": "assets/players/AM45.svg",
+    "name": "okeanos",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM46": {
+    "path": "assets/players/AM46.svg",
+    "name": "supamen",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM47": {
+    "path": "assets/players/AM47.svg",
+    "name": "Ethan",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM48": {
+    "path": "assets/players/AM48.svg",
+    "name": "mada",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM49": {
+    "path": "assets/players/AM49.svg",
+    "name": "brawk",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AM50": {
+    "path": "assets/players/AM50.svg",
+    "name": "skuba",
+    "kind": "illustration",
+    "concept": true
+  },
+  "AMT01": {
+    "path": "assets/special/AMT01.svg",
+    "name": "双线夹击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT02": {
+    "path": "assets/special/AMT02.svg",
+    "name": "破绽侦察",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT03": {
+    "path": "assets/special/AMT03.svg",
+    "name": "闪击先锋",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT04": {
+    "path": "assets/special/AMT04.svg",
+    "name": "聚火集射",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT05": {
+    "path": "assets/special/AMT05.svg",
+    "name": "烟雾推进",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT06": {
+    "path": "assets/special/AMT06.svg",
+    "name": "侦察无人机",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT07": {
+    "path": "assets/special/AMT07.svg",
+    "name": "防守协同",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT08": {
+    "path": "assets/special/AMT08.svg",
+    "name": "快速换弹",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT09": {
+    "path": "assets/special/AMT09.svg",
+    "name": "破甲射击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT10": {
+    "path": "assets/special/AMT10.svg",
+    "name": "包夹战术",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT11": {
+    "path": "assets/special/AMT11.svg",
+    "name": "陷阱布置",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT12": {
+    "path": "assets/special/AMT12.svg",
+    "name": "预判闪避",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT13": {
+    "path": "assets/special/AMT13.svg",
+    "name": "火力侦察",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT14": {
+    "path": "assets/special/AMT14.svg",
+    "name": "协同压制",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT15": {
+    "path": "assets/special/AMT15.svg",
+    "name": "经济管理",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT16": {
+    "path": "assets/special/AMT16.svg",
+    "name": "诱敌深入",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT17": {
+    "path": "assets/special/AMT17.svg",
+    "name": "多重标记",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT18": {
+    "path": "assets/special/AMT18.svg",
+    "name": "突击路线",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT19": {
+    "path": "assets/special/AMT19.svg",
+    "name": "交叉火力",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT20": {
+    "path": "assets/special/AMT20.svg",
+    "name": "后撤防守",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT21": {
+    "path": "assets/special/AMT21.svg",
+    "name": "信息优势",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT22": {
+    "path": "assets/special/AMT22.svg",
+    "name": "远程狙击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT23": {
+    "path": "assets/special/AMT23.svg",
+    "name": "包围网",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT24": {
+    "path": "assets/special/AMT24.svg",
+    "name": "爆发输出",
+    "kind": "illustration",
+    "concept": false
+  },
+  "AMT25": {
+    "path": "assets/special/AMT25.svg",
+    "name": "能量循环",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EU19": {
+    "path": "assets/players/EU19.svg",
+    "name": "Jamppi",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU20": {
+    "path": "assets/players/EU20.svg",
+    "name": "Sayonara",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU21": {
+    "path": "assets/players/EU21.svg",
+    "name": "PROFEK",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU22": {
+    "path": "assets/players/EU22.svg",
+    "name": "UNFAKE",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU23": {
+    "path": "assets/players/EU23.svg",
+    "name": "kamo",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU24": {
+    "path": "assets/players/EU24.svg",
+    "name": "MiniBoo",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU25": {
+    "path": "assets/players/EU25.svg",
+    "name": "purp0",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU26": {
+    "path": "assets/players/EU26.svg",
+    "name": "wayne",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU27": {
+    "path": "assets/players/EU27.svg",
+    "name": "ComeBack",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU28": {
+    "path": "assets/players/EU28.svg",
+    "name": "MrFaliN",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU29": {
+    "path": "assets/players/EU29.svg",
+    "name": "qRaxs",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU30": {
+    "path": "assets/players/EU30.svg",
+    "name": "yetujey",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU31": {
+    "path": "assets/players/EU31.svg",
+    "name": "xeus",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU32": {
+    "path": "assets/players/EU32.svg",
+    "name": "ATA KAPTAN",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU33": {
+    "path": "assets/players/EU33.svg",
+    "name": "KROSTALY",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU34": {
+    "path": "assets/players/EU34.svg",
+    "name": "baha",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU35": {
+    "path": "assets/players/EU35.svg",
+    "name": "Veqaj",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU36": {
+    "path": "assets/players/EU36.svg",
+    "name": "Rosé",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU37": {
+    "path": "assets/players/EU37.svg",
+    "name": "umu7",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU38": {
+    "path": "assets/players/EU38.svg",
+    "name": "Loita",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU39": {
+    "path": "assets/players/EU39.svg",
+    "name": "starxo",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU40": {
+    "path": "assets/players/EU40.svg",
+    "name": "Minny",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU41": {
+    "path": "assets/players/EU41.svg",
+    "name": "bipo",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU42": {
+    "path": "assets/players/EU42.svg",
+    "name": "GLYPH",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU43": {
+    "path": "assets/players/EU43.svg",
+    "name": "Cloud",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU44": {
+    "path": "assets/players/EU44.svg",
+    "name": "westside",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU45": {
+    "path": "assets/players/EU45.svg",
+    "name": "ara",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU46": {
+    "path": "assets/players/EU46.svg",
+    "name": "Flickless",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU47": {
+    "path": "assets/players/EU47.svg",
+    "name": "GRUBINHO",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU48": {
+    "path": "assets/players/EU48.svg",
+    "name": "Shao",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU49": {
+    "path": "assets/players/EU49.svg",
+    "name": "hiro",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EU50": {
+    "path": "assets/players/EU50.svg",
+    "name": "Filu",
+    "kind": "illustration",
+    "concept": true
+  },
+  "EUT01": {
+    "path": "assets/special/EUT01.svg",
+    "name": "开局压制",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT02": {
+    "path": "assets/special/EUT02.svg",
+    "name": "防守反击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT03": {
+    "path": "assets/special/EUT03.svg",
+    "name": "信息侦察",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT04": {
+    "path": "assets/special/EUT04.svg",
+    "name": "弱点突袭",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT05": {
+    "path": "assets/special/EUT05.svg",
+    "name": "削弱阵线",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT06": {
+    "path": "assets/special/EUT06.svg",
+    "name": "护盾加固",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT07": {
+    "path": "assets/special/EUT07.svg",
+    "name": "先手布局",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT08": {
+    "path": "assets/special/EUT08.svg",
+    "name": "决斗强化",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT09": {
+    "path": "assets/special/EUT09.svg",
+    "name": "能量管理",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT10": {
+    "path": "assets/special/EUT10.svg",
+    "name": "额外抽牌",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT11": {
+    "path": "assets/special/EUT11.svg",
+    "name": "快速突进",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT12": {
+    "path": "assets/special/EUT12.svg",
+    "name": "稳固防守",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT13": {
+    "path": "assets/special/EUT13.svg",
+    "name": "双重打击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT14": {
+    "path": "assets/special/EUT14.svg",
+    "name": "易伤标记",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT15": {
+    "path": "assets/special/EUT15.svg",
+    "name": "虚弱诅咒",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT16": {
+    "path": "assets/special/EUT16.svg",
+    "name": "战利品",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT17": {
+    "path": "assets/special/EUT17.svg",
+    "name": "防御工事",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT18": {
+    "path": "assets/special/EUT18.svg",
+    "name": "全面攻势",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT19": {
+    "path": "assets/special/EUT19.svg",
+    "name": "铁壁反击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT20": {
+    "path": "assets/special/EUT20.svg",
+    "name": "资源循环",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT21": {
+    "path": "assets/special/EUT21.svg",
+    "name": "致命弱点",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT22": {
+    "path": "assets/special/EUT22.svg",
+    "name": "战术撤退",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT23": {
+    "path": "assets/special/EUT23.svg",
+    "name": "压制射击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT24": {
+    "path": "assets/special/EUT24.svg",
+    "name": "战术觉醒",
+    "kind": "illustration",
+    "concept": false
+  },
+  "EUT25": {
+    "path": "assets/special/EUT25.svg",
+    "name": "绝地反击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PA19": {
+    "path": "assets/players/PA19.svg",
+    "name": "free1ng",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA20": {
+    "path": "assets/players/PA20.svg",
+    "name": "Hermes",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA21": {
+    "path": "assets/players/PA21.svg",
+    "name": "stax",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA22": {
+    "path": "assets/players/PA22.svg",
+    "name": "carpe",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA23": {
+    "path": "assets/players/PA23.svg",
+    "name": "iZu",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA24": {
+    "path": "assets/players/PA24.svg",
+    "name": "Meteor",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA25": {
+    "path": "assets/players/PA25.svg",
+    "name": "BuZz",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA26": {
+    "path": "assets/players/PA26.svg",
+    "name": "Lakia",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA27": {
+    "path": "assets/players/PA27.svg",
+    "name": "Ash",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA28": {
+    "path": "assets/players/PA28.svg",
+    "name": "ZynX",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA29": {
+    "path": "assets/players/PA29.svg",
+    "name": "Rb",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA30": {
+    "path": "assets/players/PA30.svg",
+    "name": "Francis",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA31": {
+    "path": "assets/players/PA31.svg",
+    "name": "Xross",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA32": {
+    "path": "assets/players/PA32.svg",
+    "name": "Ivy",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA33": {
+    "path": "assets/players/PA33.svg",
+    "name": "SSeeS",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA34": {
+    "path": "assets/players/PA34.svg",
+    "name": "akame",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA35": {
+    "path": "assets/players/PA35.svg",
+    "name": "Caedye",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA36": {
+    "path": "assets/players/PA36.svg",
+    "name": "yatsuka",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA37": {
+    "path": "assets/players/PA37.svg",
+    "name": "Leviathan",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA38": {
+    "path": "assets/players/PA38.svg",
+    "name": "killua",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA39": {
+    "path": "assets/players/PA39.svg",
+    "name": "Primmie",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA40": {
+    "path": "assets/players/PA40.svg",
+    "name": "thyy",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA41": {
+    "path": "assets/players/PA41.svg",
+    "name": "crazyguy",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA42": {
+    "path": "assets/players/PA42.svg",
+    "name": "monyet",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA43": {
+    "path": "assets/players/PA43.svg",
+    "name": "Kushy",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA44": {
+    "path": "assets/players/PA44.svg",
+    "name": "naTz",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA45": {
+    "path": "assets/players/PA45.svg",
+    "name": "kellyS",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA46": {
+    "path": "assets/players/PA46.svg",
+    "name": "Sylvan",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA47": {
+    "path": "assets/players/PA47.svg",
+    "name": "TenTen",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA48": {
+    "path": "assets/players/PA48.svg",
+    "name": "BerserX",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA49": {
+    "path": "assets/players/PA49.svg",
+    "name": "JessieVash",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PA50": {
+    "path": "assets/players/PA50.svg",
+    "name": "xavi8k",
+    "kind": "illustration",
+    "concept": true
+  },
+  "PAT01": {
+    "path": "assets/special/PAT01.svg",
+    "name": "快攻节奏",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT02": {
+    "path": "assets/special/PAT02.svg",
+    "name": "固守阵地",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT03": {
+    "path": "assets/special/PAT03.svg",
+    "name": "弱点暴露",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT04": {
+    "path": "assets/special/PAT04.svg",
+    "name": "能量涌动",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT05": {
+    "path": "assets/special/PAT05.svg",
+    "name": "压制火力",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT06": {
+    "path": "assets/special/PAT06.svg",
+    "name": "侦察突袭",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT07": {
+    "path": "assets/special/PAT07.svg",
+    "name": "防线加固",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT08": {
+    "path": "assets/special/PAT08.svg",
+    "name": "弱点打击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT09": {
+    "path": "assets/special/PAT09.svg",
+    "name": "快速布局",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT10": {
+    "path": "assets/special/PAT10.svg",
+    "name": "控场节奏",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT11": {
+    "path": "assets/special/PAT11.svg",
+    "name": "决斗强化",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT12": {
+    "path": "assets/special/PAT12.svg",
+    "name": "先手压制",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT13": {
+    "path": "assets/special/PAT13.svg",
+    "name": "能量汲取",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT14": {
+    "path": "assets/special/PAT14.svg",
+    "name": "防御反击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT15": {
+    "path": "assets/special/PAT15.svg",
+    "name": "信息优势",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT16": {
+    "path": "assets/special/PAT16.svg",
+    "name": "精确打击",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT17": {
+    "path": "assets/special/PAT17.svg",
+    "name": "全面压制",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT18": {
+    "path": "assets/special/PAT18.svg",
+    "name": "稳固防守",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT19": {
+    "path": "assets/special/PAT19.svg",
+    "name": "战术撤退",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT20": {
+    "path": "assets/special/PAT20.svg",
+    "name": "弱点连锁",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT21": {
+    "path": "assets/special/PAT21.svg",
+    "name": "资源调度",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT22": {
+    "path": "assets/special/PAT22.svg",
+    "name": "双重干扰",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT23": {
+    "path": "assets/special/PAT23.svg",
+    "name": "高能爆发",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT24": {
+    "path": "assets/special/PAT24.svg",
+    "name": "防守阵型",
+    "kind": "illustration",
+    "concept": false
+  },
+  "PAT25": {
+    "path": "assets/special/PAT25.svg",
+    "name": "快攻连携",
+    "kind": "illustration",
+    "concept": false
   }
 };
 export const ENEMY_ART={

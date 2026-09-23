@@ -1,6 +1,7 @@
 // new-demo/engine.js
 import { buildMap, availableNodes } from './season-map.js';
-import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, RELICS } from './content.js';
+import { CARDS, CARD_IDS, REGION_CARD_IDS, SHARED_CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, RELICS } from './content.js';
+import { CURSES, CURSE_RULES, EXTRA_STATUS_RULES } from '../afflictions.js';
 
 const VERSION = 'new-1';
 const MAX_HAND = 10;
@@ -312,8 +313,11 @@ function startBattle(state, node) {
     rewardTaken: false,
     playerBlock: 0
   };
-  applyRelicsAtBattleStart(state);
   state.phase = 'combat';
+  const opening=hand.slice();
+  applyRelicsAtBattleStart(state);
+  if(state.phase!=='combat')return null;
+  for(const card of opening){if(!hand.some(c=>c.uid===card.uid))continue;applyDrawAffliction(state,card);if(state.phase!=='combat')return null;}
   nextEnemyIntent(state);
   pushLog(state, 'battle_start', { enemy: node.enemy });
   return null;
@@ -355,10 +359,12 @@ function playCard(state, action) {
   b.energy -= cost;
   b.hand.splice(idx, 1);
   b.playsThisTurn++;
+  for(const held of b.hand){const rule=CURSE_RULES[held.id];if(rule?.trigger==='onPlayLoseHp'){state.hp=Math.max(0,state.hp-rule.n);if(!state.hp){finishBattleLoss(state);return null;}}}
 
   const effects = card.up && def.upgradeEffects?.length ? def.upgradeEffects : def.effects;
   for (const eff of effects) {
     applyEffect(state, eff, card, mods, context);
+    if(state.phase!=='combat')return null;
   }
 
   if (def.type === 'power') {
@@ -631,8 +637,21 @@ function drawCards(state, n) {
       b.discardPile = [];
       shuffle(b.drawPile, state);
     }
-    b.hand.push(b.drawPile.shift());
+    const card=b.drawPile.shift();b.hand.push(card);applyDrawAffliction(state,card);
+    if(state.phase!=='combat')break;
   }
+}
+
+function applyDrawAffliction(state,card){
+ const b=state.battle,rule=CURSE_RULES[card.id]||EXTRA_STATUS_RULES[card.id];if(!rule)return;
+ if(rule.trigger==='onDrawLoseEnergy')b.energy=Math.max(0,b.energy-rule.n);
+ if(rule.trigger==='onDrawWeak')b.statuses.player.weak=(b.statuses.player.weak||0)+rule.n;
+ if(rule.trigger==='onDrawVuln')b.statuses.player.vuln=(b.statuses.player.vuln||0)+rule.n;
+ if(rule.trigger==='onDrawLoseHp'){state.hp=Math.max(0,state.hp-rule.n);if(!state.hp)finishBattleLoss(state);}
+ if(rule.trigger==='onDrawDiscard')for(let i=0;i<rule.n;i++){
+  const options=b.hand.filter(c=>c.uid!==card.uid);if(!options.length)break;
+  const chosen=options[Math.floor(nextRand(state)*options.length)];b.hand.splice(b.hand.findIndex(c=>c.uid===chosen.uid),1);b.discardPile.push(chosen);
+ }
 }
 
 function manualStance(state) {
@@ -659,6 +678,8 @@ function endTurn(state) {
 
   // Discard hand, apply status card damage
   for (const card of b.hand) {
+    const rule=CURSE_RULES[card.id];
+    if(rule?.trigger==='endTurnLoseHp'){state.hp=Math.max(0,state.hp-rule.n);if(!state.hp){finishBattleLoss(state);return null;}}
     if (card.id in STATUS_CARDS) {
       const dmgMap = { ST01: 1, ST02: 2, ST03: 3 };
       state.hp = Math.max(0, state.hp - (dmgMap[card.id] || 0));
@@ -741,19 +762,23 @@ function finishBattleWin(state) {
 
   // Generate reward pool (unique cards)
   const weights = { common: 10, uncommon: 4, rare: 1 };
+  const regional = REGION_CARD_IDS[TEAMS[state.team]?.region] || REGION_CARD_IDS.AM;
+  const available = [...SHARED_CARD_IDS, ...regional];
+  const weightOf = id => weights[CARDS[id].rarity] * (CARDS[id].region ? 3 : 1);
   const pool = [];
   while (pool.length < 3) {
-    const total = CARD_IDS.reduce((s, id) => s + weights[CARDS[id].rarity], 0);
+    const total = available.reduce((s, id) => s + (pool.includes(id) ? 0 : weightOf(id)), 0);
     let roll = nextRand(state) * total;
-    let chosen = CARD_IDS[0];
-    for (const id of CARD_IDS) {
-      roll -= weights[CARDS[id].rarity];
+    let chosen = available.find(id=>!pool.includes(id));
+    for (const id of available) {
+      if(pool.includes(id))continue;
+      roll -= weightOf(id);
       if (roll <= 0) {
         chosen = id;
         break;
       }
     }
-    if (!pool.includes(chosen)) pool.push(chosen);
+    pool.push(chosen);
   }
   b.rewardPool = pool;
   b.rewardTaken = false;
@@ -847,8 +872,11 @@ function grantRandomRelic(state) {
 
 function generateShop(state) {
   const cards = [];
+  const regional = REGION_CARD_IDS[TEAMS[state.team]?.region] || REGION_CARD_IDS.AM;
+  const available = [...SHARED_CARD_IDS, ...regional];
   for (let i = 0; i < 5; i++) {
-    const id = CARD_IDS[Math.floor(nextRand(state) * CARD_IDS.length)];
+    const choices=available.filter(id=>!cards.some(card=>card.id===id));
+    const id = choices[Math.floor(nextRand(state) * choices.length)];
     cards.push({ id, price: priceOf(id) });
   }
   return { cards, categoryUpgradeUsed:false };
@@ -958,7 +986,8 @@ function generateEvent(state) {
     { id: 'ev3', text: '你找到一个补给箱。', choices: [{ id: 'heal', text: '使用医疗补给（恢复15点生命）' }, { id: 'money', text: '拿走钱（获得50金币）' }] },
     { id: 'ev4', text: '临时训练赛给了你一次检验新战术的机会。', choices: [{ id: 'scrim', text: '高强度训练（失去8点生命，随机升级一张牌）' }, { id: 'rest', text: '恢复体能（花20金币，回复8点生命）' }] },
     { id: 'ev5', text: '赞助商提出两份不同的赛季合同。', choices: [{ id: 'cash', text: '密集商务活动（最大生命-4，获得70金币）' }, { id: 'fans', text: '粉丝见面会（花50金币，最大生命+4）' }] },
-    { id: 'ev6', text: '分析师发现了一份旧赛季的战术数据库。', choices: [{ id: 'scout', text: '购买情报（花35金币，获得随机遗物）' }, { id: 'sell', text: '出售情报（失去6点生命，获得30金币）' }] }
+    { id: 'ev6', text: '分析师发现了一份旧赛季的战术数据库。', choices: [{ id: 'scout', text: '购买情报（花35金币，获得随机遗物）' }, { id: 'sell', text: '出售情报（失去6点生命，获得30金币）' }] },
+    { id: 'ev7', text: '一份高风险合作合同摆在桌上。', choices: [{ id: 'accept', text: '获得随机遗物，并加入一张随机俱乐部隐患' }, { id: 'decline', text: '谢绝合作' }] }
   ];
   return events[Math.floor(nextRand(state) * events.length)];
 }
@@ -1004,6 +1033,11 @@ function eventChoice(state, action) {
   } else if (ev.id === 'ev6' && action.choice === 'sell') {
     state.hp = Math.max(1, state.hp - 6);
     state.money += 30;
+  } else if (ev.id === 'ev7' && action.choice === 'accept') {
+    grantRandomRelic(state);
+    const curse=CURSES[Math.floor(nextRand(state)*CURSES.length)];
+    state.deck.push({uid:nextUid(state),id:curse.id,up:false});
+    pushLog(state,'curse_gained',{id:curse.id});
   }
   completeNode(state);
   state.phase = 'map';

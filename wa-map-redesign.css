@@ -514,3 +514,21 @@
   background: #ffd16633;
   color: #ffd166;
 }
+
+/* A seven-lane map cannot keep every room caption open at once. The icon and
+   legend stay visible; the room name appears on hover or keyboard focus. */
+.season-map .map-stop .node-label,
+.season-map .map-stop .here-label {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.season-map .map-stop:hover .node-label,
+.season-map .map-stop:focus-within .node-label,
+.season-map .map-stop:hover .here-label,
+.season-map .map-stop:focus-within .here-label {
+  visibility: visible;
+  opacity: 1;
+}
+.season-map .map-stop:hover,
+.season-map .map-stop:focus-within { z-index: 8; }

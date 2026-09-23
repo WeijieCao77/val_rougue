@@ -1,6 +1,9 @@
 import {REGIONS,REGIONAL_ROWS,REGIONAL_TACTICS} from './regions.js';
+import {EXPANSION_ROWS,EXPANSION_TACTICS} from './regional-expansion.js';
+import {CURSES,CURSE_RULES,EXTRA_STATUSES,EXTRA_STATUS_RULES} from './afflictions.js';
 import {EXTRA_ENEMIES} from './season-map.js';
 export {REGIONS};
+export {CURSE_RULES};
 export const VERSION = 'D0.1.0';
 // Effects are shared by rules, descriptions and previews. Player roles are design assignments.
 const hit = (n, times = 1) => ({type:'hit', n, times});
@@ -33,17 +36,27 @@ const rows = [
   ['ST03','疲劳','比赛干扰',null,[]],
   ['CU01','磨合不足','俱乐部隐患',null,[]],
   ['CU02','舆论压力','俱乐部隐患',null,[]],
+  ...CURSES.slice(2).map(c=>[c.id,c.name,'俱乐部隐患',null,[]]),
+  ...EXTRA_STATUSES.map(c=>[c.id,c.name,'比赛干扰',null,[],null,c.id==='ST04'?'exhaustEnd':'discard']),
   ['TK01','补枪','临时行动',0,[hit(3)],null,'temporary'],
   ['TK02','临时部署','临时行动',0,[block(3)],null,'temporary'],
 ];
-export const CARDS = Object.fromEntries([...rows,...REGIONAL_ROWS].map(([id,name,role,cost,effects,upgraded,zone='discard']) =>
-  [id,{id,name,role,cost,effects,upgraded,zone,player:/^(CN|AM|EU|PA)\d{2}$/.test(id)}]
+for(const region of Object.values(REGIONS)){
+ const prefix={CN:'CN',AM:'AM',EMEA:'EU',PAC:'PA'}[region.id];
+ region.pool.push(...EXPANSION_ROWS.filter(row=>row[0].startsWith(prefix)&&!row[0].startsWith(prefix+'T')).map(row=>row[0]));
+ region.pool.push(...EXPANSION_ROWS.filter(row=>row[0].startsWith(prefix+'T')).map(row=>row[0]));
+}
+export const CARDS = Object.fromEntries([...rows,...REGIONAL_ROWS,...EXPANSION_ROWS].map(([id,name,role,cost,effects,upgraded,zone='discard']) =>
+  [id,{id,name,role,cost,effects,upgraded,zone,player:/^(CN|AM|EU|PA)\d{2}$/.test(id),trainable:/^(CN|AM|EU|PA)(\d{2}|T\d{2})$/.test(id)}]
 ));
 export const PLAYER_IDS = rows.filter(r=>r[0].startsWith('CN')).map(r=>r[0]);
 // Presentation only: these motifs never add rules or identify a player's real agent pool.
 // Every number still comes from effects(); all source/adaptation notes are player-readable.
 export const TACTICS = {
  ...REGIONAL_TACTICS,
+ ...EXPANSION_TACTICS,
+ ...Object.fromEntries(CURSES.slice(2).map(c=>[c.id,{title:c.name,scene:c.text,origin:'赛季风险 · 原创适配',note:'全赛区共享隐患；只由风险事件加入，不能从普通奖励获得。'}])),
+ ...Object.fromEntries(EXTRA_STATUSES.map(c=>[c.id,{title:c.name,scene:c.text,origin:'比赛干扰 · 原创适配',note:'临时状态仅在本场战斗生效，赛后移除。'}])),
  CN01:{title:'抢线点射',scene:'准星先到拐角，第一枪抢到身位。',origin:'枪法 · 抢线',verbs:{hit:'抢线开枪'},note:'通用枪法场景；不额外获得首杀奖励。'},
  CN02:{title:'拉枪接力',scene:'一人拉开枪线，队友跟上补枪。',origin:'配合 · 补枪',verbs:{hit:'拉出交火',token:'留下补枪机会'},note:'补枪需另打生成的临时牌，不会自动追加伤害。'},
  CN03:{title:'首枪破点',scene:'准星停在头线，迎着枪声打开缺口。',origin:'枪法 · 突破',verbs:{hit:'抢下首轮交火'},note:'首枪是战术名称；任何回合都能打出，不要求本回合第一张。'},
@@ -93,9 +106,11 @@ export function effects(card) { return card.up ? CARDS[card.id].upgraded : CARDS
 export function cardName(card) { return CARDS[card.id].name + (card.up?' +':''); }
 // Short face text and full hover text use the same effects, including upgrades.
 export function compactLines(card) {
+ if(CURSE_RULES[card.id])return ['不能打出',CURSE_RULES[card.id].text];
+ if(EXTRA_STATUS_RULES[card.id])return ['不能打出',EXTRA_STATUS_RULES[card.id].text];
  const special={ST01:['不能打出'],ST02:['打出以清除此牌'],ST03:['不能打出','本场循环'],CU01:['不能打出','跨比赛保留'],CU02:['不能打出','留手至回合末：','直接失去 2 声望']};
  if(special[card.id])return special[card.id];
- return effects(card).flatMap(e=>{
+ const lines=effects(card).flatMap(e=>{
   if(e.type==='hit')return [`伤害 ${e.n}${e.times>1?` × ${e.times}`:''}`,...(e.ifWeak?[`对手有压制：基础伤害 +${e.ifWeak}`]:[])];
   if(e.type==='block')return [`布防 ${e.n}`];
   if(e.type==='weak')return [`对手压制 ${e.n} 回合`];
@@ -108,6 +123,7 @@ export function compactLines(card) {
   if(e.key==='extraDraw')return [`额外抽 ${e.n} 张`];
   return [];
  });
+ return lines.length<=3?lines:[lines[0],lines[1],lines.slice(2).join(' · ')];
 }
 export function cardKeywords(card) {
  const t=CARDS[card.id],list=[],es=effects(card)||[];
@@ -124,6 +140,8 @@ export function cardKeywords(card) {
 }
 export function describe(card) {
  const t=CARDS[card.id];
+ if(CURSE_RULES[card.id])return CURSE_RULES[card.id].text+' 跨比赛保留，直到永久移除。';
+ if(EXTRA_STATUS_RULES[card.id])return EXTRA_STATUS_RULES[card.id].text;
  const special={ST01:'不能打出。占用抽牌；回合结束时消耗。',ST02:'打出以调整身位，然后消耗。未打出则进入弃牌堆。',ST03:'不能打出。弃掉后继续参与本场洗牌。赛后移除。',CU01:'不能打出。跨比赛留在牌组，直到永久移除。',CU02:'不能打出。回合末仍在手中：直接失去 2 声望，布防无效。跨比赛保留。'};
  if(special[card.id]) return special[card.id];
  const text=effects(card).map(e=>{

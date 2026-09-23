@@ -9,7 +9,7 @@ function fixture(ids,enemy='B01'){
  const s=createRun('test',false);startBattle(s,enemy);const b=s.battle;b.hand=ids.map(id=>instance(s,id));b.draw=[];b.discard=[];b.exhaust=[];b.powers=[];return s;
 }
 test('content totals and five-role / cost distribution match approved demo',()=>{
- assert.equal(PLAYER_IDS.length,18);assert.equal(Object.keys(CARDS).length,79);
+ assert.equal(PLAYER_IDS.length,18);assert.equal(Object.keys(CARDS).length,321);
  assert.deepEqual([0,1,2,3].map(cost=>PLAYER_IDS.filter(id=>CARDS[id].cost===cost).length),[3,10,3,2]);
  assert.deepEqual(['决斗','哨位','控场','先锋','自由人'].map(role=>PLAYER_IDS.filter(id=>CARDS[id].role===role).length),[6,3,3,3,3]);
 });

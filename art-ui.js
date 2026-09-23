@@ -14,5 +14,5 @@ export function artCredit(id){
  const a=CARD_ART[id];
  if(!a)return '';
  const link=a.photoPage||a.profileUrl;
- return a.kind==='photo'&&/^https:\/\/(www\.vlr\.gg\/player\/\d+\/|www\.sina\.cn\/news\/detail\/\d+\.html)/.test(link||'')?`<p class="art-credit">选手照片：<a href="${escape(link)}" target="_blank" rel="noopener noreferrer">${escape(a.photoCredit||a.name+' · VLR 资料页')}</a></p>`:'<p class="art-credit">配图：原创战术插画。</p>';
+ return a.kind==='photo'&&/^https:\/\/(www\.vlr\.gg\/player\/\d+\/|www\.sina\.cn\/news\/detail\/\d+\.html)/.test(link||'')?`<p class="art-credit">选手照片：<a href="${escape(link)}" target="_blank" rel="noopener noreferrer">${escape(a.photoCredit||a.name+' · VLR 资料页')}</a></p>`:a.concept?'<p class="art-credit">原创概念头像，非选手本人肖像。</p>':'<p class="art-credit">配图：原创战术插画。</p>';
 }
