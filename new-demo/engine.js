@@ -102,7 +102,9 @@ export function legalActions(state) {
     if (!b) return [];
     for (const c of b.hand) {
       if (c.id in STATUS_CARDS) continue;
-      if (b.energy >= CARDS[c.id].cost) actions.push({ type: 'play', uid: c.uid });
+      const def = CARDS[c.id];
+      const cost = c.up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost;
+      if (b.energy >= cost) actions.push({ type: 'play', uid: c.uid });
     }
     if (b.energy >= 1 && !b.stanceSwitchUsedThisTurn) actions.push({ type: 'stance' });
     actions.push({ type: 'end' });
@@ -124,6 +126,10 @@ export function legalActions(state) {
         for (const c of state.deck) {
           if (canRemoveCard(state, c.uid)) actions.push({ type: 'remove', uid: c.uid });
         }
+      }
+      for (const category of ['attack', 'skill']) {
+        const quote = categoryUpgradeQuote(state, category);
+        if (!quote.used && quote.count > 0 && state.money >= quote.price) actions.push({ type:'upgradeCategory', category });
       }
     }
   } else if (state.phase === 'rest') {
@@ -175,7 +181,7 @@ export function observe(state) {
       },
       playerStatuses: b.statuses.player,
       playerBlock: b.playerBlock,
-      hand: b.hand.map(c => ({ uid: c.uid, id: c.id, name: CARDS[c.id].name, cost: CARDS[c.id].cost, text: c.up ? CARDS[c.id].upgradeText || CARDS[c.id].text : CARDS[c.id].text })),
+      hand: b.hand.map(c => { const def = CARDS[c.id]; const cost = c.up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost; return { uid: c.uid, id: c.id, name: def.name, cost, text: c.up ? def.upgradeText || def.text : def.text }; }),
       drawPileCount: b.drawPile.length,
       discardPileCount: b.discardPile.length,
       exhaustPileCount: b.exhaustPile.length,
@@ -207,7 +213,7 @@ export function preview(state, uid) {
   if (!card) return null;
   const def = CARDS[card.id];
   return {
-    card: { uid, id: card.id, name: def.name, cost: def.cost, text: card.up && def.upgradeText ? def.upgradeText : def.text },
+    card: { uid, id: card.id, name: def.name, cost: card.up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost, text: card.up && def.upgradeText ? def.upgradeText : def.text },
     stance: state.battle.stance
   };
 }
@@ -237,6 +243,7 @@ function applyAction(state, action) {
     case 'reward': return chooseReward(state, action);
     case 'buy': return buyCard(state, action);
     case 'remove': return removeCard(state, action);
+    case 'upgradeCategory': return upgradeCategory(state, action);
     case 'leave': return leaveShop(state);
     case 'rest': return restAction(state, action);
     case 'event': return eventChoice(state, action);
@@ -290,6 +297,7 @@ function startBattle(state, node) {
     stanceSwitchUsedThisTurn: false,
     attackPlayedThisTurn: false,
     blockPlayedThisTurn: false,
+    upgradeEnergyUsedThisTurn: false,
     stanceChangedThisTurn: false,
     playsThisTurn: 0,
     hand,
@@ -329,7 +337,8 @@ function playCard(state, action) {
   const def = CARDS[card.id];
   if (!def) return '未知卡牌';
   if (def.type === 'status') return '状态牌不能打出';
-  if (b.energy < def.cost) return '能量不足';
+  const cost = card.up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost;
+  if (b.energy < cost) return '能量不足';
 
   const preAttackPlayed = b.attackPlayedThisTurn;
   const preBlockPlayed = b.blockPlayedThisTurn;
@@ -343,7 +352,7 @@ function playCard(state, action) {
     blockBonusUsed: false
   };
 
-  b.energy -= def.cost;
+  b.energy -= cost;
   b.hand.splice(idx, 1);
   b.playsThisTurn++;
 
@@ -365,6 +374,11 @@ function playCard(state, action) {
     b.exhaustPile.push(card);
   } else {
     b.discardPile.push(card);
+  }
+
+  if (card.up && b.powers.includes('upgrade_core') && !b.upgradeEnergyUsedThisTurn) {
+    b.energy++;
+    b.upgradeEnergyUsedThisTurn = true;
   }
 
   // Update per-turn flags after card resolution
@@ -496,10 +510,20 @@ function applyEffect(state, eff, sourceCard, mods, context) {
       }
       break;
     }
+    case 'upgradeAllInHand':
+      for (const c of b.hand) {
+        if (!c.up && CARDS[c.id]?.upgradeEffects?.length) c.up = true;
+      }
+      break;
     case 'upgradeAllInCombatDeck': {
       for (const c of [...b.drawPile, ...b.discardPile, ...b.hand]) {
         if (!c.up && CARDS[c.id]?.upgradeEffects?.length) c.up = true;
       }
+      break;
+    }
+    case 'attackScaledByUpgradedHand': {
+      const upgraded = b.hand.filter(c => c.up && CARDS[c.id]).length;
+      applyEffect(state, {type:'attack', n:eff.base + eff.per * Math.min(eff.cap, upgraded)}, sourceCard, mods, context);
       break;
     }
     case 'conditional': {
@@ -669,6 +693,7 @@ function endTurn(state) {
   b.playsThisTurn = 0;
   b.smokeBonusUsedThisTurn = false;
   b.flashBonusUsedThisTurn = false;
+  b.upgradeEnergyUsedThisTurn = false;
   b.turn++;
   b.energy = 3;
   b.playerBlock = 0;
@@ -822,7 +847,14 @@ function generateShop(state) {
     const id = CARD_IDS[Math.floor(nextRand(state) * CARD_IDS.length)];
     cards.push({ id, price: priceOf(id) });
   }
-  return { cards };
+  return { cards, categoryUpgradeUsed:false };
+}
+
+export function categoryUpgradeQuote(state, category) {
+  if (!['attack', 'skill'].includes(category)) return {count:0, price:0, used:false};
+  const targets = state.deck.filter(c => !c.up && CARDS[c.id]?.type === category && CARDS[c.id]?.upgradeEffects?.length);
+  const price = targets.length ? 60 + targets.reduce((sum, c) => sum + ({common:28, uncommon:42, rare:56}[CARDS[c.id].rarity] || 28), 0) : 0;
+  return {count:targets.length, price, used:!!state.shop?.categoryUpgradeUsed};
 }
 
 function priceOf(cardId) {
@@ -862,6 +894,22 @@ function removeCard(state, action) {
   if (cost === 0 && state.relics.some(r => r.id === 'R09')) {
     state.freeRemovalUsed = true;
   }
+  return null;
+}
+
+function upgradeCategory(state, action) {
+  if (state.phase !== 'shop' || !state.shop) return '不在商店';
+  if (!['attack', 'skill'].includes(action.category)) return '无效类别';
+  const quote = categoryUpgradeQuote(state, action.category);
+  if (quote.used) return '本次补给已购买过批量升级';
+  if (quote.count === 0) return '没有可升级的卡牌';
+  if (state.money < quote.price) return '金币不足';
+  state.money -= quote.price;
+  for (const card of state.deck) {
+    if (!card.up && CARDS[card.id]?.type === action.category && CARDS[card.id]?.upgradeEffects?.length) card.up = true;
+  }
+  state.shop.categoryUpgradeUsed = true;
+  pushLog(state, 'upgrade_category', {category:action.category, count:quote.count, price:quote.price});
   return null;
 }
 

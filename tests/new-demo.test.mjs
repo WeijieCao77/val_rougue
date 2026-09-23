@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS } from '../new-demo/content.js';
-import { createRun, act } from '../new-demo/engine.js';
+import { createRun, act, legalActions, categoryUpgradeQuote } from '../new-demo/engine.js';
 import { buildMap } from '../new-demo/season-map.js';
 
 // Helper: create a controlled combat state with a battle fixture.
@@ -93,9 +93,9 @@ function totalBattleCards(battle) {
 
 // ----------------------------- Tests -----------------------------
 
-test('content: 75 unique permanent cards and 3 status cards', () => {
-  assert.equal(CARD_IDS.length, 75);
-  assert.equal(new Set(CARD_IDS).size, 75);
+test('content: 83 unique permanent cards and 3 status cards', () => {
+  assert.equal(CARD_IDS.length, 83);
+  assert.equal(new Set(CARD_IDS).size, 83);
   assert.equal(Object.keys(STATUS_CARDS).length, 3);
   for (const id of CARD_IDS) {
     const c = CARDS[id];
@@ -106,6 +106,83 @@ test('content: 75 unique permanent cards and 3 status cards', () => {
   for (const id of Object.keys(STATUS_CARDS)) {
     assert(!CARD_IDS.includes(id), `status card ${id} should not be in CARD_IDS`);
   }
+});
+
+test('hand and whole-combat upgrades never modify the permanent deck or status cards', () => {
+  let s = createTestBattle({handCards:['TA77','TA01','TA02','ST01'], drawPile:['TA05'], discardPile:['TA06'], energy:3});
+  const permanent = structuredClone(s.deck);
+  s = playCardById(s, 'TA77');
+  assert(s.battle.hand.filter(c=>c.id!=='ST01').every(c=>c.up));
+  assert.equal(s.battle.hand.find(c=>c.id==='ST01').up, false);
+  assert.equal(s.battle.hand.find(c=>c.id==='TA05').up, true);
+  assert.equal(s.battle.discardPile[0].up, false);
+  assert.deepEqual(s.deck, permanent);
+
+  s = createTestBattle({handCards:['TA78','TA01','ST01'], drawPile:['TA05'], discardPile:['TA06'], energy:3});
+  const original = structuredClone(s.deck);
+  s = playCardById(s, 'TA78');
+  assert.equal(s.battle.hand.find(c=>c.id==='TA01').up, true);
+  assert.equal(s.battle.hand.find(c=>c.id==='ST01').up, false);
+  assert.equal(s.battle.drawPile[0].up, true);
+  assert.equal(s.battle.discardPile[0].up, true);
+  assert.deepEqual(s.deck, original);
+});
+
+test('source-anchored upgrade cards use their upgraded effect and energy cost', () => {
+  let state = createTestBattle({handCards:['TA76','TA01','TA02'], energy:1});
+  state.battle.hand.find(card => card.id === 'TA76').up = true;
+  state = playCardById(state, 'TA76');
+  assert.equal(state.battle.energy, 0);
+  assert.equal(state.battle.playerBlock, 8); // 5 printed block + 3 from cover stance
+  assert(state.battle.hand.every(card => card.up));
+
+  state = createTestBattle({handCards:['TA78','TA01'], energy:1});
+  const base = act(state, {type:'play', uid:state.battle.hand[0].uid});
+  assert(base.error, 'base TA78 must require 2 energy');
+  state.battle.hand[0].up = true;
+  assert(legalActions(state).some(action => action.type === 'play' && action.uid === state.battle.hand[0].uid));
+  state = playCardById(state, 'TA78');
+  assert.equal(state.battle.energy, 0);
+  assert.equal(state.battle.playerBlock, 0);
+  assert.equal(state.battle.hand[0].up, true);
+});
+
+test('upgrade payoff counts other upgraded cards and power returns energy once per turn', () => {
+  let s = createTestBattle({handCards:['TA81','TA01','TA02','TA05'], enemyHp:40, energy:3});
+  s.battle.hand.filter(c=>c.id!=='TA81').forEach(c=>{c.up=true});
+  s = playCardById(s,'TA81');
+  assert.equal(s.battle.enemyHp,29);
+
+  s = createTestBattle({handCards:['TA83','TA05','TA06'], energy:3});
+  s.battle.hand.filter(c=>c.id!=='TA83').forEach(c=>{c.up=true});
+  s = playCardById(s,'TA83');
+  assert.equal(s.battle.energy,1);
+  s = playCardById(s,'TA05');
+  assert.equal(s.battle.energy,2);
+  s = playCardById(s,'TA06');
+  assert.equal(s.battle.energy,2);
+});
+
+test('shop category training quotes live deck, upgrades once, and rejects unaffordable actions', () => {
+  let s = createRun('shop-upgrade');
+  s.phase = 'shop';
+  s.shop = {cards:[{id:'TA01'}]}; // Older saves have no categoryUpgradeUsed field.
+  s.money = 1000;
+  const before = categoryUpgradeQuote(s,'attack');
+  s = act(s,{type:'buy',index:0,id:'TA01'}).state;
+  assert.equal(categoryUpgradeQuote(s,'attack').count, before.count+1);
+  s.money = 0;
+  const snapshot = structuredClone(s);
+  assert(act(s,{type:'upgradeCategory',category:'attack'}).error);
+  assert.deepEqual(s,snapshot);
+  s.money = 1000;
+  const quote = categoryUpgradeQuote(s,'attack');
+  const upgraded = act(s,{type:'upgradeCategory',category:'attack'});
+  assert(!upgraded.error,upgraded.error);
+  assert.equal(upgraded.state.money,1000-quote.price);
+  assert(upgraded.state.deck.filter(c=>CARDS[c.id].type==='attack').every(c=>c.up));
+  assert(upgraded.state.deck.some(c=>CARDS[c.id].type==='skill'&&!c.up));
+  assert(act(upgraded.state,{type:'upgradeCategory',category:'skill'}).error);
 });
 
 test('starter decks: at least 3 attacks and 2 block cards', () => {

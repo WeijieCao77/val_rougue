@@ -1,4 +1,4 @@
-import { createRun, act, legalActions, observe, preview, describeIntent } from './engine.js';
+import { createRun, act, legalActions, observe, preview, describeIntent, categoryUpgradeQuote } from './engine.js';
 import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS } from './content.js';
 import { ACTS } from './season-map.js';
 import { cardArt, combatArt, relicArt } from './art.js';
@@ -72,7 +72,7 @@ function getCardDisplay(card, up = false) {
     id: card.id,
     uid: card.uid,
     name: def.name,
-    cost: def.cost,
+    cost: up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost,
     type: def.type,
     tag: def.tag,
     rarity: def.rarity,
@@ -147,7 +147,7 @@ function renderHome() {
       <div class="hero-content">
         <div class="eyebrow">原创建构 · 三幕赛程</div>
         <h1 class="hero-title">战术试炼</h1>
-        <p class="hero-tagline">一支队伍，75种战术，三段赛程</p>
+        <p class="hero-tagline">一支队伍，${CARD_IDS.length}种战术，三段赛程</p>
       </div>
     </section>
     <section class="home-section" id="team-selection">
@@ -696,6 +696,12 @@ function renderShop(root) {
     </div>`;
   }).join('');
   const rmCost = removePrice(state);
+  const upgradeServices = ['attack', 'skill'].map(category => {
+    const quote = categoryUpgradeQuote(state, category);
+    const label = category === 'attack' ? '攻击牌' : '技能牌';
+    const disabled = quote.used || quote.count === 0 || state.money < quote.price;
+    return `<div class="upgrade-service"><strong>${label}</strong><span>${quote.count ? `${quote.count}张可升级 · ${quote.price}金币` : '暂无可升级牌'}</span><button class="btn" data-upgrade-category="${category}" ${disabled ? 'disabled' : ''}>${quote.used ? '本店已升级' : '升级这一类'}</button></div>`;
+  }).join('');
   const deckItems = state.deck.map(c => {
     const def = getCardDefinition(c.id);
     if (!def) return '';
@@ -712,6 +718,9 @@ function renderShop(root) {
       <p>金币：${state.money}</p>
       <h3>出售卡牌</h3>
       <div style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;">${shopCards}</div>
+      <h3>战术训练 · 选一类永久升级</h3>
+      <p>每次到店只能选一次；当前牌组升级后，后续比赛都会保留。</p>
+      <div class="upgrade-services">${upgradeServices}</div>
       <h3>删除卡牌（每张${rmCost}金币）</h3>
       <div class="deck-list">${deckItems}</div>
       <button class="btn" id="btn-leave">离开商店</button>
@@ -722,6 +731,9 @@ function renderShop(root) {
       const idx = parseInt(el.dataset.buyIndex);
       dispatch({ type: 'buy', index: idx, id: shop.cards[idx].id });
     });
+  });
+  document.querySelectorAll('[data-upgrade-category]').forEach(el => {
+    el.addEventListener('click', () => dispatch({type:'upgradeCategory', category:el.dataset.upgradeCategory}));
   });
   document.querySelectorAll('[data-remove-uid]').forEach(el => {
     el.addEventListener('click', () => {
@@ -896,7 +908,7 @@ function renderLibraryModal() {
           return `<div class="library-card" data-tooltip="${escapeHtml(tooltip)}" tabindex="0">
             <div class="card-art">${cardArt(id)}</div>
             <div class="name">${escapeHtml(c.name)}</div>
-            <div class="meta">${c.cost}费 ${typeMap[c.type]} ${tagMap[c.tag]} ${rarityMap[c.rarity]}</div>
+            <div class="meta">${c.cost}费${c.upgradeCost !== undefined ? ` → ${c.upgradeCost}费` : ''} ${typeMap[c.type]} ${tagMap[c.tag]} ${rarityMap[c.rarity]}</div>
             <div class="card-text">${escapeHtml(c.text)}</div>
             ${upgradeHtml}
           </div>`;
@@ -910,7 +922,7 @@ function renderLibraryModal() {
         return `<div class="library-card status-card" data-tooltip="${tooltip}" tabindex="0">
           <div class="card-art">${cardArt(c.id)}</div>
           <div class="name">${escapeHtml(c.name)}</div>
-          <div class="meta">状态 · 不可打出（不属于75张永久卡池）</div>
+          <div class="meta">状态 · 不可打出（不属于${CARD_IDS.length}张永久卡池）</div>
           <div class="card-text">${escapeHtml(c.text)}</div>
         </div>`;
       }).join('');

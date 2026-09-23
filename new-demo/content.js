@@ -1,5 +1,5 @@
 // new-demo/content.js
-// 75-card tactical action pool with all effects described from structured data.
+// Tactical action pool with all effects described from structured data.
 
 export const CARDS = {};
 export const CARD_IDS = [];
@@ -24,7 +24,9 @@ const addCardToHand = (id, n = 1) => ({ type: 'addCardToHand', id, n });
 const purgePlayerStatus = (id, n = 1) => ({ type: 'purgePlayerStatus', id, n });
 const purgeEnemyStatus = (id, n = 1) => ({ type: 'purgeEnemyStatus', id, n });
 const upgradeRandomInHand = () => ({ type: 'upgradeRandomInHand' });
+const upgradeAllInHand = () => ({ type: 'upgradeAllInHand' });
 const upgradeAllInCombatDeck = () => ({ type: 'upgradeAllInCombatDeck' });
+const attackScaledByUpgradedHand = (base, per, cap) => ({ type: 'attackScaledByUpgradedHand', base, per, cap });
 const conditional = (condition, effect) => ({ type: 'conditional', condition, effect });
 const repeat = (times, effect) => ({ type: 'repeat', times, effect });
 
@@ -90,10 +92,16 @@ function formatEffects(effects) {
         break;
       }
       case 'upgradeRandomInHand':
-        parts.push('随机升级手牌中一张可升级的牌');
+        parts.push('本场随机升级1张手牌');
+        break;
+      case 'upgradeAllInHand':
+        parts.push('本场升级其余全部手牌');
         break;
       case 'upgradeAllInCombatDeck':
-        parts.push('升级战斗中牌组中所有可升级的牌');
+        parts.push('本场升级全部战术牌');
+        break;
+      case 'attackScaledByUpgradedHand':
+        parts.push(`伤害${eff.base}；其余每张升级手牌+${eff.per}（最多${eff.cap}张）`);
         break;
       case 'conditional':
         parts.push(`若${conditionText(eff.condition)}，${formatEffects([eff.effect])}`);
@@ -133,7 +141,8 @@ function powerDesc(powerId) {
     flash_core: '每回合第一次给予闪光+2',
     tactical_master: '每回合获得2点额外能量',
     clutch_core: '敌人有烟雾或闪光时，攻击伤害+2',
-    final_push: '每回合开始获得3点布防'
+    final_push: '每回合开始获得3点布防',
+    upgrade_core: '每回合首次打出升级牌后，返还1点能量'
   };
   return map[powerId] || '';
 }
@@ -161,7 +170,7 @@ function def(card) {
   }
 }
 
-// ----------------------------- All 75 permanent cards -----------------------------
+// ----------------------------- Permanent cards -----------------------------
 const defs = [
   // Basic universal actions (18)
   { id:'TA01', name:'基础补枪', cost:1, type:'attack', tag:'basic', rarity:'common', effects:[atk(6)], upgradeEffects:[atk(8)] },
@@ -171,10 +180,10 @@ const defs = [
   { id:'TA05', name:'快速补枪', cost:0, type:'attack', tag:'basic', rarity:'common', effects:[atk(4)], upgradeEffects:[atk(6)] },
   { id:'TA06', name:'快速架点', cost:0, type:'skill', tag:'basic', rarity:'common', effects:[block(3)], upgradeEffects:[block(5)] },
   { id:'TA07', name:'战术观察', cost:1, type:'skill', tag:'basic', rarity:'common', effects:[draw(1)], upgradeEffects:[draw(2)] },
-  { id:'TA08', name:'谨慎推进', cost:1, type:'skill', tag:'basic', rarity:'common', effects:[block(4), draw(1)], upgradeEffects:[block(6), draw(1)] },
+  { id:'TA08', name:'谨慎推进', cost:1, type:'skill', tag:'basic', rarity:'common', effects:[block(5), draw(2)], upgradeEffects:[block(8), draw(2)] },
   { id:'TA09', name:'快速换弹', cost:0, type:'skill', tag:'basic', rarity:'common', effects:[draw(1)], upgradeEffects:[draw(2)] },
   { id:'TA10', name:'正面突击', cost:2, type:'attack', tag:'basic', rarity:'common', effects:[atk(8), weak(1)], upgradeEffects:[atk(11), weak(2)] },
-  { id:'TA11', name:'巩固防线', cost:2, type:'skill', tag:'basic', rarity:'common', effects:[block(8), draw(1)], upgradeEffects:[block(11), draw(1)] },
+  { id:'TA11', name:'巩固防线', cost:2, type:'skill', tag:'basic', rarity:'uncommon', effects:[weak(2), block(11)], upgradeEffects:[weak(3), block(14)] },
   { id:'TA12', name:'烟墙掩护', cost:1, type:'skill', tag:'basic', rarity:'common', effects:[smoke(3), block(3)], upgradeEffects:[smoke(4), block(4)] },
   { id:'TA13', name:'闪光突破', cost:1, type:'attack', tag:'basic', rarity:'common', effects:[flash(1), atk(4)], upgradeEffects:[flash(2), atk(6)] },
   { id:'TA14', name:'队伍集结', cost:0, type:'skill', tag:'basic', rarity:'common', effects:[block(2)], upgradeEffects:[block(4)] },
@@ -192,7 +201,7 @@ const defs = [
   { id:'TA24', name:'扫射压制', cost:2, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(5,3)], upgradeEffects:[atk(6,3)] },
   { id:'TA25', name:'爆头一击', cost:2, type:'attack', tag:'damage', rarity:'rare', effects:[atk(18)], upgradeEffects:[atk(24)] },
   { id:'TA26', name:'残局收割', cost:1, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(8), conditional('enemy_smoke', atk(8))], upgradeEffects:[atk(10), conditional('enemy_smoke', atk(10))] },
-  { id:'TA27', name:'穿墙射击', cost:2, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(9), draw(1)], upgradeEffects:[atk(12), draw(1)] },
+  { id:'TA27', name:'穿墙射击', cost:1, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(9), draw(1)], upgradeEffects:[atk(10), draw(2)] },
   { id:'TA28', name:'警戒射击', cost:1, type:'attack', tag:'damage', rarity:'common', effects:[atk(7)], upgradeEffects:[atk(10)] },
   { id:'TA29', name:'预瞄点射', cost:1, type:'attack', tag:'damage', rarity:'uncommon', effects:[atk(6), block(3)], upgradeEffects:[atk(8), block(4)] },
   { id:'TA30', name:'反架点', cost:2, type:'attack', tag:'damage', rarity:'rare', effects:[purgeEnemyStatus('block', 12), atk(14), exhaustSelf()], exhaust: true, upgradeEffects:[purgeEnemyStatus('block', 18), atk(17), exhaustSelf()] },
@@ -236,7 +245,7 @@ const defs = [
   { id:'TA60', name:'烟中补枪', cost:1, type:'attack', tag:'hybrid', rarity:'uncommon', effects:[atk(6), conditional('enemy_smoke', atk(6))], upgradeEffects:[atk(8), conditional('enemy_smoke', atk(8))] },
   { id:'TA61', name:'闪后补枪', cost:1, type:'attack', tag:'hybrid', rarity:'uncommon', effects:[atk(6), conditional('enemy_flash', atk(6))], upgradeEffects:[atk(8), conditional('enemy_flash', atk(8))] },
   { id:'TA62', name:'布防反击', cost:1, type:'attack', tag:'hybrid', rarity:'uncommon', effects:[atk(7), conditional('prev_played_attack', block(4))], upgradeEffects:[atk(9), conditional('prev_played_attack', block(6))] },
-  { id:'TA63', name:'道具补枪', cost:1, type:'attack', tag:'hybrid', rarity:'uncommon', effects:[atk(6), draw(1)], upgradeEffects:[atk(8), draw(2)] },
+  { id:'TA63', name:'道具补枪', cost:0, type:'attack', tag:'hybrid', rarity:'uncommon', effects:[atk(3), draw(1)], upgradeEffects:[atk(6), draw(1)] },
   { id:'TA64', name:'战术换防', cost:1, type:'skill', tag:'hybrid', rarity:'uncommon', effects:[block(6), stanceSwitch()], upgradeEffects:[block(9), stanceSwitch()] },
   { id:'TA65', name:'补枪换防', cost:2, type:'attack', tag:'hybrid', rarity:'rare', effects:[atk(10), block(6)], upgradeEffects:[atk(14), block(9)] },
   { id:'TA66', name:'烟闪循环', cost:1, type:'skill', tag:'hybrid', rarity:'uncommon', effects:[smoke(2), flash(2)], upgradeEffects:[smoke(3), flash(3)] },
@@ -250,7 +259,17 @@ const defs = [
   { id:'TA72', name:'破防闪光', cost:1, type:'skill', tag:'response', rarity:'uncommon', effects:[purgeEnemyStatus('block',99), draw(1)], upgradeEffects:[purgeEnemyStatus('block',99), draw(2)] },
   { id:'TA73', name:'紧急调度', cost:0, type:'skill', tag:'response', rarity:'uncommon', effects:[draw(3), exhaustSelf()], exhaust: true, upgradeEffects:[draw(4), exhaustSelf()] },
   { id:'TA74', name:'临时补给', cost:0, type:'skill', tag:'response', rarity:'common', effects:[energy(2), exhaustSelf()], upgradeEffects:[energy(3), exhaustSelf()], exhaust: true },
-  { id:'TA75', name:'最终动员', cost:3, type:'power', tag:'response', rarity:'rare', power:'final_push', effects:[], upgradeEffects:[] }
+  { id:'TA75', name:'最终动员', cost:3, type:'power', tag:'response', rarity:'rare', power:'final_push', effects:[], upgradeEffects:[] },
+
+  // Temporary in-combat upgrades and payoffs (8). Permanent deck copies never change here.
+  { id:'TA76', name:'战术笔记', cost:1, type:'skill', tag:'response', rarity:'common', effects:[block(5), upgradeRandomInHand()], upgradeEffects:[block(5), upgradeAllInHand()] },
+  { id:'TA77', name:'集体复盘', cost:1, type:'skill', tag:'response', rarity:'rare', effects:[draw(1), block(5), upgradeAllInHand(), exhaustSelf()], upgradeEffects:[draw(2), block(5), upgradeAllInHand(), exhaustSelf()], exhaust:true },
+  { id:'TA78', name:'赛前统筹', cost:2, upgradeCost:1, type:'skill', tag:'core', rarity:'rare', effects:[upgradeAllInCombatDeck(), exhaustSelf()], upgradeEffects:[upgradeAllInCombatDeck(), exhaustSelf()], exhaust:true },
+  { id:'TA79', name:'临场加练', cost:0, type:'skill', tag:'response', rarity:'uncommon', effects:[upgradeRandomInHand(), exhaustSelf()], upgradeEffects:[draw(1), upgradeRandomInHand(), exhaustSelf()], exhaust:true },
+  { id:'TA80', name:'烟中回看', cost:1, type:'skill', tag:'utility', rarity:'uncommon', effects:[conditional('enemy_smoke', upgradeRandomInHand()), smoke(3), block(2)], upgradeEffects:[conditional('enemy_smoke', upgradeRandomInHand()), smoke(4), block(4)] },
+  { id:'TA81', name:'精练攻势', cost:1, type:'attack', tag:'hybrid', rarity:'uncommon', effects:[attackScaledByUpgradedHand(5,2,4)], upgradeEffects:[attackScaledByUpgradedHand(7,2,4)] },
+  { id:'TA82', name:'连夜复盘', cost:1, type:'skill', tag:'response', rarity:'rare', effects:[draw(2), upgradeRandomInHand(), exhaustSelf()], upgradeEffects:[draw(3), upgradeRandomInHand(), exhaustSelf()], exhaust:true },
+  { id:'TA83', name:'精练体系', cost:2, type:'power', tag:'core', rarity:'rare', power:'upgrade_core', effects:[], upgradeEffects:[] }
 ];
 
 defs.forEach(c => def(c));

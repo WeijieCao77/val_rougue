@@ -651,6 +651,10 @@ button { font-family: inherit; cursor: pointer; }
   justify-content: space-between;
   border: 1px solid var(--border);
 }
+.upgrade-services{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:min(100%,560px);margin:0 auto 14px}
+.upgrade-service{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;border:1px solid #718f8c;border-radius:7px;background:#1a3035;color:#e6f3e8;font-size:13px}
+.upgrade-service span{color:#b7d2cb;font-size:11px}.upgrade-service .btn{white-space:nowrap}
+@media(max-width:650px){.upgrade-services{grid-template-columns:1fr}.upgrade-service{font-size:12px;padding:8px}}
 
 /* Library modal */
 .modal-overlay {
