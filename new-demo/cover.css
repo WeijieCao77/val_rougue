@@ -128,27 +128,6 @@
   font-size: 10px;
   line-height: 1.2;
 }
-.new-home .seed-control {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: min(100%, 350px);
-  color: #9bbdb9;
-  font-size: 11px;
-}
-.new-home .seed-control label { flex: none; }
-.new-home .seed-input {
-  min-width: 0;
-  width: 100%;
-  height: 34px;
-  padding: 5px 10px;
-  border: 1px solid #567774;
-  border-radius: 4px;
-  background: #101e25;
-  color: #e8f0eb;
-  font-size: 12px;
-}
 .new-home .home-actions {
   display: flex;
   justify-content: center;

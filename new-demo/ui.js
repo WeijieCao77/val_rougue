@@ -12,7 +12,6 @@ let previousState = null;
 let selectedCardUid = null;
 let showLibrary = false;
 let selectedTeam = 'breach';
-let seedInputValue = '';
 let noticeTimeout = null;
 let presentationBusy = false;
 
@@ -157,10 +156,6 @@ function renderHome() {
       <div class="team-select" role="radiogroup" aria-label="选择初始队伍">
         ${teamsHtml}
       </div>
-      <div class="seed-control">
-        <label for="seed-input">赛季种子</label>
-        <input type="text" id="seed-input" class="seed-input" placeholder="留空为随机" value="${escapeHtml(seedInputValue)}" />
-      </div>
       <div class="home-actions">
         <button class="btn primary" id="btn-new-secondary">确认开赛</button>
         <button class="btn" id="btn-continue" ${continueDisabled ? 'disabled' : ''}>继续上局</button>
@@ -199,17 +194,12 @@ function renderHome() {
     });
   }
 
-  const seedInput = document.getElementById('seed-input');
-  seedInput.addEventListener('input', e => {
-    seedInputValue = e.target.value;
-  });
-
   function startNewGame() {
     if (loadState()) {
       const confirmOverwrite = window.confirm('开始新局将覆盖当前存档，确定？');
       if (!confirmOverwrite) return;
     }
-    const seed = seedInputValue.trim() || String(Date.now());
+    const seed = crypto.randomUUID();
     state = createRun(seed, selectedTeam);
     saveState();
     selectedCardUid = null;
