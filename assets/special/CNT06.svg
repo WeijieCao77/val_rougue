@@ -1,1 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 340"><defs><linearGradient id="b" x2="1" y2="1"><stop stop-color="#273f5a"/><stop offset="1" stop-color="#101820"/></linearGradient></defs><rect width="500" height="340" fill="url(#b)"/><path d="M0 257L500 132M0 307L500 182" stroke="#d8a86e" stroke-opacity=".18" stroke-width="2"/><path d="M105 257l68-98 51 42 77-104 97 129-47 34-47-63-70 91-56-43-48 63z" fill="none" stroke="#d8a86e" stroke-width="20" stroke-linejoin="round"/><circle cx="327" cy="99" r="29" fill="#d8a86e"/><text x="24" y="42" fill="#d8a86e" font-family="sans-serif" font-size="28" font-weight="700">✦ CN</text><text x="250" y="316" text-anchor="middle" fill="#f3eee3" font-family="sans-serif" font-size="21" font-weight="700">战术过牌</text></svg>
+<svg viewBox="0 0 200 112" class="tc-svg" role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <defs><pattern id="g94386" width="16" height="16" patternUnits="userSpaceOnUse" x="2" y="-15"><path d="M16 0H0V16" fill="none" stroke="#4fb3ff" stroke-opacity=".07" stroke-width="1"/></pattern></defs>
+    <rect width="200" height="112" fill="#0b1015"/><rect width="200" height="112" fill="url(#g94386)"/>
+    <g><path d="M100 20 70 32v24c0 20 13 34 30 40 17-6 30-20 30-40V32z" fill="#4fb3ff" opacity=".9"/><path d="M100 30v58M80 48h40" stroke="rgba(0,0,0,.35)" stroke-width="3"/></g>
+  </svg>

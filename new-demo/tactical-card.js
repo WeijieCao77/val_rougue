@@ -80,21 +80,14 @@ const GLYPHS = {
 export function tacticalArt(def) {
   const t = TYPE[def.type] || TYPE.skill;
   const h = hash(def.id || def.name);
-  const grid = 14 + (h % 6);
+  const grid = 16;
   const ox = h % grid, oy = (h >> 5) % grid;
   const glyph = (GLYPHS[emblemOf(def)] || GLYPHS.intel)(t.color);
-  const gx = (h >> 9) % 90 + 10, gy = (h >> 13) % 60 + 10;
-  const coord = `${String((h >> 3) % 90).padStart(2, '0')}°${String((h >> 7) % 60).padStart(2, '0')}′N · ${String((h >> 11) % 180).padStart(3, '0')}°E`;
   const uid = 'g' + (h % 100000);
   return `<svg viewBox="0 0 200 112" class="tc-svg" role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-    <defs><pattern id="${uid}" width="${grid}" height="${grid}" patternUnits="userSpaceOnUse" x="${ox}" y="${oy}"><path d="M${grid} 0H0V${grid}" fill="none" stroke="${t.color}" stroke-opacity=".13" stroke-width="1"/></pattern>
-    <radialGradient id="${uid}r" cx="50%" cy="50%" r="60%"><stop offset="0" stop-color="${t.color}" stop-opacity=".22"/><stop offset="1" stop-color="#05080c" stop-opacity="0"/></radialGradient></defs>
-    <rect width="200" height="112" fill="#0a0f14"/><rect width="200" height="112" fill="url(#${uid})"/><rect width="200" height="112" fill="url(#${uid}r)"/>
-    <path d="M${gx} ${gy} q30 -12 60 4 t60 -6" fill="none" stroke="${t.color}" stroke-opacity=".18" stroke-width="1" stroke-dasharray="4 4"/>
-    <circle cx="${200 - gx}" cy="${112 - gy / 2}" r="${10 + (h % 14)}" fill="none" stroke="${t.color}" stroke-opacity=".2"/>
+    <defs><pattern id="${uid}" width="${grid}" height="${grid}" patternUnits="userSpaceOnUse" x="${ox}" y="${oy}"><path d="M${grid} 0H0V${grid}" fill="none" stroke="${t.color}" stroke-opacity=".07" stroke-width="1"/></pattern></defs>
+    <rect width="200" height="112" fill="#0b1015"/><rect width="200" height="112" fill="url(#${uid})"/>
     <g>${glyph}</g>
-    <path d="M6 16V6h10M184 6h10v10M194 96v10h-10M16 106H6V96" fill="none" stroke="${t.color}" stroke-width="1.5" stroke-opacity=".8"/>
-    <text x="8" y="104" fill="${t.color}" fill-opacity=".7" font-size="7" font-family="Bahnschrift, 'Arial Narrow', sans-serif" letter-spacing=".5">${coord}</text>
   </svg>`;
 }
 
@@ -111,6 +104,6 @@ export function tacticalCard(def, opts = {}) {
     <div class="tc-art">${tacticalArt(def)}${opts.badge ? `<span class="tc-badge">${opts.badge}</span>` : ''}</div>
     <h4 class="tc-name">${esc(def.name)}${up ? '<i>+</i>' : ''}</h4>
     <div class="tc-text">${text}</div>
-    <footer class="tc-foot"><span class="tc-rarity" aria-label="稀有度 ${rarity}">${'<i></i>'.repeat(rarity)}</span><span class="tc-id">${esc(def.id || '')}${def.exhaust ? ' · 消耗' : ''}${def.retain ? ' · 保留' : ''}</span></footer>
+    <footer class="tc-foot"><span class="tc-rarity" aria-label="稀有度 ${rarity}">${'<i></i>'.repeat(rarity)}</span><span class="tc-id">${def.exhaust ? '消耗' : ''}${def.retain ? '保留' : ''}</span></footer>
   </article>`;
 }

@@ -1,6 +1,23 @@
 import {readFile,writeFile,access} from 'node:fs/promises';
 import {CARDS,ENEMIES,REGIONS} from '../content.js';
 import {weaponFrame} from '../weapon-frame.js';
+import {tacticalArt} from '../new-demo/tactical-card.js';
+// Regional tactic cards get an emblem drawn from what they do (not a person).
+const TACTIC_ID=/^(CN|AM|EU|PA)T\d{2}$/;
+function toEmblemEffect(e){
+ if(!e)return e;
+ if(e.type==='hit')return {type:'attack',n:e.n,times:e.times};
+ if(e.type==='vulnerable')return {type:'vuln',n:e.n};
+ if(e.type==='bodyslam')return {type:'attackFromBlock'};
+ if(e.type==='token')return {type:'addCardToHand',id:e.id==='TK03'?'TK01':e.id};
+ if(e.type==='combo')return {type:'conditional',effect:toEmblemEffect(e.effect)};
+ return e;
+}
+function tacticEmblem(c){
+ const effects=(c.effects||[]).map(toEmblemEffect);
+ const type=c.zone==='power'?'power':effects.some(e=>e.type==='attack'||e.effect?.type==='attack'||e.type==='attackFromBlock')?'attack':'skill';
+ return tacticalArt({id:c.id,name:c.name,type,effects});
+}
 const root=new URL('../',import.meta.url);
 const players=JSON.parse(await readFile(new URL('assets/player-sources.json',root),'utf8')).players;
 const opponents=JSON.parse(await readFile(new URL('assets/opponent-sources.json',root),'utf8'));
@@ -20,7 +37,8 @@ for(const c of Object.values(CARDS)){
  if(c.player&&p)cards[c.id]={path:p.path,profileUrl:p.profileUrl,name:c.name,kind:'photo',photoPage:p.photoPage,photoCredit:p.photoCredit,fit:p.fit};
  else {
   const path=c.player?`assets/players/${c.id}.svg`:`assets/special/${c.id}.svg`;
-  try{await access(new URL(path,root));}catch{await writeFile(new URL(path,root),conceptArt(c));}
+  if(TACTIC_ID.test(c.id))await writeFile(new URL(path,root),tacticEmblem(c));
+  else try{await access(new URL(path,root));}catch{await writeFile(new URL(path,root),conceptArt(c));}
   cards[c.id]={path,name:c.name,kind:'illustration',concept:!!c.player};
  }
 }

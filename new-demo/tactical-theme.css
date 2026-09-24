@@ -126,3 +126,14 @@ body {
 .tc-text, .tc-text * { white-space: normal !important; overflow-wrap: anywhere; }
 .battle .hand-card .tc-text { display: block; -webkit-line-clamp: unset; }
 .tc-text .kw { white-space: nowrap !important; }
+
+/* Calmer card: fewer effects, plain coloured keywords. */
+.tc { box-shadow: none; background: #121a21; }
+.tc-r3 { box-shadow: none; }
+.tc-art::after { display: none; }
+.tc-art { border-color: rgba(255, 255, 255, .05); }
+.tc-code { border: 0; padding: 0; }
+.tc .tc-text { background: none; border-left: 0; padding: 2px 1px; }
+.tc .tc-text .kw { text-shadow: none; font-weight: 800; }
+.tc .tc-text .kw .status-svg { display: none; }
+.tc-rarity i { width: 9px; height: 3px; transform: none; }
