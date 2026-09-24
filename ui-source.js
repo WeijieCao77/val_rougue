@@ -3,7 +3,7 @@ import {combatEvents} from './combat-events.js';
 import {clearCombatFx,captureCombatStage,playCombatFx} from './combat-fx.js';
 import {VERSION,CARDS,SKINS,ENEMIES,describe,cardName,effects,TACTICS,displayText,compactLines,cardKeywords,REGIONS,CURSE_RULES,TRAITS,FIELDS} from './content.js';
 import {statusBadges,statusIcon,highlightKeywords} from './shared/status-icons.js';
-import {createRun,canPlay,preview,intent,intentText,healAmount,removalReason,observe,shopPrice,R,hasGear,supplySlots,marketPrice,restHeal,enemyMaxHp,gearSellValue,describeSeasonEvent,E,rerollPrice,restRate,regionUnlockPlan} from './engine.js';
+import {createRun,canPlay,preview,intent,intentText,incomingDamage,healAmount,removalReason,observe,shopPrice,R,hasGear,supplySlots,marketPrice,restHeal,enemyMaxHp,gearSellValue,describeSeasonEvent,E,rerollPrice,restRate,regionUnlockPlan} from './engine.js';
 import {UNLOCK_TIERS,tierOfXp,runXp,normalizeProgress,progressTier,progressGearTier,awardRun} from './shared-unlock.js';
 import {CARD_RARITY,RARITY_LABELS} from './card-rarity.js';
 import {REGION_TRAITS,TRAIT_TUNING,ASCENSION_LEVELS,MAX_ASCENSION,OPENING_OPTIONS,GEAR,SUPPLIES,RARITY,SUPPLY_PRICES,GEAR_PRICES,GEAR_SLOTS,gearName,ECON_VERSION,GEAR_UNLOCKS,SKIP_FUNDS,INVESTMENTS} from './wa-rules.js';
@@ -11,7 +11,9 @@ import {createWaSeason,waAct as act,waLegalActions as legalActions} from './wa-s
 import {syncWaCheckpoint} from './wa-online.js';
 import {flyCardsFromPile,flyCardsToPile} from './shared/card-pile-motion.js';
 import {soundToggleHtml} from './shared/sfx.js';
+import {attachCardDetail,cardSheetOpen,showDragHint,hideDragHint,touchLift} from './shared/touch-feel.js';
 import {waJuiceAction,waSlam} from './wa-juice.js';
+import {computeScore,scoreFormulaText,recordRun,loadHistory,markSeen,loadCollection,seenCount,trackStep,loadTracker,saveTracker,newTracker,filterSortCards,SORT_LABELS,COST_FILTERS,formatDuration} from './shared/run-meta.js';
 const createSeason=(seed,tutorial,region,opts)=>createWaSeason(seed,tutorial,region,crypto.randomUUID(),opts);
 // Difficulty unlocks per region: the highest level the player may pick (0–10).
 const ASC_KEY='wa-ascension-v1';
@@ -76,6 +78,7 @@ function persist(){
     recordUnlockProgress(state);
     localStorage.setItem(key,JSON.stringify(state));
     saved=state; saveError=''; saveView();
+    trackRun(state);
     const unlocked=recordAscensionWin(state);if(unlocked)state.ascensionNotice=unlocked;
   }catch{
     saveError='自动保存失败，请导出对局记录留存。';
@@ -136,7 +139,8 @@ function home(){
    <div class="setup-start">${ui('确认开赛','start-season','primary')}</div>
    <div class="button-row">
      ${ui('游戏规则','rules','text-button')}
-     ${ui('卡牌总览','library','text-button')}
+     ${ui('图鉴','library','text-button')}
+     ${ui('战绩','history','text-button')}
      <a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a>
      <a class="text-button" href="/pvp/">好友PvP</a>
      <a class="text-button" href="/">选择版本</a>
@@ -188,7 +192,7 @@ function seasonRoute(){
  const done=nodes.filter(n=>n.status==='visited'&&n.kind!=='boss').length,floors=s.map.nodes.reduce((m,n)=>n.kind==='boss'?m:Math.max(m,n.step),0);
  const lines=s.map.edges.map(e=>{const a=lookup.get(e.from),b=lookup.get(e.to),taken=a.status==='visited'&&(b.status==='visited'||resume&&b.key===s.currentNode);return `<path class="${taken?'taken':a.key===s.currentNode&&b.status==='current'?'available':''}" d="M ${a.x*7} ${a.y*14} C ${a.x*7} ${(a.y-3)*14}, ${b.x*7} ${(b.y+3)*14}, ${b.x*7} ${b.y*14}"/>`;});
  const itinerary=`<ol class="season-itinerary">${ACTS.map(a=>`<li class="${a.id===s.act?'active':a.id<s.act?'complete':''}"><b>${a.id<s.act?'✓':a.id}</b><span>${a.name}<small>${a.bossName}</small></span></li>`).join('')}</ol>`;
- return `<main class="map-screen season-map"><aside class="map-intro"><div class="eyebrow">ACT ${['I','II','III'][s.act-1]} / ${esc(REGIONS[s.region].name)}</div><h1>${info.name}</h1>${itinerary}<div class="map-progress"><b>${done}</b><span> / ${floors} 站完成 · 之后是决赛</span></div><div class="map-legend">${[['battle','比赛'],['elite','强敌'],['event','未知'],['shop','转会市场'],['crate','补给箱'],['rest','俱乐部活动'],['boss','世界赛']].map(([k,t])=>`<span>${icon(k)}${t}</span>`).join('')}</div><p class="map-instruction">${resume?'比赛与奖励尚未完成，可查看后续路线，再返回当前节点。':s.currentNode===null?'四个起点任选其一。向上滑动地图，可先看决赛和后续路线。':'沿连线选择下一站。分叉会改变接下来的比赛和补强机会。'}</p>${s.phase!=='map'?ui(s.phase==='intermission'?'查看晋级与下一幕':s.phase==='result'?'查看赛季结算':'返回当前节点','return-room','primary'):''}</aside><div class="map-scroll"><div class="map-board season-board"><div class="map-watermark">ASCEND</div><svg class="map-paths" viewBox="0 0 700 1400" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes.map(n=>`<div class="map-stop ${n.status} kind-${n.kind}" style="left:${n.x}%;top:${n.y}%"><button data-map="${n.key}" ${n.status==='current'?'':'disabled'} aria-label="${n.status==='current'?(resume?'返回':'进入'):n.status==='visited'?'已完成':n.status==='bypassed'?'未选择':'未解锁'}：第 ${n.step} 站 ${esc(n.name)}${n.revealed?`（已揭晓：${REVEALED[n.revealed]}）`:''}">${icon(n.revealed||n.kind)}${n.status==='visited'?'<span class="visited-check">✓</span>':''}</button><span class="node-label">${esc(n.name)}</span>${n.status==='current'?`<small class="here-label">${resume?'正在进行':'可选下一站'}</small>`:''}</div>`).join('')}</div></div><aside class="map-current"><span class="eyebrow">赛季进度 ${s.node} / ${3*(floors+1)} 节点</span><h3>${s.phase==='intermission'?'世界赛晋级':s.phase==='result'?'赛季结束':resume?'完成当前节点':`可选 ${choices.length} 条路线`}</h3><p>本幕终点：${info.bossName}。<br>强敌提供装备；俱乐部活动可恢复声望或训练；市场可招募与移除牌${R(s)?'，并出售装备与补给品':''}；补给箱必得资金，常有装备。未知节点进入后揭晓，多半是事件，也可能是比赛、市场或补给箱。</p><p>节点内容与连线随赛季种子生成。已进入的节点不会因刷新而改变。</p>${s.phase!=='map'?ui('返回当前进度','return-room','secondary'):''}</aside></main>`;
+ return `<main class="map-screen season-map"><aside class="map-intro"><div class="eyebrow">ACT ${['I','II','III'][s.act-1]} / ${esc(REGIONS[s.region].name)}</div><h1>${info.name}</h1>${itinerary}<div class="map-progress"><b>${done}</b><span> / ${floors} 站完成 · 之后是决赛</span></div><div class="map-legend">${[['battle','比赛'],['elite','强敌'],['event','未知'],['shop','转会市场'],['crate','补给箱'],['rest','俱乐部活动'],['boss','世界赛']].map(([k,t])=>`<span>${icon(k)}${t}</span>`).join('')}</div><p class="map-instruction">${resume?'比赛与奖励尚未完成，可查看后续路线，再返回当前节点。':s.currentNode===null?'四个起点任选其一。向上滑动地图，可先看决赛和后续路线。':'沿连线选择下一站。分叉会改变接下来的比赛和补强机会。'}</p>${s.phase!=='map'?ui(s.phase==='intermission'?'查看晋级与下一幕':s.phase==='result'?'查看赛季结算':'返回当前节点','return-room','primary'):''}</aside><div class="map-scroll"><div class="map-board season-board"><div class="map-watermark">ASCEND</div><svg class="map-paths" viewBox="0 0 700 1400" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes.map(n=>`<div class="map-stop ${n.status} kind-${n.kind}" style="left:${n.x}%;top:${n.y}%" title="${esc(n.revealed?REVEALED[n.revealed]+'（未知已揭晓）':KIND_NAMES[n.kind]||n.kind)}"><button data-map="${n.key}" ${n.status==='current'?'':'disabled'} aria-label="${esc(KIND_NAMES[n.kind]||'')} · ${n.status==='current'?(resume?'返回':'进入'):n.status==='visited'?'已完成':n.status==='bypassed'?'未选择':'未解锁'}：第 ${n.step} 站 ${esc(n.name)}${n.revealed?`（已揭晓：${REVEALED[n.revealed]}）`:''}">${icon(n.revealed||n.kind)}${n.status==='visited'?'<span class="visited-check">✓</span>':''}</button><span class="node-label">${esc(n.name)}</span>${n.status==='current'?`<small class="here-label">${resume?'正在进行':'可选下一站'}</small>`:''}</div>`).join('')}</div></div><aside class="map-current"><span class="eyebrow">赛季进度 ${s.node} / ${3*(floors+1)} 节点</span><h3>${s.phase==='intermission'?'世界赛晋级':s.phase==='result'?'赛季结束':resume?'完成当前节点':`可选 ${choices.length} 条路线`}</h3><p>本幕终点：${info.bossName}。<br>强敌提供装备；俱乐部活动可恢复声望或训练；市场可招募与移除牌${R(s)?'，并出售装备与补给品':''}；补给箱必得资金，常有装备。未知节点进入后揭晓，多半是事件，也可能是比赛、市场或补给箱。</p><p>节点内容与连线随赛季种子生成。已进入的节点不会因刷新而改变。</p>${s.phase!=='map'?ui('返回当前进度','return-room','secondary'):''}</aside></main>`;
 }
 function targetOf(c){return effects(c).some(e=>['hit','weak','vulnerable'].includes(e.type))?'enemy':'self';}
 function handCard(c,i,n){const t=CARDS[c.id],reason=canPlay(state,c.uid),offset=i-(n-1)/2;return `<button class="hand-card role-${t.player?t.role:t.id.slice(0,2)} ${reason?'unplayable':''} ${c.up?'upgraded':''}${rarityClass(c.id)}" data-card-id="${c.id}" data-card-up="${!!c.up}" data-select="${c.uid}" draggable="false" style="--offset:${offset};--tilt:${offset*(n>6?1.6:3)}deg;--bend:${Math.abs(offset)*Math.abs(offset)*1.8}px;--order:${i}" aria-label="选择 ${esc(cardName(c))} · ${esc(TACTICS[c.id].title)}，${t.role}，${t.cost===null?'不能打出':t.cost+' 行动点'}，${esc(describe(c))}"><span class="card-face">${face(c)}</span><span class="card-key">${(i+1)%10}</span>${reason?`<span class="card-unavailable">${esc(reason)}</span>`:''}</button>`;}
@@ -201,7 +205,7 @@ function fighter(which){
  const traitHtml=trait?`<div class="trait-row"><span class="trait-tag" tabindex="0" title="${esc(trait.text(b.trait.n))}">${statusIcon(trait.icon)}${esc(trait.name)}${b.trait.id==='tempo'?` ${b.tempoCount||0}/${b.trait.n}`:''}</span></div>`:own&&R(state)?regionTraitTag(state):'';
  const hidden=!own&&hasGear(state,'BX03');
  const look=e.look||(/E01$/.test(b.enemy)?'rookie':b.enemy);
- return `<section data-drop-target="${which}" class="fighter ${own?'ally':'enemy'}"${own?'':` data-character-variant="${esc(look)}"`}>${!own?`<div class="intent-bubble"><small>对手意图</small><strong>${hidden?'信息封锁：看不到对手意图':highlightKeywords(displayText(intentText(state)))}</strong>${e.boss?`<span>长战增伤 +${b.cycles*growth}</span>`:''}</div>`:'<div class="team-label">'+(state.region||'CN')+'俱乐部</div>'}<button class="combat-target" data-target="${which}" aria-label="${own?'我方俱乐部':'对手队伍'}，可作为出牌目标">${own?`<span class="crest">${icon('shield')}<b>${state.region||'CN'}</b></span>`:opponentArtwork(b.enemy)}<span class="target-caption">${own?'施放到我方':'施放到对手'}</span><span class="status-overlay">${badges}</span>${deploys}</button><h2>${own?(REGIONS[state.region]?.name||'新锐')+'俱乐部':e.name}</h2>${traitHtml}<div class="life-row"><span class="shield-value" title="布防：陷阱、墙与阻滞提供的伤害抵消；下次己方回合开始清空。" aria-label="布防 ${block}">${icon('shield')}<small>布防</small> ${block}</span><div class="life-bar ${own?'own':''}"><i style="width:${hp/max*100}%"></i><span>${hp} / ${max} ${own?'声望':'防线'}</span></div></div>${own?`<div class="active-powers">${b.powers.map(c=>`<span title="${esc(describe(c))}">${icon('power')}${esc(cardName(c))}</span>`).join('')}</div>`:''}</section>`;
+ return `<section data-drop-target="${which}" class="fighter ${own?'ally':'enemy'}"${own?'':` data-character-variant="${esc(look)}"`}>${!own?`<div class="intent-bubble" title="数字为实际伤害：已计入对手火力、压制、战场、Boss 增伤与你的易伤，未扣除你的布防。"><small>对手意图 · 实际伤害</small><strong>${hidden?'信息封锁：看不到对手意图':highlightKeywords(displayText(intentText(state,true)))}</strong>${e.boss?`<span>长战增伤 +${b.cycles*growth}</span>`:''}</div>`:'<div class="team-label">'+(state.region||'CN')+'俱乐部</div>'}<button class="combat-target" data-target="${which}" aria-label="${own?'我方俱乐部':'对手队伍'}，可作为出牌目标">${own?`<span class="crest">${icon('shield')}<b>${state.region||'CN'}</b></span>`:opponentArtwork(b.enemy)}<span class="target-caption">${own?'施放到我方':'施放到对手'}</span><span class="status-overlay">${badges}</span>${deploys}</button><h2>${own?(REGIONS[state.region]?.name||'新锐')+'俱乐部':e.name}</h2>${traitHtml}<div class="life-row"><span class="shield-value" title="布防：陷阱、墙与阻滞提供的伤害抵消；下次己方回合开始清空。" aria-label="布防 ${block}">${icon('shield')}<small>布防</small> ${block}</span><div class="life-bar ${own?'own':''}"><i style="width:${hp/max*100}%"></i><span>${hp} / ${max} ${own?'声望':'防线'}</span></div></div>${own?`<div class="active-powers">${b.powers.map(c=>`<span title="${esc(describe(c))}">${icon('power')}${esc(cardName(c))}</span>`).join('')}</div>`:''}</section>`;
 }
 // Region trait: icon + live counter + rule tooltip, shown like a starter item on our side.
 function regionTraitTag(s){
@@ -224,7 +228,7 @@ function supplyBar(s){
  return `<div class="supply-bar" aria-label="补给品">${slots}</div>`;
 }
 function battle(){
- const b=state.battle,incoming=intent(state).filter(a=>a.type==='hit').reduce((n,a)=>n+a.n*a.times*(b.vulnerable>0?1.5:1),0),hurt=hasGear(state,'BX03')?'?':Math.max(0,Math.floor(incoming)-b.block),curse=b.hand.reduce((n,c)=>n+(CURSE_RULES[c.id]?.trigger==='endTurnLoseHp'?CURSE_RULES[c.id].n:0),0);
+ const b=state.battle,incoming=incomingDamage(state).total,hurt=hasGear(state,'BX03')?'?':Math.max(0,incoming-b.block),curse=b.hand.reduce((n,c)=>n+(CURSE_RULES[c.id]?.trigger==='endTurnLoseHp'?CURSE_RULES[c.id].n:0),0);
  const actInfo=state.mode==='season'?ACTS[state.act-1]:null;
  const battleLabel=state.mode==='season'?`第 ${state.act} 赛段 · ${actInfo?.name||''} ${actInfo?.bossName||''}`:'第 '+(state.wins+1)+' 场 / 6';
  const growth=ENEMIES[b.enemy]?.growth??2;
@@ -304,7 +308,7 @@ function between(){
    const nextAct=ACTS[s.act];
    return `${heading('赛段完成','你的俱乐部晋级了。',`已完成第 ${s.act} 赛段。${s.waVersion ? '已举办晋级宣传：恢复全部声望至满。当前 ' + s.hp + '/' + s.maxHp + '。下一赛段：' : '已举办晋级宣传：恢复最大声望的 30%，本次实际 +' + (s.intermissionHeal??0) + '。当前 ' + s.hp + '/' + s.maxHp + '。下一赛段：'}${nextAct?nextAct.name+' · '+nextAct.bossName:'冠军赛'}`)}<div class="intermission-details"><p>牌组与资源将保留。</p><p><strong>当前声望</strong> ${s.hp}/${s.maxHp} <strong>资金</strong> ${s.money}</p></div>${unlockNoticeHtml(s)}<div class="page-footer">${button('进入下一赛段 →',{type:'nextAct'},'primary')}</div>`;
   }
-  if(s.phase==='result')return `<section class="result">${heading(s.outcome==='win'?'赛季冠军':'赛季结束',s.outcome==='win'?'你赢得了最终赛段冠军。':'赛季暂告一段落。',s.outcome==='win'?'你带领所选赛区的阵容走过三幕，赢得冠军赛。':'调整思路，再来一季。')}${R(s)?`<p class="asc-result">难度 ${s.ascension||0}${s.ascensionNotice?` · ${esc(s.ascensionNotice)}`:''}</p>`:''}${unlockNoticeHtml(s)}<div class="result-stats"><span><strong>${s.wins}</strong>场胜利</span><span><strong>${s.hp} / ${s.maxHp}</strong>剩余声望</span><span><strong>${s.deck.length}</strong>张赛季牌</span></div><div class="button-row">${ui('再开一个赛季','home','primary')}${ui('查看最终牌组','deck')}${ui('导出本局记录','export')}</div><p class="muted">种子：${esc(s.seed)} · ${s.actions.length} 次操作 · D0.2.0${R(s)?' · 规则 '+s.rules:''}</p></section>`;
+  if(s.phase==='result')return runResultScreen(s);
  }
  if(s.phase==='reward')return `${heading('比赛胜利','补强，还是保持精简？',`已获得 ${rewardMoney(s)} 资金。招募一名选手加入牌组，也可以跳过。${s.mode==='season'?(s.reward.offers.some(id=>CARD_RARITY[id]==='rare')?'本次出现了稀有候选。':s.reward.elite?'强敌奖励更容易出现罕见与稀有候选。':''):''}`)}${R(s)?rewardLoot(s):''}<div class="cards reward-cards${s.mode==='season'&&s.reward.offers.some(id=>CARD_RARITY[id]==='rare')?' has-rare':''}">${s.reward.offers.map(id=>card({id,up:false},{rarity:s.mode==='season',action:{type:'recruit',id},label:CARDS[id].player?'招募选手':'加入战术'})).join('')}</div>${E(s)?skipChoices(s):`<div class="page-footer">${button('跳过招募 →',{type:'recruit',id:null},'secondary')}</div>`}`;
  if(s.phase==='skin')return `${heading(s.reward.boss?'世界赛胜利 · 资金 +50':'强敌奖励','选择一件装备','本赛季持续生效，不进入抽牌堆。')}<div class="choices">${s.reward.skins.map(id=>choice(SKINS[id].name,SKINS[id].text,'领取皮肤',{type:'skin',id})).join('')}</div>${button('跳过皮肤 →',{type:'skin',id:null},'secondary')}`;
@@ -408,15 +412,19 @@ function showCardOverview(){
   const tkIds=Object.keys(CARDS).filter(id=>id.startsWith('TK'));
   const skinIds=Object.keys(SKINS);
   const skinCount=skinIds.length;
+  // 图鉴: only entries met in a run are shown; the rest stay silhouettes.
+  const coll=loadCollection(store,SEEN_KEY),seenCards=new Set(coll.cards),seenGear=new Set(coll.gear),seenSupplies=new Set(coll.supplies),seenEnemies=new Set(coll.enemies),enemyIds=SEASON_ENEMY_IDS();
+  const found=(set,ids)=>`${ids.filter(id=>set.has(id)).length}/${ids.length}`;
   const filterLabels={
-    all:`全部卡牌 (${totalNonSkin})`,
-    players:`选手牌 (${playerCount})`,
-    tactics:`赛区战术 (${tacticIds.length})`,
-    st:`比赛干扰 (${stIds.length})`,
-    cu:`俱乐部隐患 (${cuIds.length})`,
-    tk:`临时行动 (${tkIds.length})`,
-    skins:`装备 (${Object.keys(GEAR).length})`,
-    supplies:`补给品 (${Object.keys(SUPPLIES).length})`
+    all:`全部卡牌 (${found(seenCards,Object.keys(CARDS))})`,
+    players:`选手牌 (${found(seenCards,playerIds)})`,
+    tactics:`赛区战术 (${found(seenCards,tacticIds)})`,
+    st:`比赛干扰 (${found(seenCards,stIds)})`,
+    cu:`俱乐部隐患 (${found(seenCards,cuIds)})`,
+    tk:`临时行动 (${found(seenCards,tkIds)})`,
+    skins:`装备 (${found(seenGear,Object.keys(GEAR))})`,
+    supplies:`补给品 (${found(seenSupplies,Object.keys(SUPPLIES))})`,
+    enemies:`对手 (${found(seenEnemies,enemyIds)})`
   };
   const tabsHtml=Object.entries(filterLabels).map(([key,label])=>ui(label,`library-${key}`,libraryFilter===key?'primary':'secondary')).join('');
   let regionTabsHtml='';
@@ -430,9 +438,11 @@ function showCardOverview(){
   const rarityTabsHtml=['all','players','tactics'].includes(libraryFilter)?`<div class="rarity-filter-tabs" aria-label="按出现频率筛选">${[['all','全部频率'],['common','普通'],['uncommon','罕见'],['rare','稀有']].map(([key,label])=>ui(label,`library-rarity-${key}`,libraryRarityFilter===key?'primary':'secondary')).join('')}<small>出现频率只影响奖励与商店中出现的机会，不代表选手水平。</small></div>`:'';
   let contentHtml='';
   if(libraryFilter==='skins'){
-    contentHtml=`<div class="skin-overview">${Object.entries(GEAR).map(([id,g])=>`<article class="skin-entry rarity-${g.rarity}"><h3>${statusIcon(g.icon)}${esc(g.name)}</h3><p class="skin-text">${esc(g.text)}</p><p class="skin-note">${RARITY[g.rarity]}装备 · 本赛季持续 · 不进入抽牌堆</p></article>`).join('')}</div>`;
+    contentHtml=`<div class="skin-overview">${Object.entries(GEAR).map(([id,g])=>!seenGear.has(id)?unseenTile('gear'):`<article class="skin-entry rarity-${g.rarity}"><h3>${statusIcon(g.icon)}${esc(g.name)}</h3><p class="skin-text">${esc(g.text)}</p><p class="skin-note">${RARITY[g.rarity]}装备 · 本赛季持续 · 不进入抽牌堆</p></article>`).join('')}</div>`;
   } else if(libraryFilter==='supplies'){
-    contentHtml=`<div class="skin-overview">${Object.entries(SUPPLIES).map(([id,p])=>`<article class="skin-entry rarity-${p.rarity}"><h3>${statusIcon(p.icon)}${esc(p.name)}</h3><p class="skin-text">${esc(p.text)}</p><p class="skin-note">${RARITY[p.rarity]}补给品 · 一次性 · 比赛中使用</p></article>`).join('')}</div>`;
+    contentHtml=`<div class="skin-overview">${Object.entries(SUPPLIES).map(([id,p])=>!seenSupplies.has(id)?unseenTile('gear'):`<article class="skin-entry rarity-${p.rarity}"><h3>${statusIcon(p.icon)}${esc(p.name)}</h3><p class="skin-text">${esc(p.text)}</p><p class="skin-note">${RARITY[p.rarity]}补给品 · 一次性 · 比赛中使用</p></article>`).join('')}</div>`;
+  } else if(libraryFilter==='enemies'){
+    contentHtml=`<div class="skin-overview rm-enemies">${enemyIds.map(id=>enemyEntry(id,seenEnemies.has(id))).join('')}</div>`;
   } else {
     let ids=[];
     switch(libraryFilter){
@@ -445,10 +455,96 @@ function showCardOverview(){
       default: ids=[];
     }
     if(libraryRarityFilter!=='all')ids=ids.filter(id=>CARD_RARITY[id]===libraryRarityFilter);
-    contentHtml=ids.length?`<div class="cards modal-cards overview-cards">${ids.map(libraryEntry).join('')}</div>`:`<p class="empty-overview">该分类暂无可展示的卡牌。</p>`;
+    contentHtml=ids.length?`<div class="cards modal-cards overview-cards">${ids.map(id=>seenCards.has(id)?libraryEntry(id):unseenTile('card')).join('')}</div>`:`<p class="empty-overview">该分类暂无可展示的卡牌。</p>`;
   }
-  const infoHtml=`<p class="overview-info">${totalNonSkin} 张卡牌 · 另含 ${Object.keys(GEAR).length} 件装备与 ${Object.keys(SUPPLIES).length} 种补给品（不占抽牌）。当前筛选：${libraryFilter === 'players' && libraryRegionFilter !== 'all' ? REGIONS[libraryRegionFilter].name + '（' + REGIONS[libraryRegionFilter].pool.filter(id => CARDS[id]?.player).length + '）' : filterLabels[libraryFilter]}${libraryRarityFilter!=='all'?` · 出现频率：${RARITY_LABELS[libraryRarityFilter]}`:''}</p>`;
-  showModal('卡牌总览',`${infoHtml}<div class="overview-tabs">${tabsHtml}</div>${regionTabsHtml}${rarityTabsHtml}${contentHtml}`);
+  const infoHtml=`<p class="rm-found"><b>已发现</b> 卡牌 ${found(seenCards,Object.keys(CARDS))} · 装备 ${found(seenGear,Object.keys(GEAR))} · 补给品 ${found(seenSupplies,Object.keys(SUPPLIES))} · 对手 ${found(seenEnemies,enemyIds)}<small>在赛季中被提供、抽到、拥有或交手过的条目才会点亮。</small></p><p class="overview-info">${totalNonSkin} 张卡牌 · 另含 ${Object.keys(GEAR).length} 件装备与 ${Object.keys(SUPPLIES).length} 种补给品（不占抽牌）。当前筛选：${libraryFilter === 'players' && libraryRegionFilter !== 'all' ? REGIONS[libraryRegionFilter].name + '（' + REGIONS[libraryRegionFilter].pool.filter(id => CARDS[id]?.player).length + '）' : filterLabels[libraryFilter]}${libraryRarityFilter!=='all'?` · 出现频率：${RARITY_LABELS[libraryRarityFilter]}`:''}</p>`;
+  showModal('图鉴',`${infoHtml}<div class="overview-tabs">${tabsHtml}</div>${regionTabsHtml}${rarityTabsHtml}${contentHtml}`);
+}
+// ---- Run records: tracker, collection (图鉴), history (战绩) and the results screen ----
+const HISTORY_KEY='wa-run-history-v1',SEEN_KEY='wa-collection-v1',TRACK_KEY='wa-run-tracker-v1';
+const store=(()=>{try{return localStorage;}catch{return null;}})();
+const WA_TERMS={hp:'剩余声望',hpRule:'结算时每 1 点剩余声望 +1',gold:'持有资金',goldRule:'结算时每 10 资金 +1',bosses:'赢下幕末决赛',bossesRule:'每赢下 1 场幕末世界赛／冠军赛 +50',victory:'赛季夺冠',victoryRule:'赢下第三幕冠军赛 +250'};
+const OUTCOME={win:'夺冠',loss:'出局',abandon:'放弃'};
+const KIND_NAMES={battle:'比赛',elite:'强敌',event:'未知',shop:'转会市场',crate:'补给箱',rest:'俱乐部活动',boss:'幕末决赛'};
+const SEASON_ENEMY_IDS=()=>Object.keys(ENEMIES).filter(id=>/(^|_)S_/.test(id));
+function nodeOf(s){return s.map?.nodes?.find(n=>n.key===s.currentNode)||null;}
+function fightSnap(s){const b=s.battle,n=nodeOf(s);return b?{enemy:b.enemy,name:ENEMIES[b.enemy]?.name||b.enemy,act:s.act,floor:n?.step??s.node,kind:n?.kind==='elite'||n?.kind==='boss'?n.kind:'battle'}:null;}
+function outcomeOf(s){return s.phase!=='result'?null:s.outcome==='win'?'win':s.outcome==='abandoned'?'abandon':'loss';}
+function seenIn(s){
+ const cards=new Set(s.deck.map(c=>c.id)),gear=new Set(s.skins||[]),supplies=new Set(s.supplies||[]),enemies=new Set(),b=s.battle,r=s.reward,sh=s.shop,o=s.opening;
+ if(b){enemies.add(b.enemy);for(const k of ['hand','draw','discard','exhaust','powers'])for(const c of b[k]||[])cards.add(c.id);}
+ if(r){(r.offers||[]).forEach(id=>cards.add(id));[r.gear,...(r.bossGear||[]),...(r.skins||[])].forEach(id=>id&&gear.add(id));if(r.supply)supplies.add(r.supply);}
+ if(sh){(sh.slots||[]).forEach(id=>id&&cards.add(id));(sh.gear||[]).forEach(id=>id&&gear.add(id));(sh.supplies||[]).forEach(id=>id&&supplies.add(id));}
+ (s.eventOffers||[]).forEach(id=>cards.add(id));if(s.gearOffer)gear.add(s.gearOffer);
+ if(o){for(const x of o.options||[]){(x.offers||[]).forEach(id=>cards.add(id));if(x.curse)cards.add(x.curse);if(x.gear)gear.add(x.gear);}(o.pending?.offers||[]).forEach(id=>cards.add(id));}
+ return {cards:[...cards].filter(id=>CARDS[id]),gear:[...gear].filter(id=>GEAR[id]),supplies:[...supplies].filter(id=>SUPPLIES[id]),enemies:[...enemies].filter(id=>ENEMIES[id])};
+}
+function runSummary(s,t){
+ const open=s.currentNode&&!(s.completed||[]).includes(s.currentNode),won=s.outcome==='win';
+ return {floors:Math.max(0,(s.node||0)-(open?1:0)),elites:t?.elites||0,bosses:Math.max(0,(s.act||1)-1)+(won?1:0),perfect:t?.perfect||0,hp:s.hp,gold:s.money,won,ascension:R(s)?s.ascension||0:0};
+}
+function runEntry(s,outcome,t){
+ const sum=runSummary(s,t),now=Date.now(),lf=t?.lastFight,at={act:s.act,floor:nodeOf(s)?.step??null};
+ const death=outcome==='loss'?(lf&&!lf.won?{name:lf.name,act:lf.act,floor:lf.floor,kind:lf.kind}:{name:'赛程事件',...at}):outcome==='abandon'?{name:'主动放弃',...at,abandon:true}:null;
+ return {id:String(s.runId||s.seed),demo:'wa',outcome,score:computeScore(sum,WA_TERMS).total,summary:sum,startedAt:t?.startedAt||null,endedAt:now,durationMs:t?.startedAt?now-t.startedAt:null,seed:s.seed,team:REGIONS[s.region]?.name||s.region,teamId:s.region,ascension:sum.ascension,act:s.act,maxHp:s.maxHp,deck:s.deck.map(c=>({id:c.id,up:!!c.up})),gear:[...(s.skins||[])],supplies:[...(s.supplies||[])],death,fights:t?.fights||0};
+}
+function trackRun(s){
+ if(!s||s.mode!=='season')return;
+ try{
+  const t=trackStep(loadTracker(store,TRACK_KEY,s.seed),{seed:s.seed,phase:s.phase,hp:s.hp,inCombat:s.phase==='combat'&&!!s.battle,fight:fightSnap(s),outcome:outcomeOf(s)});
+  saveTracker(store,TRACK_KEY,t);markSeen(store,SEEN_KEY,seenIn(s));
+  if(s.phase==='result')recordRun(store,HISTORY_KEY,runEntry(s,outcomeOf(s),t));
+ }catch{}
+}
+// Starting over on top of an unfinished season records it as abandoned.
+function recordAbandoned(s){
+ if(!s||s.mode!=='season'||s.phase==='result')return;
+ try{recordRun(store,HISTORY_KEY,runEntry({...s,outcome:'abandoned'},'abandon',loadTracker(store,TRACK_KEY,s.seed)));}catch{}
+}
+function deathText(e){const d=e.death;if(!d)return e.outcome==='win'?'无（赛季夺冠）':'—';const where=d.floor!=null?`第 ${d.act} 幕第 ${d.floor} 层`:`第 ${d.act} 幕`;return d.abandon?`主动放弃 · ${where}`:`${d.name} · ${where}`;}
+function scoreTable(e){
+ const sc=computeScore(e.summary||{},WA_TERMS);
+ return `<table class="rm-score"><thead><tr><th>项目</th><th>数量</th><th>分值</th><th>得分</th></tr></thead><tbody>${sc.lines.map(l=>`<tr class="${l.points?'':'rm-zero'}"><th title="${esc(l.rule)}">${esc(l.label)}</th><td>${l.key==='gold'?`${l.raw}（${l.count} 组）`:l.count}</td><td>×${l.each}</td><td>${l.points}</td></tr>`).join('')}<tr class="rm-sub"><th>小计</th><td></td><td></td><td>${sc.subtotal}</td></tr><tr class="rm-sub"><th>难度加成</th><td>难度 ${sc.ascension}</td><td>×${sc.percent}%</td><td></td></tr><tr class="rm-total"><th>总分</th><td></td><td></td><td>${sc.total}</td></tr></tbody></table><p class="rm-formula"><b>计分规则</b>${esc(scoreFormulaText(WA_TERMS))}</p>`;
+}
+function entryDetail(e){
+ const counts=new Map();for(const c of e.deck||[]){if(!CARDS[c.id])continue;const k=c.id+(c.up?'+':'');counts.set(k,{c,n:(counts.get(k)?.n||0)+1});}
+ const deck=[...counts.values()].sort((a,b)=>(CARDS[a.c.id].cost??9)-(CARDS[b.c.id].cost??9)||cardName(a.c).localeCompare(cardName(b.c),'zh-Hans-CN')).map(({c,n})=>`<span class="rm-deck-chip${c.up?' up':''}" data-card-id="${c.id}" data-card-up="${c.up}" tabindex="0"><b>${CARDS[c.id].cost??'—'}</b>${esc(cardName(c))}${n>1?`<small>×${n}</small>`:''}</span>`).join('');
+ const gear=(e.gear||[]).map(id=>GEAR[id]?`<span class="rm-gear-chip rarity-${GEAR[id].rarity}" title="${esc(GEAR[id].text)}">${statusIcon(GEAR[id].icon)}${esc(GEAR[id].name)}</span>`:SKINS[id]?`<span class="rm-gear-chip" title="${esc(SKINS[id].text)}">${esc(SKINS[id].name)}</span>`:'').join('')||'<span class="muted">无</span>';
+ const facts=[['结果',OUTCOME[e.outcome]],['赛区',e.team],['难度',e.ascension??0],['推进',`第 ${e.act} 幕 · 完成 ${e.summary?.floors??0} 个节点`],[e.outcome==='abandon'?'结束位置':'出局原因',deathText(e)],['剩余声望',`${e.summary?.hp??0} / ${e.maxHp??'?'}`],['资金',e.summary?.gold??0],['战斗',`胜 ${e.fights??0} 场 · 强敌 ${e.summary?.elites??0} · 无伤 ${e.summary?.perfect??0}`],['用时',e.durationMs!=null?formatDuration(e.durationMs):'未记录'],['结束时间',e.endedAt?new Date(e.endedAt).toLocaleString('zh-CN',{hour12:false}):'—'],['种子',e.seed]];
+ return `<div class="rm-detail"><dl class="rm-facts">${facts.map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>${scoreTable(e)}<h3 class="rm-h">最终牌组 · ${(e.deck||[]).length} 张</h3><div class="rm-deck-list">${deck||'<span class="muted">无</span>'}</div><h3 class="rm-h">装备</h3><div class="rm-gear-list">${gear}</div></div>`;
+}
+function runResultScreen(s){
+ const id=String(s.runId||s.seed),o=outcomeOf(s),e=loadHistory(store,HISTORY_KEY).find(x=>x.id===id)||runEntry(s,o,loadTracker(store,TRACK_KEY,s.seed));
+ const title=o==='win'?['赛季冠军','你赢得了最终赛段冠军。']:o==='abandon'?['赛季结束','本次赛季已主动结束。']:['赛季结束','声望耗尽，俱乐部暂别赛场。'];
+ return `<section class="result rm-result rm-${o}">${heading(title[0],title[1],'')}<div class="rm-score-big"><span>本局得分</span><strong>${e.score}</strong></div>${R(s)?`<p class="asc-result">难度 ${s.ascension||0}${s.ascensionNotice?` · ${esc(s.ascensionNotice)}`:''}</p>`:''}${unlockNoticeHtml(s)}${entryDetail(e)}<div class="button-row">${ui('再开一个赛季','home','primary')}${ui('查看最终牌组','deck')}${ui('查看战绩','history')}${ui('导出本局记录','export')}</div><p class="muted">种子：${esc(s.seed)} · ${s.actions.length} 次操作 · D0.2.0${R(s)?' · 规则 '+s.rules:''}</p></section>`;
+}
+function showHistory(){
+ const list=loadHistory(store,HISTORY_KEY),best=list.reduce((m,e)=>Math.max(m,e.score||0),0);
+ showModal('战绩',list.length?`<p class="rm-note">最近 ${list.length} 个赛季（最多保存 30 个，只存在本机浏览器）。最高分 <b>${best}</b>。点开一行查看详情。</p><div class="rm-history">${list.map(e=>`<details class="rm-run rm-${e.outcome}"><summary><b class="rm-outcome">${OUTCOME[e.outcome]}</b><span class="rm-team">${esc(e.team)} · 难度 ${e.ascension??0}</span><span class="rm-where">第 ${e.act} 幕 · ${e.summary?.floors??0} 节点</span><strong class="rm-pts">${e.score} 分</strong><time>${e.endedAt?new Date(e.endedAt).toLocaleDateString('zh-CN'):''}</time></summary>${entryDetail(e)}</details>`).join('')}</div>`:'<p class="rm-note">还没有结束的赛季。赛季夺冠、出局或主动放弃后，会在这里留下记录。</p>');
+}
+// Deck viewer: whole deck from any screen, piles in combat; filter by type/cost, sort.
+let deckView={source:'deck',type:'',cost:'',sort:'acquired'};
+const WA_TYPE_ORDER=['决斗','哨位','控场','先锋','自由人','战术','临时','干扰','隐患','其他'];
+const PILES={deck:'赛季牌组',draw:'抽牌堆',discard:'弃牌堆',exhaust:'消耗区'};
+function waType(c){const t=CARDS[c.id];if(!t)return '其他';if(t.player)return t.role;if(/^(CN|AM|EU|PA)T\d{2}$/.test(t.id))return '战术';if(t.id.startsWith('CU'))return '隐患';if(t.id.startsWith('ST'))return '干扰';if(t.id.startsWith('TK'))return '临时';return '其他';}
+function viewerCards(src){if(src==='deck')return state.deck;const b=state.battle;return state.phase==='combat'&&b?b[src]||[]:[];}
+function showDeckViewer(src){
+ if(src)deckView={source:src,type:'',cost:'',sort:src==='draw'?'type':'acquired'};
+ const v=deckView,all=viewerCards(v.source);
+ const list=filterSortCards(all,v,{typeOf:waType,costOf:c=>CARDS[c.id]?.cost,nameOf:c=>cardName(c),orderOf:c=>WA_TYPE_ORDER.indexOf(waType(c))});
+ const chip=(label,name,on)=>`<button class="rm-chip${on?' active':''}" data-ui="${esc(name)}" aria-pressed="${on}">${esc(label)}</button>`;
+ const types=WA_TYPE_ORDER.filter(t=>all.some(c=>waType(c)===t));
+ const sorts=Object.entries(SORT_LABELS).filter(([k])=>!(v.source==='draw'&&k==='acquired'));
+ const piles=state.phase==='combat'&&state.battle?`<div class="rm-row rm-piles">${Object.entries(PILES).map(([k,l])=>chip(`${l} ${viewerCards(k).length}`,'dv-src-'+k,v.source===k)).join('')}</div>`:'';
+ const note={deck:'赛季牌组全部卡牌。悬停或长按一张牌，可在旁边看到训练后的效果。',draw:'抽牌堆按所选方式排序展示，不代表实际抽牌顺序。',discard:'抽牌堆用完时，弃牌堆会洗成新的抽牌堆。',exhaust:'消耗只对本场生效，赛季牌组里的原牌下场会重新带入。'}[v.source];
+ const controls=`<div class="rm-viewer-controls"><div class="rm-row"><span>类型</span>${chip('全部','dv-type-',!v.type)}${types.map(t=>chip(`${t} ${all.filter(c=>waType(c)===t).length}`,'dv-type-'+t,v.type===t)).join('')}</div><div class="rm-row"><span>费用</span>${COST_FILTERS.map(([k,l])=>chip(l,'dv-cost-'+k,v.cost===k)).join('')}</div><div class="rm-row"><span>排序</span>${sorts.map(([k,l])=>chip(l,'dv-sort-'+k,v.sort===k)).join('')}</div></div>`;
+ showModal(`${PILES[v.source]} · ${all.length} 张`,`${piles}<p class="rm-note">${note}</p>${controls}<p class="rm-count">显示 ${list.length} / ${all.length} 张</p>${list.length?`<div class="cards modal-cards">${list.map(c=>card(c,{instance:!!c.uid})).join('')}</div>`:'<p class="empty-overview">没有符合条件的牌。</p>'}`);
+}
+function unseenTile(kind){return `<article class="rm-unseen rm-unseen-${kind}" aria-label="未发现"><span class="rm-q">？</span><small>未发现</small></article>`;}
+function enemyEntry(id,seen){
+ if(!seen)return unseenTile('enemy');
+ const e=ENEMIES[id],t=e.trait&&TRAITS[e.trait.id];
+ return `<article class="skin-entry rm-enemy"><div class="rm-enemy-art">${opponentArtwork(id)}</div><h3>${esc(e.name)}</h3><p class="skin-note">${e.boss?'幕末决赛':e.elite?'强敌':'比赛'} · 防线 ${e.hp}</p>${t?`<p class="skin-text">${statusIcon(t.icon)}<b>${esc(t.name)}</b>：${esc(t.text(e.trait.n))}</p>`:''}</article>`;
 }
 function start(tutorial,selectedRegion){
  const seed=`season-${crypto.randomUUID()}`;
@@ -471,7 +567,7 @@ function handleUI(name){
   } else start(false,region);
   return;
  }
- if(name==='confirm-season'){start(false,region);return;}
+ if(name==='confirm-season'){recordAbandoned(saved);start(false,region);return;}
  if(name.startsWith('confirm-start-')){const legacy=name.includes('legacy');if(legacy)startLegacy(true);else start(name.includes('tutorial'),region);return;}
  if(name==='continue'){
    if(!saved){saveError='没有可继续的存档。';render();return;}
@@ -501,7 +597,9 @@ function handleUI(name){
   if(c){const f=TACTICS[c.id];showModal(cardName(c)+' · '+f.title,`<div class="card-detail">${card(c,{upgrade:CARDS[c.id].trainable&&!c.up})}<div><p class="detail-scene">${esc(f.scene)}</p><p><strong>${esc(f.origin)}</strong></p><p>${esc(f.note)}</p><p>选手与技能搭配为本游戏的战术设定；赛区战术牌为原创设计。</p>${artCredit(c.id)}${f.source?`<a href="${esc(f.source)}" target="_blank" rel="noopener noreferrer">查看技能／赛事出处</a>`:''}</div></div>`);}
   return;
  }
- if(name==='deck'){showCards('赛季牌组',state.deck,'同名牌是不同的行动机会；实例编号用于区分升级。比赛干扰和临时行动不进入赛季牌组。');return;}
+ if(name==='deck'){showDeckViewer('deck');return;}
+ if(name==='history'){showHistory();return;}
+ if(name.startsWith('dv-')){const [,k,...rest]=name.split('-'),val=rest.join('-');if(k==='src'&&PILES[val])showDeckViewer(val);else{if(k==='type')deckView.type=val;if(k==='cost')deckView.cost=val;if(k==='sort'&&SORT_LABELS[val])deckView.sort=val;showDeckViewer();}return;}
   if(name==='library'||name.startsWith('library-')){
     if(name==='library'){libraryFilter='all';libraryRegionFilter='all';libraryRarityFilter='all';showCardOverview();return;}
     if(name.startsWith('library-rarity-')){
@@ -517,7 +615,8 @@ function handleUI(name){
       'library-cu':'cu',
       'library-tk':'tk',
       'library-skins':'skins',
-      'library-supplies':'supplies'
+      'library-supplies':'supplies',
+      'library-enemies':'enemies'
     };
     if(filterMap[name]){
       libraryFilter=filterMap[name];
@@ -541,8 +640,7 @@ function handleUI(name){
     return;
   }
  if(name.startsWith('pile-')){
-  const key=name.slice(5),list=[...state.battle[key]].sort((a,b)=>a.id.localeCompare(b.id)||a.uid.localeCompare(b.uid));
-  showCards({draw:'抽牌堆',discard:'弃牌堆',exhaust:'消耗区'}[key],list,key==='draw'?'按卡牌编号展示，实际抽牌顺序隐藏。':'消耗只对本场生效，赛季牌组里的原牌下场会重新带入。');return;
+  const key=name.slice(5);if(PILES[key]&&state.battle)showDeckViewer(key);return;
  }
  if(name==='logs'){
   showModal('完整比赛记录',`<ol class="full-logs">${state.logs.map(l=>`<li><small>${l.node!==undefined?`节点 ${l.node} · 回合 ${l.turn}`:`回合 ${l.turn}`}</small> ${esc(displayText(l.text))}${l.text.startsWith('打出 ')?(()=>{const id=Object.keys(CARDS).find(id=>l.text.startsWith('打出 '+CARDS[id].name+'，')||l.text.startsWith('打出 '+CARDS[id].name+' +，'));return id?'<em class="log-tactic">'+esc(TACTICS[id].title+' · '+TACTICS[id].scene)+'</em>':'';})():''}</li>`).join('')}</ol>`);return;
@@ -552,7 +650,7 @@ function handleUI(name){
   showModal('赛季规则',`<div class="rules"><p><strong>目标：</strong>对手防线降到 0 就赢得比赛；自己的声望降到 0，赛季失败。</p><p><strong>每回合：</strong>3 行动点、抽 5 张。按费用出牌，结束回合后对手按公开意图行动。资金与行动点是两种资源。</p><p><strong>布防：</strong>绊线、减速、墙体与掩护的共同收益；每点抵消 1 点攻击伤害。先抵消攻击，下个自己的回合开始清空。对手布防在对手下次行动开始时清空。</p><p><strong>牌堆：</strong>打出的普通牌进入弃牌堆；结束回合时，所有未打出的手牌也进入弃牌堆，不留到下回合。注明回合末消耗的牌改入消耗区。下回合重新抽 5 张，并结算额外抽牌能力；需要抽牌而抽牌堆为空时，将弃牌堆洗成新的抽牌堆。手牌最多 10 张。</p><p><strong>消耗：</strong>写着“打出后消耗”的牌，效果结算后进入消耗区，不进入弃牌堆，本场不再抽到；未打出时仍正常弃置，除非另写“回合末消耗”。消耗不等于永久删除，赛季牌组中的原牌下场恢复。临时牌和比赛干扰在赛后消失。</p><p><strong>能力：</strong>自由人牌打出后持续本场，不再洗回；多张可叠加，只影响之后的触发。</p><p><strong>压制：</strong>攻击伤害 ×0.75。<strong>易伤：</strong>受到攻击 ×1.5。每段伤害分别向下取整；回合数在受影响一方行动结束后减少。</p><p><strong>战术场景：</strong>卡上的特工技能转译成上述卡牌规则。腐坏逼退以压制结算，闪光接枪窗口以易伤结算；不另加持续伤害、硬控或隐藏触发。选牌后点“详解”可看说明。</p><p><strong>五个位置：</strong>决斗进攻，哨位布防，控场压制，先锋配合与抽牌，自由人建立持续能力。</p><p><strong>俱乐部活动：</strong>粉丝见面会恢复最大声望的 30%（向上取整、至多满声望）；训练升级一张选手或战术牌；团建移除一张隐患。每节点只能选一项。</p><p><strong>招募：</strong>可跳过。相同选手最多三张，升级前后合并计算。</p><p><strong>登峰赛季：</strong>四个赛区、三个赛段。每赛段 15 站，第 16 层为决赛，包含分支路线：第 1–2 站固定为比赛，第 7 站转会市场，第 9 站补给箱，第 15 站俱乐部活动；前 5 站不会出现强敌。前两幕 Boss 胜利各奖励 50 资金与 Boss 装备三选一（旧存档仍为皮肤选择，集齐后改得 20 资金）。之后晋级宣传恢复最大声望的 30%。冠军赛获胜即为赛季胜利。</p><h3>赛区特质</h3>${Object.entries(REGION_TRAITS).map(([id,t])=>`<p><strong>${esc(REGIONS[id].name)} · ${esc(t.name)}：</strong>${esc(t.text)}</p>`).join('')}<p>特质只在新规则赛季与好友 PvP 中生效，战斗界面左侧显示当前计数。</p><h3>赞助商签约日</h3><p>选择赛区后、进入路线图前，从 4 份合同中签下 1 份：两份免费的小奖励、一份有代价的交换、一份常规合同。选项由赛季种子决定。</p><h3>装备</h3><p>装备在本赛季持续生效，不进入抽牌堆，分普通、罕见、稀有、Boss 专属与市场专属。战胜强敌必得 1 件（普通／罕见／稀有约 50%／33%／17%，不重复）；Boss 胜利后可从 3 件 Boss 专属装备中选 1 件或放弃；转会市场出售 2 件装备与 1 件市场专属装备。原有三件皮肤归入普通装备。最多装备 6 件（Boss 专属装备与皮肤同样占槽）：槽满时获得新装备，需替换一件（被替换的按品级折算资金：普通 15、罕见 25、稀有 40、Boss 专属 50、市场专属 30）或放弃；任何时候都可在装备栏出售一件换同样资金。转会市场在槽满时不能购入装备。</p><h3>补给品</h3><p>一次性道具，默认 3 个栏位，比赛中点击使用，任何时候都可以丢弃。普通与强敌比赛胜利后按掉落率获得：初始 40%，掉落一次 -10%，未掉落 +10%。转会市场出售 3 个补给品；栏位满时需先丢弃或替换。</p><h3>解锁、跳过补偿与俱乐部投资</h3><p>每个赛区初次游玩时牌池较小（35 张），装备也少 15 件。比赛胜利 +1 解锁经验，每击败一幕 Boss +10，赛季冠军再 +10；每升一级为该赛区加入 8 张牌，并开放 3 件装备（装备按各赛区中最高的解锁等级开放），共 5 级。解锁从下个赛季起生效。跳过招募时，可选 ${SKIP_FUNDS} 资金，或 1 次免费刷新转会名单（可留到之后的市场）。转会名单可付费刷新：每个市场第一次 20 资金，之后每次 +10。每个市场提供 1 项俱乐部投资（150–220 资金），买下后整赛季生效，同一项只能买一次。</p><h3>难度等级</h3><ol>${ASCENSION_LEVELS.filter(l=>l.level).map(l=>`<li>${esc(l.text)}</li>`).join('')}</ol><p>难度逐级叠加。每个赛区单独解锁：在当前最高难度赢下完整三幕赛季，解锁下一级。好友 PvP 只显示难度，不改变对局规则；装备与补给品不带入 PvP。</p><p>选手头像暂用占位图。游玩无需联网，也不消耗模型额度。</p></div>`);return;
  }
  if(name==='menu'){
-  showModal('赛季菜单',`<p>当前种子：${esc(state.seed)} · ${state.mode==='season'?'D0.2.0':VERSION}${state.mode==='season'?' · '+esc(state.region):''}${R(state)?' · 难度 '+(state.ascension||0):''}</p><div class="stack">${R(state)?ui(`查看装备（${state.skins.length}）`,'gear')+ui(`补给品（${state.supplies.length}/${supplySlots(state)}）`,'supplies'):''}${ui('导出本局记录','export')}${ui('返回开始页（保留进度）','home')}${state.phase!=='result'?ui('放弃本次赛季…','abandon','danger-button'):''}</div>${investList(state)}${unlockTestToggle()}`);return;
+  showModal('赛季菜单',`<p>当前种子：${esc(state.seed)} · ${state.mode==='season'?'D0.2.0':VERSION}${state.mode==='season'?' · '+esc(state.region):''}${R(state)?' · 难度 '+(state.ascension||0):''}</p><div class="stack">${R(state)?ui(`查看装备（${state.skins.length}）`,'gear')+ui(`补给品（${state.supplies.length}/${supplySlots(state)}）`,'supplies'):''}${ui('比赛记录','logs')}${ui('赛季规则','rules')}${ui('导出本局记录','export')}${ui('返回开始页（保留进度）','home')}<a class="secondary menu-link" href="/pvp/">好友PvP</a>${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="secondary menu-link" href="/new/">新demo</a>` : ''}${state.phase!=='result'?ui('放弃本次赛季…','abandon','danger-button'):''}</div>${investList(state)}${unlockTestToggle()}`);return;
  }
  if(name==='abandon'){showModal('放弃本次赛季',`<p>本次将记录为主动放弃，不算声望耗尽。之后可以重新开始。</p>${button('确认放弃',{type:'abandon'},'danger-button')}`);return;}
  if(name==='export'){
@@ -575,7 +673,8 @@ function showCardTip(el){
  clearTimeout(tipTimer);if(!el||!el.isConnected||dragging)return;
  const c={id:el.dataset.cardId,up:el.dataset.cardUp==='true'},t=CARDS[c.id],f=TACTICS[c.id];if(!t)return;
  hideCardTip();if(dialog.open)dialog.append(cardTip);else document.body.append(cardTip);tipAnchor=el;el.setAttribute('aria-describedby','card-tooltip');
- cardTip.innerHTML=`<header><span>${esc(cardName(c))}</span><b>${esc(f.title)}</b></header><p class="tip-effect">${esc(describe(c))}</p>${cardKeywords(c).map(([k,v])=>`<p class="tip-keyword"><strong>${esc(k)}</strong>${esc(v)}</p>`).join('')}<p class="tip-scene">${esc(f.scene)}<small>${esc(f.origin)}</small></p>${CARD_RARITY[c.id]?`<p class="tip-rarity rarity-${CARD_RARITY[c.id]}">${rarityTip(c.id)}<small>只表示这张牌作为奖励或商品出现的频率。</small></p>`:''}`;
+ const peek=t.trainable&&!c.up;cardTip.classList.toggle('has-upgrade',!!peek);
+ cardTip.innerHTML=`<div class="tip-main"><header><span>${esc(cardName(c))}</span><b>${esc(f.title)}</b></header><p class="tip-effect">${esc(describe(c))}</p>${cardKeywords(c).map(([k,v])=>`<p class="tip-keyword"><strong>${esc(k)}</strong>${esc(v)}</p>`).join('')}<p class="tip-scene">${esc(f.scene)}<small>${esc(f.origin)}</small></p>${CARD_RARITY[c.id]?`<p class="tip-rarity rarity-${CARD_RARITY[c.id]}">${rarityTip(c.id)}<small>只表示这张牌作为奖励或商品出现的频率。</small></p>`:''}</div>${peek?`<div class="tip-upgrade"><small>训练后</small>${card({id:c.id,up:true})}<p>${esc(describe({...c,up:true}))}</p></div>`:''}`;
  cardTip.hidden=false;if(cardTip.showPopover)cardTip.showPopover();else if(dialog.open)dialog.append(cardTip);else document.body.append(cardTip);
  const r=el.getBoundingClientRect(),w=cardTip.offsetWidth,h=cardTip.offsetHeight;
  let x=r.right+14,y=r.top;
@@ -584,6 +683,16 @@ function showCardTip(el){
  cardTip.style.left=`${Math.max(10,Math.min(x,innerWidth-w-10))}px`;
  cardTip.style.top=`${Math.max(10,Math.min(y,innerHeight-h-10))}px`;
 }
+// Touch: press and hold a card to see its rules and trained version; the click that ends the hold is swallowed.
+let holdTimer=null,held=false;
+document.addEventListener('pointerdown',e=>{
+ if(e.pointerType!=='touch')return;const el=e.target.closest('[data-card-id]');if(!el)return;
+ clearTimeout(holdTimer);held=false;const x=e.clientX,y=e.clientY;
+ const stop=ev=>{if(ev.type==='pointermove'&&Math.hypot(ev.clientX-x,ev.clientY-y)<10)return;clearTimeout(holdTimer);for(const t of ['pointermove','pointerup','pointercancel'])document.removeEventListener(t,stop,true);};
+ for(const t of ['pointermove','pointerup','pointercancel'])document.addEventListener(t,stop,true);
+ holdTimer=setTimeout(()=>{if(dragging||cardSheetOpen())return;held=true;showCardTip(el);},450);
+},true);
+document.addEventListener('click',e=>{if(held){held=false;e.preventDefault();e.stopImmediatePropagation();}},true);
 function scheduleTip(el){clearTimeout(tipTimer);if(!el||dragging)return;tipTimer=setTimeout(()=>showCardTip(el),120);}
 document.addEventListener('pointerover',e=>{if(e.pointerType==='touch')return;const el=e.target.closest('[data-card-id]');if(el&&!el.contains(e.relatedTarget))scheduleTip(el);});
 document.addEventListener('pointerout',e=>{const el=e.target.closest('[data-card-id]');if(el&&!el.contains(e.relatedTarget)){clearTimeout(tipTimer);if(tipAnchor===el)hideCardTip();}});
@@ -601,6 +710,9 @@ function dragTargetAt(c,e,originY){
 }
 function updateAim(d,e){
  const c=state.battle.hand.find(c=>c.uid===d.uid);if(!c)return;
+ const lift=d.touch?touchLift(d.el,e.clientY):d.el.offsetHeight/2;if(d.touch)d.el.style.setProperty('--drag-lift',`${lift}px`);
+ const ready=dragTargetAt(c,e,d.y);
+ showDragHint(ready?(ready==='enemy'?'松手打出 · 作用于对手':'松手打出 · 作用于我方'):'向上拖出手牌区',{ready:!!ready,x:e.clientX,y:e.clientY,lift});
  aim.removeAttribute('hidden');aim.setAttribute('viewBox',`0 0 ${innerWidth} ${innerHeight}`);
  aim.querySelector('path').setAttribute('d',`M${d.x},${d.y} Q${d.x},${e.clientY} ${e.clientX},${e.clientY}`);
  aim.querySelector('circle').setAttribute('cx',e.clientX);aim.querySelector('circle').setAttribute('cy',e.clientY);
@@ -647,25 +759,30 @@ document.addEventListener('click',e=>{
 app.addEventListener('dragstart',e=>e.preventDefault());
 app.addEventListener('pointerdown',e=>{
  const el=e.target.closest('[data-select]');if(!el||e.button!==0||canPlay(state,el.dataset.select))return;
- pointerDrag={uid:el.dataset.select,x:e.clientX,y:e.clientY,el,active:false,pointerId:e.pointerId};
+ pointerDrag={uid:el.dataset.select,x:e.clientX,y:e.clientY,el,active:false,pointerId:e.pointerId,touch:e.pointerType!=='mouse'};
  el.setPointerCapture(e.pointerId);
 });
 app.addEventListener('pointermove',e=>{
  if(!pointerDrag||pointerDrag.pointerId!==e.pointerId)return;
- const d=pointerDrag;if(!d.active&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<8)return;
- if(!d.active){hideCardTip();d.active=true;dragging=d.uid;selected=d.uid;refreshSelection();d.el.classList.add('dragging-card');}
+ const d=pointerDrag;
+ // A long press opened the card details, so this touch is not a drag any more.
+ if(cardSheetOpen()){endDrag(e,true);return;}
+ // On phones a sideways swipe scrolls the hand; only a mostly vertical drag lifts a card.
+ if(!d.active&&e.pointerType==='touch'&&Math.abs(e.clientX-d.x)>8&&Math.abs(e.clientX-d.x)>Math.abs(e.clientY-d.y)*1.2){if(d.el.hasPointerCapture(e.pointerId))d.el.releasePointerCapture(e.pointerId);pointerDrag=null;return;}
+ if(!d.active&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<8)return;
+ if(!d.active){hideCardTip();d.active=true;dragging=d.uid;selected=d.uid;refreshSelection();d.el.classList.add('dragging-card');if(d.touch)d.el.classList.add('drag-touch');}
  updateAim(d,e);e.preventDefault();d.el.style.setProperty('--drag-x',`${e.clientX}px`);d.el.style.setProperty('--drag-y',`${e.clientY}px`);
 });
 function endDrag(e,cancel=false){
  if(!pointerDrag||pointerDrag.pointerId!==e.pointerId)return;
- const d=pointerDrag;pointerDrag=null;dragging=null;clearAim();
+ const d=pointerDrag;pointerDrag=null;dragging=null;clearAim();hideDragHint();
  if(d.el.hasPointerCapture(e.pointerId))d.el.releasePointerCapture(e.pointerId);
  if(!d.active)return;
- d.el.classList.remove('dragging-card');d.el.style.removeProperty('--drag-x');d.el.style.removeProperty('--drag-y');
+ d.el.classList.remove('dragging-card','drag-touch');d.el.style.removeProperty('--drag-x');d.el.style.removeProperty('--drag-y');d.el.style.removeProperty('--drag-lift');
  suppressClick=true;setTimeout(()=>{suppressClick=false;},0);
  const c=state.battle?.hand.find(c=>c.uid===d.uid);
  if(!cancel&&c&&dragTargetAt(c,e,d.y))commit({type:'play',uid:d.uid,rev:state.rev});
- else{refreshSelection();if(!reduceMotion())d.el.animate([{filter:'brightness(1.4)'},{filter:'brightness(1)'}],{duration:220});notice('卡牌已放回手中。请拖向发亮的目标。');}
+ else{refreshSelection();if(!reduceMotion())d.el.animate([{filter:'brightness(1.4)'},{filter:'brightness(1)'}],{duration:220});if(!cardSheetOpen())notice('卡牌已放回手中。向上拖过手牌区再松手即可打出。');}
 }
 app.addEventListener('pointerup',e=>endDrag(e));
 app.addEventListener('pointercancel',e=>endDrag(e,true));
@@ -677,6 +794,14 @@ document.addEventListener('keydown',e=>{
  if(e.key.toLowerCase()==='e'){e.preventDefault();commit({type:'end',rev:state.rev});}
 });
 document.querySelector('#close-dialog').addEventListener('click',()=>{hideCardTip();dialog.close();});
+// Long press (or right click) on any card: full text, keywords and the trained version.
+function cardDetailHtml(el){
+ const c={id:el.dataset.cardId,up:el.dataset.cardUp==='true'},t=CARDS[c.id],f=TACTICS[c.id];if(!t)return '';
+ hideCardTip();
+ const text=describe(c),upText=c.up?'':describe({id:c.id,up:true}),kw=cardKeywords(c);
+ return `<div class="card-sheet-body"><div class="card-sheet-art wa-sheet-art">${card(c)}</div><div class="card-sheet-info"><h3>${esc(cardName(c))}</h3><p class="card-sheet-meta">${t.cost===null?'不能打出':`${t.cost} 行动点`} · ${esc(t.player?t.role:'战术')}${f?` · ${esc(f.title)}`:''}</p><p class="card-sheet-text">${esc(text)}</p>${kw.length?`<dl class="card-sheet-keywords">${kw.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`:''}${c.up?'<p class="card-sheet-upgrade"><b>已训练</b>这是升级后的版本。</p>':upText&&upText!==text?`<p class="card-sheet-upgrade"><b>训练后</b>${esc(upText)}</p>`:''}${f?`<p class="card-sheet-scene">${esc(f.scene)}</p>`:''}${CARD_RARITY[c.id]?`<p class="card-sheet-scene">${rarityTip(c.id)}（只表示出现频率）</p>`:''}</div></div>`;
+}
+attachCardDetail({selector:'[data-card-id]',render:cardDetailHtml});
 dialog.addEventListener('close',hideCardTip);
 window.baoDemo={observe:()=>state?observe(state):null,legalActions:()=>state?legalActions(state):[],dispatch:a=>{if(!state)return {error:'No active season'};const r=commit(a);return {error:r.error,observation:observe(state)};}};
 render();

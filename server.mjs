@@ -14,6 +14,8 @@ const assets = new Map([
   ['/shared-stage-controller.js', ['shared/character-controller.js', 'text/javascript; charset=utf-8']],
   ['/shared/card-feel.css', ['shared/card-feel.css', 'text/css; charset=utf-8']],
   ['/shared/card-gesture.js', ['shared/card-gesture.js', 'text/javascript; charset=utf-8']],
+  ['/shared/touch-feel.js', ['shared/touch-feel.js', 'text/javascript; charset=utf-8']],
+  ['/shared/touch-feel.css', ['shared/touch-feel.css', 'text/css; charset=utf-8']],
   ['/shared/card-pile-motion.js', ['shared/card-pile-motion.js', 'text/javascript; charset=utf-8']],
   ['/shared/character-stage.css', ['shared/character-stage.css', 'text/css; charset=utf-8']],
   ['/shared/status-icons.js', ['shared/status-icons.js', 'text/javascript; charset=utf-8']],
@@ -22,6 +24,8 @@ const assets = new Map([
   ['/shared/sfx.js', ['shared/sfx.js', 'text/javascript; charset=utf-8']],
   ['/shared/juice.js', ['shared/juice.js', 'text/javascript; charset=utf-8']],
   ['/shared/juice.css', ['shared/juice.css', 'text/css; charset=utf-8']],
+  ['/shared/run-meta.js', ['shared/run-meta.js', 'text/javascript; charset=utf-8']],
+  ['/shared/run-meta.css', ['shared/run-meta.css', 'text/css; charset=utf-8']],
   ['/shared/models/soldier.glb', ['shared/models/soldier.glb', 'model/gltf-binary']],
   ['/shared/models/hazmat.glb', ['shared/models/hazmat.glb', 'model/gltf-binary']],
   ['/shared/models/enemy.glb', ['shared/models/enemy.glb', 'model/gltf-binary']],
@@ -73,6 +77,8 @@ const assets = new Map([
   ['/new/run-extras.css', ['new-demo/run-extras.css', 'text/css; charset=utf-8']],
   ['/new/economy.js', ['new-demo/economy.js', 'text/javascript; charset=utf-8']],
   ['/new/economy.css', ['new-demo/economy.css', 'text/css; charset=utf-8']],
+  ['/new/phone.css', ['new-demo/phone.css', 'text/css; charset=utf-8']],
+  ['/new/run-screens.js', ['new-demo/run-screens.js', 'text/javascript; charset=utf-8']],
 ]);
 
 const imageTypes = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', svg: 'image/svg+xml' };

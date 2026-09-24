@@ -46,6 +46,12 @@ export function recordUnlockProgress(state) {
   state.unlockNotice = { at, gained: r.gained, total: r.progress.awarded[state.seed] ?? r.gained, cards, gear };
 }
 
+// An abandoned run (放弃本局 or overwritten by a new run) keeps the experience it earned.
+export function recordAbandonedRun(state) {
+  if (!state || !econOn(state)) return;
+  saveUnlocks(awardRun(loadUnlocks(), state.team, state.seed, runXpOf(state)).progress);
+}
+
 export function unlockBarHtml(team) {
   const p = loadUnlocks(), t = tierOfXp(p.xp[team] || 0);
   const pct = p.all ? 100 : t.need ? Math.round((t.into / t.need) * 100) : 100;

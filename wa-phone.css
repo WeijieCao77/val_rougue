@@ -1,0 +1,130 @@
+/* Wa demo on phones: compact header, 44px touch targets, scrollable hand,
+   landscape fit and notch safe areas. Loaded last in style.css. */
+
+html,body{overflow-x:hidden}
+.hud-resources>span{display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
+body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.game-hud{padding-top:env(safe-area-inset-top)}
+#notice:not(:empty){bottom:calc(12px + env(safe-area-inset-bottom))}
+
+/* ---------- Header: one row, every control ≥44px, links moved to 菜单 ---------- */
+@media(max-width:720px){
+ .game-hud{height:calc(50px + env(safe-area-inset-top));padding-left:max(6px,env(safe-area-inset-left));padding-right:max(6px,env(safe-area-inset-right));gap:4px}
+ .game-hud .header-links{display:none}
+ .game-hud .brand{font-size:16px;letter-spacing:0}
+ .hud-resources{flex:1 1 auto;min-width:0;gap:6px;font-size:12px}
+ .hud-resources b{font-size:15px}
+ .hud-resources .icon{width:15px;height:15px}
+ .hud-tools{flex:none;gap:2px;align-items:center}
+ .game-hud .hud-link{min-height:44px;min-width:44px;padding:0 6px;font-size:13px;display:inline-flex;align-items:center;justify-content:center}
+ .game-hud .gear-slots{min-height:44px;min-width:44px;align-content:center;justify-content:center;box-sizing:border-box}
+ .game-hud .sfx-toggle{min-width:44px;min-height:44px}
+}
+@media(max-width:560px){.game-hud .brand{display:none}}
+@media(max-width:400px){
+ .hud-resources{gap:4px}
+ .hud-resources .icon{display:none}
+ .game-hud .hud-link{padding:0 4px;font-size:12px}
+}
+
+/* ---------- Map: bigger node hit areas ---------- */
+@media(max-width:720px){
+ .season-map .map-stop>button,.map-stop>button{width:44px;height:44px;padding:9px}
+ .season-map .map-stop.kind-boss>button,.kind-boss>button{width:54px;height:54px}
+ .node-label,.eyebrow,.map-instruction{font-size:12px}
+ .map-legend span,.map-legend li{font-size:12px}
+}
+
+/* ---------- Battle, portrait phone ---------- */
+@media(max-width:720px){
+ .combat-screen{height:calc(100dvh - 50px - env(safe-area-inset-top));min-height:560px}
+ .arena-top{height:auto;min-height:22px;font-size:12px;padding:4px 10px 0}
+ .arena{min-height:220px}
+ .intent-bubble strong{font-size:13px}.intent-bubble small{font-size:12px}
+ .fighter h2{font-size:13px}.team-label{font-size:12px;letter-spacing:1px}
+ .life-bar span{font-size:12px}.shield-value{font-size:12px}
+ .target-hint{font-size:12px}
+ /* Controls: supplies · warning · end turn, then the selected card with a big play button. */
+ .combat-controls{height:auto;min-height:0;padding:6px 8px;gap:6px;flex-wrap:wrap;align-items:center}
+ .combat-controls .supply-bar{order:0}
+ .supply-slot{width:44px;height:44px}
+ .turn-warning{order:1;flex:1 1 0;min-width:0;width:auto;font-size:12px;line-height:1.35}
+ .turn-warning .discard-reminder{display:none}
+ .end-turn{order:2;min-height:44px;min-width:104px;padding:8px 12px;font-size:15px}
+ .selection-panel{order:3;flex:1 1 100%;min-height:44px}
+ .selection-placeholder,.selection-panel small{font-size:12px}
+ .selection-panel strong{font-size:13px}
+ .play-selected{min-height:44px;padding:8px 20px;font-size:14px}
+ .selection-panel .text-button{min-height:44px;min-width:44px;padding:0 6px;font-size:13px}
+ /* Hand: a scrolling row of cards that never cover each other; piles in a bar below. */
+ .hand-dock{height:auto;min-height:0;position:relative;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;grid-template-areas:'fan fan' 'deck discard'}
+ .hand-dock .deck-console,.hand-dock .discard-console{position:static;display:flex;flex-direction:row;align-items:center;width:auto;gap:8px;inset:auto}
+ .hand-dock .hand-fan{grid-area:fan}
+ .hand-dock .deck-console{grid-area:deck;justify-self:start;padding:0 0 max(6px,env(safe-area-inset-bottom)) 8px}
+ .hand-dock .discard-console{grid-area:discard;justify-self:end;padding:0 8px max(6px,env(safe-area-inset-bottom)) 0}
+ .energy-orb{width:50px;height:50px}.energy-orb b{font-size:22px;line-height:1}
+ .pile-button,.hand-dock .exhaust-link{box-sizing:border-box;width:auto;height:44px;min-width:76px;min-height:44px;padding:0 10px;font-size:13px;display:inline-flex;align-items:center;justify-content:center;box-shadow:2px 2px 0 #142029}
+ .hand-fan{position:relative;inset:auto;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:24px 10px 8px;scroll-snap-type:x proximity;overscroll-behavior-x:contain;scrollbar-width:thin;--step:0px}
+ .hand-card{position:relative;left:auto;bottom:auto;flex:0 0 112px;width:112px;min-width:112px;height:168px;transform:none;scroll-snap-align:start;z-index:1;touch-action:pan-x}
+ .hand-card:hover,.hand-card:focus-visible{transform:none;z-index:2}
+ .hand-card.selected{transform:translateY(-16px);z-index:3}
+ .hand-card .card-face{padding:5px}
+ .hand-card .card-title{font-size:13px;line-height:18px}
+ .hand-card .card-portrait{height:62px;min-height:62px}
+ .hand-card .card-type,.hand-card .card-tactic{font-size:12px;line-height:16px}
+ .hand-card .card-effect,.hand-card .card-effect *{font-size:12px;line-height:1.3}
+ .hand-card .portrait-role{font-size:12px;padding:0 3px;letter-spacing:0}
+ .skin-rack .muted,.trait-tag.region-trait,.shield-value small,.crest b{font-size:12px}
+ .energy-orb span{font-size:12px;letter-spacing:0}
+ .hand-card .card-foot{display:none}
+ .hand-card .card-cost{width:28px;height:28px;font-size:18px;top:-8px;left:-4px}
+ .card-unavailable{font-size:11px}
+ .combat-bottom{display:none}
+}
+@media(max-width:380px){
+ .hand-card{flex-basis:104px;width:104px;min-width:104px;height:160px}
+ .hand-card .card-portrait{height:54px;min-height:54px}
+}
+
+/* ---------- Battle, landscape phone (e.g. 844×390): fit without page scroll ---------- */
+@media(orientation:landscape) and (max-height:500px){
+ .game-hud{height:calc(44px + env(safe-area-inset-top));padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right));gap:10px}
+ .game-hud .header-links,.game-hud .brand span{display:none}
+ .game-hud .hud-link,.game-hud .sfx-toggle{min-height:44px;min-width:44px;font-size:13px}
+ .combat-screen{height:calc(100dvh - 44px - env(safe-area-inset-top));min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 188px;grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:'top controls' 'arena controls' 'dock dock'}
+ .combat-screen>.arena-top{grid-area:top;height:auto;min-height:0;padding:3px 12px 0;font-size:12px}
+ .combat-screen>.arena{grid-area:arena;min-height:0;margin:0 8px}
+ .combat-screen>.combat-controls{grid-area:controls;height:auto;min-height:0;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:6px;padding:6px 10px 6px 0}
+ .combat-controls .turn-warning{width:auto;font-size:12px}.turn-warning .discard-reminder{display:none}
+ .end-turn{min-height:44px;font-size:15px}
+ .selection-panel{min-height:44px}.play-selected{min-height:44px}
+ .combat-screen>.hand-dock{grid-area:dock;height:auto;min-height:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:'deck fan discard';align-items:end}
+ .hand-dock .deck-console,.hand-dock .discard-console{position:static;inset:auto;display:flex;flex-direction:column;gap:6px;width:auto;padding:0 8px max(6px,env(safe-area-inset-bottom))}
+ .hand-dock .deck-console{grid-area:deck}.hand-dock .discard-console{grid-area:discard}
+ .hand-dock .hand-fan{grid-area:fan;position:relative;inset:auto;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:16px 8px 6px;scroll-snap-type:x proximity;overscroll-behavior-x:contain}
+ .hand-card{position:relative;left:auto;bottom:auto;flex:0 0 104px;width:104px;min-width:104px;height:150px;transform:none;scroll-snap-align:start;touch-action:pan-x}
+ .hand-card:hover,.hand-card:focus-visible{transform:none}
+ .hand-card.selected{transform:translateY(-10px)}
+ .hand-card .card-face{padding:4px}
+ .hand-card .card-portrait{height:40px;min-height:40px}
+ .hand-card .card-foot,.card-key{display:none}
+ .hand-card .card-title{font-size:12px;line-height:17px}
+ .hand-card .card-tactic{font-size:12px;line-height:16px}
+ .hand-card .card-effect,.hand-card .card-effect *{font-size:12px;line-height:1.25}
+ .hand-card .portrait-role{font-size:12px;padding:0 3px;letter-spacing:0}
+ .hand-card .card-cost{width:26px;height:26px;font-size:16px;top:-7px;left:-4px}
+ .energy-orb{width:48px;height:48px}.energy-orb span{font-size:12px;letter-spacing:0}
+ .pile-button,.hand-dock .exhaust-link{box-sizing:border-box;width:auto;height:44px;min-width:70px;padding:0 8px;font-size:12px;display:inline-flex;align-items:center;justify-content:center}
+ .combat-bottom{display:none}
+ /* Smaller fighters so both fit the short arena. */
+ .fighter{width:150px;bottom:2px}.fighter.ally{left:4%}.fighter.enemy{right:4%}
+ .team-label{display:none}
+ .fighter h2{font-size:12px;margin:2px 0}
+ .combat-target:has(.character-stage-host canvas){width:120px;height:76px}
+ .enemy .combat-target{min-width:120px}.opponent-art{width:120px;height:76px}
+ .crest{height:56px;width:56px}
+ .trait-row{margin:0}.trait-tag.region-trait,.shield-value small,.life-bar span{font-size:12px}
+ .intent-bubble{padding:3px 8px}.intent-bubble strong{font-size:12px}.intent-bubble small{display:none}
+ .arena-center{top:30%}.target-hint{font-size:12px}
+ .map-screen{height:auto}
+}
