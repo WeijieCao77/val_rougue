@@ -1,0 +1,5 @@
+<svg viewBox="0 0 200 112" class="tc-svg" role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <defs><pattern id="g78006" width="16" height="16" patternUnits="userSpaceOnUse" x="6" y="-13"><path d="M16 0H0V16" fill="none" stroke="#ff6b3d" stroke-opacity=".07" stroke-width="1"/></pattern></defs>
+    <rect width="200" height="112" fill="#0b1015"/><rect width="200" height="112" fill="url(#g78006)"/>
+    <g><path d="M36 38h90" stroke="#ff6b3d" stroke-width="4" stroke-linecap="round"/><circle cx="130" cy="38" r="5" fill="#ff6b3d"/><path d="M42 56h80" stroke="#ff6b3d" stroke-width="3" stroke-linecap="round"/><circle cx="126" cy="56" r="4" fill="#ff6b3d"/><path d="M48 74h70" stroke="#ff6b3d" stroke-width="2" stroke-linecap="round"/><circle cx="122" cy="74" r="3" fill="#ff6b3d"/><path d="M150 30l24 26-24 26" fill="none" stroke="#ff6b3d" stroke-width="3"/></g>
+  </svg>

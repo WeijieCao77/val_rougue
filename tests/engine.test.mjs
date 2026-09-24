@@ -9,7 +9,7 @@ function fixture(ids,enemy='B01'){
  const s=createRun('test',false);startBattle(s,enemy);const b=s.battle;b.hand=ids.map(id=>instance(s,id));b.draw=[];b.discard=[];b.exhaust=[];b.powers=[];return s;
 }
 test('content totals and five-role / cost distribution match approved demo',()=>{
- assert.equal(PLAYER_IDS.length,18);assert.equal(Object.keys(CARDS).length,322,'321 plus the TK03 knife token');
+ assert.equal(PLAYER_IDS.length,18);assert.equal(Object.keys(CARDS).length,342,'321 plus the TK03 knife token and 20 rules-3 keyword tactic cards');
  assert.deepEqual([0,1,2,3].map(cost=>PLAYER_IDS.filter(id=>CARDS[id].cost===cost).length),[3,10,3,2]);
  assert.deepEqual(['决斗','哨位','控场','先锋','自由人'].map(role=>PLAYER_IDS.filter(id=>CARDS[id].role===role).length),[6,4,4,4,0],'CHICHOO 哨位, Haodong 控场, AAAAY 先锋 per vlr.gg agent history (2026-09-24)');
 });

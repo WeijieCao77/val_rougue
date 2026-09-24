@@ -9,3 +9,5 @@ roster-roles.json 是开发期已审核的 2026 赛区选手主池角色映射�
 rules1-claim.json 是规则 1（赛区特质、签约日、难度、装备、补给品）下由 tools/playtest-wa.mjs 机器人打通第一幕的动作记录（EMEA，难度 1），用于验证服务端按 rules/ascension 重放并生成 PvP 快照。调整第一幕对手数值或规则后需要重新生成。
 
 rules1-claim.json 早于每幕 15 层地图，没有 `mapVersion` 字段，服务端按旧 12 站地图（地图版本 1）及其对手数值重放，用于验证旧记录兼容。rules1-claim-map2.json 是地图版本 2（15 层＋第 16 层 Boss）下由同一机器人打通第一幕的记录（PAC，难度 1，`--dump 1` 生成）；调整第一幕对手数值（`ENEMY_TUNING_V2`）或地图生成后需要重新生成。
+
+rules3-claim.json 是规则 3（多敌人战斗、弱／强遭遇池、每幕三选一 Boss、关键词牌）下由 tools/playtest-wa.mjs 机器人打通第一幕的记录（CN，难度 1，`--dump 1` 生成，含对群体战的指定目标出牌），用于验证服务端按 rules 3 重放、按 rules 1 重放则失败。调整规则 3 的第一幕对手数值（`ENEMY_TUNING_V3`）、遭遇池、Boss 候选或 CN 牌池后需要重新生成。

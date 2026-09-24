@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { createMatch, applyCommand, viewFor, validateSnapshot } from './duel.mjs';
 import { createWaSeason, waAct, extractCheckpoints } from '../wa-season.js';
+import { RULES_VERSIONS } from '../wa-rules.js';
 import { generateToken, generateRoomCode, sha256 } from './store.mjs';
 
 const MAX_BODY_BYTES = 1024 * 1024;
@@ -266,7 +267,8 @@ async function rebuildSnapshot(run, act) {
     }
   }
 
-  if (run.rules !== undefined && run.rules !== 1) throw new HttpError(400, '无效的规则版本');
+  // Rules 1 records replay unchanged; rules 3 adds group fights, encounter/boss pools and keyword cards.
+  if (run.rules !== undefined && !RULES_VERSIONS.includes(run.rules)) throw new HttpError(400, '无效的规则版本');
   if (run.ascension !== undefined && (!Number.isInteger(run.ascension) || run.ascension < 0 || run.ascension > 10 || !run.rules)) {
     throw new HttpError(400, '无效的难度等级');
   }

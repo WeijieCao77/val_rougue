@@ -3,9 +3,9 @@ import {combatEvents} from './combat-events.js';
 import {clearCombatFx,captureCombatStage,playCombatFx} from './combat-fx.js';
 import {VERSION,CARDS,SKINS,ENEMIES,describe,cardName,effects,TACTICS,displayText,compactLines,cardKeywords,REGIONS,CURSE_RULES,TRAITS,FIELDS} from './content.js';
 import {statusBadges,statusIcon,highlightKeywords} from './shared/status-icons.js';
-import {createRun,canPlay,preview,intent,intentText,healAmount,removalReason,observe,shopPrice,R,hasGear,supplySlots,marketPrice,restHeal,enemyMaxHp,gearSellValue,describeSeasonEvent} from './engine.js';
+import {createRun,canPlay,preview,intent,intentText,healAmount,removalReason,observe,shopPrice,R,hasGear,supplySlots,marketPrice,restHeal,enemyMaxHp,gearSellValue,describeSeasonEvent,foeViews,livingFoes,cardTargeted,bossGrowth} from './engine.js';
 import {CARD_RARITY,RARITY_LABELS} from './card-rarity.js';
-import {REGION_TRAITS,TRAIT_TUNING,ASCENSION_LEVELS,MAX_ASCENSION,OPENING_OPTIONS,GEAR,SUPPLIES,RARITY,SUPPLY_PRICES,GEAR_PRICES,GEAR_SLOTS,gearName} from './wa-rules.js';
+import {REGION_TRAITS,TRAIT_TUNING,ASCENSION_LEVELS,MAX_ASCENSION,OPENING_OPTIONS,GEAR,SUPPLIES,RARITY,SUPPLY_PRICES,GEAR_PRICES,GEAR_SLOTS,gearName,RULES_VERSION} from './wa-rules.js';
 import {createWaSeason,waAct as act,waLegalActions as legalActions} from './wa-season.js';
 import {syncWaCheckpoint} from './wa-online.js';
 import {flyCardsFromPile,flyCardsToPile} from './shared/card-pile-motion.js';
@@ -73,7 +73,7 @@ function rarityTip(id){return `出现频率：${RARITY_LABELS[CARD_RARITY[id]]}`
 function rarityGem(id){return CARD_RARITY[id]?`<span class="card-rarity" title="${rarityTip(id)}" aria-label="${rarityTip(id)}"></span>`:'';}
 function rarityClass(id){return CARD_RARITY[id]?` rarity-${CARD_RARITY[id]}`:'';}
 function rarityCaption(id){return CARD_RARITY[id]?`<p class="rarity-caption rarity-${CARD_RARITY[id]}" title="${rarityTip(id)}"><i aria-hidden="true"></i>${rarityTip(id)}</p>`:'';}
-function face(c,instance=false){const t=CARDS[c.id],f=TACTICS[c.id],tag=t.zone==='exhaust'?'消耗':t.zone==='temporary'?'临时 · 消耗':t.zone==='exhaustEnd'?'回合末消耗':t.zone==='power'?'持续能力':t.id.startsWith('CU')?'跨比赛保留':c.up?'已训练':t.player?'选手牌':/^(CN|AM|EU|PA)T\d{2}$/.test(t.id)?'战术牌':'辅助牌';return `<span class="card-cost">${t.cost===null?'—':t.cost}</span>${rarityGem(c.id)}<span class="card-title">${esc(cardName(c))}</span><span class="card-portrait" aria-hidden="true">${cardArtwork(c.id)}<span class="portrait-role">${esc(t.player?t.role:t.id.startsWith('CU')?'隐患':/^(CN|AM|EU|PA)T\d{2}$/.test(t.id)?'战术':'行动')}</span></span><b class="card-tactic">${esc(f.title)}</b><span class="card-effect">${compactLines(c).map(line=>`<span>${highlightKeywords(esc(line).replace(/(\d+)/g,'<strong>$1</strong>'),true)}</span>`).join('')}</span><span class="card-foot"><b class="${['exhaust','temporary','exhaustEnd'].includes(t.zone)?'exhaust-tag':''}">${tag}</b>${instance?' · '+c.uid:''}</span>`;}
+function face(c,instance=false){const t=CARDS[c.id],f=TACTICS[c.id],tag=t.zone==='exhaust'?'消耗':t.zone==='temporary'?'临时 · 消耗':t.zone==='exhaustEnd'?'回合末消耗':t.zone==='power'?'持续能力':t.id.startsWith('CU')?'跨比赛保留':c.up?'已训练':t.player?'选手牌':/^(CN|AM|EU|PA)T\d{2}$/.test(t.id)?'战术牌':'辅助牌';return `<span class="card-cost">${t.cost===null?'—':t.x?'X':t.cost}</span>${rarityGem(c.id)}<span class="card-title">${esc(cardName(c))}</span><span class="card-portrait" aria-hidden="true">${cardArtwork(c.id)}<span class="portrait-role">${esc(t.player?t.role:t.id.startsWith('CU')?'隐患':/^(CN|AM|EU|PA)T\d{2}$/.test(t.id)?'战术':'行动')}</span></span><b class="card-tactic">${esc(f.title)}</b><span class="card-effect">${compactLines(c).map(line=>`<span>${highlightKeywords(esc(line).replace(/(\d+)/g,'<strong>$1</strong>'),true)}</span>`).join('')}</span><span class="card-foot"><b class="${['exhaust','temporary','exhaustEnd'].includes(t.zone)?'exhaust-tag':''}">${tag}</b>${instance?' · '+c.uid:''}</span>`;}
 function card(c,options={}){const t=CARDS[c.id];return `<article tabindex="0" data-card-id="${c.id}" data-card-up="${!!c.up}" aria-label="${esc(cardName(c)+'，'+t.role+'，'+describe(c))}" class="card role-${t.player?t.role:t.id.slice(0,2)} ${c.up?'upgraded':''}${rarityClass(c.id)}"><div class="card-face">${face(c,options.instance)}</div>${options.rarity?rarityCaption(c.id):''}${options.upgrade?`<div class="upgrade-text"><strong>训练后</strong><p>${esc(describe({...c,up:true}))}</p></div>`:''}${options.action?`<div class="card-action">${button(options.label||'选择',options.action,'',options.disabled||'')}</div>`:''}</article>`;}
 function heading(kicker,title,text=''){return `<div class="section-heading"><div class="eyebrow">${kicker}</div><h2 tabindex="-1" id="page-title">${title}</h2>${text?`<p>${text}</p>`:''}</div>`;}
 function home(){
@@ -153,13 +153,16 @@ function seasonRoute(){
  const done=nodes.filter(n=>n.status==='visited'&&n.kind!=='boss').length,floors=s.map.nodes.reduce((m,n)=>n.kind==='boss'?m:Math.max(m,n.step),0);
  const lines=s.map.edges.map(e=>{const a=lookup.get(e.from),b=lookup.get(e.to),taken=a.status==='visited'&&(b.status==='visited'||resume&&b.key===s.currentNode);return `<path class="${taken?'taken':a.key===s.currentNode&&b.status==='current'?'available':''}" d="M ${a.x*7} ${a.y*14} C ${a.x*7} ${(a.y-3)*14}, ${b.x*7} ${(b.y+3)*14}, ${b.x*7} ${b.y*14}"/>`;});
  const itinerary=`<ol class="season-itinerary">${ACTS.map(a=>`<li class="${a.id===s.act?'active':a.id<s.act?'complete':''}"><b>${a.id<s.act?'✓':a.id}</b><span>${a.name}<small>${a.bossName}</small></span></li>`).join('')}</ol>`;
- return `<main class="map-screen season-map"><aside class="map-intro"><div class="eyebrow">ACT ${['I','II','III'][s.act-1]} / ${esc(REGIONS[s.region].name)}</div><h1>${info.name}</h1>${itinerary}<div class="map-progress"><b>${done}</b><span> / ${floors} 站完成 · 之后是决赛</span></div><div class="map-legend">${[['battle','比赛'],['elite','强敌'],['event','未知'],['shop','转会市场'],['crate','补给箱'],['rest','俱乐部活动'],['boss','世界赛']].map(([k,t])=>`<span>${icon(k)}${t}</span>`).join('')}</div><p class="map-instruction">${resume?'比赛与奖励尚未完成，可查看后续路线，再返回当前节点。':s.currentNode===null?'四个起点任选其一。向上滑动地图，可先看决赛和后续路线。':'沿连线选择下一站。分叉会改变接下来的比赛和补强机会。'}</p>${s.phase!=='map'?ui(s.phase==='intermission'?'查看晋级与下一幕':s.phase==='result'?'查看赛季结算':'返回当前节点','return-room','primary'):''}</aside><div class="map-scroll"><div class="map-board season-board"><div class="map-watermark">ASCEND</div><svg class="map-paths" viewBox="0 0 700 1400" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes.map(n=>`<div class="map-stop ${n.status} kind-${n.kind}" style="left:${n.x}%;top:${n.y}%"><button data-map="${n.key}" ${n.status==='current'?'':'disabled'} aria-label="${n.status==='current'?(resume?'返回':'进入'):n.status==='visited'?'已完成':n.status==='bypassed'?'未选择':'未解锁'}：第 ${n.step} 站 ${esc(n.name)}${n.revealed?`（已揭晓：${REVEALED[n.revealed]}）`:''}">${icon(n.revealed||n.kind)}${n.status==='visited'?'<span class="visited-check">✓</span>':''}</button><span class="node-label">${esc(n.name)}</span>${n.status==='current'?`<small class="here-label">${resume?'正在进行':'可选下一站'}</small>`:''}</div>`).join('')}</div></div><aside class="map-current"><span class="eyebrow">赛季进度 ${s.node} / ${3*(floors+1)} 节点</span><h3>${s.phase==='intermission'?'世界赛晋级':s.phase==='result'?'赛季结束':resume?'完成当前节点':`可选 ${choices.length} 条路线`}</h3><p>本幕终点：${info.bossName}。<br>强敌提供装备；俱乐部活动可恢复声望或训练；市场可招募与移除牌${R(s)?'，并出售装备与补给品':''}；补给箱必得资金，常有装备。未知节点进入后揭晓，多半是事件，也可能是比赛、市场或补给箱。</p><p>节点内容与连线随赛季种子生成。已进入的节点不会因刷新而改变。</p>${s.phase!=='map'?ui('返回当前进度','return-room','secondary'):''}</aside></main>`;
+ return `<main class="map-screen season-map"><aside class="map-intro"><div class="eyebrow">ACT ${['I','II','III'][s.act-1]} / ${esc(REGIONS[s.region].name)}</div><h1>${info.name}</h1>${s.map.boss?bossPreview(s.map.boss):''}${itinerary}<div class="map-progress"><b>${done}</b><span> / ${floors} 站完成 · 之后是决赛</span></div><div class="map-legend">${[['battle','比赛'],['elite','强敌'],['event','未知'],['shop','转会市场'],['crate','补给箱'],['rest','俱乐部活动'],['boss','世界赛']].map(([k,t])=>`<span>${icon(k)}${t}</span>`).join('')}</div><p class="map-instruction">${resume?'比赛与奖励尚未完成，可查看后续路线，再返回当前节点。':s.currentNode===null?'四个起点任选其一。向上滑动地图，可先看决赛和后续路线。':'沿连线选择下一站。分叉会改变接下来的比赛和补强机会。'}</p>${s.phase!=='map'?ui(s.phase==='intermission'?'查看晋级与下一幕':s.phase==='result'?'查看赛季结算':'返回当前节点','return-room','primary'):''}</aside><div class="map-scroll"><div class="map-board season-board"><div class="map-watermark">ASCEND</div><svg class="map-paths" viewBox="0 0 700 1400" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes.map(n=>`<div class="map-stop ${n.status} kind-${n.kind}" style="left:${n.x}%;top:${n.y}%"><button data-map="${n.key}" ${n.status==='current'?'':'disabled'} aria-label="${n.status==='current'?(resume?'返回':'进入'):n.status==='visited'?'已完成':n.status==='bypassed'?'未选择':'未解锁'}：第 ${n.step} 站 ${esc(n.name)}${n.revealed?`（已揭晓：${REVEALED[n.revealed]}）`:''}">${icon(n.revealed||n.kind)}${n.status==='visited'?'<span class="visited-check">✓</span>':''}</button><span class="node-label">${esc(n.name)}</span>${n.status==='current'?`<small class="here-label">${resume?'正在进行':'可选下一站'}</small>`:''}</div>`).join('')}</div></div><aside class="map-current"><span class="eyebrow">赛季进度 ${s.node} / ${3*(floors+1)} 节点</span><h3>${s.phase==='intermission'?'世界赛晋级':s.phase==='result'?'赛季结束':resume?'完成当前节点':`可选 ${choices.length} 条路线`}</h3><p>本幕终点：${info.bossName}。<br>强敌提供装备；俱乐部活动可恢复声望或训练；市场可招募与移除牌${R(s)?'，并出售装备与补给品':''}；补给箱必得资金，常有装备。未知节点进入后揭晓，多半是事件，也可能是比赛、市场或补给箱。</p><p>节点内容与连线随赛季种子生成。已进入的节点不会因刷新而改变。</p>${s.phase!=='map'?ui('返回当前进度','return-room','secondary'):''}</aside></main>`;
 }
+// Rules 3: the act's boss (drawn from three candidates) is shown before the climb.
+function bossPreview(boss){return `<section class="boss-preview" aria-label="本幕 Boss：${esc(boss.name)}。${esc(boss.text)}"><div class="boss-preview-figure" data-character-variant="${esc(boss.look)}" aria-hidden="true"></div><div class="boss-preview-text"><small>本幕 Boss</small><b>${esc(boss.name)}</b><p>${esc(boss.text)}</p></div></section>`;}
 function targetOf(c){return effects(c).some(e=>['hit','weak','vulnerable'].includes(e.type))?'enemy':'self';}
-function handCard(c,i,n){const t=CARDS[c.id],reason=canPlay(state,c.uid),offset=i-(n-1)/2;return `<button class="hand-card role-${t.player?t.role:t.id.slice(0,2)} ${reason?'unplayable':''} ${c.up?'upgraded':''}${rarityClass(c.id)}" data-card-id="${c.id}" data-card-up="${!!c.up}" data-select="${c.uid}" draggable="false" style="--offset:${offset};--tilt:${offset*(n>6?1.6:3)}deg;--bend:${Math.abs(offset)*Math.abs(offset)*1.8}px;--order:${i}" aria-label="选择 ${esc(cardName(c))} · ${esc(TACTICS[c.id].title)}，${t.role}，${t.cost===null?'不能打出':t.cost+' 行动点'}，${esc(describe(c))}"><span class="card-face">${face(c)}</span><span class="card-key">${(i+1)%10}</span>${reason?`<span class="card-unavailable">${esc(reason)}</span>`:''}</button>`;}
+function handCard(c,i,n){const t=CARDS[c.id],reason=canPlay(state,c.uid),offset=i-(n-1)/2;return `<button class="hand-card role-${t.player?t.role:t.id.slice(0,2)} ${reason?'unplayable':''} ${c.up?'upgraded':''}${rarityClass(c.id)}" data-card-id="${c.id}" data-card-up="${!!c.up}" data-select="${c.uid}" draggable="false" style="--offset:${offset};--tilt:${offset*(n>6?1.6:3)}deg;--bend:${Math.abs(offset)*Math.abs(offset)*1.8}px;--order:${i}" aria-label="选择 ${esc(cardName(c))} · ${esc(TACTICS[c.id].title)}，${t.role}，${t.cost===null?'不能打出':t.x?'X 费（花掉全部行动点）':t.cost+' 行动点'}，${esc(describe(c))}"><span class="card-face">${face(c)}</span><span class="card-key">${(i+1)%10}</span>${reason?`<span class="card-unavailable">${esc(reason)}</span>`:''}</button>`;}
 function fighter(which){
+ if(which==='enemy'&&state.battle.foes)return foeGroup();
  const own=which==='self',b=state.battle,e=ENEMIES[b.enemy],hp=own?state.hp:b.enemyHp,max=own?state.maxHp:enemyMaxHp(b),block=own?b.block:b.enemyBlock;
- const growth=e.growth??2;
+ const growth=bossGrowth(b);
  const badges=own?statusBadges([['block',b.block],['strength',b.selfStrength],['overload',b.overload],['weak',b.weak],['vuln',b.vulnerable]]):statusBadges([['block',b.enemyBlock],['strength',b.enemyStrength],['aim',b.aim],['burn',b.enemyBurn],['weak',b.enemyWeak],['vuln',b.enemyVulnerable]]);
  const deploys=own&&b.deployables?.length?`<span class="deploy-row">${b.deployables.map(d=>`<span class="deploy-chip" title="${d.kind==='turret'?`哨戒炮：回合结束时造成 ${d.n} 伤害`:`屏障无人机：回合结束时获得 ${d.n} 布防`}，剩余 ${d.turns} 回合">${statusIcon(d.kind==='turret'?'sentry':'block')}<b>${d.n}</b><small>×${d.turns}</small></span>`).join('')}</span>`:'';
  const trait=!own&&b.trait&&TRAITS[b.trait.id];
@@ -167,6 +170,20 @@ function fighter(which){
  const hidden=!own&&hasGear(state,'BX03');
  const look=e.look||(/E01$/.test(b.enemy)?'rookie':b.enemy);
  return `<section data-drop-target="${which}" class="fighter ${own?'ally':'enemy'}"${own?'':` data-character-variant="${esc(look)}"`}>${!own?`<div class="intent-bubble"><small>对手意图</small><strong>${hidden?'信息封锁：看不到对手意图':highlightKeywords(displayText(intentText(state)))}</strong>${e.boss?`<span>长战增伤 +${b.cycles*growth}</span>`:''}</div>`:'<div class="team-label">'+(state.region||'CN')+'俱乐部</div>'}<button class="combat-target" data-target="${which}" aria-label="${own?'我方俱乐部':'对手队伍'}，可作为出牌目标">${own?`<span class="crest">${icon('shield')}<b>${state.region||'CN'}</b></span>`:opponentArtwork(b.enemy)}<span class="target-caption">${own?'施放到我方':'施放到对手'}</span><span class="status-overlay">${badges}</span>${deploys}</button><h2>${own?(REGIONS[state.region]?.name||'新锐')+'俱乐部':e.name}</h2>${traitHtml}<div class="life-row"><span class="shield-value" title="布防：陷阱、墙与阻滞提供的伤害抵消；下次己方回合开始清空。" aria-label="布防 ${block}">${icon('shield')}<small>布防</small> ${block}</span><div class="life-bar ${own?'own':''}"><i style="width:${hp/max*100}%"></i><span>${hp} / ${max} ${own?'声望':'防线'}</span></div></div>${own?`<div class="active-powers">${b.powers.map(c=>`<span title="${esc(describe(c))}">${icon('power')}${esc(cardName(c))}</span>`).join('')}</div>`:''}</section>`;
+}
+// Rules-3 group fight: one panel per opponent with its own intent, statuses and
+// line; click (or drop a card on) a panel to aim at it.
+let foeTarget=null;
+function currentTarget(){const b=state?.battle,alive=livingFoes(b);return alive.includes(foeTarget)?foeTarget:alive.includes(b?.cur)?b.cur:alive[0];}
+function foeGroup(){
+ const views=foeViews(state),target=currentTarget(),hidden=hasGear(state,'BX03');
+ const panels=views.map(v=>{
+  const e=ENEMIES[v.enemy],look=e.look||'rookie',trait=!v.dead&&v.trait&&TRAITS[v.trait.id];
+  const badges=v.dead?'':statusBadges([['block',v.enemyBlock],['strength',v.enemyStrength],['aim',v.aim],['burn',v.enemyBurn],['weak',v.enemyWeak],['vuln',v.enemyVulnerable]]);
+  const name=e.name+(views.filter(x=>x.enemy===v.enemy).length>1?' '+'ABC'[v.i]:'');
+  return `<div class="foe ${v.dead?'is-dead':''} ${v.i===target?'is-target':''}" data-foe="${v.i}" data-character-variant="${esc(look)}">${v.dead?'<div class="intent-bubble foe-down"><strong>已击倒</strong></div>':`<div class="intent-bubble"><small>意图</small><strong>${hidden?'信息封锁':highlightKeywords(displayText(v.intentText))}</strong></div>`}<button class="combat-target" data-target="enemy" data-foe="${v.i}" ${v.dead?'disabled':''} aria-label="${esc(name)}，${v.dead?'已击倒':'点击设为目标'}">${opponentArtwork(v.enemy)}<span class="target-caption">${v.i===target?'当前目标':'设为目标'}</span><span class="status-overlay">${badges}</span></button><h2>${esc(name)}</h2>${trait?`<div class="trait-row"><span class="trait-tag" tabindex="0" title="${esc(trait.text(v.trait.n))}">${statusIcon(trait.icon)}${esc(trait.name)}</span></div>`:''}<div class="life-row"><span class="shield-value" aria-label="布防 ${v.enemyBlock||0}">${icon('shield')}${v.enemyBlock||0}</span><div class="life-bar"><i style="width:${Math.max(0,v.enemyHp)/v.maxHp*100}%"></i><span>${Math.max(0,v.enemyHp)} / ${v.maxHp}</span></div></div></div>`;
+ }).join('');
+ return `<section data-drop-target="enemy" class="fighter enemy foe-group" style="--foes:${views.length}">${panels}</section>`;
 }
 // Region trait: icon + live counter + rule tooltip, shown like a starter item on our side.
 function regionTraitTag(s){
@@ -189,10 +206,10 @@ function supplyBar(s){
  return `<div class="supply-bar" aria-label="补给品">${slots}</div>`;
 }
 function battle(){
- const b=state.battle,incoming=intent(state).filter(a=>a.type==='hit').reduce((n,a)=>n+a.n*a.times*(b.vulnerable>0?1.5:1),0),hurt=hasGear(state,'BX03')?'?':Math.max(0,Math.floor(incoming)-b.block),curse=b.hand.reduce((n,c)=>n+(CURSE_RULES[c.id]?.trigger==='endTurnLoseHp'?CURSE_RULES[c.id].n:0),0);
+ const b=state.battle,incoming=(b.foes?foeViews(state).filter(v=>!v.dead).flatMap(v=>v.intent):intent(state)).filter(a=>a.type==='hit').reduce((n,a)=>n+a.n*a.times*(b.vulnerable>0?1.5:1),0),hurt=hasGear(state,'BX03')?'?':Math.max(0,Math.floor(incoming)-b.block),curse=b.hand.reduce((n,c)=>n+(CURSE_RULES[c.id]?.trigger==='endTurnLoseHp'?CURSE_RULES[c.id].n:0),0);
  const actInfo=state.mode==='season'?ACTS[state.act-1]:null;
  const battleLabel=state.mode==='season'?`第 ${state.act} 赛段 · ${actInfo?.name||''} ${actInfo?.bossName||''}`:'第 '+(state.wins+1)+' 场 / 6';
- const growth=ENEMIES[b.enemy]?.growth??2;
+ const growth=bossGrowth(b);
  const field=b.field&&FIELDS[b.field];
  return `<main class="combat-screen"><div class="arena-top"><span>${esc(battleLabel)} <b>·</b> 回合 ${b.turn}${ENEMIES[b.enemy]?.boss&&growth?` · 增长 ${growth}`:''}</span>${field?`<span class="battlefield-tag" tabindex="0" title="${esc(field.text)}">战场 <b>${esc(field.name)}</b> · ${esc(field.text)}</span>`:''}<div class="skin-rack gear-rack">${gearRack(state)}</div></div><section class="arena"><div class="arena-backdrop" aria-hidden="true"><i></i><i></i><i></i></div>${fighter('self')}<div class="arena-center"><span class="versus">VS</span>${echo?`<div class="played-echo">${icon(roleIcon[CARDS[echo.id].role]||'cards')}<span>已打出</span><strong>${esc(cardName(echo))} · ${esc(TACTICS[echo.id].title)}</strong></div>`:'<span class="arena-center-label">'+(state.mode==='season'?actInfo?.name||'赛季赛段':'大师赛资格赛')+'</span>'}<div id="target-hint" class="target-hint">先选一张手牌</div></div>${fighter('enemy')}<div class="arena-floor" aria-hidden="true"></div></section><div class="combat-controls">${supplyBar(state)}<div class="turn-warning">${curse?`<strong>舆论压力：回合末另失去 ${curse} 声望</strong>`:`结束回合预计失去 <b>${hurt}</b> 声望`}<small class="discard-reminder">未用手牌回合末弃置；回合末消耗牌除外</small></div><div id="selection-panel" class="selection-panel"></div>${button('结束回合',{type:'end'},'end-turn')}</div><section class="hand-dock"><div class="deck-console"><div class="energy-orb"><b>${b.energy}</b><span>行动点</span></div>${ui(`抽牌堆 ${b.draw.length}`,'pile-draw','pile-button draw-pile')}</div><div class="hand-fan" style="--slots:${Math.max(1,b.hand.length)}">${b.hand.length?b.hand.map((c,i)=>handCard(c,i,b.hand.length)).join(''):'<p class="empty-hand">手牌已空<br>结束回合后重新抽牌</p>'}</div><div class="discard-console">${ui(`弃牌堆 ${b.discard.length}`,'pile-discard','pile-button discard-pile')}${ui(`消耗 ${b.exhaust.length}`,'pile-exhaust','exhaust-link')}</div></section><div class="combat-bottom"><span>${b.hand.length} / 10 张手牌</span><span>${state.tutorial&&hints?'悬停看说明 · 点牌选目标 · 拖动出牌':'1–0 选牌 · Enter 打出 · Esc 取消 · E 结束回合'}</span>${state.tutorial&&hints?ui('隐藏提示','hide-hints','text-button'):ui('战斗记录','logs','text-button')}</div></main>`;
 }
@@ -309,13 +326,15 @@ function refreshSelection(){
  document.querySelectorAll('[data-target]').forEach(el=>el.classList.toggle('targetable',el.dataset.target===target&&!canPlay(state,selected)));
  if(!panel)return;
  if(!c){panel.innerHTML='<span class="selection-placeholder">从手牌中选择你的下一步</span>';if(document.querySelector('#target-hint'))document.querySelector('#target-hint').textContent='先选一张手牌';return;}
- const reason=canPlay(state,c.uid),p=reason?null:preview(state,c.uid),parts=[];
+ const reason=canPlay(state,c.uid),p=reason?null:preview(state,c.uid,state.battle.foes&&cardTargeted(c)?currentTarget():undefined),parts=[];
  if(p){if(p.damage||p.enemyBlock)parts.push(`防线 −${p.damage}${p.enemyBlock?' · 布防 −'+p.enemyBlock:''}`);if(p.block)parts.push(`布防 +${p.block}`);if(p.draw)parts.push(`抽 ${p.draw} 张${p.shuffle?'（洗牌）':''}`);if(p.wins)parts.push('可结束比赛');}
  panel.innerHTML=`<div><strong>${esc(cardName(c))} · ${esc(TACTICS[c.id].title)}</strong><small>${reason||parts.join(' / ')||'建立本场效果'}</small></div>${button('打出',{type:'play',uid:c.uid},'play-selected',reason)}${ui('详解','card-detail','text-button')}${ui('取消','deselect','text-button')}`;
  if(document.querySelector('#target-hint'))document.querySelector('#target-hint').textContent=reason||`点击${target==='enemy'?'对手':'我方'}出牌，或拖动卡牌`;
 }
 function commit(action){
  if(turnAnimating)return {error:'对手回合进行中'};
+ if(action.type==='useSupply'&&state.battle?.foes&&action.target===undefined)action={...action,target:currentTarget()};
+ if(action.type==='play'&&state.battle?.foes&&action.target===undefined){const c=state.battle.hand.find(c=>c.uid===action.uid);if(c&&cardTargeted(c))action={...action,target:currentTarget()};}
  const stage=captureCombatStage();
  const cardEl=action.type==='play'?document.querySelector(`[data-select="${action.uid}"]`):null;
  const flight=cardEl?{rect:cardEl.getBoundingClientRect(),html:cardEl.innerHTML,role:cardEl.className}:null;
@@ -404,7 +423,7 @@ function showCardOverview(){
 function start(tutorial,selectedRegion){
  const seed=`season-${crypto.randomUUID()}`;
  const r=selectedRegion||region;
- state=createSeason(seed,tutorial,r,{rules:1,ascension:chosenAsc(r)});
+ state=createSeason(seed,tutorial,r,{rules:RULES_VERSION,ascension:chosenAsc(r)});
  atHome=false;screen=state.phase==='map'?'map':'room';selected=null;echo=null;dialog.close();persist();notice(state.phase==='opening'?'赞助商签约日：选择一份开季合同。':'选择路线图上发亮的节点，开始第一场比赛。');render();
 }
 function startLegacy(tutorial){const seed=`season-${crypto.randomUUID()}`;state=createRun(seed,tutorial);atHome=false;screen='map';selected=null;echo=null;dialog.close();persist();notice('选择路线图上发亮的节点，开始第一场比赛。');render();}
@@ -554,6 +573,7 @@ function updateAim(d,e){
  aim.querySelector('circle').setAttribute('cx',e.clientX);aim.querySelector('circle').setAttribute('cy',e.clientY);
  const target=dragTargetAt(c,e,d.y);
  document.querySelectorAll('[data-drop-target]').forEach(el=>el.classList.toggle('drop-ready',el.dataset.dropTarget===target));
+ if(state.battle.foes){const over=document.elementFromPoint(e.clientX,e.clientY)?.closest('.foe:not(.is-dead)');document.querySelectorAll('.foe').forEach(el=>el.classList.toggle('drop-ready',el===over&&target==='enemy'&&cardTargeted(c)));}
 }
 function animateResolution(before,after,played,flight,action){
  if(reduceMotion())return;
@@ -574,6 +594,7 @@ document.addEventListener('click',e=>{
  if(suppressClick){suppressClick=false;e.preventDefault();return;}
  const btn=e.target.closest('button');if(!btn||btn.disabled)return;
  if(btn.dataset.select){selected=selected===btn.dataset.select?null:btn.dataset.select;refreshSelection();notice('');if(selected)showCardTip(btn);else hideCardTip();return;}
+ if(btn.dataset.foe!==undefined&&state.battle?.foes){foeTarget=Number(btn.dataset.foe);if(!selected){render();notice('已选定目标。');return;}}
  if(btn.dataset.target){if(!selected){notice('先从底部选择一张牌，再点击目标。');return;}const c=state.battle.hand.find(c=>c.uid===selected);if(targetOf(c)!==btn.dataset.target){notice('这张牌的目标是'+(targetOf(c)==='enemy'?'对手':'我方')+'。');return;}commit({type:'play',uid:selected,rev:state.rev});return;}
  if(btn.dataset.map){
   if(state.mode==='season'){
@@ -612,7 +633,7 @@ function endDrag(e,cancel=false){
  d.el.classList.remove('dragging-card');d.el.style.removeProperty('--drag-x');d.el.style.removeProperty('--drag-y');
  suppressClick=true;setTimeout(()=>{suppressClick=false;},0);
  const c=state.battle?.hand.find(c=>c.uid===d.uid);
- if(!cancel&&c&&dragTargetAt(c,e,d.y))commit({type:'play',uid:d.uid,rev:state.rev});
+ if(!cancel&&c&&dragTargetAt(c,e,d.y)){const over=state.battle.foes&&document.elementFromPoint(e.clientX,e.clientY)?.closest('.foe:not(.is-dead)');if(over)foeTarget=Number(over.dataset.foe);commit({type:'play',uid:d.uid,rev:state.rev});}
  else{refreshSelection();if(!reduceMotion())d.el.animate([{filter:'brightness(1.4)'},{filter:'brightness(1)'}],{duration:220});notice('卡牌已放回手中。请拖向发亮的目标。');}
 }
 app.addEventListener('pointerup',e=>endDrag(e));

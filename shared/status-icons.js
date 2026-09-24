@@ -34,6 +34,10 @@ const ICONS = {
   coin: svg('<circle cx="12" cy="12" r="9" fill="currentColor"/><path d="M9 8h6M9 12h6M9 16h6M12 6v12" stroke="rgba(0,0,0,.45)" stroke-width="1.8"/>'),
   supply: svg('<rect x="4" y="7" width="16" height="13" rx="2" fill="currentColor"/><path d="M9 7V4.5h6V7" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 10v7M8.5 13.5h7" stroke="rgba(0,0,0,.5)" stroke-width="2.4" stroke-linecap="round"/>'),
   cards: svg('<rect x="3" y="6" width="11" height="15" rx="1.6" fill="none" stroke="currentColor" stroke-width="2"/><rect x="9" y="3" width="11" height="15" rx="1.6" fill="currentColor"/>'),
+  ethereal: svg('<path d="M12 3c4 0 7 3 7 7v10l-2.3-1.8L14.3 20 12 18.2 9.7 20l-2.4-1.8L5 20V10c0-4 3-7 7-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 2"/><circle cx="9.5" cy="10.5" r="1.4" fill="currentColor"/><circle cx="14.5" cy="10.5" r="1.4" fill="currentColor"/>'),
+  innate: svg('<path d="M12 2.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16l-5.4 3 1.2-6-4.5-4.2 6.1-.7z" fill="currentColor"/><path d="M12 7.5v6" stroke="rgba(0,0,0,.5)" stroke-width="2" stroke-linecap="round"/>'),
+  xcost: svg('<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>'),
+  growth: svg('<path d="M4 20h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 16l4-4 3 3 5-7" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 7h5v5" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'),
   curse: svg('<circle cx="12" cy="11" r="7.5" fill="currentColor"/><circle cx="9.3" cy="10.5" r="1.7" fill="rgba(0,0,0,.55)"/><circle cx="14.7" cy="10.5" r="1.7" fill="rgba(0,0,0,.55)"/><path d="M9 20v-2.5M12 20v-2.5M15 20v-2.5" stroke="currentColor" stroke-width="2"/>')
 };
 
@@ -58,6 +62,10 @@ export const STATUS_INFO = {
   exhaust: { label: '消耗', color: '#ffb36b', rule: '消耗：打出后本场移出牌组循环。' },
   draw: { label: '抽牌', color: '#9fe3a0', rule: '抽牌：从抽牌堆抽取卡牌。' },
   status: { label: '异常', color: '#ff6b6b', rule: '异常：对手塞入的状态牌，不能打出，常在回合末造成惩罚。' },
+  ethereal: { label: '虚无', color: '#b7a8ff', rule: '虚无：回合结束时如果还在手中，这张牌被消耗。' },
+  innate: { label: '固有', color: '#ffd66b', rule: '固有：每场战斗开始时必定在起手牌中。' },
+  xcost: { label: 'X 费', color: '#7fe0ff', rule: 'X 费：打出时花掉全部行动点，效果按花掉的点数（X）结算。' },
+  growth: { label: '成长', color: '#8ee07a', rule: '成长：每打出一次，这张牌在本场战斗中永久变强。' },
   curse: { label: '隐患', color: '#d17bff', rule: '俱乐部隐患：跨比赛保留的负面牌，需要永久移除。' }
 };
 
@@ -86,7 +94,8 @@ const KEYWORDS = [
   ['烟雾', 'smoke'], ['闪光', 'flash'], ['压制', 'weak'], ['虚弱', 'weak'], ['易伤', 'vuln'],
   ['布防', 'block'], ['格挡', 'block'], ['火力', 'strength'], ['反击', 'thorns'], ['瞄准', 'aim'],
   ['哨戒炮', 'sentry'], ['哨戒', 'sentry'], ['过载', 'overload'], ['消耗', 'exhaust'], ['异常', 'status'],
-  ['燃烧', 'burn'], ['保留', 'retain'], ['发现', 'discover'], ['连击', 'combo'], ['伤害', 'damage'], ['抽牌', 'draw']
+  ['燃烧', 'burn'], ['保留', 'retain'], ['发现', 'discover'], ['连击', 'combo'], ['伤害', 'damage'], ['抽牌', 'draw'],
+  ['虚无', 'ethereal'], ['固有', 'innate'], ['X 费', 'xcost'], ['成长', 'growth']
 ];
 const KEYWORD_RE = new RegExp(KEYWORDS.map(([w]) => w).join('|'), 'g');
 const KEYWORD_MAP = new Map(KEYWORDS);

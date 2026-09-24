@@ -1,4 +1,4 @@
-import { CARDS, SKINS, effects, cardName } from '../content.js';
+import { CARDS, SKINS, effects, xEffects, cardName } from '../content.js';
 import { TRAIT_TUNING, ROLES, REGION_TRAITS } from '../wa-rules.js';
 
 // Region traits apply in PvP exactly as in the PvE season (see engine.js).
@@ -156,7 +156,9 @@ function createPlayerState(snapshot, seat, matchSeed) {
   const deck = snapshot.deck.map(c => ({ ...c }));
   const rngSeed = `${matchSeed}|pvp|${seat}|${snapshot.runId}`;
   const rng = createRng(rngSeed);
-  const drawPile = shuffleWithRng(rng, deck);
+  const shuffled = shuffleWithRng(rng, deck);
+  // 固有 (innate) cards start on top of the draw pile.
+  const drawPile = [...shuffled.filter(c => CARDS[c.id].innate), ...shuffled.filter(c => !CARDS[c.id].innate)];
   return {
     maxHp: snapshot.maxHp,
     hp: snapshot.maxHp,
@@ -258,7 +260,9 @@ function playCard(state, seat, uid) {
   if (t.cost > player.energy) throw new Error('not enough energy');
 
   player.hand.splice(cardIndex, 1);
-  player.energy -= t.cost;
+  // X 费: spend every action point; the effects scale with the amount spent.
+  const X = t.x ? player.energy : 0;
+  player.energy -= t.x ? X : t.cost;
   const playsBefore = player.plays || 0;
   player.plays = playsBefore + 1;
   const wasVuln = opponent.vulnerable > 0, wasBurning = (opponent.burn || 0) > 0;
@@ -269,7 +273,8 @@ function playCard(state, seat, uid) {
   const wasWeak = opponent.weak > 0;
   state.log.push(`玩家${seat} 打出 ${cardName(card)}。`);
 
-  const list = effects(card).flatMap(e => e.type === 'combo' ? (playsBefore > 0 ? [e.effect] : []) : [e]);
+  let list = effects(card).flatMap(e => e.type === 'combo' ? (playsBefore > 0 ? [e.effect] : []) : [e]);
+  if (t.x) list = xEffects(list, X);
   const tt = player.tt || (player.tt = { roles: [], dmg: 0, cnDone: false, emeaDrew: false });
   const deals = list.some(e => DAMAGE_TYPES.includes(e.type));
   if (deals) tt.dmg++;
@@ -325,12 +330,14 @@ function playCard(state, seat, uid) {
     } else if (e.type === 'overload') {
       player.overloadNext = (player.overloadNext || 0) + e.n;
     } else if (e.type === 'token') {
-      if (player.hand.length >= 10) {
-        state.log.push('手牌已满，未生成临时牌。');
-      } else {
-        const tokenCard = { uid: `t${state.nextTokenId++}`, id: e.id, up: false };
-        player.hand.push(tokenCard);
-        state.log.push(`生成 ${CARDS[e.id].name}。`);
+      for (let k = 0; k < (e.count ?? 1); k++) {
+        if (player.hand.length >= 10) {
+          state.log.push('手牌已满，未生成临时牌。');
+        } else {
+          const tokenCard = { uid: `t${state.nextTokenId++}`, id: e.id, up: false };
+          player.hand.push(tokenCard);
+          state.log.push(`生成 ${CARDS[e.id].name}。`);
+        }
       }
     }
     if (state.status === 'finished') break;
@@ -363,6 +370,8 @@ function playCard(state, seat, uid) {
     drawCards(state, seat, 1);
   }
 
+  // 成长: this copy grows for the rest of the match.
+  if (t.growth) card.g = (card.g || 0) + 1;
   if (t.zone === 'power') {
     player.powers.push(card);
     state.log.push(`${cardName(card)} 能力生效。`);
@@ -432,7 +441,10 @@ function endTurn(state, seat) {
   }
   const kept = [];
   for (const card of player.hand) {
-    if (CARDS[card.id].zone === 'retain') kept.push(card);
+    if (CARDS[card.id].ethereal) {
+      player.exhaust.push(card);
+      state.log.push(`${cardName(card)} 虚无：在回合末消耗。`);
+    } else if (CARDS[card.id].zone === 'retain') kept.push(card);
     else if (CARDS[card.id].zone === 'exhaustEnd' || CARDS[card.id].zone === 'temporary') {
       player.exhaust.push(card);
       state.log.push(`${cardName(card)} 在回合末消耗。`);

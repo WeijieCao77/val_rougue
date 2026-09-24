@@ -94,9 +94,9 @@ function totalBattleCards(battle) {
 
 // ----------------------------- Tests -----------------------------
 
-test('content: 124 shared (87 core + 33 archetype + 4 area) plus four 75-card regional pools and 19 afflictions', () => {
-  assert.equal(CARD_IDS.length, 424);
-  assert.equal(new Set(CARD_IDS).size, 424);
+test('content: 144 shared (87 core + 33 archetype + 4 area + 20 keyword) plus four 75-card regional pools and 19 afflictions', () => {
+  assert.equal(CARD_IDS.length, 444);
+  assert.equal(new Set(CARD_IDS).size, 444);
   assert.equal(Object.keys(STATUS_CARDS).length, 19);
   for (const id of CARD_IDS) {
     const c = CARDS[id];
@@ -1255,4 +1255,207 @@ test('装备槽：最多6件，槽满时替换（按品级折算金币）或放�
   const inShop = act(shop, { type: 'enter', key: 'sh' }).state;
   assert.ok(!legalActions(inShop).some(a => a.type === 'buyRelic'));
   assert.match(act(inShop, { type: 'buyRelic', index: 0 }).error, /装备槽已满/);
+});
+
+// ----------------------------- Boss pool, encounter pools, keywords (2026-09-24) -----------------------------
+test('boss pool: each act draws one of three bosses by seed, stable across rebuilds, with preview data', async () => {
+  const { BOSSES, BOSS_IDS_BY_ACT, GROUPS } = await import('../new-demo/content.js');
+  const { BOSS_POOL, bossForAct } = await import('../new-demo/season-map.js');
+  assert.equal(Object.keys(BOSSES).length, 9);
+  const looks = new Set();
+  for (const a of [1, 2, 3]) {
+    assert.deepEqual(BOSS_POOL[a], BOSS_IDS_BY_ACT[a]);
+    for (const id of BOSS_POOL[a]) {
+      const b = BOSSES[id];
+      assert.ok(b && b.name && b.text && b.look && b.color && b.icon, id);
+      assert.equal(b.act, a);
+      assert.doesNotMatch(b.name + b.text, /无畏契约|VCT|建议|构筑/);
+      looks.add(b.look);
+      // Every candidate is a real fight: a boss enemy or a boss group.
+      const members = GROUPS[id]?.members.map(m => m.id) || [id];
+      assert.ok(members.every(m => ENEMIES[m]), id);
+      assert.ok(members.some(m => ENEMIES[m].boss), `${id} has a boss`);
+    }
+  }
+  assert.equal(looks.size, 9, 'every boss has its own look');
+  for (let i = 0; i < 20; i++) for (const a of [1, 2, 3]) {
+    const m = buildMap(`boss-${i}`, a);
+    assert.equal(m.boss, buildMap(`boss-${i}`, a).boss);
+    assert.equal(m.boss, bossForAct(`boss-${i}`, a));
+    assert.equal(m.nodes.find(n => n.kind === 'boss').enemy, m.boss);
+  }
+  // A saved run keeps its boss: the map (and boss node) travel with the save.
+  const run = createRun('boss-save');
+  const reloaded = JSON.parse(JSON.stringify(run));
+  assert.equal(reloaded.map.boss, run.map.boss);
+});
+
+test('boss pool: all three candidates of every act appear across seeds', async () => {
+  const { BOSS_POOL } = await import('../new-demo/season-map.js');
+  for (const a of [1, 2, 3]) {
+    const seen = new Set();
+    for (let i = 0; i < 60; i++) seen.add(buildMap(`reach-${i}`, a).boss);
+    assert.deepEqual([...seen].sort(), BOSS_POOL[a].slice().sort(), `act ${a}`);
+  }
+});
+
+test('encounter pools: weak opening floors, strong pool later, no parent/grandparent repeats', async () => {
+  const { WEAK_POOL, STRONG_SINGLES, STRONG_GROUPS, WEAK_STEPS } = await import('../new-demo/season-map.js');
+  const { GROUPS } = await import('../new-demo/content.js');
+  let repeats = 0, checked = 0;
+  for (let i = 0; i < 40; i++) for (const a of [1, 2, 3]) {
+    const m = buildMap(`pool-${i}`, a);
+    const prefix = a === 1 ? '' : `A${a}_`;
+    const byKey = new Map(m.nodes.map(n => [n.key, n]));
+    const parents = n => m.edges.filter(e => e.to === n.key).map(e => byKey.get(e.from));
+    const enc = n => n.kind === 'battle' ? n.enemy : n.kind === 'event' ? n.ambush : null;
+    for (const n of m.nodes) {
+      const id = enc(n);
+      if (!id) continue;
+      const bare = id.slice(prefix.length);
+      if (n.step <= WEAK_STEPS[a]) {
+        assert.ok(WEAK_POOL.includes(bare), `${n.key} step ${n.step}: ${id} should be weak`);
+        assert.ok(!GROUPS[id], 'no group fights in the weak phase');
+      } else {
+        assert.ok([...STRONG_SINGLES, ...STRONG_GROUPS].includes(bare), `${n.key} step ${n.step}: ${id} should be strong`);
+      }
+      if (n.kind !== 'battle') continue;
+      for (const p of parents(n)) {
+        for (const q of [p, ...parents(p)]) { checked++; if (enc(q) === id && q.kind === 'battle') repeats++; }
+      }
+    }
+    // Elites never repeat on a direct elite-to-elite chain.
+    for (const n of m.nodes.filter(x => x.kind === 'elite')) for (const p of parents(n)) if (p.kind === 'elite') assert.notEqual(p.enemy, n.enemy);
+  }
+  assert.equal(repeats, 0, `${repeats}/${checked} parent/grandparent repeats`);
+});
+
+test('虚无: an ethereal card still in hand at end of turn is exhausted, not discarded', () => {
+  let s = createTestBattle({ handCards: ['TA125', 'TA01'], enemyIntent: [{ type: 'block', n: 0 }] });
+  s = endTurn(s);
+  assert.ok(s.battle.exhaustPile.some(c => c.id === 'TA125'));
+  assert.ok(!s.battle.discardPile.some(c => c.id === 'TA125'));
+  assert.ok(s.battle.discardPile.some(c => c.id === 'TA01') || s.battle.hand.some(c => c.id === 'TA01'));
+  // Played normally it goes to the discard pile like any card.
+  let t = createTestBattle({ handCards: ['TA125'], enemyHp: 50 });
+  t = playCardById(t, 'TA125');
+  assert.equal(t.battle.enemyHp, 50 - 11);
+  assert.ok(t.battle.discardPile.some(c => c.id === 'TA125'));
+  assert.match(CARDS.TA125.text, /虚无/);
+});
+
+test('固有: innate cards are always in the opening hand', () => {
+  for (let i = 0; i < 12; i++) {
+    const run = createRun(`innate-${i}`);
+    run.deck.push({ uid: 'inn1', id: 'TA130', up: false }, { uid: 'inn2', id: 'TA131', up: false });
+    const s = act(run, { type: 'enter', key: run.map.starts[0] }).state;
+    assert.ok(s.battle.hand.some(c => c.uid === 'inn1') && s.battle.hand.some(c => c.uid === 'inn2'), `seed ${i}`);
+  }
+  // More innate cards than the normal draw: the opening hand grows to hold them.
+  const run = createRun('innate-many');
+  for (let i = 0; i < 7; i++) run.deck.push({ uid: `many${i}`, id: 'TA131', up: false });
+  const s = act(run, { type: 'enter', key: run.map.starts[0] }).state;
+  assert.ok(s.battle.hand.filter(c => c.id === 'TA131').length === 7);
+  assert.match(CARDS.TA130.text, /^固有/);
+});
+
+test('X 费: spends all current energy and scales with it; upgrades add to X', () => {
+  let s = createTestBattle({ handCards: ['TA139'], enemyHp: 60, energy: 3 });
+  assert.ok(legalActions(s).some(a => a.type === 'play'));
+  s = playCardById(s, 'TA139');
+  assert.equal(s.battle.energy, 0);
+  assert.equal(s.battle.enemyHp, 60 - 3 * 7);
+  let up = createTestBattle({ handCards: ['TA139'], enemyHp: 60, energy: 3 });
+  up.battle.hand[0].up = true;
+  up = playCardById(up, 'TA139');
+  assert.equal(up.battle.enemyHp, 60 - 4 * 7, 'upgraded: X+1 hits');
+  let zero = createTestBattle({ handCards: ['TA139'], enemyHp: 60, energy: 0 });
+  zero = playCardById(zero, 'TA139');
+  assert.equal(zero.battle.enemyHp, 60, 'X = 0 does nothing');
+  let blk = createTestBattle({ handCards: ['TA136'], energy: 2, stance: 'push' });
+  blk = playCardById(blk, 'TA136');
+  assert.equal(blk.battle.playerBlock, 10);
+  assert.equal(blk.battle.energy, 0);
+  // Banked energy/draw arrive at the start of the next turn.
+  let bank = createTestBattle({ handCards: ['TA138'], drawPile: Array(10).fill('TA01'), energy: 2, enemyIntent: [{ type: 'block', n: 0 }] });
+  bank = playCardById(bank, 'TA138');
+  bank = endTurn(bank);
+  assert.equal(bank.battle.energy, 3 + 2);
+  assert.equal(bank.battle.hand.length, 5 + 2);
+  assert.equal(engine.observe(createTestBattle({ handCards: ['TA135'] })).hand[0].x, true);
+  assert.match(CARDS.TA135.text, /^X 费/);
+});
+
+test('成长: each play improves only that copy, only for the current combat', () => {
+  let s = createTestBattle({ handCards: ['TA140', 'TA140'], enemyHp: 100, energy: 3 });
+  const [a, b] = s.battle.hand.map(c => c.uid);
+  s = act(s, { type: 'play', uid: a }).state;
+  assert.equal(s.battle.enemyHp, 100 - 7);
+  s = act(s, { type: 'play', uid: b }).state;
+  assert.equal(s.battle.enemyHp, 100 - 14, 'the other copy has not grown');
+  // Bring copy A back to hand: it now hits for 7 + 4.
+  const i = s.battle.discardPile.findIndex(c => c.uid === a);
+  s.battle.hand.push(s.battle.discardPile.splice(i, 1)[0]);
+  assert.equal(s.battle.hand[0].grow, 1);
+  assert.match(engine.combatCardText(s.battle.hand[0]), /11点伤害/);
+  s = act(s, { type: 'play', uid: a }).state;
+  assert.equal(s.battle.enemyHp, 100 - 14 - 11);
+  assert.ok(s.deck.every(c => !c.grow), 'deck copies never change');
+  // A new combat starts from the deck copy: no growth carried over.
+  const run = createRun('growth-reset');
+  run.deck.push({ uid: 'gr', id: 'TA140', up: false });
+  const fight = act(run, { type: 'enter', key: run.map.starts[0] }).state;
+  const copy = [...fight.battle.hand, ...fight.battle.drawPile].find(c => c.uid === 'gr');
+  assert.ok(copy && !copy.grow);
+});
+
+test('boss traits: overwatch fires from the 6th card, reactive shield, summon refills escorts, mode shift', () => {
+  // 全程监视
+  let s = soloFight('boss', 'A3_B02', { seed: 'ow' });
+  s.battle.hand = Array.from({ length: 7 }, (_, i) => ({ uid: `z${i}`, id: 'TA06', up: false }));
+  s.battle.energy = 3;
+  const hp = s.hp;
+  for (let i = 0; i < 5; i++) s = act(s, { type: 'play', uid: `z${i}` }).state;
+  assert.equal(s.hp, hp);
+  const blockBefore = s.battle.playerBlock;
+  s = act(s, { type: 'play', uid: 'z5' }).state;
+  assert.equal(s.hp + s.battle.playerBlock, hp + blockBefore + 3 - engine.OVERWATCH_DAMAGE, '6th card draws fire (block absorbs first)');
+  // 应激护盾
+  let r = soloFight('boss', 'A2_B02', { seed: 'rx' });
+  r.battle.hand = [{ uid: 'q', id: 'TA06', up: false }];
+  r.battle.energy = 3;
+  r = act(r, { type: 'play', uid: 'q' }).state;
+  assert.equal(engine.battleEnemies(r.battle)[0].statuses.block, ENEMIES.A2_B02.trait.n);
+  r = act(r, { type: 'end' }).state;
+  assert.equal(engine.battleEnemies(r.battle)[0].statuses.block || 0, 0, 'shield drops when it acts');
+  // 战区指挥: escorts killed, the summon brings one back.
+  let m = soloFight('boss', 'A2_B03', { seed: 'mx' });
+  assert.equal(m.battle.enemies.length, 3);
+  m.battle.enemies[0].hp = 0;
+  const cmd = m.battle.enemies[1];
+  cmd.intent = [{ type: 'summon', id: 'A2_M09', n: 10 }];
+  m.battle.enemies[2].intent = [{ type: 'block', n: 0 }];
+  assert.match(engine.describeIntents(m)[cmd.uid], /调兵/);
+  m = act(m, { type: 'end' }).state;
+  assert.ok(m.battle.enemies[0].hp > 0, 'escort slot refilled');
+  assert.equal(m.battle.enemies.length, 3);
+  // 防御架势
+  let w = soloFight('boss', 'B02', { seed: 'wd' });
+  w.battle.hand = [{ uid: 'big', id: 'TA25', up: true }];
+  w.battle.energy = 3;
+  delete w.battle.enemyHp;
+  const warden = w.battle.enemies[0];
+  warden.hp = warden.maxHp - 10;
+  warden.statuses.block = 0;
+  w = act(w, { type: 'play', uid: 'big' }).state;
+  const after = engine.battleEnemies(w.battle)[0];
+  assert.equal(after.traitState.shifts, 1);
+  assert.ok(after.statuses.block > 0 && after.traitState.spikes > 0);
+  // 毒雾渗透
+  let t = soloFight('boss', 'B03', { seed: 'tx' });
+  t.battle.enemies[0].intent = [{ type: 'block', n: 0 }];
+  delete t.battle.enemyIntent;
+  const drawBefore = t.battle.drawPile.filter(c => c.id === 'ST02').length;
+  t = act(t, { type: 'end' }).state;
+  assert.ok([...t.battle.drawPile, ...t.battle.hand].filter(c => c.id === 'ST02').length > drawBefore);
 });

@@ -426,6 +426,44 @@ const ENEMY_LOOKS = {
     heightMul: 1.03,
     build: buildBoss3,
   },
+  // Boss-pool variants (2026-09-24): existing archetype rigs in boss scale and
+  // palettes, so each of the nine act bosses reads differently at a glance.
+  bossWarden: {
+    palette: { suit: 0x1f3a5f, accent: 0x9fd3ff, helmet: 0x0f1f33, visor: 0x6fe3ff, trim: 0xd4af37, glow: 0x6fe3ff },
+    body: { torsoW: 1.0, torsoH: 0.62, torsoD: 0.6, legW: 0.28, legH: 0.3, armW: 0.23, headR: 0.32 },
+    heightMul: 1.14,
+    build: buildSentinel,
+  },
+  bossHunter: {
+    palette: { suit: 0x2b2b2b, accent: 0xd4af37, helmet: 0x111111, visor: 0xff3355, glow: 0xff3355 },
+    body: { torsoW: 0.6, torsoD: 0.38, torsoH: 0.6, legH: 0.42, legW: 0.19, armW: 0.14, headR: 0.34 },
+    heightMul: 1.12,
+    build: buildSniper,
+  },
+  bossBlitz: {
+    palette: { suit: 0xe0561b, accent: 0x1b1b1b, helmet: 0x3a1206, visor: 0xfff04d, glow: 0xffd000 },
+    body: { torsoW: 0.72, torsoH: 0.56, lean: 0.3, stride: 0.16 },
+    heightMul: 1.12,
+    build: buildRusher,
+  },
+  bossToxin: {
+    palette: { suit: 0x1f4d2b, accent: 0x9cff57, helmet: 0x0d2614, visor: 0xb6ff3b, glow: 0x9cff57 },
+    body: { torsoW: 0.74, torsoH: 0.6 },
+    heightMul: 1.12,
+    build: buildController,
+  },
+  bossOracle: {
+    palette: { suit: 0x10304a, accent: 0xf2f2f2, helmet: 0x08182a, visor: 0x7affc8, trim: 0x7affc8, glow: 0x7affc8 },
+    body: { torsoW: 0.68, legH: 0.36 },
+    heightMul: 1.12,
+    build: buildRecon,
+  },
+  bossMarshal: {
+    palette: { suit: 0x2d2d3a, accent: 0xe8e8f0, helmet: 0x15151d, visor: 0xff2d2d, trim: 0xe8e8f0, glow: 0xff2d2d },
+    body: { torsoW: 0.76, torsoH: 0.62 },
+    heightMul: 1.14,
+    build: buildIgl,
+  },
 };
 
 function buildEnemyLook(look) {

@@ -1,7 +1,8 @@
 import {REGIONS,REGIONAL_ROWS,REGIONAL_TACTICS} from './regions.js';
 import {EXPANSION_ROWS,EXPANSION_TACTICS} from './regional-expansion.js';
 import {CURSES,CURSE_RULES,EXTRA_STATUSES,EXTRA_STATUS_RULES} from './afflictions.js';
-import {EXTRA_ENEMIES} from './season-map.js';
+import {EXTRA_ENEMIES,WA_GROUPS,ENCOUNTER_POOLS,BOSS_POOL,BOSS_INFO} from './season-map.js';
+import {KEYWORD_ROWS,KEYWORD_TACTICS,POOL_SWAPS} from './wa-keyword-cards.js';
 export {REGIONS};
 export {CURSE_RULES};
 export const VERSION = 'D0.1.0';
@@ -47,15 +48,24 @@ for(const region of Object.values(REGIONS)){
  region.pool.push(...EXPANSION_ROWS.filter(row=>row[0].startsWith(prefix)&&!row[0].startsWith(prefix+'T')).map(row=>row[0]));
  region.pool.push(...EXPANSION_ROWS.filter(row=>row[0].startsWith(prefix+'T')).map(row=>row[0]));
 }
-export const CARDS = Object.fromEntries([...rows,...REGIONAL_ROWS,...EXPANSION_ROWS].map(([id,name,role,cost,effects,upgraded,zone='discard']) =>
-  [id,{id,name,role,cost,effects,upgraded,zone,player:/^(CN|AM|EU|PA)\d{2}$/.test(id),trainable:/^(CN|AM|EU|PA)(\d{2}|T\d{2})$/.test(id)}]
+export const CARDS = Object.fromEntries([...rows,...REGIONAL_ROWS,...EXPANSION_ROWS,...KEYWORD_ROWS].map(([id,name,role,cost,effects,upgraded,zone='discard',flags={}]) =>
+  [id,{id,name,role,cost,effects,upgraded,zone,player:/^(CN|AM|EU|PA)\d{2}$/.test(id),trainable:/^(CN|AM|EU|PA)(\d{2}|T\d{2})$/.test(id),...flags}]
 ));
+// Rules-3 pools: five plain tactic cards per region give way to keyword cards
+// (虚无/固有/X 费/成长), keeping 50 players + 25 tactics. Older rulesets keep region.pool.
+for(const region of Object.values(REGIONS)){
+ const prefix={CN:'CN',AM:'AM',EMEA:'EU',PAC:'PA'}[region.id];
+ region.pool3=[...region.pool.filter(id=>!POOL_SWAPS[region.id].includes(id)),...KEYWORD_ROWS.map(r=>r[0]).filter(id=>id.startsWith(prefix+'T'))];
+}
+// Area cards: every opponent is hit when a fight has several (a single opponent is unchanged).
+for(const id of ['CNT14','AMT19','AMT23','EUT03','PAT05'])for(const list of [CARDS[id].effects,CARDS[id].upgraded])for(const e of list||[])if(['hit','weak','vulnerable','burn'].includes(e.type))e.all=true;
 export const PLAYER_IDS = rows.filter(r=>r[0].startsWith('CN')).map(r=>r[0]);
 // Presentation only: these motifs never add rules or identify a player's real agent pool.
 // Every number still comes from effects(); all source/adaptation notes are player-readable.
 export const TACTICS = {
  ...REGIONAL_TACTICS,
  ...EXPANSION_TACTICS,
+ ...KEYWORD_TACTICS,
  ...Object.fromEntries(CURSES.slice(2).map(c=>[c.id,{title:c.name,scene:c.text,origin:'赛季风险 · 原创适配',note:'全赛区共享隐患；只由风险事件加入，不能从普通奖励获得。'}])),
  ...Object.fromEntries(EXTRA_STATUSES.map(c=>[c.id,{title:c.name,scene:c.text,origin:'比赛干扰 · 原创适配',note:'临时状态仅在本场战斗生效，赛后移除。'}])),
  TK03:{title:'飞刀',scene:'手里还剩一把飞刀，随时补一刀。',origin:'临时行动 · 飞刀',note:'由飞刀类战术生成的 0 费临时牌。'},
@@ -106,7 +116,12 @@ export const TRAITS = {
  ritual:{name:'手感渐热',icon:'strength',text:n=>`每个对手回合结束时，获得${n}层火力。`},
  tempo:{name:'控制节奏',icon:'tempo',text:n=>`你每打出${n}张牌，它获得2层火力与6点布防。`},
  phase2:{name:'决胜局',icon:'enrage',text:()=>'防线降到一半时清除自身负面状态，获得10点布防、2层火力，并换成全新打法。'},
- sniper:{name:'狙击位',icon:'aim',text:()=>'瞄准一回合后打出重狙；开枪前让它陷入压制可打断瞄准，这一枪只剩三分之一伤害。'}
+ sniper:{name:'狙击位',icon:'aim',text:()=>'瞄准一回合后打出重狙；开枪前让它陷入压制可打断瞄准，这一枪只剩三分之一伤害。'},
+ barricade:{name:'铁壁',icon:'block',text:()=>'它的布防不会在回合之间清空；盾击的伤害随它的布防增加。'},
+ overdrive:{name:'双线突击',icon:'overload',text:()=>'每个回合连续执行两段意图。'},
+ saturate:{name:'毒雾弥漫',icon:'status',text:()=>'你的手牌、抽牌堆和弃牌堆里每有 1 张比赛干扰，它的每段攻击 +1。'},
+ foresight:{name:'预判',icon:'aim',text:()=>'每回合它受到的第一次伤害降为 1。'},
+ escort:{name:'近卫保护',icon:'thorns',text:()=>'还有队友存活时，它受到的攻击伤害减半。'}
 };
 export const FIELDS = {
  corridor:{name:'狭窄走廊',text:'所有多段攻击（双方）每段伤害 +1。'},
@@ -116,6 +131,9 @@ export const FIELDS = {
  overtime:{name:'加时赛',text:'从第 5 回合起，对手每回合行动前获得 2 层火力。'},
  eco:{name:'经济局',text:'第一回合你多 1 行动点、多抽 1 张牌。'}
 };
+const rally = n => ({type:'rally',n});
+const guard = n => ({type:'guard',n});
+const bash = n => ({type:'bash',n});
 const SEASON_ACT1 = {
  // Tuned to hurt from the first fight (2026-09-24 user request: act 1 should not be easy).
  S_E01:{name:'新秀步枪组',look:'rookie',hp:40,script:[[hit(10)],[buff(1),hit(7)],[block(5),hit(8)]]},
@@ -126,7 +144,16 @@ const SEASON_ACT1 = {
  S_E06:{name:'前哨侦察兵',look:'recon',hp:46,trait:{id:'enrageOnSkill',n:1},script:[[hit(10)],[block(6),hit(7)],[hit(4,2)]]},
  S_EL01:{name:'王牌突击手',look:'ace',hp:72,elite:true,trait:{id:'ritual',n:1},script:[[hit(10),jam('ST03')],[hit(5,3)],[block(10),hit(6)]]},
  S_EL02:{name:'战术指挥官',look:'igl',hp:66,elite:true,script:[[buff(2),block(8)],[hit(8,2)],[cleanse(),block(12),jam('ST02')],[hit(16)]]},
- S_B01:{name:'大师赛冠军卫队',look:'boss1',hp:110,boss:true,growth:0,trait:{id:'tempo',n:16},script:[[weak(1),hit(9)],[jam('ST02',2),block(12)],[hit(5,3)],[hit(15)]]}
+ S_B01:{name:'大师赛冠军卫队',look:'boss1',hp:110,boss:true,growth:0,trait:{id:'tempo',n:16},script:[[weak(1),hit(9)],[jam('ST02',2),block(12)],[hit(5,3)],[hit(15)]]},
+ // Rules-3 group members (several opponents in one fight; each keeps its own intent and statuses).
+ S_M01:{name:'步枪手',look:'rookie',hp:20,member:true,script:[[hit(5)],[hit(3,2)],[block(4),hit(4)]]},
+ S_M02:{name:'烟雾手',look:'controller',hp:24,member:true,script:[[weak(1),hit(4)],[jam('ST01'),hit(6)],[hit(7)]]},
+ S_M03:{name:'观察手',look:'recon',hp:22,member:true,script:[[rally(1),block(5)],[hit(4)],[hit(5)]]},
+ S_M04:{name:'冲锋手',look:'rusher',hp:20,member:true,script:[[hit(7)],[hit(3,2)],[hit(9)]]},
+ S_M05:{name:'自动炮台',look:'sentinel',hp:20,member:true,startBlock:6,script:[[block(5),jam('ST03')],[hit(10)]]},
+ S_M06:{name:'交叉狙击手',look:'sniper',hp:26,member:true,trait:{id:'sniper'},script:[[aim(),block(4)],[snipe(16)],[hit(6)]]},
+ S_M07:{name:'王牌狙击手',look:'ace',hp:42,member:true,elite:true,trait:{id:'sniper'},script:[[aim(),block(6)],[snipe(20)],[hit(8)]]},
+ S_M08:{name:'护卫盾手',look:'sentinel',hp:44,member:true,elite:true,startBlock:8,trait:{id:'thorns',n:2},script:[[guard(10),hit(6)],[hit(12)],[guard(8),hit(7)]]}
 };
 function scaleSeason(prefix,label,hpK,dmgK){
  const out={};
@@ -136,7 +163,7 @@ function scaleSeason(prefix,label,hpK,dmgK){
   out[prefix+id]={...e,name:label+e.name,hp:Math.round(e.hp*hpK*(e.elite?0.93:1)),startBlock:e.startBlock?r(e.startBlock):undefined,
    // Ritual and skill-enrage already compound during a fight, so only flat traits grow per act.
    trait:e.trait?{...e.trait,n:e.trait.n&&!['ritual','enrageOnSkill'].includes(e.trait.id)?e.trait.n+(dmgK>1.4?2:1):e.trait.n}:undefined,
-   script:e.script.map(turn=>turn.map(a=>['hit','block','snipe'].includes(a.type)?{...a,n:r(a.n)}:a.type==='buff'?{...a,n:a.n+1}:{...a}))};
+   script:e.script.map(turn=>turn.map(a=>['hit','block','snipe','guard','bash'].includes(a.type)?{...a,n:r(a.n)}:a.type==='buff'?{...a,n:a.n+1}:{...a}))};
  }
  return out;
 }
@@ -147,8 +174,18 @@ const SEASON_ENEMIES = {
  ...scaleSeason('A3_','决赛·',1.45,1.25),
  A3_S_B01:{name:'总决赛冠军卫队',look:'boss3',hp:115,boss:true,growth:0,trait:{id:'phase2'},
   script:[[hit(10),jam('ST03')],[weak(1),hit(4,3)],[block(12),jam('ST01',2)],[hit(15)]],
-  phase2:[[buff(1),hit(7,2)],[hit(5,3),vulnP(1)],[block(12),hit(9)]]}
+  phase2:[[buff(1),hit(7,2)],[hit(5,3),vulnP(1)],[block(12),hit(9)]]},
+ // Rules-3 boss pool: two more candidates per act (see BOSS_POOL).
+ S_B02:{name:'铁壁教官',look:'bossWarden',hp:104,boss:true,growth:0,startBlock:10,trait:{id:'barricade'},script:[[block(12),hit(8)],[hit(8,2)],[block(10),jam('ST03',2)],[bash(10)]]},
+ S_B03:{name:'狙击教官',look:'bossHunter',hp:84,boss:true,growth:0,trait:{id:'sniper'},script:[[aim(),block(8)],[snipe(24)],[hit(6,2)],[weak(1),hit(8)]]},
+ S_BM1:{name:'教官观察手',look:'recon',hp:30,member:true,script:[[rally(1),block(6)],[hit(5),rally(1)]]},
+ A2_S_B02:{name:'爆破突击长',look:'bossBlitz',hp:100,boss:true,growth:0,trait:{id:'overdrive'},script:[[hit(6)],[hit(4,2)],[block(8)],[buff(1),hit(5)],[hit(9)],[jam('ST02'),hit(4)]]},
+ A2_S_B03:{name:'毒雾控场长',look:'bossToxin',hp:115,boss:true,growth:0,trait:{id:'saturate'},script:[[jam('ST03',2),hit(6)],[weak(1),hit(8)],[jam('ST05'),block(12)],[hit(5,2)]]},
+ A3_S_B02:{name:'预判分析师',look:'bossOracle',hp:120,boss:true,growth:0,trait:{id:'foresight'},script:[[hit(7,2)],[block(14),vulnP(1)],[buff(2),hit(10)],[hit(4,4)]]},
+ A3_S_B03:{name:'总指挥',look:'bossMarshal',hp:100,boss:true,growth:0,trait:{id:'escort'},script:[[buff(1),block(10)],[hit(9,2)],[jam('ST02'),hit(12)],[hit(18)]]},
+ A3_S_BM2:{name:'近卫',look:'sentinel',hp:40,member:true,startBlock:6,script:[[guard(10),hit(6)],[hit(10)],[guard(8),hit(7)]]}
 };
+export {WA_GROUPS,ENCOUNTER_POOLS,BOSS_POOL,BOSS_INFO};
 export const ENEMIES = {
  ...EXTRA_ENEMIES,
  E01:{name:'基础试训队',hp:28,script:[[hit(6)],[hit(8)],[block(4),hit(4)]]},
@@ -162,7 +199,16 @@ export const ENEMIES = {
 };
 export const ROUTE = ['基础试训','信息压制','赛程外的机会','双核突击','市场 / 俱乐部活动','普通 / 强敌','俱乐部活动','纪律控制','大师赛 · BOSS'];
 export const START = ['CN03','CN07','CN11','CN14','CN16','CN03','CN07','CN03','CN07','CN14'];
-export function effects(card) { return card.up ? CARDS[card.id].upgraded : CARDS[card.id].effects; }
+export function effects(card) {
+ const list=card.up ? CARDS[card.id].upgraded : CARDS[card.id].effects;
+ // 成长: a copy played g times earlier this combat carries +grow×g on those effects.
+ return card.g&&list?list.map(e=>e.grow?{...e,n:e.n+e.grow*card.g}:e):list;
+}
+// X 费: resolve an X card's effects for the energy actually spent.
+export function xEffects(list,x){
+ return list.map(e=>{const k=x+(e.xPlus||0);if(e.xTimes)return {...e,times:k};if(e.perX)return e.type==='token'?{...e,count:k}:{...e,n:e.n*k};return e;});
+}
+const xLabel=e=>e.xPlus?`(X+${e.xPlus})`:'X';
 export function cardName(card) { return CARDS[card.id].name + (card.up?' +':''); }
 // Short face text and full hover text use the same effects, including upgrades.
 export function compactLines(card) {
@@ -173,7 +219,7 @@ export function compactLines(card) {
  const lines=effects(card).flatMap(function line(e){
   if(e.type==='combo')return line(e.effect).map((l,i)=>i?l:`连击：${l}`);
   if(e.type==='hit'&&(e.ifVuln||e.ifBurn))return [`伤害 ${e.n}${e.times>1?` × ${e.times}`:''}`,e.ifVuln?`对手易伤：+${e.ifVuln}`:`对手燃烧：+${e.ifBurn}`];
-  if(e.type==='burn')return [`燃烧 ${e.n}`];
+  if(e.type==='burn')return [`${e.all?'全体':''}燃烧 ${e.n}${e.perX?` × ${xLabel(e)}`:''}`];
   if(e.type==='burnMultiply')return [`燃烧层数 ×${e.n}`];
   if(e.type==='detonate')return [`引爆：燃烧×${e.per}伤害`];
   if(e.type==='deploy')return [e.kind==='turret'?`部署哨戒炮 ${e.n}×${e.turns}回合`:`部署屏障 ${e.n}布防×${e.turns}回合`];
@@ -184,6 +230,11 @@ export function compactLines(card) {
   if(e.key==='knife')return ['本场飞刀：',`伤害 +${e.n}`];
   if(e.key==='comboAtk')return ['每回合第3张起：',`攻击 +${e.n}`];
   if(e.key==='burnTick')return ['每回合开始：',`燃烧 ${e.n}`];
+  if(e.type==='hit'&&(e.xTimes||e.grow||e.all))return [`${e.all?'全体':''}伤害 ${e.n}${e.xTimes?` × ${xLabel(e)}`:e.times>1?` × ${e.times}`:''}`,...(e.grow?[`成长：每次打出 +${e.grow}`]:[])];
+  if(e.type==='block'&&(e.perX||e.grow))return [`布防 ${e.n}${e.perX?` × ${xLabel(e)}`:''}`,...(e.grow?[`成长：每次打出 +${e.grow}`]:[])];
+  if(e.type==='token'&&e.perX)return [`生成 ${e.id==='TK01'?'补枪':e.id==='TK03'?'飞刀':'续投减速'} × ${xLabel(e)}`];
+  if(e.all&&e.type==='weak')return [`全体压制 ${e.n} 回合`];
+  if(e.all&&e.type==='vulnerable')return [`全体易伤 ${e.n} 回合`];
   if(e.type==='hit')return [`伤害 ${e.n}${e.times>1?` × ${e.times}`:''}`,...(e.ifWeak?[`对手有压制：基础伤害 +${e.ifWeak}`]:[])];
   if(e.type==='block')return [`布防 ${e.n}`];
   if(e.type==='weak')return [`对手压制 ${e.n} 回合`];
@@ -197,6 +248,8 @@ export function compactLines(card) {
   return [];
  });
  if(CARDS[card.id].zone==='retain')lines.push('保留');
+ const t=CARDS[card.id],tags=[t.innate&&'固有',t.ethereal&&'虚无'].filter(Boolean);
+ if(tags.length)lines.unshift(tags.join(' · '));
  return lines.length<=3?lines:[lines[0],lines[1],lines.slice(2).join(' · ')];
 }
 export function cardKeywords(card) {
@@ -216,6 +269,11 @@ export function cardKeywords(card) {
  if(flat.some(e=>e.type==='overload'))list.push(['过载','下回合行动点减少等量。']);
  if(flat.some(e=>e.type==='strength'))list.push(['火力','本场你每一段攻击伤害 +层数。']);
  if(t.zone==='retain')list.push(['保留','回合结束时不会被弃掉，留在手中。']);
+ if(t.innate)list.push(['固有','每场比赛开始时必定在起手牌中。']);
+ if(t.ethereal)list.push(['虚无','回合结束时如果还在手中，这张牌被消耗（本场不再抽到）。']);
+ if(t.x)list.push(['X 费','打出时花掉全部行动点；效果按花掉的行动点数 X 结算。']);
+ if(flat.some(e=>e.grow))list.push(['成长','每打出一次，这一张牌在本场比赛中永久变强；赛后恢复原样。']);
+ if(flat.some(e=>e.all))list.push(['全体','同时作用于场上所有对手。']);
  if(t.id.startsWith('CU'))list.push(['俱乐部隐患','跨比赛保留。可在俱乐部团建等节点永久移除；直接失去声望不能用布防抵消。']);
  return list;
 }
@@ -227,6 +285,13 @@ export function describe(card) {
  if(special[card.id]) return special[card.id];
  const text=effects(card).map(function part(e){
   if(e.type==='combo') return `连击：${part(e.effect)}`;
+  if(e.type==='hit'&&e.xTimes) return `${e.all?'对所有对手':''}造成 ${e.n} 伤害 ${xLabel(e)} 次${e.grow?`；成长：本场每打出一次，此牌伤害 +${e.grow}`:''}`;
+  if(e.type==='hit'&&(e.all||e.grow)) return `${e.all?'对所有对手':''}造成 ${e.n} 伤害${e.times>1?` × ${e.times} 次`:''}${e.grow?`；成长：本场每打出一次，此牌每段伤害 +${e.grow}`:''}`;
+  if(e.type==='block'&&(e.perX||e.grow)) return `获得 ${e.n}${e.perX?` × ${xLabel(e)}`:''} 布防${e.grow?`；成长：本场每打出一次，此牌布防 +${e.grow}`:''}`;
+  if(e.type==='burn'&&(e.perX||e.all)) return `给予${e.all?'所有对手':'对手'} ${e.n}${e.perX?` × ${xLabel(e)}`:''} 层燃烧`;
+  if(e.type==='token'&&e.perX) return `生成 ${xLabel(e)} 张${CARDS[e.id].name}（0 费，${e.id==='TK01'?'3 伤害':e.id==='TK03'?'4 伤害':'3 布防'}，临时）`;
+  if(e.type==='weak'&&e.all) return `所有对手压制 ${e.n} 回合（攻击 −25%）`;
+  if(e.type==='vulnerable'&&e.all) return `所有对手易伤 ${e.n} 回合（受到攻击 +50%）`;
   if(e.type==='hit') return `造成 ${e.n} 伤害${e.times>1?` × ${e.times} 次`:''}${e.ifWeak?`；对手有压制时基础伤害 +${e.ifWeak}`:''}${e.ifVuln?`；对手易伤时基础伤害 +${e.ifVuln}`:''}${e.ifBurn?`；对手燃烧时基础伤害 +${e.ifBurn}`:''}`;
   if(e.type==='burn') return `给予对手 ${e.n} 层燃烧`;
   if(e.type==='burnMultiply') return `对手燃烧层数 ×${e.n}`;
@@ -243,5 +308,6 @@ export function describe(card) {
   if(e.type==='token') return `生成 1 张${CARDS[e.id].name}·${TACTICS[e.id].title}（0 费，${e.id==='TK01'?'3 伤害':e.id==='TK03'?'4 伤害':'3 布防'}，临时）`;
   return ({knife:`本场你的飞刀伤害 +${e.n}`,comboAtk:`本场每回合第 3 张及之后的牌，攻击伤害 +${e.n}`,burnTick:`本场每回合开始时给予对手 ${e.n} 层燃烧`,duel:`本场每回合第一张决斗牌的第一段攻击 +${e.n}`,init:`本场每回合第一张先锋打出后，获得 ${e.n} 布防`,energy:`从下一回合起，每回合行动点 +${e.n}`,extraDraw:`从下一回合起，每回合额外抽 ${e.n} 张`})[e.key];
  }).join('；');
- return text + (t.zone==='exhaust'?'。打出后消耗。':t.zone==='temporary'?'。打出或回合末消耗。':t.zone==='power'?'。能力：本场持续生效，不再洗回。':t.zone==='retain'?'。保留：回合末不弃置。':'。');
+ const pre=[t.x&&'X 费：花掉全部行动点',t.innate&&'固有',t.ethereal&&'虚无'].filter(Boolean).join('。');
+ return (pre?pre+'。':'') + text + (t.zone==='exhaust'?'。打出后消耗。':t.zone==='temporary'?'。打出或回合末消耗。':t.zone==='power'?'。能力：本场持续生效，不再洗回。':t.zone==='retain'?'。保留：回合末不弃置。':'。');
 }

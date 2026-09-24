@@ -15,6 +15,7 @@ const modules = [
   'shared-unknown-room.js',
   'shared-event-core.js',
   'season-map.js',
+  'wa-keyword-cards.js',
   'content.js',
   'wa-rules.js',
   'card-rarity.js',

@@ -1,6 +1,6 @@
 // new-demo/engine.js
 import { buildMap, availableNodes } from './season-map.js';
-import { CARDS, CARD_IDS, REGION_CARD_IDS, SHARED_CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, GROUPS, RELICS, ARCHETYPES, TEAM_TRAITS, RELIC_IDS_BY_TIER, EQUIP_TIERS, SUPPLIES, SUPPLY_IDS, SUPPLY_SLOTS } from './content.js';
+import { CARDS, CARD_IDS, REGION_CARD_IDS, SHARED_CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, GROUPS, RELICS, ARCHETYPES, TEAM_TRAITS, RELIC_IDS_BY_TIER, EQUIP_TIERS, SUPPLIES, SUPPLY_IDS, SUPPLY_SLOTS, grownEffects, cardGrowth, cardTextFor } from './content.js';
 import { CURSES, CURSE_RULES, EXTRA_STATUS_RULES } from '../afflictions.js';
 import { EVENTS, EVENT_POOLS, CRATE_LOOT } from './events.js';
 import { opsReason, describeOps, applyOps, pickKind, pickCandidates } from '../shared-event-core.js';
@@ -222,12 +222,22 @@ function effectNeedsTarget(e) {
   if (!e || e.all) return false;
   if (TARGET_EFFECTS.has(e.type)) return true;
   if (e.type === 'conditional') return TARGET_CONDITIONS.has(e.condition) || effectNeedsTarget(e.effect);
-  if (e.type === 'repeat') return effectNeedsTarget(e.effect);
+  if (e.type === 'repeat' || e.type === 'xRepeat' || e.type === 'xMul') return effectNeedsTarget(e.effect);
   return false;
 }
 function cardEffects(card) {
   const def = CARDS[card.id];
-  return card.up && def.upgradeEffects?.length ? def.upgradeEffects : def.effects;
+  const base = card.up && def.upgradeEffects?.length ? def.upgradeEffects : def.effects;
+  // 成长: this combat copy has been played `grow` times (reset every combat).
+  return card.grow ? grownEffects(base, cardGrowth(card.id, card.up), card.grow) : base;
+}
+// X-cost cards (X 费) list cost 0 and spend all current energy when played.
+export function isXCost(idOrCard) {
+  return !!CARDS[typeof idOrCard === 'string' ? idOrCard : idOrCard?.id]?.x;
+}
+// Card text for a combat copy: upgraded text plus growth gained this combat.
+export function combatCardText(card) {
+  return cardTextFor(card.id, !!card.up, card.grow || 0);
 }
 // True when the card must be aimed at one enemy (implied while only one is alive).
 export function cardNeedsTarget(idOrCard, up = false) {
@@ -377,7 +387,7 @@ export function observe(state) {
       enemies,
       playerStatuses: b.statuses.player,
       playerBlock: b.playerBlock,
-      hand: b.hand.map(c => { const def = CARDS[c.id]; return { uid: c.uid, id: c.id, name: def.name, cost: cardCost(c), text: c.up ? def.upgradeText || def.text : def.text, needsTarget: !!def.effects && cardNeedsTarget(c) }; }),
+      hand: b.hand.map(c => { const def = CARDS[c.id] || STATUS_CARDS[c.id]; return { uid: c.uid, id: c.id, name: def.name, cost: cardCost(c), x: !!def.x, grow: c.grow || 0, text: CARDS[c.id] ? combatCardText(c) : def.text, needsTarget: !!CARDS[c.id] && cardNeedsTarget(c) }; }),
       drawPileCount: b.drawPile.length,
       discardPileCount: b.discardPile.length,
       exhaustPileCount: b.exhaustPile.length,
@@ -417,6 +427,7 @@ function intentText(b, e, pending = 0) {
       parts.push(e.statuses.aim ? `重狙${full}（闪光可打断）` : `仓促射击${Math.ceil(act.n / 3) + strength}（瞄准已被打断）`);
     }
     else if (act.type === 'cleanse') parts.push('清除自身负面状态');
+    else if (act.type === 'summon') parts.push(summonSlot(b, e) ? `调兵：补回1名「${getEnemyDef(act.id)?.name || act.id}」` : `布防${act.n}（护卫满员）`);
   }
   return parts.join('，');
 }
@@ -448,7 +459,7 @@ export function preview(state, uid) {
   if (!card) return null;
   const def = CARDS[card.id];
   return {
-    card: { uid, id: card.id, name: def.name, cost: cardCost(card), text: card.up && def.upgradeText ? def.upgradeText : def.text },
+    card: { uid, id: card.id, name: def.name, cost: cardCost(card), x: !!def.x, xValue: def.x ? state.battle.energy : null, grow: card.grow || 0, text: combatCardText(card) },
     stance: state.battle.stance,
     needsTarget: cardNeedsTarget(card),
     hitsAll: cardHitsAll(card)
@@ -580,8 +591,17 @@ function startBattle(state, node) {
   if (!members.length || members.some(m => !getEnemyDef(m.id))) return '敌人未找到';
   const deck = state.deck.map(c => ({ uid: c.uid, id: c.id, up: c.up }));
   shuffle(deck, state);
+  // 固有: innate cards go on top of the draw pile, and the opening hand grows to
+  // hold all of them (up to the hand limit).
+  const innate = deck.filter(c => CARDS[c.id]?.innate);
+  if (innate.length) {
+    const rest = deck.filter(c => !CARDS[c.id]?.innate);
+    deck.length = 0;
+    deck.push(...innate, ...rest);
+  }
   const hand = [];
-  for (let i = 0; i < drawPerTurn(state) && deck.length; i++) hand.push(deck.shift());
+  const openingSize = Math.min(MAX_HAND, Math.max(drawPerTurn(state), innate.length));
+  for (let i = 0; i < openingSize && deck.length; i++) hand.push(deck.shift());
   // Repeated member types get A/B/C suffixes so the player can tell them apart.
   const counts = {};
   for (const m of members) counts[m.id] = (counts[m.id] || 0) + 1;
@@ -782,15 +802,19 @@ function playCard(state, action) {
   };
 
   b.energy -= cost;
+  // X 费: X is the energy available now; all of it is spent (a free copy keeps it).
+  if (def.x) { context.x = b.energy; if (!card.free) b.energy = 0; }
   b.hand.splice(idx, 1);
   b.playsThisTurn++;
   for(const held of b.hand){const rule=CURSE_RULES[held.id];if(rule?.trigger==='onPlayLoseHp'){state.hp=Math.max(0,state.hp-rule.n);if(!state.hp){finishBattleLoss(state);return null;}}}
 
-  const effects = card.up && def.upgradeEffects?.length ? def.upgradeEffects : def.effects;
+  const effects = cardEffects(card);
   for (const eff of effects) {
     applyEffect(state, eff, card, mods, context);
     if(state.phase!=='combat')return null;
   }
+  // 成长: this copy improves for the rest of the combat.
+  if (cardGrowth(card.id, card.up)) card.grow = (card.grow || 0) + 1;
   // 双发扳机 (first attack card each turn) and 双倍弹药 (next card): resolve again.
   let replays = 0;
   if (def.type === 'attack' && !preAttackPlayed && hasRelic(state, 'R30')) replays++;
@@ -816,12 +840,7 @@ function playCard(state, action) {
   } else if (def.exhaust || card.temp || effects.some(e => e.type === 'exhaustSelf')) {
     delete card.free;
     b.exhaustPile.push(card);
-    if (b.powerStacks.dark_embrace) drawCards(state, b.powerStacks.dark_embrace);
-    if (b.powerStacks.feel_no_pain) b.playerBlock += 3 * b.powerStacks.feel_no_pain;
-    if (hasRelic(state, 'R24')) {
-      const pool = alive(b);
-      if (pool.length) { const t = pool[Math.floor(nextRand(state) * pool.length)]; t.hp = Math.max(0, t.hp - 3); if (t.hp <= 0) pushLog(state, 'enemy_down', { enemy: t.uid }); checkEnemyHpTraits(state, t); }
-    }
+    onExhaust(state);
   } else {
     b.discardPile.push(card);
   }
@@ -853,13 +872,20 @@ function playCard(state, action) {
 
   // Update per-turn flags after card resolution
   const isAttack = def.type === 'attack' || def.effects.some(e => e.type === 'attack' || (e.type === 'conditional' && e.effect.type === 'attack'));
-  const isBlock = def.effects.some(e => e.type === 'block' || (e.type === 'conditional' && e.effect.type === 'block'));
+  const isBlock = def.effects.some(e => e.type === 'block' || ((e.type === 'conditional' || e.type === 'xMul' || e.type === 'xRepeat') && e.effect.type === 'block'));
   if (isAttack) b.attackPlayedThisTurn = true;
   if (isBlock) b.blockPlayedThisTurn = true;
   if (effects.some(e => e.type === 'stanceSwitch')) b.stanceChangedThisTurn = true;
 
   for (const e of alive(b)) {
     if (e.trait?.id === 'enrageOnSkill' && def.type === 'skill') addStatus(e, 'strength', e.trait.n);
+    // 应激护盾: every card you play gives it block (cleared before it acts).
+    if (e.trait?.id === 'reactive') addStatus(e, 'block', e.trait.n);
+    // 全程监视: from the (n+1)th card of a turn, each card draws its fire.
+    if (e.trait?.id === 'overwatch' && b.playsThisTurn > e.trait.n) {
+      damagePlayerDirect(state, OVERWATCH_DAMAGE);
+      if (state.phase !== 'combat') return null;
+    }
     if (e.trait?.id === 'tempo' && ++e.tempoCount >= e.trait.n) {
       e.tempoCount = 0;
       addStatus(e, 'strength', 2);
@@ -875,6 +901,19 @@ function playCard(state, action) {
   pushLog(state, 'play_card', { uid: card.uid, id: card.id, target: target?.uid || null });
   return null;
 }
+
+// Shared by played exhaust cards and ethereal cards exhausted at end of turn.
+function onExhaust(state) {
+  const b = state.battle;
+  if (b.powerStacks.dark_embrace) drawCards(state, b.powerStacks.dark_embrace);
+  if (b.powerStacks.feel_no_pain) b.playerBlock += 3 * b.powerStacks.feel_no_pain;
+  if (hasRelic(state, 'R24')) {
+    const pool = alive(b);
+    if (pool.length) { const t = pool[Math.floor(nextRand(state) * pool.length)]; t.hp = Math.max(0, t.hp - 3); if (t.hp <= 0) pushLog(state, 'enemy_down', { enemy: t.uid }); checkEnemyHpTraits(state, t); }
+  }
+}
+export const OVERWATCH_DAMAGE = 4;
+export const GUARD_MODE_SPIKES = 4;
 
 function applyEffect(state, eff, sourceCard, mods, context) {
   const b = state.battle;
@@ -928,8 +967,9 @@ function applyEffect(state, eff, sourceCard, mods, context) {
         dealDamageToEnemy(state, t, dmg);
         checkEnemyHpTraits(state, t);
         if (t.hp <= 0) break;
-        if (t.trait?.id === 'thorns') {
-          damagePlayerDirect(state, t.trait.n);
+        const counter = t.trait?.id === 'thorns' ? t.trait.n : t.traitState?.spikes || 0;
+        if (counter) {
+          damagePlayerDirect(state, counter);
           if (state.phase !== 'combat') return;
         }
       }
@@ -1105,6 +1145,26 @@ function applyEffect(state, eff, sourceCard, mods, context) {
     case 'overload':
       b.overloadNext = (b.overloadNext || 0) + eff.n;
       break;
+    case 'xRepeat': {
+      const times = (context.x || 0) + (eff.plus || 0);
+      for (let i = 0; i < times; i++) {
+        if (!eff.effect.all && effectNeedsTarget(eff.effect) && !(context.target && context.target.hp > 0)) break;
+        applyEffect(state, eff.effect, sourceCard, mods, context);
+        if (state.phase !== 'combat' || allDead(b)) break;
+      }
+      break;
+    }
+    case 'xMul': {
+      const k = (context.x || 0) + (eff.plus || 0);
+      if (k > 0) applyEffect(state, { ...eff.effect, n: eff.effect.n * k }, sourceCard, mods, context);
+      break;
+    }
+    case 'nextTurnX': {
+      const k = (context.x || 0) + (eff.plus || 0);
+      b.nextTurnEnergy = (b.nextTurnEnergy || 0) + (eff.energy || 0) * k;
+      b.nextTurnDraw = (b.nextTurnDraw || 0) + (eff.draw || 0) * k;
+      break;
+    }
     case 'conditional': {
       if (checkCondition(state, eff.condition, context)) {
         applyEffect(state, eff.effect, sourceCard, mods, context);
@@ -1202,6 +1262,23 @@ function checkEnemyHpTraits(state, e) {
     e.traitState.berserk = true;
     addStatus(e, 'strength', trait.n);
     pushLog(state, 'trait', { id: 'berserk', enemy: e.uid });
+  }
+  // 防御架势: every `n` (then n+10, n+20 ...) HP lost since the fight began.
+  if (trait.id === 'modeShift') {
+    const next = e.traitState.nextShift ?? trait.n;
+    if (e.maxHp - e.hp >= next) {
+      e.traitState.nextShift = next + trait.n + 10 * ((e.traitState.shifts || 0) + 1);
+      e.traitState.shifts = (e.traitState.shifts || 0) + 1;
+      e.traitState.spikes = GUARD_MODE_SPIKES;
+      e.traitState.spikeTurns = 2;
+      addStatus(e, 'block', Math.round(10 * (e.dmgMul || 1)));
+      const def = getEnemyDef(e.id);
+      if (def.guardMode?.length) {
+        e.intent = scaleScript(def.guardMode, e.dmgMul || 1)[0];
+        e.scriptIndex = Math.max(0, e.scriptIndex - 1);
+      }
+      pushLog(state, 'trait', { id: 'modeShift', enemy: e.uid });
+    }
   }
   if (trait.id === 'phase2' && !e.traitState.phase2 && e.hp <= e.maxHp / 2) {
     e.traitState.phase2 = true;
@@ -1313,6 +1390,18 @@ function endTurn(state) {
       }
     }
   }
+  // 虚无: ethereal cards still in hand are exhausted instead of discarded.
+  const ethereal = b.hand.filter(c => CARDS[c.id]?.ethereal);
+  if (ethereal.length) {
+    b.hand = b.hand.filter(c => !CARDS[c.id]?.ethereal);
+    for (const card of ethereal) {
+      delete card.free;
+      b.exhaustPile.push(card);
+      onExhaust(state);
+      if (state.phase !== 'combat') return null;
+    }
+    if (allDead(b)) { finishBattleWin(state); return null; }
+  }
   const kept = [];
   // 快速弹匣: the priciest playable card stays in hand.
   let magazine = null;
@@ -1374,7 +1463,10 @@ function endTurn(state) {
   b.attacksThisTurn = 0;
   b.tempAttack = 0;
   b.replayNext = false;
-  b.energy = Math.max(0, baseEnergy(state) - (b.overloadNext || 0)) + leftover;
+  b.energy = Math.max(0, baseEnergy(state) - (b.overloadNext || 0)) + leftover + (b.nextTurnEnergy || 0);
+  b.nextTurnEnergy = 0;
+  const extraDraw = b.nextTurnDraw || 0;
+  b.nextTurnDraw = 0;
   b.overload = b.overloadNext || 0;
   b.overloadNext = 0;
   if (!b.powers.includes('barricade')) {
@@ -1388,7 +1480,7 @@ function endTurn(state) {
   applyTurnStartPowers(state);
   if (state.phase !== 'combat') return null;
   if (allDead(b)) { finishBattleWin(state); return null; }
-  drawCards(state, drawPerTurn(state));
+  drawCards(state, drawPerTurn(state) + extraDraw);
   if (state.phase !== 'combat') return null;
   afterTurnDraw(state);
   if (state.phase !== 'combat') return null;
@@ -1414,7 +1506,10 @@ function executeEnemyTurn(state) {
   if (b.field === 'overtime' && b.turn >= 5) for (const e of alive(b)) addStatus(e, 'strength', 2);
   // Each living enemy acts left to right with its revealed intent.
   for (const e of b.enemies) {
-    if (e.hp <= 0 || !e.intent) continue;
+    if (e.hp <= 0) continue;
+    // 应激护盾: the reactive shield drops as it acts.
+    if (e.trait?.id === 'reactive') e.statuses.block = 0;
+    if (!e.intent) { endOfEnemyTraits(state, e); continue; }
     for (const action of e.intent) {
       if (state.phase !== 'combat') return;
       if (e.hp <= 0) break;
@@ -1461,10 +1556,43 @@ function executeEnemyTurn(state) {
         if (state.hp <= 0) { finishBattleLoss(state); return; }
       } else if (action.type === 'cleanse') {
         for (const k of ['weak', 'vuln', 'smoke', 'flash']) e.statuses[k] = 0;
+      } else if (action.type === 'summon') {
+        const slot = summonSlot(b, e);
+        if (slot) reviveEscort(state, slot, action.id);
+        else addStatus(e, 'block', action.n);
       }
     }
-    if (e.trait?.id === 'ritual') addStatus(e, 'strength', e.trait.n);
+    endOfEnemyTraits(state, e);
   }
+}
+
+function endOfEnemyTraits(state, e) {
+  const b = state.battle;
+  if (e.hp <= 0) return;
+  if (e.trait?.id === 'ritual') addStatus(e, 'strength', e.trait.n);
+  // 毒雾渗透: shuffle 犹豫 into the draw pile.
+  if (e.trait?.id === 'toxin') {
+    for (let i = 0; i < e.trait.n; i++) b.drawPile.splice(Math.floor(nextRand(state) * (b.drawPile.length + 1)), 0, { uid: nextUid(state), id: 'ST02', up: false });
+  }
+  // 防御架势 lasts until the end of its second turn after the shift.
+  if (e.traitState?.spikeTurns > 0 && --e.traitState.spikeTurns === 0) e.traitState.spikes = 0;
+}
+
+// 战区指挥: a fallen escort slot the commander can refill (at most 2 escorts alive).
+function summonSlot(b, commander) {
+  const escorts = b.enemies.filter(x => x !== commander);
+  if (escorts.filter(x => x.hp > 0).length >= 2) return null;
+  return escorts.find(x => x.hp <= 0) || null;
+}
+function reviveEscort(state, slot, id) {
+  const def = getEnemyDef(id);
+  if (!def) return;
+  const index = Number(String(slot.uid).slice(1)) || 0;
+  const fresh = createEnemy(state, { id }, index, '');
+  // 热身赛 does not apply to reinforcements.
+  const hp = Math.max(1, Math.round(def.hp * ascensionMods(state, def).hp));
+  Object.assign(slot, fresh, { uid: slot.uid, hp, maxHp: hp, intent: null });
+  pushLog(state, 'summon', { enemy: slot.uid, id });
 }
 
 function finishBattleWin(state) {

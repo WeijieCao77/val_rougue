@@ -30,7 +30,14 @@ function evaluate(s, hpWeight) {
   if (s.phase === 'result') return -1e6;
   if (s.phase !== 'combat') return 1e5 + s.hp * 10;
   const b = s.battle;
-  return s.hp * hpWeight - enemyHpLeft(b) + enemyStatusValue(b) + b.powers.length * 6 + (b.powers.includes('barricade') ? b.playerBlock * 0.6 : 0) + squadValue(b);
+  return s.hp * hpWeight - enemyHpLeft(b) + enemyStatusValue(b) + b.powers.length * 6 + (b.powers.includes('barricade') ? b.playerBlock * 0.6 : 0) + squadValue(b) + keywordValue(b);
+}
+
+// Banked next-turn energy/draw (X-cost 蓄势待发) and growth gained this combat.
+function keywordValue(b) {
+  let v = (b.nextTurnEnergy || 0) * 4 + (b.nextTurnDraw || 0) * 2;
+  for (const c of [...b.hand, ...b.drawPile, ...b.discardPile]) if (c.grow) v += c.grow * ((c.up && CARDS[c.id].upgradeGrowth) || CARDS[c.id].growth).n * 0.6;
+  return v;
 }
 
 // Team trait progress carried into the next turn is worth something.
@@ -45,7 +52,7 @@ function squadValue(b) {
 
 function stateKey(s) {
   const b = s.battle;
-  return [b.hand.map(c => c.id + (c.up ? '+' : '')).sort().join(','), b.energy, b.stance, battleEnemies(b).map(e => e.hp).join('/'), b.playerBlock, s.hp,
+  return [b.hand.map(c => c.id + (c.up ? '+' : '') + (c.grow ? 'g' + c.grow : '')).sort().join(','), b.energy, (b.nextTurnEnergy || 0) + '/' + (b.nextTurnDraw || 0), b.stance, battleEnemies(b).map(e => e.hp).join('/'), b.playerBlock, s.hp,
     JSON.stringify(b.statuses) + JSON.stringify(battleEnemies(b).map(e => e.statuses)), b.powers.join(','), b.attackPlayedThisTurn, b.blockPlayedThisTurn, b.stanceSwitchUsedThisTurn, b.drawPile.length, JSON.stringify(b.squad || null)].join('|');
 }
 
@@ -125,9 +132,17 @@ function cardValue(id) {
     else if (e.type === 'overload') v -= 4 * e.n * m;
     else if (e.type === 'attackFromBlock' || e.type === 'detonate' || e.type === 'burnMultiply' || e.type === 'fireTurrets') v += 7 * m;
     else if (e.type === 'strength') v += 5 * e.n * m;
+    // X-cost cards are valued as if played with 3 energy (X = 3).
+    else if (e.type === 'xRepeat') walk(e.effect, (3 + (e.plus || 0)) * m);
+    else if (e.type === 'xMul') walk({ ...e.effect, n: e.effect.n * (3 + (e.plus || 0)) }, m);
+    else if (e.type === 'nextTurnX') v += ((e.energy || 0) * 5 + (e.draw || 0) * 3.5) * (3 + (e.plus || 0)) * m;
   };
   d.effects.forEach(e => walk(e));
-  const eff = v / (d.cost + 0.8);
+  // 成长 pays off over repeat plays; 虚无 is a small risk, 固有 a small plus.
+  if (d.growth) v += d.growth.n * 1.5;
+  if (d.ethereal) v -= 1;
+  if (d.innate) v += 1;
+  const eff = v / ((d.x ? 3 : d.cost) + 0.8);
   return eff - (d.exhaust ? 1 : 0);
 }
 
@@ -381,7 +396,9 @@ function playRun(seed, team, policy) {
   return log;
 }
 
-const seeds = Array.from({ length: SEEDS }, (_, i) => `pt-${i + 1}`);
+// --seed-start N offsets the seed names (pt-N ...) so larger samples can run in parallel.
+const SEED_START = Number(args["seed-start"] || 1);
+const seeds = Array.from({ length: SEEDS }, (_, i) => `pt-${i + SEED_START}`);
 const runs = [];
 const t0 = Date.now();
 for (const team of (args.teams ? args.teams.split(',') : Object.keys(TEAMS))) for (const policy of POLICIES) for (const seed of seeds) runs.push(playRun(seed, team, policy));

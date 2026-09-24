@@ -7,7 +7,10 @@ import {SKINS} from './content.js';
 
 // Runs created with rules >= 1 get traits, the opening, equipment and supplies.
 // Older saves and server records without `rules` replay exactly as before.
-export const RULES_VERSION = 1;
+export const RULES_VERSION = 3;
+// Rules 3 (2026-09-24): group fights, weak/strong encounter pools, three boss
+// candidates per act, keyword cards. Rules 1 stays accepted so its records replay.
+export const RULES_VERSIONS = [1, 3];
 export const ROLES = ['决斗','哨位','控场','先锋','自由人'];
 
 // Numbers live here so the engine, PvP and the displayed text never disagree.
@@ -151,4 +154,10 @@ export const ENEMY_TUNING_V2 = {
  1:{normal:{hp:1.32,dmg:1.4},elite:{hp:1.35,dmg:1.35},boss:{hp:1.4,dmg:1.35}},
  2:{normal:{hp:1.5,dmg:1.38},elite:{hp:1.5,dmg:1.38},boss:{hp:1.5,dmg:1.32}},
  3:{normal:{hp:1.7,dmg:1.52},elite:{hp:1.7,dmg:1.52},boss:{hp:1.7,dmg:1.47}}
+};
+// Rules 3: tuning for the rules-3 encounter pools, boss pool and group fights.
+export const ENEMY_TUNING_V3 = {
+ 1:{weak:{hp:1.25,dmg:1.4},normal:{hp:1.32,dmg:1.4},elite:{hp:1.35,dmg:1.35},boss:{hp:1.4,dmg:1.35}},
+ 2:{weak:{hp:1.35,dmg:1.25},normal:{hp:1.5,dmg:1.38},elite:{hp:1.5,dmg:1.38},boss:{hp:1.8,dmg:1.5,growth:2}},
+ 3:{weak:{hp:1.55,dmg:1.4},normal:{hp:1.7,dmg:1.52},elite:{hp:1.7,dmg:1.52},boss:{hp:1.9,dmg:1.6,growth:3}}
 };

@@ -1,7 +1,7 @@
-import { createRun, act, legalActions, observe, preview, describeIntent, describeIntents, battleEnemies, livingEnemies, cardNeedsTarget, cardHitsAll, categoryUpgradeQuote, shopPrice, ASCENSION_RULES, MAX_ASCENSION, restHealAmount, removePrice, baseEnergy, supplySlots, hasRelic, RELIC_SLOTS, relicSellValue, describeEvent } from './engine.js';
+import { createRun, act, legalActions, observe, preview, describeIntent, describeIntents, battleEnemies, livingEnemies, cardNeedsTarget, cardHitsAll, categoryUpgradeQuote, shopPrice, ASCENSION_RULES, MAX_ASCENSION, restHealAmount, removePrice, baseEnergy, supplySlots, hasRelic, RELIC_SLOTS, relicSellValue, describeEvent, combatCardText } from './engine.js';
 import { squadChipHtml, traitTagHtml, teamTrait, TRAIT_ICONS, loadAscensionUnlocks, recordAscensionWin, equipIconHtml, supplyGlyphHtml, equipTileHtml, supplyTileHtml, TIER_COLORS } from './run-extras.js';
-import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS, TRAITS, FIELDS, ARCHETYPES, SUPPLIES, SUPPLY_IDS, EQUIP_TIERS } from './content.js';
-import { statusBadges, statusBadge, statusIcon, highlightKeywords } from '/shared/status-icons.js';
+import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS, TRAITS, FIELDS, ARCHETYPES, SUPPLIES, SUPPLY_IDS, EQUIP_TIERS, BOSSES } from './content.js';
+import { statusBadges, statusBadge, statusIcon, highlightKeywords, STATUS_INFO } from '/shared/status-icons.js';
 import { ACTS } from './season-map.js';
 import { cardArt, combatArt, relicArt } from './art.js';
 import { tacticalCard } from './tactical-card.js';
@@ -80,7 +80,8 @@ function getCardDefinition(id) {
 function getCardDisplay(card, up = false) {
   const def = getCardDefinition(card.id);
   if (!def) return null;
-  const text = up && def.upgradeText ? def.upgradeText : def.text;
+  // Combat copies of 成长 cards show the growth gained this combat.
+  const text = card.grow && CARDS[card.id] ? combatCardText({ ...card, up }) : up && def.upgradeText ? def.upgradeText : def.text;
   return {
     id: card.id,
     uid: card.uid,
@@ -100,11 +101,12 @@ function getCardDisplay(card, up = false) {
 function tagLabel(def) {
   return tagMap[def.tag] || '';
 }
-function cardHtml(id, { up = false, cost, badge, extraClass } = {}) {
+function cardHtml(id, { up = false, cost, badge, extraClass, text: textOverride } = {}) {
   const def = getCardDefinition(id);
   if (!def) return '';
-  const text = up && def.upgradeText ? def.upgradeText : def.text;
-  const shownCost = cost ?? (up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost);
+  const text = textOverride ?? (up && def.upgradeText ? def.upgradeText : def.text);
+  // X 费 cards show "X" instead of a number.
+  const shownCost = def.x ? 'X' : cost ?? (up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost);
   return tacticalCard(def, { up, cost: shownCost, text: highlightKeywords(text), tagLabel: tagLabel(def), badge, extraClass });
 }
 
@@ -112,7 +114,7 @@ function describeCardFull(card) {
   const d = getCardDisplay(card, card.up);
   if (!d) return '';
   const parts = [
-    `${d.name} [${d.cost}费 ${typeMap[d.type]||d.type} ${tagMap[d.tag]||d.tag} ${rarityMap[d.rarity]||d.rarity}${d.exhaust?' 消耗':''}${d.up?' 已升级':''}]`,
+    `${d.name} [${getCardDefinition(card.id)?.x ? "X" : d.cost}费 ${typeMap[d.type]||d.type} ${tagMap[d.tag]||d.tag} ${rarityMap[d.rarity]||d.rarity}${d.exhaust?' 消耗':''}${d.up?' 已升级':''}]`,
     d.text
   ];
   if (d.detail) parts.push(d.detail);
@@ -120,6 +122,11 @@ function describeCardFull(card) {
   if (d.text.includes('闪光')) parts.push('闪光：敌方下一次命中伤害减少3×层数，触发后移除。');
   if (d.text.includes('压制')) parts.push('压制：攻击伤害变为原来的75%。');
   if (d.text.includes('易伤')) parts.push('易伤：受到攻击伤害变为原来的150%。');
+  // Card keywords, same rule text as the keyword highlight tooltips.
+  for (const [word, key] of [['虚无', 'ethereal'], ['固有', 'innate'], ['X 费', 'xcost'], ['成长', 'growth'], ['保留', 'retain'], ['消耗', 'exhaust']]) {
+    if (d.text.includes(word) || (key === 'exhaust' && d.exhaust)) parts.push(STATUS_INFO[key].rule);
+  }
+  if (card.grow) parts.push(`本场已成长 ${card.grow} 次。`);
   return parts.join('\n');
 }
 
@@ -547,8 +554,17 @@ function renderMap(root) {
     </g>`;
   }).join('');
 
+  // This act's boss, fixed by seed when the map was built (older saves: read the boss node).
+  const bossId = state.map.boss || nodes.find(n => n.kind === 'boss')?.enemy;
+  const boss = BOSSES[bossId];
+  const bossHtml = boss ? `<div class="boss-preview" style="--boss-color:${boss.color}" role="note" aria-label="本幕决赛对手：${escapeHtml(boss.name)}。${escapeHtml(boss.text)}">
+        <span class="boss-preview-figure" data-character-variant="${escapeHtml(boss.look)}"></span>
+        <span class="boss-preview-body"><small><i class="boss-preview-emblem">${statusIcon(boss.icon)}</i>本幕决赛 · 第16层</small><b>${escapeHtml(boss.name)}</b><em>${highlightKeywords(boss.text)}</em></span>
+      </div>` : '';
+
   root.innerHTML = `
     <div class="map-container">
+      ${bossHtml}
       ${guideStrip('map', '先点亮起的节点开赛。向上滑动可预览后续路线和决赛；每场胜利后挑一张新牌。')}
       <div class="map-stage-info">
         <span>幕 ${state.act}：${act.name} · ${act.subtitle} · ${state.completed.filter(key => state.map.nodes.some(node => node.key === key && node.kind !== 'boss')).length}/15 站 · 之后是决赛${state.ascension ? ` · 难度 ${state.ascension}` : ''}${state.warmup ? ` · 热身赛剩余 ${state.warmup} 场` : ''}</span>
@@ -578,7 +594,7 @@ function renderMap(root) {
   const details = root.querySelector('#node-details');
   const showDetails = (node) => {
     const kindNames = { battle: '常规比赛', elite: '高压强敌', event: '未知', shop: '战术补给', rest: '战术休整', crate: '补给箱', boss: 'BOSS' };
-    const kindDesc = { battle: '标准战斗，获胜获得卡牌奖励。', elite: '更高难度，奖励更丰厚。', event: node.revealed ? `已揭晓：${REVEALED_NAMES[node.revealed]}。` : '进入后揭晓：多半是事件，也可能是比赛、补给站或补给箱。', shop: '购买卡牌或删除卡牌。', rest: '回复生命或升级卡牌。', crate: '打开后必得金币，常有战术装备。', boss: '幕末强敌，击败进入下一幕。' };
+    const kindDesc = { battle: '标准战斗，获胜获得卡牌奖励。', elite: '更高难度，奖励更丰厚。', event: node.revealed ? `已揭晓：${REVEALED_NAMES[node.revealed]}。` : '进入后揭晓：多半是事件，也可能是比赛、补给站或补给箱。', shop: '购买卡牌或删除卡牌。', rest: '回复生命或升级卡牌。', crate: '打开后必得金币，常有战术装备。', boss: boss ? `幕末强敌，击败进入下一幕。${boss.text}` : '幕末强敌，击败进入下一幕。' };
     const isAvailable = availableKeys.has(node.key);
     const isCurrent = node.key === currentKey;
     const isCompleted = completedSet.has(node.key);
@@ -652,9 +668,13 @@ function aimingCard(b, playableUids) {
 function enemyUnitHtml(e, { intentText, aiming, isPrimary }) {
   const dead = e.hp <= 0;
   const st = e.statuses || {};
-  const badges = dead ? '' : statusBadges([['block', st.block], ['strength', st.strength], ['aim', st.aim], ['burn', st.burn], ['smoke', st.smoke], ['flash', st.flash], ['weak', st.weak], ['vuln', st.vuln]]);
+  const badges = dead ? '' : statusBadges([['block', st.block], ['strength', st.strength], ['aim', st.aim], ['thorns', e.traitState?.spikes], ['burn', st.burn], ['smoke', st.smoke], ['flash', st.flash], ['weak', st.weak], ['vuln', st.vuln]]);
   const traitInfo = !dead && e.trait && TRAITS[e.trait.id];
-  const traitHtml = traitInfo ? `<span class="trait-tag" tabindex="0" title="${escapeHtml(traitInfo.text(e.trait.n))}">${statusIcon(traitInfo.icon)}${escapeHtml(traitInfo.name)}${e.trait.id === 'tempo' ? ` ${e.tempoCount || 0}/${e.trait.n}` : ''}</span>` : '';
+  const plays = state.battle?.playsThisTurn || 0;
+  const traitCount = e.trait?.id === 'tempo' ? ` ${e.tempoCount || 0}/${e.trait.n}`
+    : e.trait?.id === 'overwatch' ? ` ${Math.min(plays, e.trait.n)}/${e.trait.n}`
+    : e.trait?.id === 'modeShift' ? (e.traitState?.spikes ? ' · 架势中' : ` ${Math.max(0, e.maxHp - e.hp)}/${e.traitState?.nextShift ?? e.trait.n}`) : '';
+  const traitHtml = traitInfo ? `<span class="trait-tag" tabindex="0" title="${escapeHtml(traitInfo.text(e.trait.n))}">${statusIcon(traitInfo.icon)}${escapeHtml(traitInfo.name)}${traitCount}</span>` : '';
   const pct = Math.max(0, Math.min(100, e.hp / e.maxHp * 100));
   return `<div class="enemy-unit${dead ? ' is-dead' : ''}${aiming && !dead ? ' targetable' : ''}" data-enemy-uid="${escapeHtml(e.uid)}"${isPrimary ? ' id="enemy-box"' : ''} role="button" tabindex="${dead ? -1 : 0}" aria-label="${escapeHtml(e.name)}${dead ? '（已淘汰）' : ''}">
       <div class="intent">${dead ? '已淘汰' : highlightKeywords(intentText || '未知')}</div>
@@ -696,7 +716,7 @@ function renderCombat(root) {
     const tooltip = describeCardFull(card);
     const offset = idx - (b.hand.length - 1) / 2;
     return `<div class="hand-card shared-card role-${escapeHtml(display.type)} ${isSelected ? 'selected' : ''} ${isPlayable ? '' : 'not-playable'}" data-uid="${card.uid}" data-index="${idx}" tabindex="0" role="button" aria-label="${escapeHtml(display.name)}" data-tooltip="${escapeHtml(tooltip)}" style="--offset:${offset};--tilt:${offset * (b.hand.length > 6 ? 1.6 : 3)}deg;--bend:${Math.abs(offset) * Math.abs(offset) * 1.8}px;--order:${idx}">
-      ${cardHtml(card.id, { up: card.up, cost: card.free ? 0 : display.cost, badge: card.temp ? '临时' : '' })}
+      ${cardHtml(card.id, { up: card.up, cost: card.free ? 0 : display.cost, badge: card.temp ? '临时' : card.grow ? `成长×${card.grow}` : '', text: display.text })}
     </div>`;
   }).join('');
 

@@ -371,6 +371,27 @@ test('规则1 爬塔记录：服务端按 rules/ascension 重放核验，快照�
   }
 });
 
+test('规则 3（多敌人战斗、遭遇池、Boss 候选、关键词牌）的爬塔记录按 rules 3 重放；按规则 1 重放则失败', async () => {
+  const { store, handler, dir } = await setup();
+  try {
+    const run = JSON.parse(await readFile(new URL('./fixtures/rules3-claim.json', import.meta.url), 'utf8'));
+    assert.equal(run.rules, 3);
+    // The record contains a group fight (targeted plays) so it cannot pass as a rules-1 run.
+    assert.ok(run.actions.some(a => a.type === 'play' && a.target !== undefined));
+    const token = await createAccount(handler);
+    const asRules1 = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run: { ...run, rules: 1 }, act: 1 } });
+    assert.equal(asRules1.status, 400);
+    const badRules = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run: { ...run, rules: 2 }, act: 1 } });
+    assert.equal(badRules.status, 400);
+    const res = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run, act: 1 } });
+    assert.equal(res.status, 200, JSON.stringify(res.body));
+    const account = await request(handler, { method: 'GET', path: '/api/account', token });
+    assert.equal(account.body.archives[0].snapshot.region, run.region);
+  } finally {
+    await teardown({ dir, store });
+  }
+});
+
 test('15 层地图（mapVersion 2）的爬塔记录按新地图重放核验；去掉 mapVersion 则按旧 12 站地图重放并失败', async () => {
   const { store, handler, dir } = await setup();
   try {

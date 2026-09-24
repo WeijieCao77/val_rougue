@@ -104,6 +104,6 @@ export function tacticalCard(def, opts = {}) {
     <div class="tc-art">${tacticalArt(def)}${opts.badge ? `<span class="tc-badge">${opts.badge}</span>` : ''}</div>
     <h4 class="tc-name">${esc(def.name)}${up ? '<i>+</i>' : ''}</h4>
     <div class="tc-text">${text}</div>
-    <footer class="tc-foot"><span class="tc-rarity" aria-label="稀有度 ${rarity}">${'<i></i>'.repeat(rarity)}</span><span class="tc-id">${def.exhaust ? '消耗' : ''}${def.retain ? '保留' : ''}</span></footer>
+    <footer class="tc-foot"><span class="tc-rarity" aria-label="稀有度 ${rarity}">${'<i></i>'.repeat(rarity)}</span><span class="tc-id">${[def.innate && '固有', def.ethereal && '虚无', def.growth && '成长', def.exhaust && '消耗', def.retain && '保留'].filter(Boolean).join(' · ')}</span></footer>
   </article>`;
 }

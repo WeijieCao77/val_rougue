@@ -5,15 +5,17 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createWaSeason, waAct, waLegalActions } from '../wa-season.js';
 import { CARDS, REGIONS, effects } from '../content.js';
-import { ENEMY_TUNING_V2 as ENEMY_TUNING, TRAIT_TUNING, GEAR } from '../wa-rules.js';
-import { describeSeasonEvent } from '../engine.js';
+import { ENEMY_TUNING_V2, ENEMY_TUNING_V3, TRAIT_TUNING, GEAR, RULES_VERSION } from '../wa-rules.js';
+import { describeSeasonEvent, battleFoes } from '../engine.js';
 import { WA_EVENTS } from '../wa-events.js';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, v, i, all) => (v.startsWith('--') ? [...acc, [v.slice(2), all[i + 1]]] : acc), []));
 const SEEDS = Number(args.seeds || 6);
+const SEED_START = Number(args['seed-start'] || 1); // --seed-start N: first seed index (parallel shards)
 const ACTS = Number(args.acts || 3);
 const OUT = args.out || 'reports/playtest/wa.json';
-const RULES = Number(args.rules ?? 1);
+const RULES = Number(args.rules ?? RULES_VERSION);
+const ENEMY_TUNING = RULES >= 3 ? ENEMY_TUNING_V3 : ENEMY_TUNING_V2;
 // --tune '{"1":{"normal":{"hp":1.2}}}' overrides opponent tuning for balance sweeps.
 if (args.tune) { const t = JSON.parse(args.tune); for (const [act, kinds] of Object.entries(t)) for (const [kind, v] of Object.entries(kinds)) Object.assign(ENEMY_TUNING[act][kind], v); }
 // --trait '{"PAC":{"every":4}}' overrides region trait numbers for balance sweeps.
@@ -28,9 +30,12 @@ function evaluate(s) {
   if (s.phase === 'result') return s.outcome === 'win' ? 1e5 : -1e6;
   if (s.phase !== 'combat') return 1e5 + s.hp * 10;
   const b = s.battle;
-  return s.hp * 1.6 - b.enemyHp + (b.enemyBurn || 0) * 2 + (b.deployables || []).reduce((v, d) => v + d.n * d.turns * 0.7, 0) + (b.selfStrength || 0) * 3 + b.enemyWeak * 2.5 + b.enemyVulnerable * 3 - (b.enemyStrength || 0) * 0.5 - (b.aim ? 6 : 0) - b.turn * 0.6 + b.powers.length * 6;
+  // Group fights: every living opponent counts (a knocked-out one stops acting).
+  const foes = (battleFoes(b) || [b]).filter(f => f.enemyHp > 0);
+  const sum = f => foes.reduce((n, e) => n + f(e), 0);
+  return s.hp * 1.6 - sum(e => e.enemyHp) - foes.length * 4 + sum(e => (e.enemyBurn || 0) * 2 + (e.enemyWeak || 0) * 2.5 + (e.enemyVulnerable || 0) * 3 - (e.enemyStrength || 0) * 0.5 - (e.aim ? 6 : 0)) + (b.deployables || []).reduce((v, d) => v + d.n * d.turns * 0.7, 0) + (b.selfStrength || 0) * 3 - b.turn * 0.6 + b.powers.length * 6;
 }
-const key = s => { const b = s.battle; return [b.hand.map(c => c.id + (c.up ? '+' : '')).sort().join(','), b.energy, b.enemyHp, b.block, s.hp, b.enemyWeak, b.enemyVulnerable, b.enemyBlock, b.aim, b.enemyStrength, b.draw.length, b.enemyBurn, b.plays, b.selfStrength, (b.deployables || []).length].join('|'); };
+const key = s => { const b = s.battle; return [(battleFoes(b) || []).map(f => f.enemyHp + ':' + (f.enemyBlock || 0)).join('/'), b.cur, b.hand.map(c => c.id + (c.up ? '+' : '')).sort().join(','), b.energy, b.enemyHp, b.block, s.hp, b.enemyWeak, b.enemyVulnerable, b.enemyBlock, b.aim, b.enemyStrength, b.draw.length, b.enemyBurn, b.plays, b.selfStrength, (b.deployables || []).length].join('|'); };
 
 function searchTurn(s, budget = 2000) {
   const seen = new Set(); let best = null, nodes = 0;
@@ -45,7 +50,13 @@ function searchTurn(s, budget = 2000) {
   return best.line;
 }
 const effValue = e => e.type === 'combo' ? effValue(e.effect) * 0.7 : e.type === 'hit' ? e.n * e.times + (e.ifVuln || e.ifBurn || 0) * 0.5 : e.type === 'block' ? e.n * 0.8 : e.type === 'draw' ? e.n * 3 : e.type === 'weak' || e.type === 'vulnerable' ? e.n * 3 : e.type === 'burn' ? e.n * 2.2 : e.type === 'deploy' ? e.n * e.turns * 0.8 : e.type === 'overload' ? -4 * e.n : e.type === 'strength' ? 5 * e.n : ['burnMultiply', 'detonate', 'bodyslam', 'fireTurrets'].includes(e.type) ? 7 : 2;
-const hitValue = id => (CARDS[id]?.effects || []).reduce((v, e) => v + effValue(e), 0) / ((CARDS[id]?.cost ?? 1) + 0.8);
+const hitValue = id => {
+  const c = CARDS[id]; if (!c) return 0;
+  // X cards are valued as if played with 2 action points; growth adds a little; ethereal risks waste.
+  const list = c.x ? c.effects.map(e => e.xTimes ? { ...e, times: 2 } : e.perX ? { ...e, n: e.n * 2 } : e) : c.effects || [];
+  const v = list.reduce((sum, e) => sum + effValue(e) + (e.grow || 0) * 1.5, 0) / ((c.x ? 2 : c.cost ?? 1) + 0.8);
+  return v * (c.ethereal ? 0.85 : 1) + (c.innate ? 1 : 0);
+};
 
 // Static expected value of an event option, read from its ops (no peeking at
 // seeded gamble outcomes).
@@ -99,7 +110,7 @@ function playRun(seed, region) {
       const rank = n => ({ elite: pct > 0.7 ? 5 : -3, rest: pct < 0.5 ? 6 : 1, shop: s.money >= 90 ? 4 : 0, event: 3, crate: 4, battle: 2.5, boss: 9 }[n.kind] ?? 0);
       const i = nodes.map(rank).reduce((bi, v, j, arr) => (v > arr[bi] ? j : bi), 0);
       s = step(s, moves[i]);
-      if (s.phase === 'combat') fight = { act: s.act, enemy: s.battle.enemy, hp0: s.hp, turns: 0 };
+      if (s.phase === 'combat') fight = { act: s.act, enemy: s.battle.group || s.battle.enemy, kind: nodes[i].kind, hp0: s.hp, turns: 0 };
       continue;
     }
     if (s.phase === 'opening') { const o = s.opening.options[0]; log.opening = o.id; s = step(s, { type: 'opening', choice: o.id }); continue; }
@@ -114,7 +125,7 @@ function playRun(seed, region) {
     if (s.phase === 'bossGear') { const a = acts.find(x => x.id) || acts[0]; s = step(s, a); continue; }
     if (s.phase === 'combat') {
       // Supplies: spend them in elite/boss fights, or when reputation is low.
-      const boss = /EL|B0/.test(s.battle.enemy);
+      const boss = fight?.kind === 'elite' || fight?.kind === 'boss' || /EL|B0/.test(s.battle.enemy);
       while ((s.supplies || []).length && s.phase === 'combat' && (boss && s.battle.turn <= 2 || s.hp / s.maxHp < 0.4)) { s = step(s, { type: 'useSupply', slot: 0 }); log.suppliesUsed++; }
       if (s.phase !== 'combat') { fight.turns++; fight.lost = fight.hp0 - s.hp; fight.won = s.phase !== 'result' || s.outcome === 'win'; log.fights.push(fight); continue; }
       for (const a of searchTurn(s)) { s = step(s, a); if (s.phase !== 'combat') break; }
@@ -180,7 +191,7 @@ function playRun(seed, region) {
 
 const runs = [];
 const REGION_LIST = args.regions ? args.regions.split(',') : Object.keys(REGIONS);
-for (const region of REGION_LIST) for (let i = 1; i <= SEEDS; i++) { const t = Date.now(); const r = playRun(`wa-pt-${i}`, region); runs.push(r); console.error(region, i, r.result, r.diedAt || '', ((Date.now() - t) / 1000).toFixed(0) + 's', 'fights', r.fights.length, 'maxTurns', Math.max(0, ...r.fights.map(f => f.turns)), r.opening || '', r.gear.join(',')); }
+for (const region of REGION_LIST) for (let i = SEED_START; i < SEED_START + SEEDS; i++) { const t = Date.now(); const r = playRun(`wa-pt-${i}`, region); runs.push(r); console.error(region, i, r.result, r.diedAt || '', ((Date.now() - t) / 1000).toFixed(0) + 's', 'fights', r.fights.length, 'maxTurns', Math.max(0, ...r.fights.map(f => f.turns)), r.opening || '', r.gear.join(',')); }
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, JSON.stringify(runs, null, 1));
 const by = {};
@@ -189,6 +200,6 @@ for (const [k, g] of Object.entries(by).sort()) console.log(k.padEnd(10), 'n', S
 const res = {}; for (const r of runs) res[`${r.region}:${r.result}`] = (res[`${r.region}:${r.result}`] || 0) + 1;
 console.log(JSON.stringify(res));
 const first = runs.map(r => r.fights[0]).filter(Boolean);
-const cleared = region => runs.filter(r => r.region === region && (r.result === 'win' || r.result === 'act-clear' || r.fights.some(f => /S_B01$/.test(f.enemy) && !/A[23]_/.test(f.enemy) && f.won))).length;
+const cleared = region => runs.filter(r => r.region === region && (r.result === 'win' || r.result === 'act-clear' || r.fights.some(f => f.act === 1 && (f.kind === 'boss' || /^S_B01$/.test(f.enemy)) && f.won))).length;
 console.log('first-fight avg lost', (first.reduce((n, f) => n + f.lost, 0) / first.length).toFixed(1));
 console.log('act-1 clears', Object.fromEntries(REGION_LIST.map(r => [r, `${cleared(r)}/${SEEDS}`])), 'full wins', runs.filter(r => r.result === 'win').length + '/' + runs.length);

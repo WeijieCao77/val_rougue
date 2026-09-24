@@ -8,15 +8,15 @@ import {CARD_RARITY,RARITY_LABELS,RARITY_ORDER} from '../card-rarity.js';
 const step=(s,a)=>{const r=act(s,a);assert.equal(r.error,null);return r.state;};
 
 test('every regional pool has 35-45 common, 20-30 uncommon and 7-13 rare cards',()=>{
- for(const region of Object.values(REGIONS)){
+ for(const region of Object.values(REGIONS))for(const pool of [region.pool,region.pool3]){
   const n={common:0,uncommon:0,rare:0};
-  for(const id of region.pool){assert.ok(RARITY_ORDER.includes(CARD_RARITY[id]),`${id} lacks rarity`);n[CARD_RARITY[id]]++;}
+  for(const id of pool){assert.ok(RARITY_ORDER.includes(CARD_RARITY[id]),`${id} lacks rarity`);n[CARD_RARITY[id]]++;}
   assert.ok(n.common>=35&&n.common<=45,`${region.id} common ${n.common}`);
   assert.ok(n.uncommon>=20&&n.uncommon<=30,`${region.id} uncommon ${n.uncommon}`);
   assert.ok(n.rare>=7&&n.rare<=13,`${region.id} rare ${n.rare}`);
   for(const id of region.start)assert.equal(CARD_RARITY[id],'common',`starter ${id}`);
  }
- const pooled=new Set(Object.values(REGIONS).flatMap(r=>r.pool));
+ const pooled=new Set(Object.values(REGIONS).flatMap(r=>[...r.pool,...r.pool3]));
  for(const id of Object.keys(CARD_RARITY))assert.ok(pooled.has(id),`${id} has rarity but is not recruitable`);
  for(const id of Object.keys(CARDS))if(/^(CU|ST|TK)/.test(id))assert.equal(CARD_RARITY[id],undefined);
 });

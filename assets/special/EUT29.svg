@@ -1,0 +1,5 @@
+<svg viewBox="0 0 200 112" class="tc-svg" role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <defs><pattern id="g26992" width="16" height="16" patternUnits="userSpaceOnUse" x="0" y="14"><path d="M16 0H0V16" fill="none" stroke="#ff6b3d" stroke-opacity=".07" stroke-width="1"/></pattern></defs>
+    <rect width="200" height="112" fill="#0b1015"/><rect width="200" height="112" fill="url(#g26992)"/>
+    <g><path d="M102 16c4 16 26 26 26 50a28 28 0 0 1-56 0c0-12 6-20 12-26 1 10 5 16 11 18-2-16 2-30 7-42z" fill="#ff6b3d"/><path d="M100 60c6 7 12 11 12 20a12 12 0 0 1-24 0c0-6 4-10 7-13 1 4 3 6 5 7z" fill="#fff4" /></g>
+  </svg>

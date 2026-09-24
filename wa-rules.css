@@ -56,3 +56,37 @@ button.supply-slot:hover{background:#21403f;border-color:#ffd58a}
  .market-row{grid-template-columns:1fr 1fr;gap:8px}.market-item{padding:10px 8px}.market-item h4{font-size:12px;padding-right:40px}.market-item p{font-size:11px}
 }
 @media(max-width:420px){.game-hud .hud-tools .hud-link{padding:4px 2px}}
+/* Rules 3: act boss preview on the map */
+.boss-preview{display:flex;gap:10px;align-items:center;margin:0 0 14px;padding:8px 10px;border:1px solid #8b675466;border-radius:10px;background:linear-gradient(135deg,#2b1f22cc,#141c24cc)}
+.boss-preview-figure{position:relative;flex:0 0 72px;width:72px;height:84px;border-radius:8px;overflow:hidden;background:radial-gradient(ellipse at 50% 84%,#ba7c4933,transparent 62%),#17191f}
+.boss-preview-text{min-width:0}
+.boss-preview-text small{display:block;font-size:10px;letter-spacing:2px;color:#d9a36a}
+.boss-preview-text b{display:block;font-size:15px;color:#f0dcb4;margin:1px 0 3px}
+.boss-preview-text p{margin:0;font-size:11px;line-height:1.55;color:#b7c2bd}
+/* Rules 3: group fights (one panel per opponent) */
+.fighter.enemy.foe-group{width:auto;right:3%;display:flex;gap:10px;align-items:flex-end}
+.foe-group .foe{position:relative;width:150px;text-align:center;transition:filter .12s,opacity .2s}
+.foe-group .foe .intent-bubble{left:2px;right:2px;transform:none;min-width:0;max-width:none;width:auto;margin-bottom:8px}
+.foe-group .foe .combat-target{margin:0 auto;min-width:0;padding:0 3px;max-width:100%;overflow:hidden}
+.foe-group .combat-target:has(.character-stage-host canvas){width:140px;height:112px}
+.foe-group .foe h2{font-size:12px;letter-spacing:1px;margin:4px 0}
+.foe-group .foe.is-target .combat-target{outline:2px solid #ffcf7a;outline-offset:4px;border-radius:12px}
+.foe-group .foe.is-target h2{color:#ffd88f}
+.foe-group .foe.drop-ready .combat-target{outline:3px solid #d8efb0;outline-offset:6px;border-radius:12px;filter:drop-shadow(0 0 12px #c7ecc2)}
+.foe-group .foe.is-dead{opacity:.38;filter:grayscale(1)}
+.foe-group .foe .life-row{display:flex;gap:4px;align-items:center}
+.foe-group .foe .life-row .life-bar{flex:1}
+.intent-bubble.foe-down strong{color:#9aa}
+@media(max-width:1100px){.foe-group .foe{width:120px}.foe-group .combat-target:has(.character-stage-host canvas){width:112px;height:90px}}
+@media(max-width:720px){
+ .boss-preview{flex:1 1 100%;margin:0;padding:6px 8px}.boss-preview-figure{flex-basis:52px;width:52px;height:60px}.boss-preview-text b{font-size:13px}.boss-preview-text p{font-size:10px;line-height:1.45}
+ .fighter.enemy.foe-group{right:1%;gap:3px}
+ .foe-group .foe{width:74px}
+ .foe-group .foe .intent-bubble{padding:3px 4px}.foe-group .foe .intent-bubble small{display:none}.foe-group .foe .intent-bubble strong{font-size:9px}
+ .foe-group .combat-target:has(.character-stage-host canvas){width:72px;height:66px}
+ .foe-group .foe h2{font-size:9px;letter-spacing:0;margin:2px 0}
+ .foe-group .foe .trait-row{display:none}
+ .foe-group .foe .life-row .shield-value{font-size:9px}.foe-group .foe .life-bar span{font-size:8px}
+ .combat-screen:has(.foe-group) .fighter.ally{width:112px}
+ .combat-screen:has(.foe-group) .fighter.ally .combat-target:has(.character-stage-host canvas){width:104px;height:84px}
+}

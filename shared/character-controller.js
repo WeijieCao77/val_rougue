@@ -14,8 +14,15 @@ function targets() {
   if (npc) return [{ element: npc, side: 'npc', variant: npc.dataset.npc, block: false }];
   if (document.querySelector('.combat-screen')) return [
     { element: document.querySelector('.fighter.ally .combat-target'), side: 'ally', variant: document.querySelector('.team-label')?.textContent || 'club', block: Number(document.querySelector('.fighter.ally .shield-value')?.textContent.replace(/\D/g, '') || 0) > 0 },
-    { element: document.querySelector('.fighter.enemy .combat-target'), side: 'enemy', variant: document.querySelector('.fighter.enemy')?.dataset.characterVariant || document.querySelector('.fighter.enemy h2')?.textContent || 'rival', block: Number(document.querySelector('.fighter.enemy .shield-value')?.textContent.replace(/\D/g, '') || 0) > 0 },
+    // Wa group fights (rules 3) show one panel per living opponent; single fights one.
+    ...[...document.querySelectorAll('.fighter.enemy .foe:not(.is-dead) .combat-target, .fighter.enemy:not(.foe-group) .combat-target')].map(element => {
+      const panel = element.closest('.foe') || element.closest('.fighter.enemy');
+      return { element, side: 'enemy', variant: panel?.dataset.characterVariant || panel?.querySelector('h2')?.textContent || 'rival', block: Number(panel?.querySelector('.shield-value')?.textContent.replace(/\D/g, '') || 0) > 0 };
+    }),
   ];
+  // Map screens: the act's boss preview (both demos may use .boss-preview-figure).
+  const boss = document.querySelector('.boss-preview-figure[data-character-variant]');
+  if (boss) return [{ element: boss, side: 'enemy', variant: boss.dataset.characterVariant, block: false }];
   return [];
 }
 
