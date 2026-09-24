@@ -106,15 +106,15 @@ test('new route actions replay deterministically without fixture mutations',()=>
 test('season opponents: sniper aim is broken by suppression, sentinel counter-fires, fields apply to both sides',()=>{
  let s=createSeason('traits');s=step(s,{type:'chooseNode',key:s.map.starts[0]});
  s.battle.enemy='S_E02';s.battle.trait={id:'sniper'};s.battle.intent=0;s.battle.hand=[];
- s=step(s,{type:'end'});assert.equal(s.battle.aim,1);assert.match(intentText(s),/重狙 18/);
+ s=step(s,{type:'end'});assert.equal(s.battle.aim,1);assert.match(intentText(s),/重狙 22/);
  const weakCard=Object.keys(CARDS).find(id=>CARDS[id].cost===1&&CARDS[id].effects?.some(e=>e.type==='weak'));
  s.battle.hand=[instance(s,weakCard)];s.battle.energy=3;s=step(s,{type:'play',uid:s.battle.hand[0].uid});
- assert.equal(s.battle.aim,0);assert.match(intentText(s),/仓促射击 4/,'one third of 18, then suppressed ×0.75');
+ assert.equal(s.battle.aim,0);assert.match(intentText(s),/仓促射击 6/,'one third of 22 rounded up, then suppressed ×0.75');
  s=createSeason('thorns');s=step(s,{type:'chooseNode',key:s.map.starts[0]});
  s.battle.enemy='S_E04';s.battle.trait={id:'thorns',n:2};s.battle.traitState={};s.battle.enemyHp=40;s.battle.enemyBlock=0;s.battle.block=0;
  const hitter=Object.keys(CARDS).find(id=>CARDS[id].cost===1&&CARDS[id].effects?.length===1&&CARDS[id].effects[0].type==='hit'&&CARDS[id].effects[0].times===1);
  s.battle.hand=[instance(s,hitter)];s.battle.energy=3;const hp=s.hp;s=step(s,{type:'play',uid:s.battle.hand[0].uid});assert.equal(s.hp,hp-2);
- s.battle.field='corridor';s.battle.intent=0;s.battle.enemy='S_E03';s.battle.enemyWeak=0;s.battle.enemyStrength=0;assert.equal(intent(s)[0].n,4,'3×3 multi-hit gains +1 per hit');
+ s.battle.field='corridor';s.battle.intent=0;s.battle.enemy='S_E03';s.battle.enemyWeak=0;s.battle.enemyStrength=0;assert.equal(intent(s)[0].n,5,'4×3 multi-hit gains +1 per hit');
 });
 test('legacy tutorial enemies are untouched by season traits',()=>{
  for(const id of ['E01','E02','E03','E04','E05','EL01','B01'])assert.ok(!ENEMIES[id].trait&&!ENEMIES[id].look,id);

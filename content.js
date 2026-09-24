@@ -117,14 +117,16 @@ export const FIELDS = {
  eco:{name:'经济局',text:'第一回合你多 1 行动点、多抽 1 张牌。'}
 };
 const SEASON_ACT1 = {
- S_E02:{name:'远点狙击手',look:'sniper',hp:36,trait:{id:'sniper'},script:[[aim(),block(4)],[snipe(18)],[hit(6)]]},
- S_E03:{name:'突破手双枪',look:'rusher',hp:40,trait:{id:'berserk',n:3},script:[[hit(3,3)],[hit(8)],[block(5),hit(6)]]},
- S_E04:{name:'哨位架枪组',look:'sentinel',hp:38,startBlock:8,trait:{id:'thorns',n:2},script:[[block(6),hit(4)],[hit(11)],[block(5),hit(6)]]},
- S_E05:{name:'烟雾控场手',look:'controller',hp:40,script:[[weak(1),jam('ST01',2),hit(4)],[hit(9)],[vulnP(1),hit(6)]]},
- S_E06:{name:'前哨侦察兵',look:'recon',hp:42,trait:{id:'enrageOnSkill',n:1},script:[[hit(8)],[block(6),hit(5)],[hit(3,2)]]},
- S_EL01:{name:'王牌突击手',look:'ace',hp:60,elite:true,trait:{id:'ritual',n:1},script:[[hit(8),jam('ST03')],[hit(4,3)],[block(10),hit(4)]]},
- S_EL02:{name:'战术指挥官',look:'igl',hp:56,elite:true,script:[[buff(2),block(8)],[hit(7,2)],[cleanse(),block(12),jam('ST02')],[hit(14)]]},
- S_B01:{name:'大师赛冠军卫队',look:'boss1',hp:90,boss:true,growth:0,trait:{id:'tempo',n:16},script:[[weak(1),hit(7)],[jam('ST02',2),block(10)],[hit(4,3)],[hit(12)]]}
+ // Tuned to hurt from the first fight (2026-09-24 user request: act 1 should not be easy).
+ S_E01:{name:'新秀步枪组',look:'rookie',hp:40,script:[[hit(10)],[buff(1),hit(7)],[block(5),hit(8)]]},
+ S_E02:{name:'远点狙击手',look:'sniper',hp:40,trait:{id:'sniper'},script:[[aim(),block(5)],[snipe(22)],[hit(8)]]},
+ S_E03:{name:'突破手双枪',look:'rusher',hp:46,trait:{id:'berserk',n:3},script:[[hit(4,3)],[hit(10)],[block(6),hit(8)]]},
+ S_E04:{name:'哨位架枪组',look:'sentinel',hp:42,startBlock:8,trait:{id:'thorns',n:2},script:[[block(6),hit(6)],[hit(13)],[block(5),hit(8)]]},
+ S_E05:{name:'烟雾控场手',look:'controller',hp:44,script:[[weak(1),jam('ST01',2),hit(6)],[hit(11)],[vulnP(1),hit(8)]]},
+ S_E06:{name:'前哨侦察兵',look:'recon',hp:46,trait:{id:'enrageOnSkill',n:1},script:[[hit(10)],[block(6),hit(7)],[hit(4,2)]]},
+ S_EL01:{name:'王牌突击手',look:'ace',hp:72,elite:true,trait:{id:'ritual',n:1},script:[[hit(10),jam('ST03')],[hit(5,3)],[block(10),hit(6)]]},
+ S_EL02:{name:'战术指挥官',look:'igl',hp:66,elite:true,script:[[buff(2),block(8)],[hit(8,2)],[cleanse(),block(12),jam('ST02')],[hit(16)]]},
+ S_B01:{name:'大师赛冠军卫队',look:'boss1',hp:110,boss:true,growth:0,trait:{id:'tempo',n:16},script:[[weak(1),hit(9)],[jam('ST02',2),block(12)],[hit(5,3)],[hit(15)]]}
 };
 function scaleSeason(prefix,label,hpK,dmgK){
  const out={};

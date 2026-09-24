@@ -2105,6 +2105,14 @@ export const ENEMY_ART={
     "skinName": "Prime Vandal",
     "accent": "#FFD700"
   },
+  "S_E01": {
+    "path": "assets/opponents/rush.png",
+    "name": "新秀步枪组",
+    "archetype": "冲锋枪 · 快攻",
+    "skinId": "rush",
+    "skinName": "Singularity Spectre",
+    "accent": "#9D4EDD"
+  },
   "S_E02": {
     "path": "assets/opponents/elite.png",
     "name": "远点狙击手",
@@ -2169,6 +2177,14 @@ export const ENEMY_ART={
     "skinName": "Prime Vandal",
     "accent": "#FFD700"
   },
+  "A2_S_E01": {
+    "path": "assets/opponents/rush.png",
+    "name": "二幕·新秀步枪组",
+    "archetype": "冲锋枪 · 快攻",
+    "skinId": "rush",
+    "skinName": "Singularity Spectre",
+    "accent": "#9D4EDD"
+  },
   "A2_S_E02": {
     "path": "assets/opponents/elite.png",
     "name": "二幕·远点狙击手",
@@ -2232,6 +2248,14 @@ export const ENEMY_ART={
     "skinId": "master2",
     "skinName": "Reaver Operator",
     "accent": "#8B0000"
+  },
+  "A3_S_E01": {
+    "path": "assets/opponents/rush.png",
+    "name": "决赛·新秀步枪组",
+    "archetype": "冲锋枪 · 快攻",
+    "skinId": "rush",
+    "skinName": "Singularity Spectre",
+    "accent": "#9D4EDD"
   },
   "A3_S_E02": {
     "path": "assets/opponents/elite.png",

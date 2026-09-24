@@ -318,6 +318,24 @@
       "asset": "assets/opponents/champion.png",
       "name": "总决赛冠军卫队",
       "archetype": "champion"
+    },
+    {
+      "id": "S_E01",
+      "asset": "assets/opponents/rush.png",
+      "name": "新秀步枪组",
+      "archetype": "rush"
+    },
+    {
+      "id": "A2_S_E01",
+      "asset": "assets/opponents/rush.png",
+      "name": "二幕·新秀步枪组",
+      "archetype": "rush"
+    },
+    {
+      "id": "A3_S_E01",
+      "asset": "assets/opponents/rush.png",
+      "name": "决赛·新秀步枪组",
+      "archetype": "rush"
     }
   ]
 }

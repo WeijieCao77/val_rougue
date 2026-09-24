@@ -145,7 +145,11 @@ function renderGuideModal() {
   modalRoot.querySelector('#guide-close').focus();
 }
 
+const SCREEN_KEY = 'new-demo-screen';
+function rememberScreen(name) { try { sessionStorage.setItem(SCREEN_KEY, name); } catch {} }
+
 function renderHome() {
+  rememberScreen('home');
   const teamsHtml = Object.values(TEAMS).map(t => `
     <div class="team-card ${selectedTeam === t.id ? 'selected' : ''}" data-team="${t.id}" tabindex="0" role="button" aria-pressed="${selectedTeam === t.id}">
       <div class="team-art">${combatArt(t.id, 'ally')}</div>
@@ -246,6 +250,7 @@ function renderHome() {
 }
 
 function renderGame() {
+  rememberScreen('game');
   if (!state) {
     renderHome();
     return;
@@ -1683,8 +1688,12 @@ document.addEventListener('DOMContentLoaded', () => {
       combatKeyHandler(e);
     }
   });
+  // Reload returns to the screen the player was on: home stays home;
+  // only a reload in the middle of a run resumes it directly.
   const saved = loadState();
-  if (saved) {
+  let lastScreen = null;
+  try { lastScreen = sessionStorage.getItem(SCREEN_KEY); } catch {}
+  if (saved && lastScreen === 'game') {
     state = saved;
     renderGame();
   } else {

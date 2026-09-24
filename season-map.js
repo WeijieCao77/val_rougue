@@ -50,7 +50,7 @@ export const EXTRA_ENEMIES = {
 
 // Seeded PRNG: FNV-1a hash to initialize sfc32 generator.
 const roomNames = { battle: '常规比赛', elite: '高压强敌', event: '未知事件', shop: "转会市场", rest: "俱乐部活动" };
-const battleNames = { E01: '基础进攻', S_E02: '远点狙击', S_E03: '突破双枪', S_E04: '哨位架枪', S_E05: '烟雾控场', S_E06: '前哨侦察' };
+const battleNames = { E01: '基础进攻', S_E01: '新秀步枪', S_E02: '远点狙击', S_E03: '突破双枪', S_E04: '哨位架枪', S_E05: '烟雾控场', S_E06: '前哨侦察' };
 // Keys of FIELDS in content.js (kept here to avoid a map→content import cycle).
 const FIELD_IDS = ['corridor', 'longrange', 'suppress', 'highground', 'overtime', 'eco'];
 function choice(seed, values) {
@@ -70,7 +70,7 @@ export function buildMap(seed, act) {
   const prefix = act === 1 ? '' : 'A' + act + '_';
   for (const node of map.nodes) {
     if (node.kind === 'battle') {
-      const ids = node.step <= 2 ? (act === 1 ? ['E01'] : ['E01', 'S_E03', 'S_E06']) : node.step === 3 ? ['S_E02', 'S_E03', 'S_E06'] : ['S_E02', 'S_E03', 'S_E04', 'S_E05', 'S_E06'];
+      const ids = node.step <= 2 ? (act === 1 ? ['S_E01'] : ['S_E01', 'S_E03', 'S_E06']) : node.step === 3 ? ['S_E02', 'S_E03', 'S_E06'] : ['S_E02', 'S_E03', 'S_E04', 'S_E05', 'S_E06'];
       const parents = map.edges.filter(edge => edge.to === node.key).map(edge => byKey.get(edge.from));
       const fresh = ids.filter(id => !parents.some(parent => parent.enemy === prefix + id));
       const id = choice(seed + '|' + act + '|' + node.key + '|enemy', fresh.length ? fresh : ids);
