@@ -14,6 +14,7 @@ const modules = [
   'shared-route-generator.js',
   'season-map.js',
   'content.js',
+  'card-rarity.js',
   'engine.js',
   'navigation.js',
   'art-data.js',

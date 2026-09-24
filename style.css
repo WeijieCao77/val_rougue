@@ -450,6 +450,36 @@ dialog{color:var(--ink);border:1px solid #a99567;border-radius:8px;background:li
 .weapon-display:before,.weapon-display:after{display:none}
 @media(max-width:760px){.weapon-frame{width:160px;height:120px}.weapon-frame .weapon-ring{max-height:80px}}
 
+/* Card rarity = how often a card is offered (普通 steel / 罕见 blue / 稀有 gold).
+   It is a game-design marker, never a grade of the player pictured on the card. */
+.card,.hand-card{--rarity:#8d99a6;--rarity-deep:#4b5561}
+.card.rarity-uncommon,.hand-card.rarity-uncommon{--rarity:#5b9be6;--rarity-deep:#23497a}
+.card.rarity-rare,.hand-card.rarity-rare{--rarity:#e6bd4f;--rarity-deep:#7a5a14}
+.card-rarity{position:absolute;top:-6px;right:-6px;width:15px;height:15px;transform:rotate(45deg);border:2px solid #f3e7c4;outline:1px solid #3a2f20;border-radius:3px;background:linear-gradient(135deg,#fff8 0 18%,var(--rarity) 40%,var(--rarity-deep));box-shadow:0 2px 4px #0006;z-index:2}
+.hand-card .card-rarity{width:11px;height:11px;top:-4px;right:-4px;border-width:1.5px}
+.rarity-common .card-face{outline:1px solid #8d99a699;outline-offset:1px}
+.rarity-uncommon .card-face{outline:2px solid #5b9be6cc;outline-offset:1px}
+.rarity-rare .card-face{outline:2px solid #e6bd4f;outline-offset:1px;filter:drop-shadow(0 0 7px #e6bd4f66)}
+.rarity-rare .card-rarity{box-shadow:0 0 8px #ffd86a,0 2px 4px #0006}
+.rarity-caption{display:flex;align-items:center;justify-content:center;gap:6px;margin:9px 0 0;font-size:11px;letter-spacing:.5px;color:#c9d2da}
+.rarity-caption i{width:9px;height:9px;transform:rotate(45deg);border-radius:2px;background:var(--rarity);box-shadow:0 0 0 1px #f3e7c4aa}
+.rarity-caption.rarity-uncommon{color:#9cc6f7}
+.rarity-caption.rarity-rare{color:#f3d27a;font-weight:700}
+.contract-slot .rarity-caption{margin-top:6px}
+#card-tooltip .tip-rarity{margin:8px 0 0;padding-top:7px;border-top:1px solid #93836944;font-size:11px;color:#b8c2cc}
+#card-tooltip .tip-rarity.rarity-uncommon{color:#8dbdf5}#card-tooltip .tip-rarity.rarity-rare{color:#f0cf6a}
+#card-tooltip .tip-rarity small{display:block;font-size:9px;color:#8a9a9a;margin-top:2px}
+.rarity-filter-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;justify-content:center;align-items:center}
+.rarity-filter-tabs button{font-size:11px;padding:6px 10px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.rarity-filter-tabs button[data-ui$="-common"]::before,.rarity-filter-tabs button[data-ui$="-uncommon"]::before,.rarity-filter-tabs button[data-ui$="-rare"]::before{content:"";width:8px;height:8px;transform:rotate(45deg);border-radius:2px;background:#8d99a6}
+.rarity-filter-tabs button[data-ui$="-uncommon"]::before{background:#5b9be6}
+.rarity-filter-tabs button[data-ui$="-rare"]::before{background:#e6bd4f}
+.rarity-filter-tabs small{flex-basis:100%;text-align:center;font-size:10px;color:#8f9c9a}
+@keyframes rare-reveal{0%,100%{filter:drop-shadow(0 0 5px #e6bd4f55)}50%{filter:drop-shadow(0 0 14px #e6bd4fbb)}}
+.reward-cards .rarity-rare>.card-face{animation:rare-reveal 2.4s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.reward-cards .rarity-rare>.card-face{animation:none}}
+@media(max-width:720px){.rarity-filter-tabs{gap:4px}.rarity-filter-tabs button{font-size:10px;padding:4px 6px}.rarity-caption{font-size:10px;margin-top:6px}}
+
 /* combat-fx.css */
 .cfx-container {
   position: fixed;

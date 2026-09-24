@@ -1,6 +1,7 @@
 import {VERSION,CARDS,PLAYER_IDS,SKINS,ENEMIES,START,effects,cardName,REGIONS,TACTICS} from './content.js';
 import {buildMap,availableNodes} from './season-map.js';
 import {CURSES,CURSE_RULES,EXTRA_STATUS_RULES} from './afflictions.js';
+import {CARD_RARITY,RARITY_ORDER} from './card-rarity.js';
 export const clone = x => structuredClone(x);
 const log = (s,text) => s.logs.push({node:s.node,turn:s.battle?.turn||0,text});
 export function random(s) { let x=s.rng; x^=x<<13; x^=x>>>17; x^=x<<5; s.rng=x>>>0; return s.rng/4294967296; }
@@ -30,13 +31,54 @@ export function offers(s,weights=[15,60,20,5],number=3,excluded=[]) {
  }
  return result;
 }
+// Season-only rarity odds (common/uncommon/rare, percent), modelled on Slay the Spire:
+// rares are rare, elites pay better, and every reward without a rare adds +1% pity.
+export const RARITY_ODDS={normal:[60,37,3],elite:[50,40,10],boss:[0,0,100],shop:[54,37,9]};
+export const SHOP_PRICE_RANGE={common:[45,55],uncommon:[68,82],rare:[135,165]};
+export function rarityChances(s,kind='normal'){
+ const [c,u,r]=RARITY_ODDS[kind],pity=kind==='normal'||kind==='elite'?Math.min(c,s.rarePity||0):0;
+ return [c-pity,u,r+pity];
+}
+function rollRarity(s,kind){
+ const [c,u]=rarityChances(s,kind),roll=random(s)*100;
+ return roll<c?'common':roll<c+u?'uncommon':'rare';
+}
+// Falls back to the nearest tier (lower first) when the copy cap empties a tier.
+function pickOfRarity(s,rarity,taken){
+ const i=RARITY_ORDER.indexOf(rarity);
+ for(const k of [i,i-1,i+1,i-2,i+2].filter(k=>k>=0&&k<3)){
+  const pool=REGIONS[s.region].pool.filter(id=>CARD_RARITY[id]===RARITY_ORDER[k]&&eligible(s,id)&&!taken.includes(id));
+  if(pool.length)return pool[Math.floor(random(s)*pool.length)];
+ }
+ return null;
+}
+export function rarityOffers(s,kind='normal',number=3,excluded=[]){
+ const result=[];
+ for(let k=0;k<number;k++){const id=pickOfRarity(s,rollRarity(s,kind),[...result,...excluded]);if(!id)break;result.push(id);}
+ return result;
+}
+function updatePity(s,list){s.rarePity=list.some(id=>CARD_RARITY[id]==='rare')?0:(s.rarePity||0)+1;}
+function seasonShop(s){
+ const slots=[];
+ for(let k=0;k<3;k++){const id=pickOfRarity(s,rollRarity(s,'shop'),slots);if(id)slots.push(id);}
+ slots.sort((a,b)=>RARITY_ORDER.indexOf(CARD_RARITY[a])-RARITY_ORDER.indexOf(CARD_RARITY[b]));
+ const prices=slots.map(id=>{const [lo,hi]=SHOP_PRICE_RANGE[CARD_RARITY[id]];return lo+Math.floor(random(s)*(hi-lo+1));});
+ while(slots.length<3){slots.push(null);prices.push(null);}
+ return {slots,prices,removed:false};
+}
+// Legacy tutorial shops keep the fixed 40/65/90 cost tiers.
+export function shopPrice(s,slot){return s.shop?.prices?s.shop.prices[slot]:[40,65,90][slot];}
 // Season rewards always include one build-direction card (burn, deploy, combo...)
-// so every reward screen offers a real choice of direction.
+// so every reward screen offers a real choice of direction. The swap keeps the
+// replaced slot's rarity when possible and never overwrites a rolled rare.
 function withArchetype(s,list){
  if(list.some(id=>TACTICS[id]?.archetype))return list;
  const pool=REGIONS[s.region].pool.filter(id=>TACTICS[id]?.archetype&&eligible(s,id)&&!list.includes(id));
  if(!pool.length||!list.length)return list;
- return [...list.slice(0,-1),pool[Math.floor(random(s)*pool.length)]];
+ const swap=(i,from)=>{const next=[...list];next[i]=from[Math.floor(random(s)*from.length)];return next;};
+ for(let i=list.length-1;i>=0;i--){const same=pool.filter(id=>CARD_RARITY[id]===CARD_RARITY[list[i]]);if(same.length)return swap(i,same);}
+ const slot=list.findLastIndex(id=>CARD_RARITY[id]!=='rare'),fallback=pool.filter(id=>CARD_RARITY[id]!=='rare');
+ return slot<0||!fallback.length?list:swap(slot,fallback);
 }
 export function createRun(seed='first-season',tutorial=true) {
  const s={version:VERSION,seed:String(seed),tutorial,rng:seedHash(seed),rev:0,nextId:1,node:1,phase:'combat',hp:80,maxHp:80,money:60,deck:[],skins:[],logs:[],actions:[],wins:0,battle:null};
@@ -148,7 +190,7 @@ function winSeason(s) {
  const elite = node && node.kind==='elite' ? true : ENEMIES[s.battle.enemy].elite;
  const money = elite ? 35 : 20;
  s.money += money;
- s.reward={offers:withArchetype(s,offers(s,elite?[10,45,30,15]:undefined)),elite:!!elite};
+ s.reward={offers:withArchetype(s,rarityOffers(s,elite?'elite':'normal')),elite:!!elite};updatePity(s,s.reward.offers);
  s.phase='reward';
  log(s, `资金 +${money}。招募候选：${s.reward.offers.map(id=>CARDS[id].name).join('、')}。`);
 }
@@ -337,7 +379,7 @@ function perform(s,a) {
   }else throw Error('未知路线');break;
  case 'opponent':requirePhase('opponent');if(!['E04','EL01'].includes(a.id))throw Error('未知对手');startBattle(s,a.id);break;
  case 'buy':requirePhase('shop');{
-  const id=s.shop.slots[a.slot],price=[40,65,90][a.slot];if(!id||!price)throw Error('该货位已售出');if(s.money<price)throw Error('资金不足');addPlayer(s,id);s.money-=price;s.shop.slots[a.slot]=null;log(s,`转会支出 ${price} 资金。`);break;}
+  const id=s.shop.slots[a.slot],price=shopPrice(s,a.slot);if(!id||!price)throw Error('该货位已售出');if(s.money<price)throw Error('资金不足');addPlayer(s,id);s.money-=price;s.shop.slots[a.slot]=null;log(s,`转会支出 ${price} 资金。`);break;}
  case 'remove':requirePhase('shop');if(s.shop.removed)throw Error('本次移除已使用');if(s.money<50)throw Error('需要 50 资金');{const reason=removalReason(s,a.uid);if(reason)throw Error(reason);const c=s.deck.find(c=>c.uid===a.uid);log(s,`支付 50 资金，永久移除 ${cardName(c)}。`);s.money-=50;s.deck=s.deck.filter(c=>c.uid!==a.uid);s.shop.removed=true;}break;
  case 'leaveShop':requirePhase('shop');advance(s);break;
  case 'activity':requirePhase('activity');
@@ -359,8 +401,7 @@ function perform(s,a) {
   } else if(node.kind==='event'){
    startSeasonEvent(s);
   } else if(node.kind==='shop'){
-   const low=offers(s,[1,4,0,0],1),mid=offers(s,[0,0,1,0],1),high=offers(s,[0,0,0,1],1);
-   s.shop={slots:[low[0]||null,mid[0]||null,high[0]||null],removed:false};s.phase='shop';
+   s.shop=seasonShop(s);s.phase='shop';
    log(s,`进入转会市场：${s.shop.slots.map(id=>id?CARDS[id].name:'空位').join('、')}。`);
   } else if(node.kind==='rest'){
    s.phase='activity';
@@ -466,7 +507,7 @@ function startSeasonEvent(s) {
  const id = fresh[Math.floor(random(s)*fresh.length)];
  s.seenEvents.push(id);
  s.eventId = id;
- if (id==='trial') s.eventOffers = offers(s);
+ if (id==='trial') s.eventOffers = rarityOffers(s,'normal');
  s.phase='event';
  log(s, `事件：${SEASON_EVENTS[id].label}`);
 }
@@ -506,7 +547,7 @@ export function legalActions(s) {
  if(s.phase==='branch')actions.push({type:'branch',choice:'shop'},{type:'branch',choice:'activity'});
  if(s.phase==='opponent')actions.push({type:'opponent',id:'E04'},{type:'opponent',id:'EL01'});
  if(s.phase==='shop'){
-  s.shop.slots.forEach((id,slot)=>{if(id&&eligible(s,id)&&s.money>=[40,65,90][slot])actions.push({type:'buy',slot});});
+  s.shop.slots.forEach((id,slot)=>{if(id&&eligible(s,id)&&s.money>=shopPrice(s,slot))actions.push({type:'buy',slot});});
   if(!s.shop.removed&&s.money>=50)for(const c of s.deck)if(!removalReason(s,c.uid))actions.push({type:'remove',uid:c.uid});actions.push({type:'leaveShop'});
  }
  if(s.phase==='activity'){
