@@ -478,7 +478,7 @@ function renderCombat(root) {
             <div class="hp-bar"><i style="width:${b.enemyHp/b.enemyMaxHp*100}%"></i></div>
             <span>${b.enemyHp}/${b.enemyMaxHp}</span>
           </div>
-          <div class="intent">意图：${highlightKeywords(intentStr)}</div>
+          <div class="intent">${highlightKeywords(intentStr)}</div>
         </div>
       </div>
       <div class="player-area">

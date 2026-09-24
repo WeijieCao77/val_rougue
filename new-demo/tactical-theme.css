@@ -122,3 +122,6 @@ body {
 .battle .player-box .label { font-family: var(--ops-num); letter-spacing: 3px; color: var(--ops-green) !important; }
 .battlefield-tag { border-radius: 0; }
 .trait-tag { border-radius: 0; }
+/* Older layers force single-line card text; tactical cards wrap. */
+.tc-text, .tc-text * { white-space: normal !important; overflow-wrap: anywhere; }
+.battle .hand-card .tc-text { display: block; -webkit-line-clamp: unset; }
