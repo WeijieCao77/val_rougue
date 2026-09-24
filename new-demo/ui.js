@@ -1,4 +1,4 @@
-import { createRun, act, legalActions, observe, preview, describeIntent, describeIntents, battleEnemies, livingEnemies, cardNeedsTarget, cardHitsAll, categoryUpgradeQuote, shopPrice } from './engine.js';
+import { createRun, act, legalActions, observe, preview, describeIntent, describeIntents, battleEnemies, livingEnemies, cardNeedsTarget, cardHitsAll, categoryUpgradeQuote, shopPrice, describeEvent } from './engine.js';
 import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS, TRAITS, FIELDS, ARCHETYPES } from './content.js';
 import { statusBadges, statusBadge, statusIcon, highlightKeywords } from '/shared/status-icons.js';
 import { ACTS } from './season-map.js';
@@ -8,10 +8,10 @@ import { captureCombatPresentation, animateCombatTransition, clearCombatPresenta
 import { attachCardGesture } from '/shared/card-gesture.js';
 import { flyCardsFromPile, flyCardsToPile } from '/shared/card-pile-motion.js';
 
-const STORAGE_KEY = 'new-demo-run-route-v3';
+const STORAGE_KEY = 'new-demo-run-route-v4';
 const GUIDE_KEY = 'new-demo-guide-v2-';
 // Internal beta: discard runs created with the previous route layout.
-try { for (const key of ['new-demo-run-v1', 'new-demo-run-route-v2']) localStorage.removeItem(key); } catch {}
+try { for (const key of ['new-demo-run-v1', 'new-demo-run-route-v2', 'new-demo-run-route-v3']) localStorage.removeItem(key); } catch {}
 let state = null;
 let previousState = null;
 let selectedCardUid = null;
@@ -291,10 +291,14 @@ function renderPhase() {
   else if (state.phase === 'shop') renderShop(root);
   else if (state.phase === 'rest') renderRest(root);
   else if (state.phase === 'event') renderEvent(root);
+  else if (state.phase === 'crate') renderCrate(root);
   else if (state.phase === 'intermission') renderIntermission(root);
   else if (state.phase === 'result') renderResult(root);
   else renderHome();
 }
+
+const MAP_GLYPHS = { battle: '⚔', elite: '☠', event: '?', shop: '⇄', rest: '✚', crate: '▣', boss: '👑' };
+const REVEALED_NAMES = { battle: '遭遇战', shop: '战术补给', crate: '补给箱', event: '事件' };
 
 function renderMap(root) {
   const act = ACTS[state.act - 1];
@@ -322,9 +326,9 @@ function renderMap(root) {
     const isAvailable = availableKeys.has(n.key);
     const isCompleted = completedSet.has(n.key) && n.key !== currentKey;
     const isCurrent = n.key === currentKey;
-    const cls = `map-node kind-${n.kind} ${isAvailable ? 'available' : ''} ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`;
-    const glyph = { battle: '⚔', elite: '☠', event: '?', shop: '⇄', rest: '✚', boss: '👑' }[n.kind] || '·';
-    const label = n.name || { battle: '战斗', elite: '强敌', event: '事件', shop: '转会', rest: '休整', boss: 'Boss' }[n.kind] || n.kind;
+    const cls = `map-node kind-${n.kind}${n.revealed ? ' revealed' : ''} ${isAvailable ? 'available' : ''} ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`;
+    const glyph = MAP_GLYPHS[n.revealed || n.kind] || '·';
+    const label = n.name || { battle: '战斗', elite: '强敌', event: '未知', shop: '补给', rest: '休整', crate: '补给箱', boss: 'Boss' }[n.kind] || n.kind;
     return `<g class="${cls}" data-key="${n.key}" tabindex="${isAvailable ? '0' : '-1'}" role="button" aria-label="${n.kind === 'boss' ? 'Boss：' : n.kind === 'elite' ? '强敌：' : ''}${escapeHtml(n.name)}" style="cursor:pointer">
       <circle cx="${sx(n.x)}" cy="${sy(n.y)}" r="${n.kind === 'boss' ? 24 : 18}" />
       <text class="map-glyph" x="${sx(n.x)}" y="${sy(n.y) + 1}">${glyph}</text>
@@ -339,7 +343,7 @@ function renderMap(root) {
         <span>幕 ${state.act}：${act.name} · ${act.subtitle} · ${state.completed.filter(key => state.map.nodes.some(node => node.key === key)).length}/12 站</span>
         <span>HP ${state.hp}/${state.maxHp} · 💰 ${state.money}</span>
       </div>
-      <div class="map-quick-legend" aria-label="路线图标说明">⚔ 比赛　☠ 强敌　? 事件　⇄ 补给　✚ 休整　👑 决赛</div>
+      <div class="map-quick-legend" aria-label="路线图标说明">⚔ 比赛　☠ 强敌　? 未知　⇄ 补给　▣ 补给箱　✚ 休整　👑 决赛</div>
       <div class="map-scroll">
         <svg class="map-svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
           ${edgesSvg}
@@ -349,8 +353,9 @@ function renderMap(root) {
       <div class="map-legend">
         <div class="legend-item"><span class="legend-icon">⚔</span> 常规比赛：标准战斗，获胜得卡牌奖励。</div>
         <div class="legend-item"><span class="legend-icon">☠</span> 强敌：更高难度，奖励更丰厚。</div>
-        <div class="legend-item"><span class="legend-icon">?</span> 未知事件：随机事件，风险与机遇并存。</div>
+        <div class="legend-item"><span class="legend-icon">?</span> 未知：进入后揭晓，多半是事件，也可能是比赛、补给站或补给箱。</div>
         <div class="legend-item"><span class="legend-icon">⇄</span> 转会补给：购买卡牌或删除卡牌。</div>
+        <div class="legend-item"><span class="legend-icon">▣</span> 补给箱：必得金币，常有战术装备。</div>
         <div class="legend-item"><span class="legend-icon">✚</span> 休整：回复生命或升级卡牌。</div>
         <div class="legend-item"><span class="legend-icon">👑</span> BOSS：幕末强敌，击败进入下一幕。</div>
       </div>
@@ -361,8 +366,8 @@ function renderMap(root) {
 
   const details = root.querySelector('#node-details');
   const showDetails = (node) => {
-    const kindNames = { battle: '常规比赛', elite: '高压强敌', event: '未知事件', shop: '战术补给', rest: '战术休整', boss: 'BOSS' };
-    const kindDesc = { battle: '标准战斗，获胜获得卡牌奖励。', elite: '更高难度，奖励更丰厚。', event: '随机事件，风险与机遇并存。', shop: '购买卡牌或删除卡牌。', rest: '回复生命或升级卡牌。', boss: '幕末强敌，击败进入下一幕。' };
+    const kindNames = { battle: '常规比赛', elite: '高压强敌', event: '未知', shop: '战术补给', rest: '战术休整', crate: '补给箱', boss: 'BOSS' };
+    const kindDesc = { battle: '标准战斗，获胜获得卡牌奖励。', elite: '更高难度，奖励更丰厚。', event: node.revealed ? `已揭晓：${REVEALED_NAMES[node.revealed]}。` : '进入后揭晓：多半是事件，也可能是比赛、补给站或补给箱。', shop: '购买卡牌或删除卡牌。', rest: '回复生命或升级卡牌。', crate: '打开后必得金币，常有战术装备。', boss: '幕末强敌，击败进入下一幕。' };
     const isAvailable = availableKeys.has(node.key);
     const isCurrent = node.key === currentKey;
     const isCompleted = completedSet.has(node.key);
@@ -867,23 +872,67 @@ function renderRest(root) {
 }
 
 function renderEvent(root) {
-  const ev = state.event;
-  if (!ev) return;
-  const choicesHtml = ev.choices.map(ch => `
-    <div class="event-choice" data-choice="${ch.id}">
-      ${escapeHtml(ch.text)}
-    </div>
-  `).join('');
+  const view = describeEvent(state);
+  if (!view) return;
+  if (view.pending) {
+    const pickVerb = { upgrade: '升级', remove: '永久移除', transform: '变换', duplicate: '复制', cleanse: '移除' }[view.pending.kind] || '选择';
+    const cards = view.pending.candidates.map(uid => {
+      const c = state.deck.find(card => card.uid === uid);
+      const upgrade = view.pending.kind === 'upgrade';
+      return `<button class="event-pick-card tc-pick" data-pick-uid="${uid}" aria-label="${pickVerb} ${escapeHtml(getCardDefinition(c.id)?.name || c.id)}">${cardHtml(c.id, { up: upgrade ? true : c.up })}<span class="event-pick-verb">${pickVerb}${upgrade ? '（显示升级后）' : ''}</span></button>`;
+    }).join('');
+    root.innerHTML = `
+      <div class="phase-container event-room">
+        <div class="ops-eyebrow">EVENT // ${escapeHtml(view.title)}</div>
+        <h2 class="ops-title">${escapeHtml(view.pending.title)} · 选择一张牌</h2>
+        <p class="event-effects">确认后生效：${escapeHtml(view.pending.effects)}</p>
+        <div class="event-pick-grid">${cards}</div>
+        <button class="btn ops-skip" id="btn-event-back">返回事件，不付出代价</button>
+      </div>`;
+    root.querySelectorAll('[data-pick-uid]').forEach(el => el.addEventListener('click', () => dispatch({ type: 'eventPick', uid: el.dataset.pickUid })));
+    document.getElementById('btn-event-back').addEventListener('click', () => dispatch({ type: 'eventBack' }));
+    return;
+  }
+  const choicesHtml = view.options.map(o => `
+    <button class="event-option${o.reason ? ' is-disabled' : ''}" data-choice="${o.id}" ${o.reason ? 'disabled aria-disabled="true"' : ''}>
+      <strong>${escapeHtml(o.title)}</strong>
+      <span class="event-option-effects">${escapeHtml(o.effects)}</span>
+      ${o.reason ? `<small class="event-option-reason">${escapeHtml(o.reason)}</small>` : ''}
+    </button>`).join('');
   root.innerHTML = `
-    <div class="phase-container">
-      <h2>事件</h2>
-      <p>${escapeHtml(ev.text)}</p>
-      <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">${choicesHtml}</div>
-    </div>
-  `;
-  document.querySelectorAll('.event-choice').forEach(el => {
+    <div class="phase-container event-room">
+      <div class="ops-eyebrow">EVENT // 未知已揭晓</div>
+      <h2 class="ops-title">${escapeHtml(view.title)}</h2>
+      <p class="event-scene">${escapeHtml(view.scene)}</p>
+      <div class="event-options">${choicesHtml}</div>
+      <div class="event-status">生命 ${state.hp}/${state.maxHp} · 金币 ${state.money}</div>
+    </div>`;
+  root.querySelectorAll('.event-option:not([disabled])').forEach(el => {
     el.addEventListener('click', () => dispatch({ type: 'event', choice: el.dataset.choice }));
   });
+}
+
+const CRATE_NAMES = { small: '小型补给箱', medium: '中型补给箱', large: '大型补给箱' };
+function renderCrate(root) {
+  const crate = state.crate;
+  if (!crate) return;
+  const r = crate.result;
+  const relic = r?.equip ? state.relics.find(x => x.name === r.equip) : null;
+  const loot = r ? `
+      <div class="crate-loot">
+        <div class="crate-loot-item"><b>+${r.money + r.bonusMoney}</b><span>金币${r.bonusMoney ? `（含无装备补偿 ${r.bonusMoney}）` : ''}</span></div>
+        ${relic ? `<div class="crate-loot-item crate-relic"><div class="crate-relic-art">${relicArt(relic.id)}</div><div><b>${escapeHtml(relic.name)}</b><span>${escapeHtml(relic.desc)}</span></div></div>` : '<div class="crate-loot-item"><span>箱里没有战术装备。</span></div>'}
+      </div>` : '';
+  root.innerHTML = `
+    <div class="phase-container crate-room">
+      <div class="ops-eyebrow">SUPPLY // 补给箱</div>
+      <h2 class="ops-title">${CRATE_NAMES[crate.size] || '补给箱'}</h2>
+      <div class="crate-box crate-${crate.size}${crate.opened ? ' is-open' : ''}" aria-hidden="true"><span class="crate-lid"></span><span class="crate-body"></span></div>
+      <p class="event-scene">${crate.opened ? '封条已经撕开。' : '一只贴着赛事物流封条的补给箱。越大的箱子越少见，金币越多，也越可能装着战术装备。'}</p>
+      ${loot}
+      ${crate.opened ? '<button class="btn primary" id="btn-crate-leave">收好物资，继续赛程 →</button>' : '<button class="btn primary" id="btn-crate-open">打开补给箱</button>'}
+    </div>`;
+  document.getElementById(crate.opened ? 'btn-crate-leave' : 'btn-crate-open').addEventListener('click', () => dispatch({ type: 'crate', choice: crate.opened ? 'leave' : 'open' }));
 }
 
 function renderIntermission(root) {

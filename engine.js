@@ -1,6 +1,10 @@
 import {VERSION,CARDS,PLAYER_IDS,SKINS,ENEMIES,START,effects,cardName,REGIONS,TACTICS} from './content.js';
 import {buildMap,availableNodes} from './season-map.js';
 import {CURSES,CURSE_RULES,EXTRA_STATUS_RULES} from './afflictions.js';
+import {WA_EVENTS,WA_EVENT_POOLS,WA_CRATE_LOOT} from './wa-events.js';
+import {opsReason,describeOps,applyOps,pickKind,pickCandidates} from './shared-event-core.js';
+import {freshUnknownOdds,resolveUnknown,blockedUnknownKinds,rollCrateSize} from './shared-unknown-room.js';
+import {ROUTE_STEPS} from './shared-route-generator.js';
 export const clone = x => structuredClone(x);
 const log = (s,text) => s.logs.push({node:s.node,turn:s.battle?.turn||0,text});
 export function random(s) { let x=s.rng; x^=x<<13; x^=x>>>17; x^=x<<5; s.rng=x>>>0; return s.rng/4294967296; }
@@ -10,14 +14,7 @@ export function instance(s,id,up=false) { return {uid:`c${s.nextId++}`,id,up}; }
 const count = (s,id) => s.deck.filter(c=>c.id===id).length;
 const eligible = (s,id) => count(s,id)<3;
 const SEASON_VERSION = 'D0.2.0';
-export const SEASON_EVENTS = {
-  sponsor:{label:'商业活动',desc:'资金 +70，获得舆论压力。',options:{accept:'接受赞助',skip:'谢绝'}},
-  trial:{label:'紧急试训',desc:'从候选池招募一名选手并加入磨合不足。',options:{accept:'试训',skip:'谢绝'}},
-  scrim:{label:'训练赛',desc:'支付20资金回复15%声望，或冒风险失去8声望换35资金。',options:{safe:'支付训练（-20资金，回复15%）',risk:'冒险（-8声望，+35资金）'}},
-  training:{label:'特训',desc:'支付40升级一名选手，或免费升级但获得磨合不足。',options:{paid:'付费训练（-40）',risky:'鲁莽训练（免费但+磨合不足）'}},
-  rally:{label:'动员',desc:'支付60移除一个诅咒并回复15%声望，或获得100资金但获得两个舆论压力。',options:{cleanse:'净化（-60资金，移除诅咒+回复）',sponsor:'接受赞助（+100资金，+2舆论压力）'}}
-  ,risk:{label:'高风险合作',desc:'领取90资金并加入一张随机俱乐部隐患，或谢绝。',options:{accept:'接受合作',skip:'谢绝'}}
-};
+export const SEASON_EVENTS = Object.fromEntries(Object.entries(WA_EVENTS).map(([id,e])=>[id,{label:e.title,desc:e.scene}]));
 export function offers(s,weights=[15,60,20,5],number=3,excluded=[]) {
  const result=[];
  const allowed = s.mode==='season' ? REGIONS[s.region].pool : PLAYER_IDS;
@@ -269,6 +266,7 @@ function advance(s) {
  else throw Error('无效赛程节点');
 }
 function advanceSeason(s) {
+ if(s.eventBonus){const bonus=s.eventBonus;delete s.eventBonus;log(s,`约战额外奖励：${applyOps(s,bonus,WA_CTX).log.join('，')}。`);}
  if(s.currentNode) {
   if(!s.completed.includes(s.currentNode))s.completed.push(s.currentNode);
 
@@ -357,11 +355,11 @@ function perform(s,a) {
   if(node.kind==='battle'||node.kind==='elite'||node.kind==='boss'){
    startBattle(s,node.enemy);
   } else if(node.kind==='event'){
-   startSeasonEvent(s);
+   enterUnknownSeason(s,node);
+  } else if(node.kind==='crate'){
+   enterCrateSeason(s);
   } else if(node.kind==='shop'){
-   const low=offers(s,[1,4,0,0],1),mid=offers(s,[0,0,1,0],1),high=offers(s,[0,0,0,1],1);
-   s.shop={slots:[low[0]||null,mid[0]||null,high[0]||null],removed:false};s.phase='shop';
-   log(s,`进入转会市场：${s.shop.slots.map(id=>id?CARDS[id].name:'空位').join('、')}。`);
+   openSeasonShop(s);
   } else if(node.kind==='rest'){
    s.phase='activity';
   } else throw Error('未知节点类型');
@@ -371,66 +369,15 @@ function perform(s,a) {
   s.act++; s.map=buildMap(s.seed,s.act); s.currentNode=null; delete s.intermissionHeal; s.seenEvents=[]; s.phase='map';
   log(s,`进入第 ${s.act} 幕。`);
   break;}
- case 'seasonEvent':{
-  requirePhase('event'); if(s.mode!=='season') throw Error('非赛季模式');
-  const id=s.eventId; if(!id) throw Error('无事件');
-  if(a.choice==='skip'){ log(s,'谢绝事件。'); advanceSeason(s); break; }
-  switch(id){
-   case 'sponsor':
-    if(a.choice==='accept'){s.money+=70; s.deck.push(instance(s,'CU02')); log(s,'商业活动：资金 +70，加入舆论压力。'); advanceSeason(s);}
-    else throw Error('未知选项');
-    break;
-   case 'trial':
-    if(a.choice==='accept'){ if(!s.eventOffers.length)throw Error('无可招募选手');s.phase='trial'; } else throw Error('未知选项');
-    break;
-   case 'scrim':
-    if(a.choice==='safe'){
-     if(s.money<20) throw Error('资金不足'); if(s.hp>=s.maxHp) throw Error('声望已满');
-     s.money-=20; const n=healAmount(s,0.15); s.hp+=n; log(s,`训练赛：支付20资金，回复 ${n} 声望。`); advanceSeason(s);
-    } else if(a.choice==='risk'){
-     if(s.hp<=8) throw Error('声望过低'); const dmg=8; s.hp-=dmg; s.money+=35; log(s,`训练赛冒险：失去 ${dmg} 声望，资金 +35。`); advanceSeason(s);
-    } else throw Error('未知选项');
-    break;
-   case 'training':
-    if(a.choice==='paid'||a.choice==='risky'){
-     if(!s.deck.some(c=>CARDS[c.id].trainable&&!c.up))throw Error('没有可训练牌');if(a.choice==='paid'&&s.money<40)throw Error('资金不足');
-     s.pendingEvent=a.choice; s.phase='eventUpgrade';
-    } else throw Error('未知选项');
-    break;
-   case 'rally':
-    if(a.choice==='cleanse'){
-     if(s.money<60) throw Error('资金不足');
-     if(!s.deck.some(c=>c.id.startsWith('CU'))) throw Error('没有诅咒');
-     s.pendingEvent='cleanse'; s.phase='eventCleanse';
-    } else if(a.choice==='sponsor'){
-     s.money+=100; s.deck.push(instance(s,'CU02')); s.deck.push(instance(s,'CU02')); log(s,'动员赞助：资金 +100，加入两个舆论压力。'); advanceSeason(s);
-    } else throw Error('未知选项');
-    break;
-   case 'risk':
-    if(a.choice==='accept'){const curse=CURSES[2+Math.floor(random(s)*(CURSES.length-2))];s.money+=90;s.deck.push(instance(s,curse.id));log(s,`高风险合作：资金 +90，加入 ${curse.name}。`);advanceSeason(s);}else throw Error('未知选项');
-    break;
-   default: throw Error('未知事件');
-  }
-  break;}
- case 'eventUpgrade':{
-  requirePhase('eventUpgrade');
-  const pending=s.pendingEvent; if(!pending) throw Error('无待处理事件');
-  const c=s.deck.find(c=>c.uid===a.uid); if(!c||!CARDS[c.id].trainable||c.up) throw Error('此牌不能升级');
-  if(pending==='paid'){ if(s.money<40) throw Error('资金不足'); s.money-=40; }
-  c.up=true; if(pending==='risky') s.deck.push(instance(s,'CU01'));
-  log(s,`特训完成：${cardName(c)}。`);
-  delete s.pendingEvent; advanceSeason(s);
-  break;}
- case 'eventCleanse':{
-  requirePhase('eventCleanse');
-  if(s.money<60) throw Error('资金不足');
-  const c=s.deck.find(c=>c.uid===a.uid); if(!c||!c.id.startsWith('CU')) throw Error('只能移除诅咒');
-  s.money-=60; s.deck=s.deck.filter(c=>c.uid!==a.uid); const n=healAmount(s,0.15); s.hp+=n;
-  log(s,`动员净化：费用 -60，移除 ${cardName(c)}，回复 ${n} 声望。`);
-  delete s.pendingEvent; advanceSeason(s);
-  break;}
+ case 'seasonEvent':requirePhase('event'); if(s.mode!=='season') throw Error('非赛季模式'); applySeasonEvent(s,a); break;
+ case 'eventUpgrade': case 'eventCleanse': case 'eventPick':requirePhase(a.type); pickSeasonEvent(s,a); break;
+ case 'crate':requirePhase('crate'); crateSeason(s,a); break;
+ case 'crateUpgrade':{requirePhase('crate');
+  if(!s.crate.opened||!s.crate.result?.upgrade) throw Error('没有可用的训练机会');
+  const c=s.deck.find(c=>c.uid===a.uid); if(!c||!WA_CTX.upgradeable(s,c)) throw Error('此牌不能升级');
+  c.up=true; log(s,`补给箱训练：${cardName(c)}。`); delete s.crate; advanceSeason(s); break;}
  case 'eventBack':{
-  requirePhase('eventUpgrade','eventCleanse');
+  requirePhase('eventUpgrade','eventCleanse','eventPick');
   delete s.pendingEvent; s.phase='event';
   break;}
  default:throw Error('未知操作');
@@ -457,18 +404,108 @@ export function preview(s,uid) {
  const c=s.battle.hand.find(c=>c.uid===uid),copy=clone(s),before=s.battle,working=copy.battle;play(copy,uid);const after=copy.battle||working;
  const newLogs=copy.logs.slice(s.logs.length);return {energy:after.energy,damage:before.enemyHp-after.enemyHp,enemyBlock:before.enemyBlock-after.enemyBlock,block:after.block-before.block,draw:newLogs.filter(l=>l.text.startsWith('抽到 ')).length,shuffle:newLogs.some(l=>l.text==='抽牌堆耗尽：弃牌堆洗回抽牌堆。'),wins:copy.phase!=='combat'};
 }
+// ---- Unknown rooms, supply crates and events (season mode only) ----
+// Every roll uses the run RNG inside the action that triggers it, so the online
+// server's action-by-action replay reproduces the same rooms and outcomes.
+const WA_CTX={
+ labels:{hp:'声望',money:'资金',equip:'皮肤',equipNone:'皮肤已满或已集齐时',curse:'俱乐部隐患',upgrade:'训练',tier:{any:'选手或战术牌',star:'高费选手或战术牌'}},
+ rand:s=>random(s),
+ newCard:(s,id,up)=>instance(s,id,up),
+ cardName:id=>CARDS[id]?.name||id,
+ upgradeable:(s,c)=>!!CARDS[c.id]?.trainable&&!c.up,
+ removable:(s,c)=>!removalReason(s,c.uid),
+ transformable:(s,c)=>!removalReason(s,c.uid),
+ duplicable:(s,c)=>!!CARDS[c.id]?.trainable&&eligible(s,c.id),
+ isCurse:(s,c)=>c.id.startsWith('CU'),
+ curseIds:CURSES.slice(2).map(c=>c.id),
+ randomCardAvailable:(s,tier)=>REGIONS[s.region].pool.some(id=>eligible(s,id)&&(tier!=='star'||CARDS[id].cost>=2)),
+ randomCard:(s,tier)=>offers(s,tier==='star'?[0,0,1,2]:undefined,1)[0]||null,
+ transformInto:(s,c)=>offers(s,undefined,1,[c.id])[0]||null,
+ gainEquip:s=>{if(s.skins.length>=3)return null;const ids=Object.keys(SKINS).filter(id=>!s.skins.includes(id));if(!ids.length)return null;const id=ids[Math.floor(random(s)*ids.length)];s.skins.push(id);return SKINS[id].name;},
+ specialReason:(s,name)=>name==='trial'&&!s.eventOffers?.length?'无可招募选手':'',
+ describeSpecial:name=>name==='trial'?'从三名候选中招募一名，同时加入 1 张「磨合不足」':''
+};
+function openSeasonShop(s){
+ const low=offers(s,[1,4,0,0],1),mid=offers(s,[0,0,1,0],1),high=offers(s,[0,0,0,1],1);
+ s.shop={slots:[low[0]||null,mid[0]||null,high[0]||null],removed:false};s.phase='shop';
+ log(s,`进入转会市场：${s.shop.slots.map(id=>id?CARDS[id].name:'空位').join('、')}。`);
+}
+function enterUnknownSeason(s,node){
+ if(!s.unknownOdds||s.unknownOdds.act!==s.act)s.unknownOdds=freshUnknownOdds(s.act);
+ const {kind,odds}=resolveUnknown(s.unknownOdds,random(s),blockedUnknownKinds(node.step,ROUTE_STEPS.shop,ROUTE_STEPS.crate));
+ s.unknownOdds=odds;node.revealed=kind;
+ log(s,`未知节点揭晓：${{battle:'遭遇战',shop:'转会市场',crate:'补给箱',event:'事件'}[kind]}。`);
+ if(kind==='battle')startBattle(s,node.ambush||(s.act===1?'S_E02':`A${s.act}_S_E02`));
+ else if(kind==='shop')openSeasonShop(s);
+ else if(kind==='crate')enterCrateSeason(s);
+ else startSeasonEvent(s);
+}
+function enterCrateSeason(s){s.phase='crate';s.crate={size:rollCrateSize(random(s)),opened:false,result:null};}
+function crateSeason(s,a){
+ if(a.choice==='open'){
+  if(s.crate.opened)throw Error('补给箱已经打开');
+  const loot=WA_CRATE_LOOT[s.crate.size],money=loot.money[0]+Math.floor(random(s)*(loot.money[1]+1));
+  s.money+=money;const r={money,skin:null,bonusMoney:0,upgrade:false};
+  if(random(s)<loot.skin)r.skin=WA_CTX.gainEquip(s);
+  if(!r.skin){r.bonusMoney=loot.bonus;s.money+=loot.bonus;r.upgrade=s.deck.some(c=>WA_CTX.upgradeable(s,c));}
+  s.crate.opened=true;s.crate.result=r;
+  log(s,`打开补给箱：资金 +${money+r.bonusMoney}${r.skin?`，获得皮肤「${r.skin}」`:''}。`);
+ } else if(a.choice==='leave'){
+  if(!s.crate.opened)throw Error('先打开补给箱');
+  delete s.crate;advanceSeason(s);
+ } else throw Error('未知选项');
+}
 function startSeasonEvent(s) {
- const pool = ['sponsor','trial','scrim','risk'];
- if (s.act===2) pool.push('training');
- if (s.act===3) pool.push('rally');
- let fresh = pool.filter(id=>!s.seenEvents.includes(id));
- if (fresh.length===0) { fresh = pool; s.seenEvents = s.seenEvents.filter(id=>!pool.includes(id)); }
- const id = fresh[Math.floor(random(s)*fresh.length)];
+ const pool=WA_EVENT_POOLS[s.act]||WA_EVENT_POOLS[1];
+ s.seenEvents||=[];
+ let fresh=pool.filter(id=>!s.seenEvents.includes(id));
+ if(fresh.length===0){fresh=pool;s.seenEvents=s.seenEvents.filter(id=>!pool.includes(id));}
+ const id=fresh[Math.floor(random(s)*fresh.length)];
  s.seenEvents.push(id);
- s.eventId = id;
- if (id==='trial') s.eventOffers = offers(s);
+ s.eventId=id;
+ if(id==='trial')s.eventOffers=offers(s);
  s.phase='event';
- log(s, `事件：${SEASON_EVENTS[id].label}`);
+ log(s,`事件：${WA_EVENTS[id].title}`);
+}
+function seasonEventActions(s){
+ const def=WA_EVENTS[s.eventId];if(!def)return [];
+ return [{type:'seasonEvent',choice:'skip'},...def.options.filter(o=>!opsReason(s,o.ops,WA_CTX)).map(o=>({type:'seasonEvent',choice:o.id}))];
+}
+// Scene, options with generated effect text and the reason an option is closed.
+export function describeSeasonEvent(s){
+ const def=WA_EVENTS[s?.eventId];if(!def)return null;
+ const pending=s.pendingEvent?def.options.find(o=>o.id===s.pendingEvent):null;
+ return {id:s.eventId,title:def.title,scene:def.scene,
+  options:def.options.map(o=>({id:o.id,title:o.title,effects:describeOps(o.ops,WA_CTX),reason:opsReason(s,o.ops,WA_CTX),pick:pickKind(o.ops)})),
+  pending:pending?{id:pending.id,title:pending.title,effects:describeOps(pending.ops,WA_CTX),kind:pickKind(pending.ops),candidates:pickCandidates(s,pickKind(pending.ops),WA_CTX).map(c=>c.uid)}:null};
+}
+function applySeasonEvent(s,a){
+ const id=s.eventId;if(!id)throw Error('无事件');
+ if(a.choice==='skip'){log(s,'谢绝事件。');advanceSeason(s);return;}
+ const def=WA_EVENTS[id];if(!def)throw Error('未知事件');
+ const opt=def.options.find(o=>o.id===a.choice);if(!opt)throw Error('未知选项');
+ const reason=opsReason(s,opt.ops,WA_CTX);if(reason)throw Error(reason);
+ if(opt.ops.some(op=>op.special==='trial')){s.phase='trial';return;}
+ const kind=pickKind(opt.ops);
+ if(kind){s.pendingEvent=opt.id;s.phase=kind==='upgrade'?'eventUpgrade':kind==='cleanse'?'eventCleanse':'eventPick';return;}
+ resolveSeasonEvent(s,opt,null);
+}
+function pickSeasonEvent(s,a){
+ const opt=WA_EVENTS[s.eventId]?.options.find(o=>o.id===s.pendingEvent);if(!opt)throw Error('无待处理事件');
+ const card=pickCandidates(s,pickKind(opt.ops),WA_CTX).find(c=>c.uid===a.uid);if(!card)throw Error('这张牌不能选择');
+ const reason=opsReason(s,opt.ops,WA_CTX);if(reason)throw Error(reason);
+ resolveSeasonEvent(s,opt,card);
+}
+function resolveSeasonEvent(s,opt,picked){
+ const {log:lines,fight}=applyOps(s,opt.ops,WA_CTX,picked);
+ log(s,`${WA_EVENTS[s.eventId].title} · ${opt.title}：${lines.join('，')||'无变化'}。`);
+ delete s.pendingEvent;
+ if(fight){
+  const prefix=s.act===1?'':`A${s.act}_`,ids=['S_EL01','S_EL02'].map(id=>prefix+id).filter(id=>ENEMIES[id]);
+  const enemy=ids[Math.floor(random(s)*ids.length)];
+  delete s.eventId;s.eventBonus=fight.bonus;startBattle(s,enemy);log(s,`接受约战：${ENEMIES[enemy].name}。`);return;
+ }
+ advanceSeason(s);
 }
 export function legalActions(s) {
  const actions=[];
@@ -477,27 +514,7 @@ export function legalActions(s) {
  if(s.phase==='skin')actions.push(...s.reward.skins.map(id=>({type:'skin',id})),{type:'skin',id:null});
  if(s.phase==='event'){
   if(s.mode==='season'){
-   const id=s.eventId;
-   if(id){
-    actions.push({type:'seasonEvent',choice:'skip'});
-    if(id==='sponsor') actions.push({type:'seasonEvent',choice:'accept'});
-    if(id==='risk') actions.push({type:'seasonEvent',choice:'accept'});
-    if(id==='trial'&&s.eventOffers.length) actions.push({type:'seasonEvent',choice:'accept'});
-    if(id==='scrim'){
-     if(s.money>=20 && s.hp<s.maxHp) actions.push({type:'seasonEvent',choice:'safe'});
-     if(s.hp>8) actions.push({type:'seasonEvent',choice:'risk'});
-    }
-    if(id==='training'){
-     if(s.deck.some(c=>CARDS[c.id].trainable&&!c.up)){
-      if(s.money>=40) actions.push({type:'seasonEvent',choice:'paid'});
-      actions.push({type:'seasonEvent',choice:'risky'});
-     }
-    }
-    if(id==='rally'){
-     if(s.money>=60 && s.deck.some(c=>c.id.startsWith('CU'))) actions.push({type:'seasonEvent',choice:'cleanse'});
-     actions.push({type:'seasonEvent',choice:'sponsor'});
-    }
-   }
+   actions.push(...seasonEventActions(s));
   } else {
    actions.push({type:'event',choice:'money'},{type:'event',choice:'skip'},...(s.eventOffers.length?[{type:'event',choice:'trial'}]:[]));
   }
@@ -521,13 +538,14 @@ export function legalActions(s) {
   for(const n of availableNodes(s)) actions.push({type:'chooseNode',key:n.key});
  }
  if(s.mode==='season' && s.phase==='intermission') actions.push({type:'nextAct'});
- if(s.mode==='season' && s.phase==='eventUpgrade'){
-  for(const c of s.deck) if(CARDS[c.id].trainable&&!c.up) actions.push({type:'eventUpgrade',uid:c.uid});
+ if(s.mode==='season' && ['eventUpgrade','eventCleanse','eventPick'].includes(s.phase)){
+  const opt=WA_EVENTS[s.eventId]?.options.find(o=>o.id===s.pendingEvent);
+  if(opt) for(const c of pickCandidates(s,pickKind(opt.ops),WA_CTX)) actions.push({type:s.phase,uid:c.uid});
   actions.push({type:'eventBack'});
  }
- if(s.mode==='season' && s.phase==='eventCleanse'){
-  for(const c of s.deck) if(c.id.startsWith('CU')) actions.push({type:'eventCleanse',uid:c.uid});
-  actions.push({type:'eventBack'});
+ if(s.mode==='season' && s.phase==='crate'){
+  if(!s.crate.opened) actions.push({type:'crate',choice:'open'});
+  else { if(s.crate.result?.upgrade) for(const c of s.deck) if(WA_CTX.upgradeable(s,c)) actions.push({type:'crateUpgrade',uid:c.uid}); actions.push({type:'crate',choice:'leave'}); }
  }
  return actions.map(a=>({...a,rev:s.rev}));
 }

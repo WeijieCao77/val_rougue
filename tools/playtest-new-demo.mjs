@@ -3,7 +3,8 @@
 // Usage: node tools/playtest-new-demo.mjs [--seeds 10] [--acts 1] [--out reports/playtest/x.json]
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { createRun, legalActions, act, battleEnemies } from '../new-demo/engine.js';
+import { createRun, legalActions, act, battleEnemies, describeEvent } from '../new-demo/engine.js';
+import { EVENTS } from '../new-demo/events.js';
 import { CARDS, TEAMS } from '../new-demo/content.js';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, v, i, all) => (v.startsWith('--') ? [...acc, [v.slice(2), all[i + 1]]] : acc), []));
@@ -117,6 +118,34 @@ function cardValue(id) {
   return eff - (d.exhaust ? 1 : 0);
 }
 
+// Static expected value of an event option, read from its ops (the bot never
+// peeks at the seeded outcome of a gamble).
+function opsValue(s, ops) {
+  const hpPct = s.hp / s.maxHp;
+  let v = 0;
+  for (const op of ops || []) {
+    if (op.money) v += op.money * 0.25;
+    if (op.hp > 0) v += Math.min(op.hp, s.maxHp - s.hp) * 0.8;
+    if (op.hp < 0) v += op.hp * (hpPct < 0.5 ? 1.6 : 1);
+    if (op.healPct) v += Math.min(Math.ceil(s.maxHp * op.healPct), s.maxHp - s.hp) * 0.8;
+    if (op.maxHp) v += op.maxHp * (op.maxHp > 0 ? 1.5 : 2);
+    if (op.equip) v += 30;
+    if (op.curse) v -= 15;
+    if (op.card) v += { rare: 10, uncommon: 6, common: 3 }[op.card] || 4;
+    if (op.upgradeRandom) v += op.upgradeRandom * 5;
+    if (op.transformRandom) v += op.transformRandom;
+    if (op.pick) v += { upgrade: 7, remove: 8, transform: 3, duplicate: 6, cleanse: 14 }[op.pick] || 0;
+    if (op.gamble) v += op.gamble.p * opsValue(s, op.gamble.win) + (1 - op.gamble.p) * opsValue(s, op.gamble.lose);
+    if (op.fight) v += hpPct > 0.7 ? 10 + opsValue(s, op.bonus) : -30;
+  }
+  return v;
+}
+function pickCard(s, kind, uids) {
+  const val = uid => { const c = s.deck.find(x => x.uid === uid); return CARDS[c.id] ? cardValue(c.id) + (c.up ? 1 : 0) : -20; };
+  const sorted = [...uids].sort((a, b) => val(a) - val(b));
+  return ['remove', 'transform', 'cleanse'].includes(kind) ? sorted[0] : sorted[sorted.length - 1];
+}
+
 function mulberry(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
 function playRun(seed, team, policy) {
@@ -135,16 +164,17 @@ function playRun(seed, team, policy) {
       if (policy === 'random') pick = opts[Math.floor(rand() * opts.length)];
       else {
         const hpPct = s.hp / s.maxHp;
-        const rank = n => ({ elite: hpPct > 0.7 ? 5 : -3, rest: hpPct < 0.5 ? 6 : 1, shop: s.money >= 110 ? 4 : 0, event: 3, battle: hpPct > 0.45 ? 2.5 : 0.5, boss: 9 }[n.kind] ?? 0);
+        const rank = n => ({ elite: hpPct > 0.7 ? 5 : -3, rest: hpPct < 0.5 ? 6 : 1, shop: s.money >= 110 ? 4 : 0, event: 3, crate: 4, battle: hpPct > 0.45 ? 2.5 : 0.5, boss: 9 }[n.kind] ?? 0);
         pick = opts[nodes.map(rank).reduce((bi, v, i, arr) => (v > arr[bi] ? i : bi), 0)];
       }
       const chosen = s.map.nodes.find(n => n.key === pick.key);
       log.route.push({ step: chosen.step, options: nodes.map(n => n.kind), chose: chosen.kind, enemy: chosen.enemy, hp: s.hp, maxHp: s.maxHp, money: s.money });
       s = step(s, pick);
+      if (chosen.kind === 'event') log.route[log.route.length - 1].revealed = s.map.nodes.find(n => n.key === chosen.key).revealed;
       if (s.phase === 'combat') {
         const idx = log.fights.filter(f => f.act === s.act).length;
         const group = (s.battle.enemies?.length || 1) > 1;
-        fight = { act: s.act, idx, enemy: chosen.enemy, kind: chosen.kind, group, hpStart: s.hp, turns: [], won: false };
+        fight = { act: s.act, idx, enemy: chosen.enemy || s.battle.encounter, kind: chosen.kind === 'event' ? 'ambush' : chosen.kind, group, hpStart: s.hp, turns: [], won: false };
       }
       continue;
     }
@@ -225,14 +255,29 @@ function playRun(seed, team, policy) {
       s = step(s, a);
       continue;
     }
+    if (s.phase === 'crate') {
+      if (!s.crate.opened) (log.route[log.route.length - 1].crate = s.crate.size);
+      s = step(s, legalActions(s)[0]);
+      continue;
+    }
     if (s.phase === 'event') {
       const all = legalActions(s);
-      let a = all[0];
+      let a;
       if (policy === 'random') a = all[Math.floor(rand() * all.length)];
-      const tries = all.map(x => { const r = act(s, x); return r.error ? null : x; }).filter(Boolean);
-      if (!tries.includes(a)) a = tries[tries.length - 1];
-      log.route[log.route.length - 1].event = `${s.event.id}:${a.choice}`;
+      else if (s.event.pending) {
+        const view = describeEvent(s);
+        a = { type: 'eventPick', uid: pickCard(s, view.pending.kind, view.pending.candidates) };
+      } else {
+        const opts = EVENTS[s.event.id].options.filter(o => all.some(x => x.choice === o.id));
+        const best = opts.map(o => ({ o, v: policy === 'naive' ? (o.ops.length ? 1 : 0) : opsValue(s, o.ops) })).sort((x, y) => y.v - x.v)[0];
+        a = { type: 'event', choice: best.o.id };
+      }
+      if (a.type === 'event') log.route[log.route.length - 1].event = `${s.event.id}:${a.choice}`;
       s = step(s, a);
+      if (s.phase === 'combat') {
+        const idx = log.fights.filter(f => f.act === s.act).length;
+        fight = { act: s.act, idx, enemy: s.battle.encounter, kind: 'elite', group: false, hpStart: s.hp, turns: [], won: false, fromEvent: true };
+      }
       continue;
     }
     throw Error('unhandled phase ' + s.phase);

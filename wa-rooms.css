@@ -1,0 +1,23 @@
+/* Wa demo: event scenes and supply crates. */
+.room-screen .event-scene{max-width:640px;margin:0 auto 6px;font-size:14px;line-height:1.9;color:#d9ceb2}
+.room-screen .event-choices{flex-wrap:wrap}
+.room-screen .event-choices .choice{min-width:220px}
+.room-screen .event-choices .choice p{color:#c7d2c3}
+.room-screen .event-choices .choice .disabled-reason{display:block;margin-top:8px;color:#e0a08c;font-size:11px}
+.room-screen .event-status{font-size:12px;color:#8fa29a;margin:0}
+.room-crate .crate-box{position:relative;width:150px;height:110px;margin:34px auto 18px}
+.crate-box .crate-body{position:absolute;inset:30px 0 0 0;border-radius:6px;background:repeating-linear-gradient(90deg,#6b5330 0 18px,#5d4829 18px 20px);border:3px solid #c49c50;box-shadow:inset 0 0 0 6px #0002}
+.crate-box .crate-body:after{content:'';position:absolute;left:50%;top:18%;width:26px;height:20px;margin-left:-13px;border-radius:3px;background:#d6b56d;box-shadow:0 0 10px #d6b56d99}
+.crate-box .crate-lid{position:absolute;left:-6px;right:-6px;top:10px;height:26px;border-radius:6px 6px 3px 3px;background:#7d6139;border:3px solid #c49c50;transform-origin:10% 100%;transition:transform .5s cubic-bezier(.3,1.4,.5,1)}
+.crate-box.is-open .crate-lid{transform:rotate(-16deg) translate(-4px,-8px)}
+.crate-box.crate-small{transform:scale(.8)}
+.crate-box.crate-large{transform:scale(1.2)}
+.crate-box.crate-large .crate-body,.crate-box.crate-large .crate-lid{border-color:#f6d989}
+.crate-loot{display:flex;flex-direction:column;gap:10px;max-width:520px;margin:0 auto 18px}
+.crate-loot-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid #6a705e;border-radius:6px;background:linear-gradient(#30403eaa,#1a292dcc);text-align:left}
+.crate-loot-item b{color:var(--gold);font-size:17px;white-space:nowrap}
+.crate-loot-item span{color:#a5b5aa;font-size:12px;line-height:1.7}
+.season-map .map-stop.kind-crate>button{border-color:#8a7440;color:#6b5330}
+.season-map .map-stop.kind-event>button{border-style:dashed}
+.season-map .map-stop.kind-event.visited>button{border-style:solid}
+@media(max-width:720px){.room-screen .event-scene{font-size:13px}.room-screen .event-choices .choice{min-width:0}}

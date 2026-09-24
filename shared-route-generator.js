@@ -29,8 +29,11 @@ const BOSS_STEP = 12;
 const NORMAL_MAX_STEP = 11;
 const REST_STEP = 11;
 const SHOP_STEP = 6;
+// Mid-act supply crate row (an adaptation of Slay the Spire's mid-act treasure).
+const CRATE_STEP = 8;
 const BATTLE_FIXED_STEPS = [1, 2];
-const WEIGHTED_STEPS = [3, 4, 5, 7, 8, 9, 10];
+const WEIGHTED_STEPS = [3, 4, 5, 7, 9, 10];
+export const ROUTE_STEPS = { shop: SHOP_STEP, crate: CRATE_STEP, rest: REST_STEP, boss: BOSS_STEP };
 const START_LANE_COUNT = 4;
 const LANE_COUNT = 7;
 const MIN_WIDTH = 3;
@@ -97,6 +100,7 @@ function assignRooms(nodes, edges, random) {
   for (const node of nodes) {
     if (BATTLE_FIXED_STEPS.includes(node.step)) { node.kind = 'battle'; continue; }
     if (node.step === SHOP_STEP) { node.kind = 'shop'; continue; }
+    if (node.step === CRATE_STEP) { node.kind = 'crate'; continue; }
     if (node.step === REST_STEP) { node.kind = 'rest'; continue; }
     if (node.step === BOSS_STEP) { node.kind = 'boss'; continue; }
     if (WEIGHTED_STEPS.includes(node.step)) {

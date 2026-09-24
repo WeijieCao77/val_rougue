@@ -31,7 +31,7 @@ export const EXTRA_ENEMIES = {
 };
 
 // Seeded PRNG: FNV-1a hash to initialize sfc32 generator.
-const roomNames = { battle: '常规比赛', elite: '高压强敌', event: '未知事件', shop: "战术补给", rest: "战术休整" };
+const roomNames = { battle: '常规比赛', elite: '高压强敌', event: '未知', shop: "战术补给", rest: "战术休整", crate: '补给箱' };
 const battleNames = { E01: '新秀步枪', E02: '远点狙击', E03: '突破双枪', E04: '哨位架枪', E05: '烟雾控场', E06: '前哨侦察' };
 // Keys of FIELDS in content.js; kept here to avoid a map→content import cycle.
 const FIELD_IDS = ['corridor', 'longrange', 'smoky', 'highground', 'overtime', 'eco'];
@@ -85,6 +85,8 @@ export function buildMap(seed, act) {
       node.name = ACTS[act - 1].bossName;
     } else {
       node.name = roomNames[node.kind];
+      // An unknown room can turn out to be a fight; its opponent is fixed by seed.
+      if (node.kind === 'event') node.ambush = prefix + choice(seed + '|' + act + '|' + node.key + '|ambush', ['E02', 'E03', 'E04', 'E05', 'E06']);
     }
   }
   return { act, ...map };

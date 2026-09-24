@@ -2,6 +2,10 @@
 import { buildMap, availableNodes } from './season-map.js';
 import { CARDS, CARD_IDS, REGION_CARD_IDS, SHARED_CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, GROUPS, RELICS, ARCHETYPES } from './content.js';
 import { CURSES, CURSE_RULES, EXTRA_STATUS_RULES } from '../afflictions.js';
+import { EVENTS, EVENT_POOLS, CRATE_LOOT } from './events.js';
+import { opsReason, describeOps, applyOps, pickKind, pickCandidates } from '../shared-event-core.js';
+import { freshUnknownOdds, resolveUnknown, blockedUnknownKinds, rollCrateSize } from '../shared-unknown-room.js';
+import { ROUTE_STEPS } from '../shared-route-generator.js';
 
 const VERSION = 'new-1';
 const MAX_HAND = 10;
@@ -239,7 +243,9 @@ export function legalActions(state) {
       }
     }
   } else if (state.phase === 'event') {
-    for (const ch of state.event.choices) actions.push({ type: 'event', choice: ch.id });
+    actions.push(...eventActions(state));
+  } else if (state.phase === 'crate') {
+    actions.push({ type: 'crate', choice: state.crate?.opened ? 'leave' : 'open' });
   } else if (state.phase === 'intermission') {
     actions.push({ type: 'nextAct' });
   }
@@ -384,6 +390,9 @@ function applyAction(state, action) {
     case 'leave': return leaveShop(state);
     case 'rest': return restAction(state, action);
     case 'event': return eventChoice(state, action);
+    case 'eventPick': return eventPick(state, action);
+    case 'eventBack': return eventBack(state);
+    case 'crate': return crateAction(state, action);
     case 'nextAct': return startNextAct(state);
     default: return '未知操作';
   }
@@ -407,8 +416,9 @@ function enterNode(state, action) {
   } else if (node.kind === 'rest') {
     state.phase = 'rest';
   } else if (node.kind === 'event') {
-    state.phase = 'event';
-    state.event = generateEvent(state);
+    return enterUnknown(state, node);
+  } else if (node.kind === 'crate') {
+    enterCrate(state);
   }
   return null;
 }
@@ -1245,6 +1255,7 @@ function chooseReward(state, action) {
     state.deck.push({ uid: nextUid(state), id: action.id, up: false });
   }
   b.rewardTaken = true;
+  if (state.eventBonus) { applyOps(state, state.eventBonus, EVENT_CTX); state.eventBonus = null; }
   const wasBoss = state.currentNode && state.map.nodes.find(n => n.key === state.currentNode)?.kind === 'boss';
   if (wasBoss) {
     grantRandomRelic(state);
@@ -1278,16 +1289,16 @@ function completeNode(state) {
     state.completed.push(state.currentNode);
   }
   const node = state.map.nodes.find(n => n.key === state.currentNode);
-  if (node && ['shop', 'rest', 'event'].includes(node.kind)) {
+  if (node && ['shop', 'rest', 'event', 'crate'].includes(node.kind) && node.revealed !== 'battle') {
     if (state.relics.some(r => r.id === 'R08')) {
       state.money += 15;
     }
   }
 }
 
-function grantRandomRelic(state) {
+function grantRandomRelic(state, forcedId = null) {
   const ids = Object.keys(RELICS);
-  const id = ids[Math.floor(nextRand(state) * ids.length)];
+  const id = forcedId || ids[Math.floor(nextRand(state) * ids.length)];
   if (state.relics.some(r => r.id === id)) {
     state.money += 100;
     pushLog(state, 'duplicate_relic', { id });
@@ -1424,69 +1435,181 @@ function restAction(state, action) {
   return null;
 }
 
+// ----------------------------- Unknown rooms, crates, events -----------------------------
+// All randomness below uses the run RNG, so the same seed and actions always
+// resolve the same room, crate and event outcome.
+const cardDef = id => CARDS[id] || STATUS_CARDS[id] || null;
+const cardPoolFor = state => [...SHARED_CARD_IDS, ...(REGION_CARD_IDS[TEAMS[state.team]?.region] || REGION_CARD_IDS.AM)];
+
+const EVENT_CTX = {
+  labels: { hp: '生命', money: '金币', equip: '战术装备', equipNone: '已全部拥有时', curse: '俱乐部隐患', upgrade: '升级', tier: { common: '普通牌', uncommon: '罕见牌', rare: '稀有牌' } },
+  rand: state => nextRand(state),
+  newCard: (state, id, up) => ({ uid: nextUid(state), id, up: !!up }),
+  cardName: id => cardDef(id)?.name || id,
+  upgradeable: (state, c) => !c.up && !!CARDS[c.id]?.upgradeEffects?.length,
+  removable: (state, c) => canRemoveCard(state, c.uid),
+  transformable: (state, c) => !!cardDef(c.id) && (!!STATUS_CARDS[c.id]?.curse || canRemoveCard(state, c.uid)),
+  duplicable: (state, c) => !!CARDS[c.id] && CARDS[c.id].type !== 'status',
+  isCurse: (state, c) => !!STATUS_CARDS[c.id]?.curse,
+  curseIds: CURSES.map(c => c.id),
+  randomCardAvailable: (state, tier) => cardPoolFor(state).some(id => CARDS[id].rarity === tier),
+  randomCard: (state, tier) => {
+    const ids = cardPoolFor(state).filter(id => CARDS[id].rarity === tier);
+    return ids.length ? ids[Math.floor(nextRand(state) * ids.length)] : null;
+  },
+  transformInto: (state, c) => {
+    const ids = cardPoolFor(state).filter(id => id !== c.id);
+    return ids[Math.floor(nextRand(state) * ids.length)];
+  },
+  gainEquip: state => {
+    const ids = Object.keys(RELICS).filter(id => !state.relics.some(r => r.id === id));
+    if (!ids.length) return null;
+    const id = ids[Math.floor(nextRand(state) * ids.length)];
+    grantRandomRelic(state, id);
+    return RELICS[id].name;
+  }
+};
+
+function enterUnknown(state, node) {
+  if (!state.unknownOdds || state.unknownOdds.act !== state.act) state.unknownOdds = freshUnknownOdds(state.act);
+  const { kind, odds } = resolveUnknown(state.unknownOdds, nextRand(state), blockedUnknownKinds(node.step, ROUTE_STEPS.shop, ROUTE_STEPS.crate));
+  state.unknownOdds = odds;
+  node.revealed = kind;
+  pushLog(state, 'unknown_room', { node: node.key, kind });
+  if (kind === 'battle') {
+    const enemy = node.ambush || (state.act === 1 ? 'E02' : `A${state.act}_E02`);
+    const err = startBattle(state, { enemy, field: null });
+    if (err) return err;
+    pushLog(state, 'enter_battle', { node: node.key, enemy });
+  } else if (kind === 'shop') {
+    state.phase = 'shop';
+    state.shop = generateShop(state);
+    state.freeRemovalUsed = false;
+    pushLog(state, 'enter_shop');
+  } else if (kind === 'crate') {
+    enterCrate(state);
+  } else {
+    state.phase = 'event';
+    state.event = generateEvent(state);
+  }
+  return null;
+}
+
+function enterCrate(state) {
+  state.phase = 'crate';
+  state.crate = { size: rollCrateSize(nextRand(state)), opened: false, result: null };
+}
+
+function crateAction(state, action) {
+  if (state.phase !== 'crate' || !state.crate) return '不在补给箱';
+  if (action.choice === 'open') {
+    if (state.crate.opened) return '补给箱已经打开';
+    const loot = CRATE_LOOT[state.crate.size];
+    const money = loot.money[0] + Math.floor(nextRand(state) * (loot.money[1] + 1));
+    state.money += money;
+    const result = { money, equip: null, bonusMoney: 0 };
+    if (nextRand(state) < loot.equip) result.equip = EVENT_CTX.gainEquip(state);
+    if (!result.equip) { result.bonusMoney = loot.bonus; state.money += loot.bonus; }
+    state.crate.opened = true;
+    state.crate.result = result;
+    pushLog(state, 'crate_opened', { size: state.crate.size, ...result });
+    return null;
+  }
+  if (action.choice === 'leave') {
+    if (!state.crate.opened) return '先打开补给箱';
+    state.crate = null;
+    completeNode(state);
+    state.phase = 'map';
+    return null;
+  }
+  return '无效操作';
+}
+
+// Picks an event from the act's pool that has not been seen this run; once the
+// act pool is exhausted, its events can appear again.
 function generateEvent(state) {
-  const events = [
-    { id: 'ev1', text: '你发现了一处废弃的战术装备。', choices: [{ id: 'take', text: '拆走装备（失去6点生命，获得随机遗物）' }, { id: 'leave', text: '离开' }] },
-    { id: 'ev2', text: '一位老将提出指导训练。', choices: [{ id: 'train', text: '接受训练（升级一张随机牌）' }, { id: 'skip', text: '拒绝' }] },
-    { id: 'ev3', text: '你找到一个补给箱。', choices: [{ id: 'heal', text: '使用医疗补给（恢复15点生命）' }, { id: 'money', text: '拿走钱（获得50金币）' }] },
-    { id: 'ev4', text: '临时训练赛给了你一次检验新战术的机会。', choices: [{ id: 'scrim', text: '高强度训练（失去8点生命，随机升级一张牌）' }, { id: 'rest', text: '恢复体能（花20金币，回复8点生命）' }] },
-    { id: 'ev5', text: '赞助商提出两份不同的赛季合同。', choices: [{ id: 'cash', text: '密集商务活动（最大生命-4，获得70金币）' }, { id: 'fans', text: '粉丝见面会（花50金币，最大生命+4）' }] },
-    { id: 'ev6', text: '分析师发现了一份旧赛季的战术数据库。', choices: [{ id: 'scout', text: '购买情报（花35金币，获得随机遗物）' }, { id: 'sell', text: '出售情报（失去6点生命，获得30金币）' }] },
-    { id: 'ev7', text: '一份高风险合作合同摆在桌上。', choices: [{ id: 'accept', text: '获得随机遗物，并加入一张随机俱乐部隐患' }, { id: 'decline', text: '谢绝合作' }] }
-  ];
-  return events[Math.floor(nextRand(state) * events.length)];
+  const pool = EVENT_POOLS[state.act] || EVENT_POOLS[1];
+  state.seenEvents ||= [];
+  let fresh = pool.filter(id => !state.seenEvents.includes(id));
+  if (!fresh.length) { state.seenEvents = state.seenEvents.filter(id => !pool.includes(id)); fresh = pool; }
+  const id = fresh[Math.floor(nextRand(state) * fresh.length)];
+  state.seenEvents.push(id);
+  return { id, act: state.act };
+}
+
+function eventOption(state, id) {
+  return EVENTS[state.event?.id]?.options.find(o => o.id === id) || null;
+}
+
+function eventActions(state) {
+  const ev = state.event;
+  const def = EVENTS[ev?.id];
+  if (!def) return [];
+  if (ev.pending) {
+    const opt = eventOption(state, ev.pending);
+    return [...pickCandidates(state, pickKind(opt.ops), EVENT_CTX).map(c => ({ type: 'eventPick', uid: c.uid })), { type: 'eventBack' }];
+  }
+  return def.options.filter(o => !opsReason(state, o.ops, EVENT_CTX)).map(o => ({ type: 'event', choice: o.id }));
+}
+
+// Everything the event screen needs: scene, options with generated effect text
+// and the reason an option is unavailable, plus the pending card pick.
+export function describeEvent(state) {
+  const ev = state?.event;
+  const def = EVENTS[ev?.id];
+  if (!def) return null;
+  const pending = ev.pending ? eventOption(state, ev.pending) : null;
+  return {
+    id: ev.id, title: def.title, scene: def.scene,
+    options: def.options.map(o => ({ id: o.id, title: o.title, effects: describeOps(o.ops, EVENT_CTX), reason: opsReason(state, o.ops, EVENT_CTX), pick: pickKind(o.ops) })),
+    pending: pending ? { id: pending.id, title: pending.title, effects: describeOps(pending.ops, EVENT_CTX), kind: pickKind(pending.ops), candidates: pickCandidates(state, pickKind(pending.ops), EVENT_CTX).map(c => c.uid) } : null
+  };
 }
 
 function eventChoice(state, action) {
-  if (state.phase !== 'event') return '不在事件阶段';
-  const ev = state.event;
-  const choice = ev.choices.find(c => c.id === action.choice);
-  if (!choice) return '无效选择';
-  if (ev.id === 'ev1' && action.choice === 'take') {
-    state.hp = Math.max(1, state.hp - 6);
-    grantRandomRelic(state);
-  } else if (ev.id === 'ev2' && action.choice === 'train') {
-    const candidates = state.deck.filter(c => !c.up && CARDS[c.id]?.upgradeEffects?.length);
-    if (candidates.length) {
-      candidates[Math.floor(nextRand(state) * candidates.length)].up = true;
-    }
-  } else if (ev.id === 'ev3' && action.choice === 'heal') {
-    state.hp = Math.min(state.hp + 15, state.maxHp);
-  } else if (ev.id === 'ev3' && action.choice === 'money') {
-    state.money += 50;
-  } else if (ev.id === 'ev4' && action.choice === 'scrim') {
-    state.hp = Math.max(1, state.hp - 8);
-    const candidates = state.deck.filter(c => !c.up && CARDS[c.id]?.upgradeEffects?.length);
-    if (candidates.length) candidates[Math.floor(nextRand(state) * candidates.length)].up = true;
-  } else if (ev.id === 'ev4' && action.choice === 'rest') {
-    if (state.money < 20) return '金币不足';
-    state.money -= 20;
-    state.hp = Math.min(state.maxHp, state.hp + 8);
-  } else if (ev.id === 'ev5' && action.choice === 'cash') {
-    state.maxHp = Math.max(1, state.maxHp - 4);
-    state.hp = Math.min(state.hp, state.maxHp);
-    state.money += 70;
-  } else if (ev.id === 'ev5' && action.choice === 'fans') {
-    if (state.money < 50) return '金币不足';
-    state.money -= 50;
-    state.maxHp += 4;
-    state.hp += 4;
-  } else if (ev.id === 'ev6' && action.choice === 'scout') {
-    if (state.money < 35) return '金币不足';
-    state.money -= 35;
-    grantRandomRelic(state);
-  } else if (ev.id === 'ev6' && action.choice === 'sell') {
-    state.hp = Math.max(1, state.hp - 6);
-    state.money += 30;
-  } else if (ev.id === 'ev7' && action.choice === 'accept') {
-    grantRandomRelic(state);
-    const curse=CURSES[Math.floor(nextRand(state)*CURSES.length)];
-    state.deck.push({uid:nextUid(state),id:curse.id,up:false});
-    pushLog(state,'curse_gained',{id:curse.id});
+  if (state.phase !== 'event' || !state.event) return '不在事件阶段';
+  if (state.event.pending) return '请先选择一张牌，或返回事件';
+  if (!EVENTS[state.event.id]) return '未知事件';
+  const opt = eventOption(state, action.choice);
+  if (!opt) return '无效选择';
+  const reason = opsReason(state, opt.ops, EVENT_CTX);
+  if (reason) return reason;
+  if (pickKind(opt.ops)) { state.event.pending = opt.id; return null; }
+  return resolveEventOption(state, opt, null);
+}
+
+function eventPick(state, action) {
+  if (state.phase !== 'event' || !state.event?.pending) return '当前无需选牌';
+  const opt = eventOption(state, state.event.pending);
+  const card = pickCandidates(state, pickKind(opt.ops), EVENT_CTX).find(c => c.uid === action.uid);
+  if (!card) return '这张牌不能选择';
+  const reason = opsReason(state, opt.ops, EVENT_CTX);
+  if (reason) return reason;
+  return resolveEventOption(state, opt, card);
+}
+
+function eventBack(state) {
+  if (state.phase !== 'event' || !state.event?.pending) return '当前无需返回';
+  delete state.event.pending;
+  return null;
+}
+
+function resolveEventOption(state, opt, picked) {
+  const { log, fight } = applyOps(state, opt.ops, EVENT_CTX, picked);
+  pushLog(state, 'event_choice', { id: state.event.id, choice: opt.id, log });
+  state.event = null;
+  if (fight) {
+    const prefix = state.act === 1 ? '' : `A${state.act}_`;
+    const ids = ['EL01', 'EL02'].map(id => prefix + id).filter(id => ENEMIES[id]);
+    const enemy = ids[Math.floor(nextRand(state) * ids.length)];
+    const err = startBattle(state, { enemy, field: null });
+    if (err) return err;
+    state.eventBonus = fight.bonus;
+    pushLog(state, 'enter_battle', { node: state.currentNode, enemy, fromEvent: true });
+    return null;
   }
   completeNode(state);
   state.phase = 'map';
-  state.event = null;
   return null;
 }
 

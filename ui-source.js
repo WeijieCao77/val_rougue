@@ -3,7 +3,7 @@ import {combatEvents} from './combat-events.js';
 import {clearCombatFx,captureCombatStage,playCombatFx} from './combat-fx.js';
 import {VERSION,CARDS,SKINS,ENEMIES,describe,cardName,effects,TACTICS,displayText,compactLines,cardKeywords,REGIONS,CURSE_RULES,TRAITS,FIELDS} from './content.js';
 import {statusBadges,statusIcon,highlightKeywords} from './shared/status-icons.js';
-import {createRun,canPlay,preview,intent,intentText,healAmount,removalReason,observe} from './engine.js';
+import {createRun,canPlay,preview,intent,intentText,healAmount,removalReason,observe,describeSeasonEvent} from './engine.js';
 import {createWaSeason,waAct as act,waLegalActions as legalActions} from './wa-season.js';
 import {syncWaCheckpoint} from './wa-online.js';
 import {flyCardsFromPile,flyCardsToPile} from './shared/card-pile-motion.js';
@@ -11,9 +11,9 @@ const createSeason=(seed,tutorial,region)=>createWaSeason(seed,tutorial,region,c
 import {routeNodes,mapEntry,nextScreen,restoreScreen} from './navigation.js';
 import {ACTS,availableNodes} from './season-map.js';
 const app=document.querySelector('#app'),dialog=document.querySelector('#dialog'),modal=document.querySelector('#dialog-content');
-const SAVE='bao-yi-ba-D0.1-save-route-v2',SEASON_SAVE='peak-season-D0.2-save-route-v4',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view-route-v4',LEGACY_VIEW='bao-yi-ba-view-legacy-route-v2';
+const SAVE='bao-yi-ba-D0.1-save-route-v2',SEASON_SAVE='peak-season-D0.2-save-route-v5',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view-route-v4',LEGACY_VIEW='bao-yi-ba-view-legacy-route-v2';
 // Internal beta: old maps cannot be resumed under the new route rules.
-try{for(const key of ['bao-yi-ba-D0.1-save','peak-season-D0.2-save','bao-yi-ba-view','bao-yi-ba-view-legacy','peak-season-D0.2-save-route-v2','bao-yi-ba-view-route-v2','peak-season-D0.2-save-route-v3','bao-yi-ba-view-route-v3'])localStorage.removeItem(key);}catch{}
+try{for(const key of ['bao-yi-ba-D0.1-save','peak-season-D0.2-save','bao-yi-ba-view','bao-yi-ba-view-legacy','peak-season-D0.2-save-route-v2','bao-yi-ba-view-route-v2','peak-season-D0.2-save-route-v3','bao-yi-ba-view-route-v3','peak-season-D0.2-save-route-v4'])localStorage.removeItem(key);}catch{}
 let state=null,atHome=true,hints=true,saveError='',saved=null,screen='map',selected=null,echo=null,dragging=null,pointerDrag=null,suppressClick=false,region='CN',turnAnimating=false;
 let libraryFilter='all',libraryRegionFilter='all';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -47,6 +47,7 @@ const shapes={
  power:'<path d="M13 2L4 14h7l-1 8 10-13h-7l0-7z"/>',
  cards:'<path d="M5 3h13v17H5V3zM2 6v17h13M8 8l4-3 3 3-3 5-4-5z"/>',
  coin:'<circle cx="12" cy="12" r="9"/><path d="M9 7h6m-6 5h6m-6 5h6M12 5v14"/>',
+ crate:'<path d="M3 8l9-4 9 4v9l-9 4-9-4V8zM3 8l9 4 9-4M12 12v9M7.5 6l9 4"/>',
 };
 function icon(key,cls=''){return `<svg class="icon ${cls}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${shapes[key]||shapes.cards}</svg>`;}
 const roleIcon={'决斗':'battle','哨位':'shield','控场':'smoke','先锋':'eye','自由人':'power'};
@@ -105,13 +106,14 @@ function route(){
  }
  return `<main class="map-screen"><aside class="map-intro"><div class="eyebrow">ACT I / 中国赛区</div><h1>大师赛<br>征程</h1><p>从下方向上前进。<br>每次选择一站，走向冠军。</p><div class="map-progress"><b>${state.wins}</b><span> / 6 场胜利</span></div><div class="map-legend">${[['battle','比赛'],['elite','强敌'],['event','事件'],['shop','转会市场'],['rest','俱乐部活动'],['boss','大师赛决赛']].map(([k,t])=>`<span>${icon(k)}${t}</span>`).join('')}</div><p class="map-instruction">${current.length>1?'当前有两条路线可选。进入其中一条后，另一条会关闭。':'点击发亮的节点进入。暗色节点将在之后解锁。'}</p>${state.phase==='result'?ui('查看赛季结算','return-room','primary'):''}</aside><div class="map-scroll"><div class="map-board"><div class="map-watermark">CHAMPIONSHIP</div><svg class="map-paths" viewBox="0 0 700 750" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes.map(n=>`<div class="map-stop ${n.status} kind-${n.kind}" style="left:${n.x}%;top:${n.y}%"><button data-map="${n.key}" ${n.status==='current'?'':'disabled'} aria-label="${n.status==='current'?'进入':n.status==='visited'?'已完成':n.status==='bypassed'?'未选择':'未解锁'}：${n.name}">${icon(n.kind)}${n.status==='visited'?'<span class="visited-check">✓</span>':''}</button><span class="node-label">${n.name}</span>${n.status==='current'?'<small class="here-label">你的下一站</small>':''}</div>`).join('')}<span class="map-start">赛季启程</span></div></div><aside class="map-current"><span class="eyebrow">第 ${state.node} / 9 站</span><h3>${current.length>1?'决定下一步':current[0]?.name||'赛季已结束'}</h3><p>${state.node===5?'招募新选手，或为当前阵容安排一次活动。':state.node===6?'普通比赛更稳妥。强敌压力更大，但会掉落一件皮肤。':state.node===9?'最后一场。对手会随战斗时间增强，用你的整套牌组争取冠军。':state.node===7?'粉丝见面会、训练和团建，选择你现在最需要的一项。':'牌组和剩余声望会随你进入下一站。'}</p><div class="map-stamp">${state.phase==='combat'?'MATCH':state.phase==='activity'?'CLUB':'SEASON'}<strong>${String(state.node).padStart(2,'0')}</strong></div>${state.phase==='combat'&&state.battle.turn>1?ui('返回正在进行的比赛','return-room','secondary'):''}</aside></main>`;
 }
+const REVEALED={battle:'遭遇战',shop:'转会市场',crate:'补给箱',event:'事件'};
 function seasonRoute(){
  const s=state,nodes=routeNodes(s),lookup=new Map(nodes.map(n=>[n.key,n])),choices=nodes.filter(n=>n.status==='current'),info=ACTS[s.act-1];
  const resume=!['map','result','intermission'].includes(s.phase);
  const done=nodes.filter(n=>n.status==='visited').length;
  const lines=s.map.edges.map(e=>{const a=lookup.get(e.from),b=lookup.get(e.to),taken=a.status==='visited'&&(b.status==='visited'||resume&&b.key===s.currentNode);return `<path class="${taken?'taken':a.key===s.currentNode&&b.status==='current'?'available':''}" d="M ${a.x*7} ${a.y*10.5} C ${a.x*7} ${(a.y-4)*10.5}, ${b.x*7} ${(b.y+4)*10.5}, ${b.x*7} ${b.y*10.5}"/>`;});
  const itinerary=`<ol class="season-itinerary">${ACTS.map(a=>`<li class="${a.id===s.act?'active':a.id<s.act?'complete':''}"><b>${a.id<s.act?'✓':a.id}</b><span>${a.name}<small>${a.bossName}</small></span></li>`).join('')}</ol>`;
- return `<main class="map-screen season-map"><aside class="map-intro"><div class="eyebrow">ACT ${['I','II','III'][s.act-1]} / ${esc(REGIONS[s.region].name)}</div><h1>${info.name}</h1>${itinerary}<div class="map-progress"><b>${done}</b><span> / 12 站完成</span></div><div class="map-legend">${[['battle','比赛'],['elite','强敌'],['event','未知事件'],['shop','转会市场'],['rest','俱乐部活动'],['boss','世界赛']].map(([k,t])=>`<span>${icon(k)}${t}</span>`).join('')}</div><p class="map-instruction">${resume?'比赛与奖励尚未完成，可查看后续路线，再返回当前节点。':s.currentNode===null?'四个起点任选其一。向上滑动地图，可先看决赛和后续路线。':'沿连线选择下一站。分叉会改变接下来的比赛和补强机会。'}</p>${s.phase!=='map'?ui(s.phase==='intermission'?'查看晋级与下一幕':s.phase==='result'?'查看赛季结算':'返回当前节点','return-room','primary'):''}</aside><div class="map-scroll"><div class="map-board season-board"><div class="map-watermark">ASCEND</div><svg class="map-paths" viewBox="0 0 700 1050" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes.map(n=>`<div class="map-stop ${n.status} kind-${n.kind}" style="left:${n.x}%;top:${n.y}%"><button data-map="${n.key}" ${n.status==='current'?'':'disabled'} aria-label="${n.status==='current'?(resume?'返回':'进入'):n.status==='visited'?'已完成':n.status==='bypassed'?'未选择':'未解锁'}：第 ${n.step} 站 ${esc(n.name)}">${icon(n.kind)}${n.status==='visited'?'<span class="visited-check">✓</span>':''}</button><span class="node-label">${esc(n.name)}</span>${n.status==='current'?`<small class="here-label">${resume?'正在进行':'可选下一站'}</small>`:''}</div>`).join('')}</div></div><aside class="map-current"><span class="eyebrow">赛季已走过 ${s.node} / 36 站</span><h3>${s.phase==='intermission'?'世界赛晋级':s.phase==='result'?'赛季结束':resume?'完成当前节点':`可选 ${choices.length} 条路线`}</h3><p>本幕终点：${info.bossName}。<br>强敌提供皮肤；俱乐部活动可恢复声望或训练；市场可招募与移除牌。</p><p>节点内容与连线随赛季种子生成。已进入的节点不会因刷新而改变。</p>${s.phase!=='map'?ui('返回当前进度','return-room','secondary'):''}</aside></main>`;
+ return `<main class="map-screen season-map"><aside class="map-intro"><div class="eyebrow">ACT ${['I','II','III'][s.act-1]} / ${esc(REGIONS[s.region].name)}</div><h1>${info.name}</h1>${itinerary}<div class="map-progress"><b>${done}</b><span> / 12 站完成</span></div><div class="map-legend">${[['battle','比赛'],['elite','强敌'],['event','未知'],['shop','转会市场'],['crate','补给箱'],['rest','俱乐部活动'],['boss','世界赛']].map(([k,t])=>`<span>${icon(k)}${t}</span>`).join('')}</div><p class="map-instruction">${resume?'比赛与奖励尚未完成，可查看后续路线，再返回当前节点。':s.currentNode===null?'四个起点任选其一。向上滑动地图，可先看决赛和后续路线。':'沿连线选择下一站。分叉会改变接下来的比赛和补强机会。'}</p>${s.phase!=='map'?ui(s.phase==='intermission'?'查看晋级与下一幕':s.phase==='result'?'查看赛季结算':'返回当前节点','return-room','primary'):''}</aside><div class="map-scroll"><div class="map-board season-board"><div class="map-watermark">ASCEND</div><svg class="map-paths" viewBox="0 0 700 1050" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes.map(n=>`<div class="map-stop ${n.status} kind-${n.kind}" style="left:${n.x}%;top:${n.y}%"><button data-map="${n.key}" ${n.status==='current'?'':'disabled'} aria-label="${n.status==='current'?(resume?'返回':'进入'):n.status==='visited'?'已完成':n.status==='bypassed'?'未选择':'未解锁'}：第 ${n.step} 站 ${esc(n.name)}${n.revealed?`（已揭晓：${REVEALED[n.revealed]}）`:''}">${icon(n.revealed||n.kind)}${n.status==='visited'?'<span class="visited-check">✓</span>':''}</button><span class="node-label">${esc(n.name)}</span>${n.status==='current'?`<small class="here-label">${resume?'正在进行':'可选下一站'}</small>`:''}</div>`).join('')}</div></div><aside class="map-current"><span class="eyebrow">赛季已走过 ${s.node} / 36 站</span><h3>${s.phase==='intermission'?'世界赛晋级':s.phase==='result'?'赛季结束':resume?'完成当前节点':`可选 ${choices.length} 条路线`}</h3><p>本幕终点：${info.bossName}。<br>强敌提供皮肤；俱乐部活动可恢复声望或训练；市场可招募与移除牌；补给箱必得资金，常有皮肤。未知节点进入后揭晓，多半是事件，也可能是比赛、市场或补给箱。</p><p>节点内容与连线随赛季种子生成。已进入的节点不会因刷新而改变。</p>${s.phase!=='map'?ui('返回当前进度','return-room','secondary'):''}</aside></main>`;
 }
 function targetOf(c){return effects(c).some(e=>['hit','weak','vulnerable'].includes(e.type))?'enemy':'self';}
 function handCard(c,i,n){const t=CARDS[c.id],reason=canPlay(state,c.uid),offset=i-(n-1)/2;return `<button class="hand-card role-${t.player?t.role:t.id.slice(0,2)} ${reason?'unplayable':''} ${c.up?'upgraded':''}" data-card-id="${c.id}" data-card-up="${!!c.up}" data-select="${c.uid}" draggable="false" style="--offset:${offset};--tilt:${offset*(n>6?1.6:3)}deg;--bend:${Math.abs(offset)*Math.abs(offset)*1.8}px;--order:${i}" aria-label="选择 ${esc(cardName(c))} · ${esc(TACTICS[c.id].title)}，${t.role}，${t.cost===null?'不能打出':t.cost+' 行动点'}，${esc(describe(c))}"><span class="card-face">${face(c)}</span><span class="card-key">${(i+1)%10}</span>${reason?`<span class="card-unavailable">${esc(reason)}</span>`:''}</button>`;}
@@ -146,7 +148,8 @@ function marketScene(s){
 function choice(title,text,label,action,disabled=''){return `<article class="choice"><h3>${title}</h3><p>${text}</p>${button(label,action,'',disabled)}</article>`;}
 function between(){
  const s=state;
- if(s.mode==='season'&&['event','eventUpgrade','eventCleanse'].includes(s.phase))return seasonEventRoom();
+ if(s.mode==='season'&&['event','eventUpgrade','eventCleanse','eventPick'].includes(s.phase))return seasonEventRoom();
+ if(s.mode==='season'&&s.phase==='crate')return crateRoom();
  if(s.mode==='season'){
   if(s.phase==='intermission'){
    const nextAct=ACTS[s.act];
@@ -167,21 +170,23 @@ function between(){
  return '';
 }
 function seasonEventRoom(){
- const s=state;
- if(s.phase==='eventUpgrade'||s.phase==='eventCleanse'){
-  const training=s.phase==='eventUpgrade',paid=s.pendingEvent==='paid';
-  return `${heading('赛程外的机会',training?'选择训练对象':'整顿团队',training?(paid?'确认时支付 40 资金，升级这一个选手实例。':'确认时升级一个选手实例，并加入一张磨合不足。'):'确认时支付 60 资金，移除一张隐患并恢复最大声望的 15%。')}<div class="cards">${s.deck.filter(c=>training?CARDS[c.id].trainable&&!c.up:c.id.startsWith('CU')).map(c=>card(c,{instance:true,upgrade:training,label:training?'确认训练':'确认整顿',action:{type:s.phase,uid:c.uid}})).join('')}</div>${button('返回事件，不支付费用',{type:'eventBack'},'secondary')}`;
+ const s=state,view=describeSeasonEvent(s);
+ if(!view)return `${heading('未知事件','事件已结束','返回路线图继续赛程。')}`;
+ if(view.pending){
+  const verb={upgrade:'训练这张牌',remove:'永久移除',transform:'变换这张牌',duplicate:'复制这张牌',cleanse:'永久移除此隐患'}[view.pending.kind]||'选择';
+  const cards=view.pending.candidates.map(uid=>s.deck.find(c=>c.uid===uid)).map(c=>card(c,{instance:true,upgrade:view.pending.kind==='upgrade',label:verb,action:{type:s.phase,uid:c.uid}})).join('');
+  return `${heading(view.title,`${esc(view.pending.title)} · 选择一张牌`,`确认后生效：${esc(view.pending.effects)}。返回事件不付出任何代价。`)}<div class="cards">${cards}</div><div class="page-footer">${button('返回事件，不付出代价',{type:'eventBack'},'secondary')}</div>`;
  }
- const option=(title,text,label,choiceKey,disabled='')=>choice(title,text,label,{type:'seasonEvent',choice:choiceKey},disabled);
- const skip=button('谢绝，继续赛程 →',{type:'seasonEvent',choice:'skip'},'secondary');
- let title='',desc='',options='';
- if(s.eventId==='sponsor'){title='商业邀约';desc='一次曝光机会，也可能把额外压力带进俱乐部。';options=option('接受合作','资金 +70，牌组加入一张舆论压力。回合末仍在手中时失去 2 声望。','接受邀约','accept');}
- if(s.eventId==='trial'){title='紧急试训';desc='候选已经到场，返回查看不会更换名单。';options=option('试训补强','三名候选中招募一名，同时加入不能打出的磨合不足。','查看候选','accept',!s.eventOffers?.length?'无可招募选手':'');}
- if(s.eventId==='scrim'){title='训练赛邀约';desc='今天投入资源恢复状态，还是接一场高强度商业训练赛？';options=option('轻量公开训练',`支付 20 资金，恢复最大声望的 15%，实际 +${healAmount(s,.15)}。`,'安排公开训练','safe',s.money<20?'资金不足':s.hp===s.maxHp?'声望已满':'')+option('高强度商业训练','失去 8 声望，获得 35 资金。声望不足时不能参加。','参加商业训练','risk',s.hp<=8?'至少需要 9 声望':'');}
- if(s.eventId==='training'){title='训练安排';desc='为接下来的大师赛强化一张选手牌。';const noTarget=!s.deck.some(c=>CARDS[c.id].trainable&&!c.up);options=option('常规强化','支付 40 资金，升级一张选手或战术牌。选好目标后才扣费。','选择强化对象','paid',noTarget?'无可升级选手':s.money<40?'资金不足':'')+option('加练试验','免费升级一张选手或战术牌，但加入一张磨合不足。','选择加练对象','risky',noTarget?'无可升级选手':'');}
- if(s.eventId==='rally'){title='赛前动员';desc='冠军赛临近，整理团队状态或争取最后一笔赞助。';options=option('整顿团队',`支付 60 资金，移除一张俱乐部隐患，并恢复最大声望的 15%（至多 ${healAmount(s,.15)}）。`,'选择处理的隐患','cleanse',s.money<60?'资金不足':!s.deck.some(c=>c.id.startsWith('CU'))?'没有俱乐部隐患':'')+option('商业动员','获得 100 资金，同时加入两张舆论压力。','接受商业动员','sponsor');}
- if(s.eventId==='risk'){title='高风险合作';desc='一笔可观的资金，但合同会带来一张随机俱乐部隐患。';options=option('接受合作','获得 90 资金；从 12 种额外隐患中随机加入 1 张。','接受合作','accept');}
- return `${heading('未知事件 · 已揭晓',title,desc)}<div class="choices">${options}</div><div class="page-footer">${skip}</div>`;
+ const options=view.options.map(o=>choice(esc(o.title),esc(o.effects),o.pick?'选择目标牌':'就这么办',{type:'seasonEvent',choice:o.id},o.reason)).join('');
+ return `${heading('未知 · 已揭晓',esc(view.title),'')}<p class="event-scene">${esc(view.scene)}</p><div class="choices event-choices">${options}</div><p class="event-status">声望 ${s.hp}/${s.maxHp} · 资金 ${s.money}</p><div class="page-footer">${button('谢绝，继续赛程 →',{type:'seasonEvent',choice:'skip'},'secondary')}</div>`;
+}
+function crateRoom(){
+ const s=state,c=s.crate,r=c.result,names={small:'小型补给箱',medium:'中型补给箱',large:'大型补给箱'};
+ const box=`<div class="crate-box crate-${c.size}${c.opened?' is-open':''}" aria-hidden="true"><span class="crate-lid"></span><span class="crate-body"></span></div>`;
+ if(!c.opened)return `${heading('补给箱',names[c.size],'赛事物流送来的补给。越大的箱子越少见，资金越多，也越可能装着皮肤。')}${box}<div class="page-footer">${button('打开补给箱',{type:'crate',choice:'open'},'primary')}</div>`;
+ const loot=`<div class="crate-loot"><div class="crate-loot-item"><b>+${r.money+r.bonusMoney}</b><span>资金${r.bonusMoney?`（含无皮肤补偿 ${r.bonusMoney}）`:''}</span></div>${r.skin?`<div class="crate-loot-item"><b>${esc(r.skin)}</b><span>${esc(Object.values(SKINS).find(k=>k.name===r.skin)?.text||'')}</span></div>`:`<div class="crate-loot-item"><span>${r.upgrade?'箱里没有皮肤，附赠一次免费训练：选择一张牌升级，或直接离开。':'箱里没有皮肤。'}</span></div>`}</div>`;
+ const ups=r.upgrade?`<div class="cards">${s.deck.filter(x=>CARDS[x.id].trainable&&!x.up).map(x=>card(x,{instance:true,upgrade:true,label:'免费训练',action:{type:'crateUpgrade',uid:x.uid}})).join('')}</div>`:'';
+ return `${heading('补给箱 · 已打开',names[c.size],'')}${box}${loot}${ups}<div class="page-footer">${button(r.upgrade?'不训练，继续赛程 →':'收好物资，继续赛程 →',{type:'crate',choice:'leave'},r.upgrade?'secondary':'primary')}</div>`;
 }
 function render(){
  clearCombatFx();
@@ -190,7 +195,7 @@ function render(){
  if(atHome){app.innerHTML=home();document.body.className='home-mode';return;}
  const inMap=screen==='map';
  document.body.className=inMap?'map-mode':state.phase==='combat'?'combat-mode':'room-mode';
- const content=inMap?route():state.phase==='combat'?battle():`<main class="room-screen room-${state.phase}"><div class="room-emblem">${icon(state.phase==='shop'?'shop':['activity','upgrade','cleanse'].includes(state.phase)?'rest':state.phase==='event'||state.phase==='trial'?'event':state.phase==='result'||state.phase==='intermission'?'boss':'cards')}</div>${between()}</main>`;
+ const content=inMap?route():state.phase==='combat'?battle():`<main class="room-screen room-${state.phase}"><div class="room-emblem">${icon(state.phase==='crate'?'crate':state.phase==='shop'?'shop':['activity','upgrade','cleanse'].includes(state.phase)?'rest':['event','trial','eventPick','eventUpgrade','eventCleanse'].includes(state.phase)?'event':state.phase==='result'||state.phase==='intermission'?'boss':'cards')}</div>${between()}</main>`;
  app.innerHTML=`${header()}${saveError?`<div class="warning">${esc(saveError)}</div>`:''}${content}`;
  refreshSelection();
  if(inMap)centerCurrentMap();
