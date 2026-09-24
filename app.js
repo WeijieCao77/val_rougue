@@ -2707,27 +2707,23 @@ const EXPANSION_ROWS = [
   ],
   [
     "CNT01",
-    "快速部署",
+    "炮台架点",
     "战术",
-    0,
+    2,
     [
       {
-        "type": "draw",
-        "n": 1
-      },
-      {
-        "type": "weak",
-        "n": 1
+        "type": "deploy",
+        "kind": "turret",
+        "n": 5,
+        "turns": 3
       }
     ],
     [
       {
-        "type": "draw",
-        "n": 2
-      },
-      {
-        "type": "weak",
-        "n": 1
+        "type": "deploy",
+        "kind": "turret",
+        "n": 7,
+        "turns": 3
       }
     ],
     "discard"
@@ -2809,22 +2805,26 @@ const EXPANSION_ROWS = [
   ],
   [
     "CNT05",
-    "压制火力",
+    "屏障无人机",
     "战术",
-    2,
+    1,
     [
       {
-        "type": "weak",
-        "n": 3
+        "type": "deploy",
+        "kind": "barrier",
+        "n": 5,
+        "turns": 2
       }
     ],
     [
       {
-        "type": "weak",
-        "n": 4
+        "type": "deploy",
+        "kind": "barrier",
+        "n": 7,
+        "turns": 2
       }
     ],
-    "exhaust"
+    "discard"
   ],
   [
     "CNT06",
@@ -2878,22 +2878,27 @@ const EXPANSION_ROWS = [
   ],
   [
     "CNT08",
-    "情报优势",
+    "集火指令",
     "战术",
-    0,
+    1,
     [
       {
-        "type": "block",
-        "n": 2
+        "type": "fireTurrets"
+      },
+      {
+        "type": "draw",
+        "n": 1
       }
     ],
     [
       {
-        "type": "block",
-        "n": 4
+        "type": "fireTurrets"
+      },
+      {
+        "type": "fireTurrets"
       }
     ],
-    "exhaust"
+    "discard"
   ],
   [
     "CNT09",
@@ -2974,30 +2979,24 @@ const EXPANSION_ROWS = [
   ],
   [
     "CNT12",
-    "全面压制",
+    "以守代攻",
     "战术",
-    2,
+    1,
     [
       {
-        "type": "weak",
-        "n": 2
-      },
-      {
-        "type": "vulnerable",
-        "n": 2
+        "type": "bodyslam"
       }
     ],
     [
       {
-        "type": "weak",
-        "n": 2
-      },
-      {
-        "type": "vulnerable",
+        "type": "block",
         "n": 3
+      },
+      {
+        "type": "bodyslam"
       }
     ],
-    "exhaust"
+    "discard"
   ],
   [
     "CNT13",
@@ -3086,49 +3085,43 @@ const EXPANSION_ROWS = [
   ],
   [
     "CNT16",
-    "战略撤退",
-    "战术",
-    0,
-    [
-      {
-        "type": "block",
-        "n": 3
-      }
-    ],
-    [
-      {
-        "type": "block",
-        "n": 5
-      }
-    ],
-    "exhaust"
-  ],
-  [
-    "CNT17",
-    "信息封锁",
+    "架枪等待",
     "战术",
     1,
     [
       {
-        "type": "weak",
-        "n": 1
-      },
-      {
         "type": "block",
-        "n": 3
+        "n": 6
       }
     ],
     [
       {
-        "type": "weak",
-        "n": 1
-      },
-      {
         "type": "block",
-        "n": 5
+        "n": 9
       }
     ],
-    "discard"
+    "retain"
+  ],
+  [
+    "CNT17",
+    "留枪",
+    "战术",
+    1,
+    [
+      {
+        "type": "hit",
+        "n": 8,
+        "times": 1
+      }
+    ],
+    [
+      {
+        "type": "hit",
+        "n": 11,
+        "times": 1
+      }
+    ],
+    "retain"
   ],
   [
     "CNT18",
@@ -3161,56 +3154,54 @@ const EXPANSION_ROWS = [
   ],
   [
     "CNT19",
-    "连环计",
+    "铁壁架点",
     "战术",
-    1,
+    2,
     [
       {
-        "type": "vulnerable",
-        "n": 1
+        "type": "block",
+        "n": 10
       },
       {
-        "type": "draw",
-        "n": 1
+        "type": "deploy",
+        "kind": "barrier",
+        "n": 3,
+        "turns": 2
       }
     ],
     [
       {
-        "type": "vulnerable",
-        "n": 2
+        "type": "block",
+        "n": 12
       },
       {
-        "type": "draw",
-        "n": 2
+        "type": "deploy",
+        "kind": "barrier",
+        "n": 4,
+        "turns": 2
       }
     ],
-    "exhaust"
+    "discard"
   ],
   [
     "CNT20",
-    "火力侦察",
+    "交叉火力网",
     "战术",
-    1,
+    3,
     [
       {
-        "type": "hit",
-        "n": 3,
-        "times": 1
-      },
-      {
-        "type": "draw",
-        "n": 1
+        "type": "deploy",
+        "kind": "turret",
+        "n": 7,
+        "turns": 4
       }
     ],
     [
       {
-        "type": "hit",
-        "n": 4,
-        "times": 1
-      },
-      {
-        "type": "draw",
-        "n": 2
+        "type": "deploy",
+        "kind": "turret",
+        "n": 9,
+        "turns": 4
       }
     ],
     "discard"
@@ -3244,59 +3235,71 @@ const EXPANSION_ROWS = [
   ],
   [
     "CNT22",
-    "游击战术",
+    "稳守反击",
     "战术",
     1,
     [
       {
-        "type": "hit",
-        "n": 5,
-        "times": 1
+        "type": "block",
+        "n": 5
       },
       {
-        "type": "draw",
-        "n": 1
+        "type": "combo",
+        "effect": {
+          "type": "hit",
+          "n": 6,
+          "times": 1
+        }
       }
     ],
     [
       {
-        "type": "hit",
-        "n": 6,
-        "times": 1
+        "type": "block",
+        "n": 7
       },
       {
-        "type": "draw",
-        "n": 2
+        "type": "combo",
+        "effect": {
+          "type": "hit",
+          "n": 8,
+          "times": 1
+        }
       }
     ],
     "discard"
   ],
   [
     "CNT23",
-    "心理战",
+    "阵地轮换",
     "战术",
-    1,
+    0,
     [
       {
-        "type": "weak",
-        "n": 2
+        "type": "block",
+        "n": 3
       },
       {
-        "type": "draw",
-        "n": 1
+        "type": "combo",
+        "effect": {
+          "type": "draw",
+          "n": 1
+        }
       }
     ],
     [
       {
-        "type": "weak",
-        "n": 2
+        "type": "block",
+        "n": 5
       },
       {
-        "type": "draw",
-        "n": 2
+        "type": "combo",
+        "effect": {
+          "type": "draw",
+          "n": 1
+        }
       }
     ],
-    "exhaust"
+    "discard"
   ],
   [
     "CNT24",
@@ -4247,26 +4250,34 @@ const EXPANSION_ROWS = [
   ],
   [
     "AMT02",
-    "破绽侦察",
+    "飞刀出手",
     "战术",
-    0,
+    1,
     [
       {
-        "type": "vulnerable",
-        "n": 1
-      }
-    ],
-    [
-      {
-        "type": "vulnerable",
-        "n": 1
+        "type": "token",
+        "id": "TK03"
       },
       {
-        "type": "draw",
-        "n": 1
+        "type": "token",
+        "id": "TK03"
       }
     ],
-    "exhaust"
+    [
+      {
+        "type": "token",
+        "id": "TK03"
+      },
+      {
+        "type": "token",
+        "id": "TK03"
+      },
+      {
+        "type": "token",
+        "id": "TK03"
+      }
+    ],
+    "discard"
   ],
   [
     "AMT03",
@@ -4320,19 +4331,23 @@ const EXPANSION_ROWS = [
   ],
   [
     "AMT05",
-    "烟雾推进",
+    "弱点处决",
     "战术",
     1,
     [
       {
-        "type": "block",
-        "n": 4
+        "type": "hit",
+        "n": 6,
+        "times": 1,
+        "ifVuln": 6
       }
     ],
     [
       {
-        "type": "block",
-        "n": 6
+        "type": "hit",
+        "n": 8,
+        "times": 1,
+        "ifVuln": 8
       }
     ],
     "discard"
@@ -4366,51 +4381,61 @@ const EXPANSION_ROWS = [
   ],
   [
     "AMT07",
-    "防守协同",
+    "连续交火",
     "战术",
     1,
     [
       {
-        "type": "block",
-        "n": 3
+        "type": "hit",
+        "n": 5,
+        "times": 1
       },
       {
-        "type": "block",
-        "n": 3
+        "type": "combo",
+        "effect": {
+          "type": "hit",
+          "n": 5,
+          "times": 1
+        }
       }
     ],
     [
       {
-        "type": "block",
-        "n": 4
+        "type": "hit",
+        "n": 7,
+        "times": 1
       },
       {
-        "type": "block",
-        "n": 4
+        "type": "combo",
+        "effect": {
+          "type": "hit",
+          "n": 7,
+          "times": 1
+        }
       }
     ],
     "discard"
   ],
   [
     "AMT08",
-    "快速换弹",
+    "刀锋风暴",
     "战术",
-    0,
+    2,
     [
       {
-        "type": "hit",
-        "n": 3,
-        "times": 1
+        "type": "power",
+        "key": "knife",
+        "n": 3
       }
     ],
     [
       {
-        "type": "hit",
-        "n": 4,
-        "times": 1
+        "type": "power",
+        "key": "knife",
+        "n": 4
       }
     ],
-    "discard"
+    "power"
   ],
   [
     "AMT09",
@@ -4491,48 +4516,68 @@ const EXPANSION_ROWS = [
   ],
   [
     "AMT12",
-    "预判闪避",
+    "快速转点",
     "战术",
-    1,
+    0,
     [
       {
         "type": "block",
-        "n": 5
+        "n": 3
+      },
+      {
+        "type": "combo",
+        "effect": {
+          "type": "draw",
+          "n": 1
+        }
       }
     ],
     [
       {
         "type": "block",
-        "n": 7
+        "n": 5
+      },
+      {
+        "type": "combo",
+        "effect": {
+          "type": "draw",
+          "n": 1
+        }
       }
     ],
     "discard"
   ],
   [
     "AMT13",
-    "火力侦察",
+    "标记弱点",
     "战术",
     1,
     [
       {
-        "type": "hit",
-        "n": 3,
-        "times": 1
+        "type": "vulnerable",
+        "n": 2
       },
       {
-        "type": "vulnerable",
-        "n": 1
+        "type": "combo",
+        "effect": {
+          "type": "hit",
+          "n": 4,
+          "times": 1
+        }
       }
     ],
     [
       {
-        "type": "hit",
-        "n": 3,
-        "times": 1
+        "type": "vulnerable",
+        "n": 3
       },
       {
-        "type": "vulnerable",
-        "n": 2
+        "type": "combo",
+        "effect": {
+          "type": "hit",
+          "n": 5,
+          "times": 1
+        }
       }
     ],
     "discard"
@@ -4593,27 +4638,37 @@ const EXPANSION_ROWS = [
   ],
   [
     "AMT16",
-    "诱敌深入",
+    "一穿三",
     "战术",
-    1,
+    2,
     [
       {
-        "type": "vulnerable",
-        "n": 1
+        "type": "hit",
+        "n": 4,
+        "times": 3
       },
       {
-        "type": "block",
-        "n": 3
+        "type": "combo",
+        "effect": {
+          "type": "hit",
+          "n": 3,
+          "times": 3
+        }
       }
     ],
     [
       {
-        "type": "vulnerable",
-        "n": 2
+        "type": "hit",
+        "n": 5,
+        "times": 3
       },
       {
-        "type": "block",
-        "n": 3
+        "type": "combo",
+        "effect": {
+          "type": "hit",
+          "n": 4,
+          "times": 3
+        }
       }
     ],
     "discard"
@@ -4647,32 +4702,24 @@ const EXPANSION_ROWS = [
   ],
   [
     "AMT18",
-    "突击路线",
+    "节奏大师",
     "战术",
-    1,
+    2,
     [
       {
-        "type": "hit",
-        "n": 2,
-        "times": 2
-      },
-      {
-        "type": "block",
-        "n": 2
+        "type": "power",
+        "key": "comboAtk",
+        "n": 3
       }
     ],
     [
       {
-        "type": "hit",
-        "n": 2,
-        "times": 2
-      },
-      {
-        "type": "block",
+        "type": "power",
+        "key": "comboAtk",
         "n": 4
       }
     ],
-    "discard"
+    "power"
   ],
   [
     "AMT19",
@@ -4705,13 +4752,13 @@ const EXPANSION_ROWS = [
   ],
   [
     "AMT20",
-    "后撤防守",
+    "肾上腺素",
     "战术",
     1,
     [
       {
-        "type": "block",
-        "n": 6
+        "type": "strength",
+        "n": 1
       },
       {
         "type": "draw",
@@ -4720,15 +4767,15 @@ const EXPANSION_ROWS = [
     ],
     [
       {
-        "type": "block",
-        "n": 8
+        "type": "strength",
+        "n": 2
       },
       {
         "type": "draw",
         "n": 1
       }
     ],
-    "discard"
+    "exhaust"
   ],
   [
     "AMT21",
@@ -4817,21 +4864,23 @@ const EXPANSION_ROWS = [
   ],
   [
     "AMT24",
-    "爆发输出",
+    "处决时刻",
     "战术",
     2,
     [
       {
         "type": "hit",
         "n": 9,
-        "times": 1
+        "times": 1,
+        "ifVuln": 9
       }
     ],
     [
       {
         "type": "hit",
-        "n": 11,
-        "times": 1
+        "n": 12,
+        "times": 1,
+        "ifVuln": 12
       }
     ],
     "discard"
@@ -5785,27 +5834,19 @@ const EXPANSION_ROWS = [
   ],
   [
     "EUT03",
-    "信息侦察",
+    "燃烧弹",
     "战术",
     1,
     [
       {
-        "type": "draw",
-        "n": 1
-      },
-      {
-        "type": "block",
-        "n": 2
+        "type": "burn",
+        "n": 4
       }
     ],
     [
       {
-        "type": "draw",
-        "n": 2
-      },
-      {
-        "type": "block",
-        "n": 3
+        "type": "burn",
+        "n": 6
       }
     ],
     "discard"
@@ -5841,27 +5882,27 @@ const EXPANSION_ROWS = [
   ],
   [
     "EUT05",
-    "削弱阵线",
+    "火墙封路",
     "战术",
     1,
     [
       {
-        "type": "weak",
+        "type": "burn",
         "n": 2
       },
       {
-        "type": "vulnerable",
-        "n": 1
+        "type": "block",
+        "n": 5
       }
     ],
     [
       {
-        "type": "weak",
+        "type": "burn",
         "n": 3
       },
       {
-        "type": "vulnerable",
-        "n": 2
+        "type": "block",
+        "n": 7
       }
     ],
     "discard"
@@ -6003,7 +6044,7 @@ const EXPANSION_ROWS = [
   ],
   [
     "EUT11",
-    "快速突进",
+    "点燃补枪",
     "战术",
     0,
     [
@@ -6013,8 +6054,8 @@ const EXPANSION_ROWS = [
         "times": 1
       },
       {
-        "type": "draw",
-        "n": 1
+        "type": "burn",
+        "n": 2
       }
     ],
     [
@@ -6024,58 +6065,46 @@ const EXPANSION_ROWS = [
         "times": 1
       },
       {
-        "type": "draw",
-        "n": 1
+        "type": "burn",
+        "n": 3
       }
     ],
     "discard"
   ],
   [
     "EUT12",
-    "稳固防守",
-    "战术",
-    0,
-    [
-      {
-        "type": "block",
-        "n": 2
-      },
-      {
-        "type": "weak",
-        "n": 1
-      }
-    ],
-    [
-      {
-        "type": "block",
-        "n": 4
-      },
-      {
-        "type": "weak",
-        "n": 2
-      }
-    ],
-    "discard"
-  ],
-  [
-    "EUT13",
-    "双重打击",
+    "助燃剂",
     "战术",
     1,
     [
       {
-        "type": "hit",
-        "n": 4,
-        "times": 2,
-        "ifWeak": true
+        "type": "burnMultiply",
+        "n": 2
       }
     ],
     [
       {
-        "type": "hit",
-        "n": 5,
-        "times": 2,
-        "ifWeak": true
+        "type": "burnMultiply",
+        "n": 3
+      }
+    ],
+    "exhaust"
+  ],
+  [
+    "EUT13",
+    "引爆",
+    "战术",
+    2,
+    [
+      {
+        "type": "detonate",
+        "per": 2
+      }
+    ],
+    [
+      {
+        "type": "detonate",
+        "per": 3
       }
     ],
     "discard"
@@ -6120,50 +6149,48 @@ const EXPANSION_ROWS = [
   ],
   [
     "EUT16",
-    "战利品",
+    "纵火专家",
     "战术",
-    1,
+    2,
     [
       {
-        "type": "token",
-        "id": "TK01"
+        "type": "power",
+        "key": "burnTick",
+        "n": 3
       }
     ],
     [
       {
-        "type": "token",
-        "id": "TK01"
-      },
-      {
-        "type": "draw",
-        "n": 1
+        "type": "power",
+        "key": "burnTick",
+        "n": 4
       }
     ],
-    "discard"
+    "power"
   ],
   [
     "EUT17",
-    "防御工事",
+    "焦土防线",
     "战术",
     1,
     [
       {
-        "type": "token",
-        "id": "TK02"
+        "type": "block",
+        "n": 6
       },
       {
-        "type": "block",
-        "n": 2
+        "type": "burn",
+        "n": 1
       }
     ],
     [
       {
-        "type": "token",
-        "id": "TK02"
+        "type": "block",
+        "n": 8
       },
       {
-        "type": "block",
-        "n": 4
+        "type": "burn",
+        "n": 2
       }
     ],
     "discard"
@@ -6236,42 +6263,45 @@ const EXPANSION_ROWS = [
   ],
   [
     "EUT20",
-    "资源循环",
+    "兴奋信标",
     "战术",
     1,
     [
       {
-        "type": "draw",
-        "n": 2
+        "type": "strength",
+        "n": 1
       },
       {
-        "type": "weak",
-        "n": 1
+        "type": "block",
+        "n": 5
       }
     ],
     [
       {
-        "type": "draw",
+        "type": "strength",
         "n": 2
       },
       {
-        "type": "weak",
-        "n": 2
+        "type": "block",
+        "n": 6
       }
     ],
-    "discard"
+    "exhaust"
   ],
   [
     "EUT21",
-    "致命弱点",
+    "灼烧压制",
     "战术",
     2,
     [
       {
         "type": "hit",
-        "n": 7,
-        "times": 1,
-        "ifWeak": true
+        "n": 6,
+        "times": 1
+      },
+      {
+        "type": "burn",
+        "n": 3
       },
       {
         "type": "weak",
@@ -6282,39 +6312,38 @@ const EXPANSION_ROWS = [
       {
         "type": "hit",
         "n": 8,
-        "times": 1,
-        "ifWeak": true
+        "times": 1
+      },
+      {
+        "type": "burn",
+        "n": 4
       },
       {
         "type": "weak",
-        "n": 2
+        "n": 1
       }
     ],
     "discard"
   ],
   [
     "EUT22",
-    "战术撤退",
+    "余烬追击",
     "战术",
     0,
     [
       {
-        "type": "block",
-        "n": 2
-      },
-      {
-        "type": "draw",
-        "n": 1
+        "type": "hit",
+        "n": 3,
+        "times": 1,
+        "ifBurn": 4
       }
     ],
     [
       {
-        "type": "block",
-        "n": 3
-      },
-      {
-        "type": "draw",
-        "n": 2
+        "type": "hit",
+        "n": 4,
+        "times": 1,
+        "ifBurn": 6
       }
     ],
     "discard"
@@ -7288,22 +7317,32 @@ const EXPANSION_ROWS = [
   ],
   [
     "PAT01",
-    "快攻节奏",
+    "全火力倾泻",
     "战术",
-    0,
+    1,
     [
       {
-        "type": "draw",
+        "type": "hit",
+        "n": 12,
+        "times": 1
+      },
+      {
+        "type": "overload",
         "n": 1
       }
     ],
     [
       {
-        "type": "draw",
-        "n": 2
+        "type": "hit",
+        "n": 16,
+        "times": 1
+      },
+      {
+        "type": "overload",
+        "n": 1
       }
     ],
-    "exhaust"
+    "discard"
   ],
   [
     "PAT02",
@@ -7334,22 +7373,30 @@ const EXPANSION_ROWS = [
   ],
   [
     "PAT03",
-    "弱点暴露",
+    "超频架点",
     "战术",
-    1,
+    0,
     [
       {
-        "type": "vulnerable",
-        "n": 2
+        "type": "block",
+        "n": 8
+      },
+      {
+        "type": "overload",
+        "n": 1
       }
     ],
     [
       {
-        "type": "vulnerable",
-        "n": 3
+        "type": "block",
+        "n": 11
+      },
+      {
+        "type": "overload",
+        "n": 1
       }
     ],
-    "exhaust"
+    "discard"
   ],
   [
     "PAT04",
@@ -7492,54 +7539,80 @@ const EXPANSION_ROWS = [
   ],
   [
     "PAT09",
-    "快速布局",
+    "孤注一掷",
     "战术",
-    0,
+    2,
     [
       {
-        "type": "draw",
-        "n": 1
+        "type": "hit",
+        "n": 24,
+        "times": 1
       },
       {
-        "type": "token",
-        "id": "TK01"
+        "type": "overload",
+        "n": 2
       }
     ],
     [
       {
-        "type": "draw",
-        "n": 2
+        "type": "hit",
+        "n": 30,
+        "times": 1
       },
       {
-        "type": "token",
-        "id": "TK01"
+        "type": "overload",
+        "n": 2
       }
     ],
     "discard"
   ],
   [
     "PAT10",
-    "控场节奏",
+    "疾速连段",
     "战术",
     1,
     [
       {
-        "type": "weak",
-        "n": 2
+        "type": "hit",
+        "n": 4,
+        "times": 1
       },
       {
-        "type": "draw",
-        "n": 1
+        "type": "combo",
+        "effect": {
+          "type": "hit",
+          "n": 4,
+          "times": 1
+        }
+      },
+      {
+        "type": "combo",
+        "effect": {
+          "type": "draw",
+          "n": 1
+        }
       }
     ],
     [
       {
-        "type": "weak",
-        "n": 3
+        "type": "hit",
+        "n": 5,
+        "times": 1
       },
       {
-        "type": "draw",
-        "n": 1
+        "type": "combo",
+        "effect": {
+          "type": "hit",
+          "n": 5,
+          "times": 1
+        }
+      },
+      {
+        "type": "combo",
+        "effect": {
+          "type": "draw",
+          "n": 1
+        }
       }
     ],
     "discard"
@@ -7567,21 +7640,31 @@ const EXPANSION_ROWS = [
   ],
   [
     "PAT12",
-    "先手压制",
+    "飞刀雨",
     "战术",
     1,
     [
       {
-        "type": "hit",
-        "n": 3,
-        "times": 2
+        "type": "token",
+        "id": "TK03"
+      },
+      {
+        "type": "token",
+        "id": "TK03"
       }
     ],
     [
       {
-        "type": "hit",
-        "n": 4,
-        "times": 2
+        "type": "token",
+        "id": "TK03"
+      },
+      {
+        "type": "token",
+        "id": "TK03"
+      },
+      {
+        "type": "token",
+        "id": "TK03"
       }
     ],
     "discard"
@@ -7642,19 +7725,37 @@ const EXPANSION_ROWS = [
   ],
   [
     "PAT15",
-    "信息优势",
+    "炸药包",
     "战术",
     1,
     [
       {
+        "type": "hit",
+        "n": 8,
+        "times": 1
+      },
+      {
         "type": "draw",
-        "n": 3
+        "n": 1
+      },
+      {
+        "type": "overload",
+        "n": 1
       }
     ],
     [
       {
+        "type": "hit",
+        "n": 11,
+        "times": 1
+      },
+      {
         "type": "draw",
-        "n": 4
+        "n": 1
+      },
+      {
+        "type": "overload",
+        "n": 1
       }
     ],
     "discard"
@@ -7727,36 +7828,20 @@ const EXPANSION_ROWS = [
   ],
   [
     "PAT18",
-    "稳固防守",
+    "补位掩护",
     "战术",
     0,
-    [
-      {
-        "type": "block",
-        "n": 2
-      }
-    ],
-    [
-      {
-        "type": "block",
-        "n": 4
-      }
-    ],
-    "discard"
-  ],
-  [
-    "PAT19",
-    "战术撤退",
-    "战术",
-    1,
     [
       {
         "type": "block",
         "n": 3
       },
       {
-        "type": "draw",
-        "n": 1
+        "type": "combo",
+        "effect": {
+          "type": "block",
+          "n": 3
+        }
       }
     ],
     [
@@ -7765,8 +7850,46 @@ const EXPANSION_ROWS = [
         "n": 4
       },
       {
+        "type": "combo",
+        "effect": {
+          "type": "block",
+          "n": 4
+        }
+      }
+    ],
+    "discard"
+  ],
+  [
+    "PAT19",
+    "节奏抢断",
+    "战术",
+    1,
+    [
+      {
         "type": "draw",
-        "n": 2
+        "n": 1
+      },
+      {
+        "type": "combo",
+        "effect": {
+          "type": "hit",
+          "n": 6,
+          "times": 1
+        }
+      }
+    ],
+    [
+      {
+        "type": "draw",
+        "n": 1
+      },
+      {
+        "type": "combo",
+        "effect": {
+          "type": "hit",
+          "n": 8,
+          "times": 1
+        }
       }
     ],
     "discard"
@@ -7792,38 +7915,38 @@ const EXPANSION_ROWS = [
   ],
   [
     "PAT21",
-    "资源调度",
+    "临场超频",
     "战术",
-    1,
+    0,
     [
+      {
+        "type": "strength",
+        "n": 1
+      },
       {
         "type": "draw",
         "n": 1
       },
       {
-        "type": "token",
-        "id": "TK01"
-      },
-      {
-        "type": "token",
-        "id": "TK02"
+        "type": "overload",
+        "n": 1
       }
     ],
     [
       {
-        "type": "draw",
+        "type": "strength",
         "n": 2
       },
       {
-        "type": "token",
-        "id": "TK01"
+        "type": "draw",
+        "n": 1
       },
       {
-        "type": "token",
-        "id": "TK02"
+        "type": "overload",
+        "n": 1
       }
     ],
-    "discard"
+    "exhaust"
   ],
   [
     "PAT22",
@@ -7906,29 +8029,37 @@ const EXPANSION_ROWS = [
   ],
   [
     "PAT25",
-    "快攻连携",
+    "连击终结",
     "战术",
-    0,
+    1,
     [
       {
         "type": "hit",
-        "n": 3,
+        "n": 5,
         "times": 1
       },
       {
-        "type": "draw",
-        "n": 1
+        "type": "combo",
+        "effect": {
+          "type": "hit",
+          "n": 8,
+          "times": 1
+        }
       }
     ],
     [
       {
         "type": "hit",
-        "n": 4,
+        "n": 7,
         "times": 1
       },
       {
-        "type": "draw",
-        "n": 1
+        "type": "combo",
+        "effect": {
+          "type": "hit",
+          "n": 10,
+          "times": 1
+        }
       }
     ],
     "discard"
@@ -8128,10 +8259,11 @@ const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "CNT01": {
-    "title": "前哨战",
-    "scene": "快速进入战斗阵型",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "炮台架点",
+    "scene": "把自动炮台架在交叉口，每个回合都替你开火。",
+    "origin": "赛区战术 · 流派·部署",
+    "archetype": "deploy",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "CNT02": {
     "title": "铁壁",
@@ -8152,10 +8284,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "CNT05": {
-    "title": "火力封锁",
-    "scene": "压制对手使其乏力",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "屏障无人机",
+    "scene": "无人机悬在身前，回合结束时自动撑起护盾。",
+    "origin": "赛区战术 · 流派·部署",
+    "archetype": "deploy",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "CNT06": {
     "title": "情报搜集",
@@ -8170,10 +8303,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "CNT08": {
-    "title": "侦察收益",
-    "scene": "掌握先机并削弱对手",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "集火指令",
+    "scene": "一声令下，所有已部署的炮台立即开火。",
+    "origin": "赛区战术 · 流派·部署",
+    "archetype": "deploy",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "CNT09": {
     "title": "战术欺骗",
@@ -8194,10 +8328,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "CNT12": {
-    "title": "双重施压",
-    "scene": "同时削弱并暴露弱点",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "以守代攻",
+    "scene": "把掩体推到对手脸上：布防越厚，这一击越重。",
+    "origin": "赛区战术 · 流派·布防反击",
+    "archetype": "fortify",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "CNT13": {
     "title": "战地修复",
@@ -8218,16 +8353,18 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "CNT16": {
-    "title": "避实就虚",
-    "scene": "撤退中构筑防御",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "架枪等待",
+    "scene": "准星不离拐角，这张牌可以留到对手露头的那一回合。",
+    "origin": "赛区战术 · 流派·布防反击",
+    "archetype": "fortify",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "CNT17": {
-    "title": "静默战术",
-    "scene": "封锁信息并防御",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "留枪",
+    "scene": "子弹留给关键回合；不打出也不会被弃掉。",
+    "origin": "赛区战术 · 流派·布防反击",
+    "archetype": "fortify",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "CNT18": {
     "title": "背水一战",
@@ -8236,16 +8373,18 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "CNT19": {
-    "title": "计谋连锁",
-    "scene": "设下圈套并获取情报",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "铁壁架点",
+    "scene": "先砌墙，再放无人机补位。",
+    "origin": "赛区战术 · 流派·部署",
+    "archetype": "deploy",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "CNT20": {
-    "title": "试探攻击",
-    "scene": "攻击并侦察敌情",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "交叉火力网",
+    "scene": "两台炮台交叉覆盖整条通道。",
+    "origin": "赛区战术 · 流派·部署",
+    "archetype": "deploy",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "CNT21": {
     "title": "铜墙铁壁",
@@ -8254,16 +8393,18 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "CNT22": {
-    "title": "机动战",
-    "scene": "灵活进攻并补充手牌",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "稳守反击",
+    "scene": "先稳住站位，再趁队友开枪时反打。",
+    "origin": "赛区战术 · 流派·连击",
+    "archetype": "combo",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "CNT23": {
-    "title": "攻心为上",
-    "scene": "使对手自我怀疑",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "阵地轮换",
+    "scene": "跟在队友动作后换位，顺势摸到新的信息。",
+    "origin": "赛区战术 · 流派·连击",
+    "archetype": "combo",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "CNT24": {
     "title": "后勤补给",
@@ -8476,10 +8617,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "AMT02": {
-    "title": "发现弱点",
-    "scene": "快速分析敌方缺陷。",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "飞刀出手",
+    "scene": "一次甩出两把飞刀，留在手里随时补刀。",
+    "origin": "赛区战术 · 流派·连击",
+    "archetype": "combo",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "AMT03": {
     "title": "快速突袭",
@@ -8494,10 +8636,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "AMT05": {
-    "title": "隐蔽行动",
-    "scene": "借助遮蔽接近并削弱敌人。",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "弱点处决",
+    "scene": "对手露出破绽的瞬间，一枪打满伤害。",
+    "origin": "赛区战术 · 流派·易伤处决",
+    "archetype": "execute",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "AMT06": {
     "title": "空中侦察",
@@ -8506,16 +8649,18 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "AMT07": {
-    "title": "双重防线",
-    "scene": "队友互相掩护。",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "连续交火",
+    "scene": "跟着上一个动作继续压枪，第二段伤害接上。",
+    "origin": "赛区战术 · 流派·连击",
+    "archetype": "combo",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "AMT08": {
-    "title": "紧急补给",
-    "scene": "快速补充资源。",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "刀锋风暴",
+    "scene": "整场比赛，每一把飞刀都更致命。",
+    "origin": "赛区战术 · 流派·连击",
+    "archetype": "combo",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "AMT09": {
     "title": "穿透打击",
@@ -8536,16 +8681,18 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "AMT12": {
-    "title": "灵活走位",
-    "scene": "躲避敌方攻击。",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "快速转点",
+    "scene": "接在队友动作后快速转点。",
+    "origin": "赛区战术 · 流派·连击",
+    "archetype": "combo",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "AMT13": {
-    "title": "火力试探",
-    "scene": "攻击同时收集情报。",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "标记弱点",
+    "scene": "先标记，再趁着连续动作补一枪。",
+    "origin": "赛区战术 · 流派·易伤处决",
+    "archetype": "execute",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "AMT14": {
     "title": "联合施压",
@@ -8560,10 +8707,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "AMT16": {
-    "title": "设伏反打",
-    "scene": "引诱敌人并准备反击。",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "一穿三",
+    "scene": "连续动作打出节奏，三段扫射再来一轮。",
+    "origin": "赛区战术 · 流派·连击",
+    "archetype": "combo",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "AMT17": {
     "title": "弱点标记",
@@ -8572,10 +8720,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "AMT18": {
-    "title": "进攻掩护",
-    "scene": "推进同时保持防护。",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "节奏大师",
+    "scene": "每回合第三张起，所有攻击伤害提高。",
+    "origin": "赛区战术 · 流派·连击",
+    "archetype": "combo",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "AMT19": {
     "title": "覆盖射击",
@@ -8584,10 +8733,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "AMT20": {
-    "title": "稳固撤退",
-    "scene": "边撤边补充资源。",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "肾上腺素",
+    "scene": "心跳加速，本场之后每一枪都更重。",
+    "origin": "赛区战术 · 流派·易伤处决",
+    "archetype": "execute",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "AMT21": {
     "title": "情报掌控",
@@ -8608,10 +8758,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "AMT24": {
-    "title": "集中爆发",
-    "scene": "短时间高伤害。",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "处决时刻",
+    "scene": "对手易伤时，这一枪伤害翻倍。",
+    "origin": "赛区战术 · 流派·易伤处决",
+    "archetype": "execute",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "AMT25": {
     "title": "能量回收",
@@ -8824,10 +8975,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "EUT03": {
-    "title": "信息侦察",
-    "scene": "获取情报并构筑防线",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "燃烧弹",
+    "scene": "燃烧弹封住点位，火焰每回合都在烧。",
+    "origin": "赛区战术 · 流派·燃烧",
+    "archetype": "burn",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT04": {
     "title": "弱点突袭",
@@ -8836,10 +8988,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "EUT05": {
-    "title": "削弱阵线",
-    "scene": "全面降低敌方战力",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "火墙封路",
+    "scene": "一道火墙既挡住进攻，也烧伤冲过来的人。",
+    "origin": "赛区战术 · 流派·燃烧",
+    "archetype": "burn",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT06": {
     "title": "护盾加固",
@@ -8872,22 +9025,25 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "EUT11": {
-    "title": "快速突进",
-    "scene": "零费造成伤害",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "点燃补枪",
+    "scene": "燃烧弹药打出的补枪。",
+    "origin": "赛区战术 · 流派·燃烧",
+    "archetype": "burn",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT12": {
-    "title": "稳固防守",
-    "scene": "零费获得格挡",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "助燃剂",
+    "scene": "往火里再添一把，燃烧层数翻倍。",
+    "origin": "赛区战术 · 流派·燃烧",
+    "archetype": "burn",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT13": {
-    "title": "双重打击",
-    "scene": "连续两次攻击",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "引爆",
+    "scene": "把所有火点一次引爆，燃烧越多伤害越高。",
+    "origin": "赛区战术 · 流派·燃烧",
+    "archetype": "burn",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT14": {
     "title": "易伤标记",
@@ -8902,16 +9058,18 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "EUT16": {
-    "title": "战利品",
-    "scene": "获得一枚攻击令牌",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "纵火专家",
+    "scene": "整场比赛，每回合开始都会补上一把火。",
+    "origin": "赛区战术 · 流派·燃烧",
+    "archetype": "burn",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT17": {
-    "title": "防御工事",
-    "scene": "获得防御令牌并格挡",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "焦土防线",
+    "scene": "守住点位，把地面烧成禁区。",
+    "origin": "赛区战术 · 流派·燃烧",
+    "archetype": "burn",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT18": {
     "title": "全面攻势",
@@ -8926,22 +9084,25 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "EUT20": {
-    "title": "资源循环",
-    "scene": "快速补充手牌",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "兴奋信标",
+    "scene": "信标亮起，本场之后每一枪都更重。",
+    "origin": "赛区战术 · 流派·易伤处决",
+    "archetype": "execute",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT21": {
-    "title": "致命弱点",
-    "scene": "虚弱敌人后精准打击",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "灼烧压制",
+    "scene": "火力与火焰一起压住对手。",
+    "origin": "赛区战术 · 流派·燃烧",
+    "archetype": "burn",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT22": {
-    "title": "战术撤退",
-    "scene": "零费格挡并抽牌",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "余烬追击",
+    "scene": "对手身上还在燃烧时，追击伤害更高。",
+    "origin": "赛区战术 · 流派·燃烧",
+    "archetype": "burn",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT23": {
     "title": "压制射击",
@@ -9154,10 +9315,11 @@ const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "PAT01": {
-    "title": "快攻节奏",
-    "scene": "迅速调整手牌",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "全火力倾泻",
+    "scene": "把弹匣一次打空，下回合要花时间换弹。",
+    "origin": "赛区战术 · 流派·过载爆发",
+    "archetype": "overload",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "PAT02": {
     "title": "固守阵地",
@@ -9166,10 +9328,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "PAT03": {
-    "title": "弱点暴露",
-    "scene": "标记敌方破绽",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "超频架点",
+    "scene": "透支体能硬扛一波，下回合少一步行动。",
+    "origin": "赛区战术 · 流派·过载爆发",
+    "archetype": "overload",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "PAT04": {
     "title": "能量涌动",
@@ -9202,16 +9365,18 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "PAT09": {
-    "title": "快速布局",
-    "scene": "补充资源",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "孤注一掷",
+    "scene": "全队压上一波，赢下这回合，下回合再说。",
+    "origin": "赛区战术 · 流派·过载爆发",
+    "archetype": "overload",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "PAT10": {
-    "title": "控场节奏",
-    "scene": "削弱并补充",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "疾速连段",
+    "scene": "跟着节奏连续出手，还能顺手摸一张牌。",
+    "origin": "赛区战术 · 流派·连击",
+    "archetype": "combo",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "PAT11": {
     "title": "决斗强化",
@@ -9220,10 +9385,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "PAT12": {
-    "title": "先手压制",
-    "scene": "连续快攻",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "飞刀雨",
+    "scene": "一把一把甩出去的飞刀，全是 0 费补刀。",
+    "origin": "赛区战术 · 流派·连击",
+    "archetype": "combo",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "PAT13": {
     "title": "能量汲取",
@@ -9238,10 +9404,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "PAT15": {
-    "title": "信息优势",
-    "scene": "大量补充手牌",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "炸药包",
+    "scene": "炸药包把自己弹进点，下回合落地要缓一步。",
+    "origin": "赛区战术 · 流派·过载爆发",
+    "archetype": "overload",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "PAT16": {
     "title": "精确打击",
@@ -9256,16 +9423,18 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "PAT18": {
-    "title": "稳固防守",
-    "scene": "快速防御",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "补位掩护",
+    "scene": "队友出手后立刻补位掩护。",
+    "origin": "赛区战术 · 流派·连击",
+    "archetype": "combo",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "PAT19": {
-    "title": "战术撤退",
-    "scene": "防守并调整",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "节奏抢断",
+    "scene": "抢在连续动作里打出一枪。",
+    "origin": "赛区战术 · 流派·连击",
+    "archetype": "combo",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "PAT20": {
     "title": "弱点连锁",
@@ -9274,10 +9443,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "PAT21": {
-    "title": "资源调度",
-    "scene": "补充多种资源",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "临场超频",
+    "scene": "透支状态换来整场更强的火力。",
+    "origin": "赛区战术 · 流派·过载爆发",
+    "archetype": "overload",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "PAT22": {
     "title": "双重干扰",
@@ -9298,10 +9468,11 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "PAT25": {
-    "title": "快攻连携",
-    "scene": "快速攻击并补充",
-    "origin": "赛区战术",
-    "note": "赛区战术牌；不代表任何真实选手。"
+    "title": "连击终结",
+    "scene": "连续动作的最后一击。",
+    "origin": "赛区战术 · 流派·连击",
+    "archetype": "combo",
+    "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   }
 };
 
@@ -9624,6 +9795,7 @@ const rows = [
   ...EXTRA_STATUSES.map(c=>[c.id,c.name,'比赛干扰',null,[],null,c.id==='ST04'?'exhaustEnd':'discard']),
   ['TK01','补枪','临时行动',0,[hit(3)],null,'temporary'],
   ['TK02','临时部署','临时行动',0,[block(3)],null,'temporary'],
+ ['TK03','飞刀','临时行动',0,[hit(4)],null,'temporary'],
 ];
 for(const region of Object.values(REGIONS)){
  const prefix={CN:'CN',AM:'AM',EMEA:'EU',PAC:'PA'}[region.id];
@@ -9641,6 +9813,7 @@ const TACTICS = {
  ...EXPANSION_TACTICS,
  ...Object.fromEntries(CURSES.slice(2).map(c=>[c.id,{title:c.name,scene:c.text,origin:'赛季风险 · 原创适配',note:'全赛区共享隐患；只由风险事件加入，不能从普通奖励获得。'}])),
  ...Object.fromEntries(EXTRA_STATUSES.map(c=>[c.id,{title:c.name,scene:c.text,origin:'比赛干扰 · 原创适配',note:'临时状态仅在本场战斗生效，赛后移除。'}])),
+ TK03:{title:'飞刀',scene:'手里还剩一把飞刀，随时补一刀。',origin:'临时行动 · 飞刀',note:'由飞刀类战术生成的 0 费临时牌。'},
  CN01:{title:'抢线点射',scene:'准星先到拐角，第一枪抢到身位。',origin:'枪法 · 抢线',verbs:{hit:'抢线开枪'},note:'通用枪法场景；不额外获得首杀奖励。'},
  CN02:{title:'拉枪接力',scene:'一人拉开枪线，队友跟上补枪。',origin:'配合 · 补枪',verbs:{hit:'拉出交火',token:'留下补枪机会'},note:'补枪需另打生成的临时牌，不会自动追加伤害。'},
  CN03:{title:'首枪破点',scene:'准星停在头线，迎着枪声打开缺口。',origin:'枪法 · 突破',verbs:{hit:'抢下首轮交火'},note:'首枪是战术名称；任何回合都能打出，不要求本回合第一张。'},
@@ -9750,19 +9923,33 @@ function compactLines(card) {
  if(EXTRA_STATUS_RULES[card.id])return ['不能打出',EXTRA_STATUS_RULES[card.id].text];
  const special={ST01:['不能打出'],ST02:['打出以清除此牌'],ST03:['不能打出','本场循环'],CU01:['不能打出','跨比赛保留'],CU02:['不能打出','留手至回合末：','直接失去 2 声望']};
  if(special[card.id])return special[card.id];
- const lines=effects(card).flatMap(e=>{
+ const lines=effects(card).flatMap(function line(e){
+  if(e.type==='combo')return line(e.effect).map((l,i)=>i?l:`连击：${l}`);
+  if(e.type==='hit'&&(e.ifVuln||e.ifBurn))return [`伤害 ${e.n}${e.times>1?` × ${e.times}`:''}`,e.ifVuln?`对手易伤：+${e.ifVuln}`:`对手燃烧：+${e.ifBurn}`];
+  if(e.type==='burn')return [`燃烧 ${e.n}`];
+  if(e.type==='burnMultiply')return [`燃烧层数 ×${e.n}`];
+  if(e.type==='detonate')return [`引爆：燃烧×${e.per}伤害`];
+  if(e.type==='deploy')return [e.kind==='turret'?`部署哨戒炮 ${e.n}×${e.turns}回合`:`部署屏障 ${e.n}布防×${e.turns}回合`];
+  if(e.type==='fireTurrets')return ['哨戒炮立即开火'];
+  if(e.type==='bodyslam')return ['伤害=当前布防'];
+  if(e.type==='strength')return [`本场火力 +${e.n}`];
+  if(e.type==='overload')return [`过载 ${e.n}`];
+  if(e.key==='knife')return ['本场飞刀：',`伤害 +${e.n}`];
+  if(e.key==='comboAtk')return ['每回合第3张起：',`攻击 +${e.n}`];
+  if(e.key==='burnTick')return ['每回合开始：',`燃烧 ${e.n}`];
   if(e.type==='hit')return [`伤害 ${e.n}${e.times>1?` × ${e.times}`:''}`,...(e.ifWeak?[`对手有压制：基础伤害 +${e.ifWeak}`]:[])];
   if(e.type==='block')return [`布防 ${e.n}`];
   if(e.type==='weak')return [`对手压制 ${e.n} 回合`];
   if(e.type==='vulnerable')return [`对手易伤 ${e.n} 回合`];
   if(e.type==='draw')return [`抽 ${e.n} 张牌`];
-  if(e.type==='token')return [`生成 ${e.id==='TK01'?'补枪':'续投减速'} ×1`];
+  if(e.type==='token')return [`生成 ${e.id==='TK01'?'补枪':e.id==='TK03'?'飞刀':'续投减速'} ×1`];
   if(e.key==='duel')return ['每回合首张决斗：',`首段伤害 +${e.n}`];
   if(e.key==='init')return ['每回合首张先锋后：',`布防 +${e.n}`];
   if(e.key==='energy')return ['下回合起，每回合：',`行动点 +${e.n}`];
   if(e.key==='extraDraw')return [`额外抽 ${e.n} 张`];
   return [];
  });
+ if(CARDS[card.id].zone==='retain')lines.push('保留');
  return lines.length<=3?lines:[lines[0],lines[1],lines.slice(2).join(' · ')];
 }
 function cardKeywords(card) {
@@ -9775,6 +9962,13 @@ function cardKeywords(card) {
  if(t.zone==='exhaust')list.push(['消耗','打出后进入消耗区，本场不再抽到。没打出时正常弃置；赛季牌组中的原牌下场恢复。']);
  if(t.zone==='temporary')list.push(['临时','打出或回合末进入消耗区，本场不再抽到；不加入赛季牌组。']);
  if(t.zone==='exhaustEnd')list.push(['回合末消耗','留在手中到回合结束时，进入消耗区，而不是弃牌堆。']);
+ const flat=es.flatMap(e=>e.type==='combo'?[e,e.effect]:[e]);
+ if(flat.some(e=>e.type==='combo'))list.push(['连击','本回合已经打出过其他牌时，才会触发“连击：”后面的效果。']);
+ if(flat.some(e=>['burn','burnMultiply','detonate'].includes(e.type)||e.key==='burnTick'||e.ifBurn))list.push(['燃烧','对手回合开始前失去等同层数的防线（无视布防），然后 -1 层。']);
+ if(flat.some(e=>['deploy','fireTurrets'].includes(e.type)))list.push(['部署','哨戒炮在你的回合结束时自动开火；屏障在回合结束时提供布防。持续指定回合数。']);
+ if(flat.some(e=>e.type==='overload'))list.push(['过载','下回合行动点减少等量。']);
+ if(flat.some(e=>e.type==='strength'))list.push(['火力','本场你每一段攻击伤害 +层数。']);
+ if(t.zone==='retain')list.push(['保留','回合结束时不会被弃掉，留在手中。']);
  if(t.id.startsWith('CU'))list.push(['俱乐部隐患','跨比赛保留。可在俱乐部团建等节点永久移除；直接失去声望不能用布防抵消。']);
  return list;
 }
@@ -9784,22 +9978,31 @@ function describe(card) {
  if(EXTRA_STATUS_RULES[card.id])return EXTRA_STATUS_RULES[card.id].text;
  const special={ST01:'不能打出。占用抽牌；回合结束时消耗。',ST02:'打出以调整身位，然后消耗。未打出则进入弃牌堆。',ST03:'不能打出。弃掉后继续参与本场洗牌。赛后移除。',CU01:'不能打出。跨比赛留在牌组，直到永久移除。',CU02:'不能打出。回合末仍在手中：直接失去 2 声望，布防无效。跨比赛保留。'};
  if(special[card.id]) return special[card.id];
- const text=effects(card).map(e=>{
-  if(e.type==='hit') return `造成 ${e.n} 伤害${e.times>1?` × ${e.times} 次`:''}${e.ifWeak?`；对手有压制时基础伤害 +${e.ifWeak}`:''}`;
+ const text=effects(card).map(function part(e){
+  if(e.type==='combo') return `连击：${part(e.effect)}`;
+  if(e.type==='hit') return `造成 ${e.n} 伤害${e.times>1?` × ${e.times} 次`:''}${e.ifWeak?`；对手有压制时基础伤害 +${e.ifWeak}`:''}${e.ifVuln?`；对手易伤时基础伤害 +${e.ifVuln}`:''}${e.ifBurn?`；对手燃烧时基础伤害 +${e.ifBurn}`:''}`;
+  if(e.type==='burn') return `给予对手 ${e.n} 层燃烧`;
+  if(e.type==='burnMultiply') return `对手燃烧层数 ×${e.n}`;
+  if(e.type==='detonate') return `引爆：造成燃烧层数 ×${e.per} 的伤害并清空燃烧`;
+  if(e.type==='deploy') return e.kind==='turret'?`部署哨戒炮：回合结束时造成 ${e.n} 伤害，持续 ${e.turns} 回合`:`部署屏障无人机：回合结束时获得 ${e.n} 布防，持续 ${e.turns} 回合`;
+  if(e.type==='fireTurrets') return '所有哨戒炮立即开火一次';
+  if(e.type==='bodyslam') return '造成等同于当前布防的伤害';
+  if(e.type==='strength') return `本场获得 ${e.n} 层火力`;
+  if(e.type==='overload') return `过载 ${e.n}（下回合行动点 -${e.n}）`;
   if(e.type==='block') return `获得 ${e.n} 布防`;
   if(e.type==='weak') return `对手压制 ${e.n} 回合（攻击 −25%）`;
   if(e.type==='vulnerable') return `对手易伤 ${e.n} 回合（受到攻击 +50%）`;
   if(e.type==='draw') return `抽 ${e.n} 张牌`;
-  if(e.type==='token') return `生成 1 张${CARDS[e.id].name}·${TACTICS[e.id].title}（0 费，${e.id==='TK01'?'3 伤害':'3 布防'}，临时）`;
-  return ({duel:`本场每回合第一张决斗牌的第一段攻击 +${e.n}`,init:`本场每回合第一张先锋打出后，获得 ${e.n} 布防`,energy:`从下一回合起，每回合行动点 +${e.n}`,extraDraw:`从下一回合起，每回合额外抽 ${e.n} 张`})[e.key];
+  if(e.type==='token') return `生成 1 张${CARDS[e.id].name}·${TACTICS[e.id].title}（0 费，${e.id==='TK01'?'3 伤害':e.id==='TK03'?'4 伤害':'3 布防'}，临时）`;
+  return ({knife:`本场你的飞刀伤害 +${e.n}`,comboAtk:`本场每回合第 3 张及之后的牌，攻击伤害 +${e.n}`,burnTick:`本场每回合开始时给予对手 ${e.n} 层燃烧`,duel:`本场每回合第一张决斗牌的第一段攻击 +${e.n}`,init:`本场每回合第一张先锋打出后，获得 ${e.n} 布防`,energy:`从下一回合起，每回合行动点 +${e.n}`,extraDraw:`从下一回合起，每回合额外抽 ${e.n} 张`})[e.key];
  }).join('；');
- return text + (t.zone==='exhaust'?'。打出后消耗。':t.zone==='temporary'?'。打出或回合末消耗。':t.zone==='power'?'。能力：本场持续生效，不再洗回。':'。');
+ return text + (t.zone==='exhaust'?'。打出后消耗。':t.zone==='temporary'?'。打出或回合末消耗。':t.zone==='power'?'。能力：本场持续生效，不再洗回。':t.zone==='retain'?'。保留：回合末不弃置。':'。');
 }
 
 return {VERSION,CARDS,PLAYER_IDS,TACTICS,displayText,SKINS,TRAITS,FIELDS,ENEMIES,ROUTE,START,effects,cardName,compactLines,cardKeywords,describe,REGIONS,CURSE_RULES};
 })();
 const module6=(()=>{
-const { VERSION, CARDS, PLAYER_IDS, SKINS, ENEMIES, START, effects, cardName, REGIONS } = module5;
+const { VERSION, CARDS, PLAYER_IDS, SKINS, ENEMIES, START, effects, cardName, REGIONS, TACTICS } = module5;
 const { buildMap, availableNodes } = module4;
 const { CURSES, CURSE_RULES, EXTRA_STATUS_RULES } = module2;
 const clone = x => structuredClone(x);
@@ -9830,6 +10033,14 @@ function offers(s,weights=[15,60,20,5],number=3,excluded=[]) {
   const pool=bins[cost]; result.push(pool[Math.floor(random(s)*pool.length)]);
  }
  return result;
+}
+// Season rewards always include one build-direction card (burn, deploy, combo...)
+// so every reward screen offers a real choice of direction.
+function withArchetype(s,list){
+ if(list.some(id=>TACTICS[id]?.archetype))return list;
+ const pool=REGIONS[s.region].pool.filter(id=>TACTICS[id]?.archetype&&eligible(s,id)&&!list.includes(id));
+ if(!pool.length||!list.length)return list;
+ return [...list.slice(0,-1),pool[Math.floor(random(s)*pool.length)]];
 }
 function createRun(seed='first-season',tutorial=true) {
  const s={version:VERSION,seed:String(seed),tutorial,rng:seedHash(seed),rev:0,nextId:1,node:1,phase:'combat',hp:80,maxHp:80,money:60,deck:[],skins:[],logs:[],actions:[],wins:0,battle:null};
@@ -9876,6 +10087,9 @@ function drawCards(s,n) {
 }
 function beginTurn(s) {
  const b=s.battle;b.turn++;b.block=0;b.energy=3+powerTotal(b,'energy');b.roleCounts={};
+ if(b.plays!==undefined)b.plays=0;
+ if(b.overloadNext){b.energy=Math.max(0,b.energy-b.overloadNext);b.overload=b.overloadNext;b.overloadNext=0;}else if(b.overload)b.overload=0;
+ const tick=powerTotal(b,'burnTick');if(tick){b.enemyBurn=(b.enemyBurn||0)+tick;}
  if(b.field)b.attackedThisTurn=false;
  const eco=b.turn===1&&b.field==='eco'?1:0;b.energy+=eco;
  if(b.turn===1&&s.skins.includes('SK01')){b.block=3;log(s,'磨砂黑：开局获得 3 格挡。');}
@@ -9938,7 +10152,7 @@ function winSeason(s) {
  const elite = node && node.kind==='elite' ? true : ENEMIES[s.battle.enemy].elite;
  const money = elite ? 35 : 20;
  s.money += money;
- s.reward={offers:offers(s,elite?[10,45,30,15]:undefined),elite:!!elite};
+ s.reward={offers:withArchetype(s,offers(s,elite?[10,45,30,15]:undefined)),elite:!!elite};
  s.phase='reward';
  log(s, `资金 +${money}。招募候选：${s.reward.offers.map(id=>CARDS[id].name).join('、')}。`);
 }
@@ -9965,16 +10179,21 @@ function play(s,uid) {
  const reason=canPlay(s,uid);if(reason)throw Error(reason);
  const b=s.battle,c=b.hand.splice(b.hand.findIndex(c=>c.uid===uid),1)[0],t=CARDS[c.id];
  b.energy-=t.cost;b.resolving=c;const first=!(b.roleCounts[t.role]||0);
+ // Plays-this-turn is only tracked in season mode so frozen legacy replays keep their exact state.
+ const playsBefore=b.plays||0;if(s.mode==='season')b.plays=playsBefore+1;
+ const wasVuln=b.enemyVulnerable>0,wasBurning=(b.enemyBurn||0)>0;
+ const knifeBonus=c.id==='TK03'?powerTotal(b,'knife'):0,comboBonus=playsBefore>=2?powerTotal(b,'comboAtk'):0;
  if(t.player)b.roleCounts[t.role]=(b.roleCounts[t.role]||0)+1;
  let bonus=t.player&&t.role==='决斗'&&first?powerTotal(b,'duel'):0;
  const wasWeak=b.enemyWeak>0;log(s,`打出 ${cardName(c)}，支付 ${t.cost} 行动点。`);
  for(const held of b.hand){const rule=CURSE_RULES[held.id];if(rule?.trigger==='onPlayLoseHp'){s.hp=Math.max(0,s.hp-rule.n);log(s,`${rule.name}：声望 -${rule.n}。`);if(!s.hp){lose(s,rule.name);b.resolving=null;return;}}}
- for(const e of effects(c)) {
+ const list=effects(c).flatMap(e=>e.type==='combo'?(playsBefore>0?[e.effect]:[]):[e]);
+ for(const e of list) {
   if(e.type==='hit'){
    let first=0;if(b.field==='highground'&&!b.attackedThisTurn){first=3;}
    if(b.field)b.attackedThisTurn=true;
    for(let i=0;i<e.times;i++){
-    strike(s,damage(e.n+bonus+first+fieldHitBonus(b,e.n,e.times)+(e.ifWeak&&wasWeak?e.ifWeak:0),b.weak>0,b.enemyVulnerable>0));bonus=0;first=0;
+    strike(s,damage(e.n+bonus+first+fieldHitBonus(b,e.n,e.times)+(e.ifWeak&&wasWeak?e.ifWeak:0)+(e.ifVuln&&wasVuln?e.ifVuln:0)+(e.ifBurn&&wasBurning?e.ifBurn:0)+(b.selfStrength||0)+knifeBonus+comboBonus,b.weak>0,b.enemyVulnerable>0));bonus=0;first=0;
     if(s.phase!=='combat'){b.resolving=null;return;}
    }
   }
@@ -9982,6 +10201,14 @@ function play(s,uid) {
   if(e.type==='weak'){b.enemyWeak+=e.n;log(s,`对手虚弱 +${e.n} 回合。`);if(b.aim){b.aim=0;log(s,'压制打断了对手的瞄准。');}}
   if(e.type==='vulnerable'){b.enemyVulnerable+=e.n;log(s,`对手易伤 +${e.n} 回合。`);}
   if(e.type==='draw')drawCards(s,e.n);
+  if(e.type==='burn'){b.enemyBurn=(b.enemyBurn||0)+e.n;log(s,`对手燃烧 +${e.n}。`);}
+  if(e.type==='burnMultiply'){b.enemyBurn=(b.enemyBurn||0)*e.n;log(s,`对手燃烧层数 ×${e.n}。`);}
+  if(e.type==='detonate'){const n=(b.enemyBurn||0)*e.per;b.enemyBurn=0;if(n){strike(s,damage(n,b.weak>0,b.enemyVulnerable>0));if(s.phase!=='combat'){b.resolving=null;return;}}}
+  if(e.type==='deploy'){(b.deployables||=[]).push({kind:e.kind,n:e.n,turns:e.turns});log(s,e.kind==='turret'?`部署哨戒炮（${e.n} 伤害 × ${e.turns} 回合）。`:`部署屏障无人机（${e.n} 布防 × ${e.turns} 回合）。`);}
+  if(e.type==='fireTurrets')for(const d of b.deployables||[]){if(d.kind!=='turret')continue;strike(s,damage(d.n,false,b.enemyVulnerable>0));if(s.phase!=='combat'){b.resolving=null;return;}}
+  if(e.type==='bodyslam'){strike(s,damage(b.block+(b.selfStrength||0),b.weak>0,b.enemyVulnerable>0));if(s.phase!=='combat'){b.resolving=null;return;}}
+  if(e.type==='strength'){b.selfStrength=(b.selfStrength||0)+e.n;log(s,`本场火力 +${e.n}。`);}
+  if(e.type==='overload'){b.overloadNext=(b.overloadNext||0)+e.n;log(s,`过载 ${e.n}：下回合行动点 -${e.n}。`);}
   if(e.type==='token'){
    if(b.hand.length>=10)log(s,'手牌已满，未生成临时牌。');else{b.hand.push(instance(s,e.id));log(s,`生成 ${CARDS[e.id].name}。`);}
   }
@@ -10001,8 +10228,15 @@ function play(s,uid) {
 function endTurn(s) {
  const b=s.battle;
  for(const c of b.hand){const rule=CURSE_RULES[c.id];if(rule?.trigger==='endTurnLoseHp'){s.hp=Math.max(0,s.hp-rule.n);log(s,`${rule.name}：直接失去 ${rule.n} 声望。`);if(!s.hp){lose(s,`${rule.name}耗尽声望`);return;}}}
- for(const c of b.hand){if(['temporary','exhaustEnd'].includes(CARDS[c.id].zone)){b.exhaust.push(c);log(s,`${cardName(c)} 在回合末消耗。`);}else b.discard.push(c);}
- b.hand=[];b.weak=Math.max(0,b.weak-1);b.enemyBlock=0;
+ const kept=[];
+ for(const c of b.hand){if(CARDS[c.id].zone==='retain')kept.push(c);else if(['temporary','exhaustEnd'].includes(CARDS[c.id].zone)){b.exhaust.push(c);log(s,`${cardName(c)} 在回合末消耗。`);}else b.discard.push(c);}
+ b.hand=kept;
+ if(b.deployables?.length){
+  for(const d of b.deployables){if(d.kind==='turret'){log(s,'哨戒炮开火。');strike(s,damage(d.n,false,b.enemyVulnerable>0));if(s.phase!=='combat')return;}else{b.block+=d.n;log(s,`屏障无人机：布防 +${d.n}。`);}d.turns--;}
+  b.deployables=b.deployables.filter(d=>d.turns>0);
+ }
+ if(b.enemyBurn>0){const n=b.enemyBurn;b.enemyHp=Math.max(0,b.enemyHp-n);b.enemyBurn--;log(s,`燃烧：对手防线 -${n}（剩余 ${b.enemyHp}）。`);if(!b.enemyHp){win(s);return;}checkEnemyHpTraits(s);}
+ b.weak=Math.max(0,b.weak-1);b.enemyBlock=0;
  log(s,`对手行动：${intentText(s)}。`);
  const acting=intent(s);
  if(b.field==='overtime'&&b.turn>=5)b.enemyStrength=(b.enemyStrength||0)+2;
@@ -10614,6 +10848,12 @@ const CARD_ART={
     "kind": "illustration",
     "concept": false
   },
+  "TK03": {
+    "path": "assets/special/TK03.svg",
+    "name": "飞刀",
+    "kind": "illustration",
+    "concept": false
+  },
   "AM01": {
     "path": "assets/players/AM01.png",
     "profileUrl": "https://www.vlr.gg/player/601/asuna",
@@ -11132,7 +11372,7 @@ const CARD_ART={
   },
   "CNT01": {
     "path": "assets/special/CNT01.svg",
-    "name": "快速部署",
+    "name": "炮台架点",
     "kind": "illustration",
     "concept": false
   },
@@ -11156,7 +11396,7 @@ const CARD_ART={
   },
   "CNT05": {
     "path": "assets/special/CNT05.svg",
-    "name": "压制火力",
+    "name": "屏障无人机",
     "kind": "illustration",
     "concept": false
   },
@@ -11174,7 +11414,7 @@ const CARD_ART={
   },
   "CNT08": {
     "path": "assets/special/CNT08.svg",
-    "name": "情报优势",
+    "name": "集火指令",
     "kind": "illustration",
     "concept": false
   },
@@ -11198,7 +11438,7 @@ const CARD_ART={
   },
   "CNT12": {
     "path": "assets/special/CNT12.svg",
-    "name": "全面压制",
+    "name": "以守代攻",
     "kind": "illustration",
     "concept": false
   },
@@ -11222,13 +11462,13 @@ const CARD_ART={
   },
   "CNT16": {
     "path": "assets/special/CNT16.svg",
-    "name": "战略撤退",
+    "name": "架枪等待",
     "kind": "illustration",
     "concept": false
   },
   "CNT17": {
     "path": "assets/special/CNT17.svg",
-    "name": "信息封锁",
+    "name": "留枪",
     "kind": "illustration",
     "concept": false
   },
@@ -11240,13 +11480,13 @@ const CARD_ART={
   },
   "CNT19": {
     "path": "assets/special/CNT19.svg",
-    "name": "连环计",
+    "name": "铁壁架点",
     "kind": "illustration",
     "concept": false
   },
   "CNT20": {
     "path": "assets/special/CNT20.svg",
-    "name": "火力侦察",
+    "name": "交叉火力网",
     "kind": "illustration",
     "concept": false
   },
@@ -11258,13 +11498,13 @@ const CARD_ART={
   },
   "CNT22": {
     "path": "assets/special/CNT22.svg",
-    "name": "游击战术",
+    "name": "稳守反击",
     "kind": "illustration",
     "concept": false
   },
   "CNT23": {
     "path": "assets/special/CNT23.svg",
-    "name": "心理战",
+    "name": "阵地轮换",
     "kind": "illustration",
     "concept": false
   },
@@ -11480,7 +11720,7 @@ const CARD_ART={
   },
   "AMT02": {
     "path": "assets/special/AMT02.svg",
-    "name": "破绽侦察",
+    "name": "飞刀出手",
     "kind": "illustration",
     "concept": false
   },
@@ -11498,7 +11738,7 @@ const CARD_ART={
   },
   "AMT05": {
     "path": "assets/special/AMT05.svg",
-    "name": "烟雾推进",
+    "name": "弱点处决",
     "kind": "illustration",
     "concept": false
   },
@@ -11510,13 +11750,13 @@ const CARD_ART={
   },
   "AMT07": {
     "path": "assets/special/AMT07.svg",
-    "name": "防守协同",
+    "name": "连续交火",
     "kind": "illustration",
     "concept": false
   },
   "AMT08": {
     "path": "assets/special/AMT08.svg",
-    "name": "快速换弹",
+    "name": "刀锋风暴",
     "kind": "illustration",
     "concept": false
   },
@@ -11540,13 +11780,13 @@ const CARD_ART={
   },
   "AMT12": {
     "path": "assets/special/AMT12.svg",
-    "name": "预判闪避",
+    "name": "快速转点",
     "kind": "illustration",
     "concept": false
   },
   "AMT13": {
     "path": "assets/special/AMT13.svg",
-    "name": "火力侦察",
+    "name": "标记弱点",
     "kind": "illustration",
     "concept": false
   },
@@ -11564,7 +11804,7 @@ const CARD_ART={
   },
   "AMT16": {
     "path": "assets/special/AMT16.svg",
-    "name": "诱敌深入",
+    "name": "一穿三",
     "kind": "illustration",
     "concept": false
   },
@@ -11576,7 +11816,7 @@ const CARD_ART={
   },
   "AMT18": {
     "path": "assets/special/AMT18.svg",
-    "name": "突击路线",
+    "name": "节奏大师",
     "kind": "illustration",
     "concept": false
   },
@@ -11588,7 +11828,7 @@ const CARD_ART={
   },
   "AMT20": {
     "path": "assets/special/AMT20.svg",
-    "name": "后撤防守",
+    "name": "肾上腺素",
     "kind": "illustration",
     "concept": false
   },
@@ -11612,7 +11852,7 @@ const CARD_ART={
   },
   "AMT24": {
     "path": "assets/special/AMT24.svg",
-    "name": "爆发输出",
+    "name": "处决时刻",
     "kind": "illustration",
     "concept": false
   },
@@ -11828,7 +12068,7 @@ const CARD_ART={
   },
   "EUT03": {
     "path": "assets/special/EUT03.svg",
-    "name": "信息侦察",
+    "name": "燃烧弹",
     "kind": "illustration",
     "concept": false
   },
@@ -11840,7 +12080,7 @@ const CARD_ART={
   },
   "EUT05": {
     "path": "assets/special/EUT05.svg",
-    "name": "削弱阵线",
+    "name": "火墙封路",
     "kind": "illustration",
     "concept": false
   },
@@ -11876,19 +12116,19 @@ const CARD_ART={
   },
   "EUT11": {
     "path": "assets/special/EUT11.svg",
-    "name": "快速突进",
+    "name": "点燃补枪",
     "kind": "illustration",
     "concept": false
   },
   "EUT12": {
     "path": "assets/special/EUT12.svg",
-    "name": "稳固防守",
+    "name": "助燃剂",
     "kind": "illustration",
     "concept": false
   },
   "EUT13": {
     "path": "assets/special/EUT13.svg",
-    "name": "双重打击",
+    "name": "引爆",
     "kind": "illustration",
     "concept": false
   },
@@ -11906,13 +12146,13 @@ const CARD_ART={
   },
   "EUT16": {
     "path": "assets/special/EUT16.svg",
-    "name": "战利品",
+    "name": "纵火专家",
     "kind": "illustration",
     "concept": false
   },
   "EUT17": {
     "path": "assets/special/EUT17.svg",
-    "name": "防御工事",
+    "name": "焦土防线",
     "kind": "illustration",
     "concept": false
   },
@@ -11930,19 +12170,19 @@ const CARD_ART={
   },
   "EUT20": {
     "path": "assets/special/EUT20.svg",
-    "name": "资源循环",
+    "name": "兴奋信标",
     "kind": "illustration",
     "concept": false
   },
   "EUT21": {
     "path": "assets/special/EUT21.svg",
-    "name": "致命弱点",
+    "name": "灼烧压制",
     "kind": "illustration",
     "concept": false
   },
   "EUT22": {
     "path": "assets/special/EUT22.svg",
-    "name": "战术撤退",
+    "name": "余烬追击",
     "kind": "illustration",
     "concept": false
   },
@@ -12158,7 +12398,7 @@ const CARD_ART={
   },
   "PAT01": {
     "path": "assets/special/PAT01.svg",
-    "name": "快攻节奏",
+    "name": "全火力倾泻",
     "kind": "illustration",
     "concept": false
   },
@@ -12170,7 +12410,7 @@ const CARD_ART={
   },
   "PAT03": {
     "path": "assets/special/PAT03.svg",
-    "name": "弱点暴露",
+    "name": "超频架点",
     "kind": "illustration",
     "concept": false
   },
@@ -12206,13 +12446,13 @@ const CARD_ART={
   },
   "PAT09": {
     "path": "assets/special/PAT09.svg",
-    "name": "快速布局",
+    "name": "孤注一掷",
     "kind": "illustration",
     "concept": false
   },
   "PAT10": {
     "path": "assets/special/PAT10.svg",
-    "name": "控场节奏",
+    "name": "疾速连段",
     "kind": "illustration",
     "concept": false
   },
@@ -12224,7 +12464,7 @@ const CARD_ART={
   },
   "PAT12": {
     "path": "assets/special/PAT12.svg",
-    "name": "先手压制",
+    "name": "飞刀雨",
     "kind": "illustration",
     "concept": false
   },
@@ -12242,7 +12482,7 @@ const CARD_ART={
   },
   "PAT15": {
     "path": "assets/special/PAT15.svg",
-    "name": "信息优势",
+    "name": "炸药包",
     "kind": "illustration",
     "concept": false
   },
@@ -12260,13 +12500,13 @@ const CARD_ART={
   },
   "PAT18": {
     "path": "assets/special/PAT18.svg",
-    "name": "稳固防守",
+    "name": "补位掩护",
     "kind": "illustration",
     "concept": false
   },
   "PAT19": {
     "path": "assets/special/PAT19.svg",
-    "name": "战术撤退",
+    "name": "节奏抢断",
     "kind": "illustration",
     "concept": false
   },
@@ -12278,7 +12518,7 @@ const CARD_ART={
   },
   "PAT21": {
     "path": "assets/special/PAT21.svg",
-    "name": "资源调度",
+    "name": "临场超频",
     "kind": "illustration",
     "concept": false
   },
@@ -12302,7 +12542,7 @@ const CARD_ART={
   },
   "PAT25": {
     "path": "assets/special/PAT25.svg",
-    "name": "快攻连携",
+    "name": "连击终结",
     "kind": "illustration",
     "concept": false
   }
@@ -13844,11 +14084,12 @@ function handCard(c,i,n){const t=CARDS[c.id],reason=canPlay(state,c.uid),offset=
 function fighter(which){
  const own=which==='self',b=state.battle,e=ENEMIES[b.enemy],hp=own?state.hp:b.enemyHp,max=own?state.maxHp:e.hp,block=own?b.block:b.enemyBlock;
  const growth=e.growth??2;
- const badges=own?statusBadges([['block',b.block],['weak',b.weak],['vuln',b.vulnerable]]):statusBadges([['block',b.enemyBlock],['strength',b.enemyStrength],['aim',b.aim],['weak',b.enemyWeak],['vuln',b.enemyVulnerable]]);
+ const badges=own?statusBadges([['block',b.block],['strength',b.selfStrength],['overload',b.overload],['weak',b.weak],['vuln',b.vulnerable]]):statusBadges([['block',b.enemyBlock],['strength',b.enemyStrength],['aim',b.aim],['burn',b.enemyBurn],['weak',b.enemyWeak],['vuln',b.enemyVulnerable]]);
+ const deploys=own&&b.deployables?.length?`<span class="deploy-row">${b.deployables.map(d=>`<span class="deploy-chip" title="${d.kind==='turret'?`哨戒炮：回合结束时造成 ${d.n} 伤害`:`屏障无人机：回合结束时获得 ${d.n} 布防`}，剩余 ${d.turns} 回合">${statusIcon(d.kind==='turret'?'sentry':'block')}<b>${d.n}</b><small>×${d.turns}</small></span>`).join('')}</span>`:'';
  const trait=!own&&b.trait&&TRAITS[b.trait.id];
  const traitHtml=trait?`<div class="trait-row"><span class="trait-tag" tabindex="0" title="${esc(trait.text(b.trait.n))}">${statusIcon(trait.icon)}${esc(trait.name)}${b.trait.id==='tempo'?` ${b.tempoCount||0}/${b.trait.n}`:''}</span></div>`:'';
  const look=e.look||(/E01$/.test(b.enemy)?'rookie':b.enemy);
- return `<section data-drop-target="${which}" class="fighter ${own?'ally':'enemy'}"${own?'':` data-character-variant="${esc(look)}"`}>${!own?`<div class="intent-bubble"><small>对手意图</small><strong>${highlightKeywords(displayText(intentText(state)))}</strong>${e.boss?`<span>长战增伤 +${b.cycles*growth}</span>`:''}</div>`:'<div class="team-label">'+(state.region||'CN')+'俱乐部</div>'}<button class="combat-target" data-target="${which}" aria-label="${own?'我方俱乐部':'对手队伍'}，可作为出牌目标">${own?`<span class="crest">${icon('shield')}<b>${state.region||'CN'}</b></span>`:opponentArtwork(b.enemy)}<span class="target-caption">${own?'施放到我方':'施放到对手'}</span><span class="status-overlay">${badges}</span></button><h2>${own?(REGIONS[state.region]?.name||'新锐')+'俱乐部':e.name}</h2>${traitHtml}<div class="life-row"><span class="shield-value" title="布防：陷阱、墙与阻滞提供的伤害抵消；下次己方回合开始清空。" aria-label="布防 ${block}">${icon('shield')}<small>布防</small> ${block}</span><div class="life-bar ${own?'own':''}"><i style="width:${hp/max*100}%"></i><span>${hp} / ${max} ${own?'声望':'防线'}</span></div></div>${own?`<div class="active-powers">${b.powers.map(c=>`<span title="${esc(describe(c))}">${icon('power')}${esc(cardName(c))}</span>`).join('')}</div>`:''}</section>`;
+ return `<section data-drop-target="${which}" class="fighter ${own?'ally':'enemy'}"${own?'':` data-character-variant="${esc(look)}"`}>${!own?`<div class="intent-bubble"><small>对手意图</small><strong>${highlightKeywords(displayText(intentText(state)))}</strong>${e.boss?`<span>长战增伤 +${b.cycles*growth}</span>`:''}</div>`:'<div class="team-label">'+(state.region||'CN')+'俱乐部</div>'}<button class="combat-target" data-target="${which}" aria-label="${own?'我方俱乐部':'对手队伍'}，可作为出牌目标">${own?`<span class="crest">${icon('shield')}<b>${state.region||'CN'}</b></span>`:opponentArtwork(b.enemy)}<span class="target-caption">${own?'施放到我方':'施放到对手'}</span><span class="status-overlay">${badges}</span>${deploys}</button><h2>${own?(REGIONS[state.region]?.name||'新锐')+'俱乐部':e.name}</h2>${traitHtml}<div class="life-row"><span class="shield-value" title="布防：陷阱、墙与阻滞提供的伤害抵消；下次己方回合开始清空。" aria-label="布防 ${block}">${icon('shield')}<small>布防</small> ${block}</span><div class="life-bar ${own?'own':''}"><i style="width:${hp/max*100}%"></i><span>${hp} / ${max} ${own?'声望':'防线'}</span></div></div>${own?`<div class="active-powers">${b.powers.map(c=>`<span title="${esc(describe(c))}">${icon('power')}${esc(cardName(c))}</span>`).join('')}</div>`:''}</section>`;
 }
 function battle(){
  const b=state.battle,incoming=intent(state).filter(a=>a.type==='hit').reduce((n,a)=>n+a.n*a.times*(b.vulnerable>0?1.5:1),0),hurt=Math.max(0,Math.floor(incoming)-b.block),curse=b.hand.reduce((n,c)=>n+(CURSE_RULES[c.id]?.trigger==='endTurnLoseHp'?CURSE_RULES[c.id].n:0),0);

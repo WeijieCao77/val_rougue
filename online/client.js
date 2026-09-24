@@ -181,14 +181,14 @@ function renderGame() {
       <section class="opponent-panel">
         <h3>${esc(room.members?.find(m => m.seat !== mySeat)?.name || '对手')}</h3>
         <p>手牌 ${opp.handCount} 张 · 抽牌堆 ${opp.drawCount}</p>
-        <p>声望 ${opp.hp}/${opp.maxHp} · 布防 ${opp.block}${opp.weak ? ` · 压制 ${opp.weak}` : ''}${opp.vulnerable ? ` · 易伤 ${opp.vulnerable}` : ''}</p>
+        <p>声望 ${opp.hp}/${opp.maxHp} · 布防 ${opp.block}${opp.weak ? ` · 压制 ${opp.weak}` : ''}${opp.vulnerable ? ` · 易伤 ${opp.vulnerable}` : ''}${opp.burn ? ` · 燃烧 ${opp.burn}` : ''}${opp.strength ? ` · 火力 ${opp.strength}` : ''}${opp.overload ? ` · 过载 ${opp.overload}` : ''}${(opp.deployables || []).map(d => ` · ${d.kind === 'turret' ? '哨戒炮' : '屏障'} ${d.n}×${d.turns}`).join('')}</p>
         <div class="opp-hand-stub">${Array.from({ length: Math.min(opp.handCount, 10) }).map(() => '<span class="card-back"></span>').join('')}</div>
       </section>
       <section class="battle-ground">
         ${finished ? `<div class="battle-result">${resultText}</div>` : ''}
         <div class="my-info">
           <h3>你</h3>
-          <p>声望 ${me.hp}/${me.maxHp} · 布防 ${me.block}${me.weak ? ` · 压制 ${me.weak}` : ''}${me.vulnerable ? ` · 易伤 ${me.vulnerable}` : ''}</p>
+          <p>声望 ${me.hp}/${me.maxHp} · 布防 ${me.block}${me.weak ? ` · 压制 ${me.weak}` : ''}${me.vulnerable ? ` · 易伤 ${me.vulnerable}` : ''}${me.burn ? ` · 燃烧 ${me.burn}` : ''}${me.strength ? ` · 火力 ${me.strength}` : ''}${me.overload ? ` · 过载 ${me.overload}` : ''}${(me.deployables || []).map(d => ` · ${d.kind === 'turret' ? '哨戒炮' : '屏障'} ${d.n}×${d.turns}`).join('')}</p>
           <p>行动点 ${me.energy} · 抽牌堆 ${me.drawCount}</p>
           <div class="powers">${(me.powers || []).map(p => `<span class="power-chip">${esc(cardName(p))}</span>`).join('')}</div>
         </div>
@@ -227,14 +227,14 @@ function roomKey(r) {
       turn: r.match.turn,
       you: {
         hp: r.match.you.hp, maxHp: r.match.you.maxHp, block: r.match.you.block,
-        weak: r.match.you.weak, vulnerable: r.match.you.vulnerable,
+        weak: r.match.you.weak, vulnerable: r.match.you.vulnerable, burn: r.match.you.burn, strength: r.match.you.strength, overload: r.match.you.overload, deployables: r.match.you.deployables,
         energy: r.match.you.energy, hand: r.match.you.hand?.map(c => c.uid),
         drawCount: r.match.you.drawCount, discardCount: r.match.you.discard?.length,
         exhaustCount: r.match.you.exhaust?.length, powers: r.match.you.powers
       },
       opponent: {
         hp: r.match.opponent.hp, maxHp: r.match.opponent.maxHp, block: r.match.opponent.block,
-        weak: r.match.opponent.weak, vulnerable: r.match.opponent.vulnerable,
+        weak: r.match.opponent.weak, vulnerable: r.match.opponent.vulnerable, burn: r.match.opponent.burn, strength: r.match.opponent.strength, overload: r.match.opponent.overload, deployables: r.match.opponent.deployables,
         handCount: r.match.opponent.handCount, drawCount: r.match.opponent.drawCount
       },
       log: r.match.log

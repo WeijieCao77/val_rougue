@@ -7,7 +7,7 @@
 - 仓库：<https://github.com/WeijieCao77/val_rougue.git>。`main` 与 `codex/tactical-card-design` 均为提交 `f2f940ec6130d34a36703103cf72458cf5d32994`；2026-09-23 交接时工作区干净，两个分支都已推送 GitHub。
 - Railway 部署 `e118bacf-d040-4208-b885-041c2c90e4dc` 状态为 `SUCCESS`，线上网页资源已核对。首页：<https://valrougue-production.up.railway.app/>；瓦 Demo：`/wa/`；新 Demo：`/new/`；好友 PvP：`/pvp/`。
 - 旧尝试版完整保留在标签 `demo-d0.2.0-attempt-2026-09-22`（提交 `461e7d0948c8b478b8203b484466ce79ddc290a2`）。不要移动或删除这个标签。当前两版 Demo 是继续开发的版本，不是这个冻结标签。
-- 最近一次改动（2026-09-23 夜）：新 Demo 按自动首幕试玩数据调整平衡——敌人新增“强化火力”成长意图，三幕对手 HP／伤害上调，2–3 费牌伤害与布防加强，修掉太平洋·调度起手的 0 费抽牌无限循环，并调整三队起手牌。详见 `docs/NEW-DEMO-PLAYTEST-2026-09-23.md`。瓦 Demo 未改。地图滚动一轮与这一轮都还没有用户真人试玩反馈。
+- 最近一次改动（2026-09-24）：两版都做了多样性改造——对手原型（各有外观、打法和特性）、每场战场、状态图标徽章、关键词高亮、商店 NPC 场景；卡牌新增燃烧／部署／连击／布防反击／过载／易伤处决流派（新 Demo 另有“发现”），PvP 同步支持。详见 `docs/VARIETY-PASS-2026-09-24.md`。瓦 Demo 赛季存档键已轮换。尚无真人试玩反馈。
 
 ## 产品和边界
 
@@ -36,13 +36,13 @@ npm start
 | PvP 和持久化 | `online/api.mjs`、`online/duel.mjs`、`online/store.mjs`、`online/client.js`、`server.mjs` |
 | 构建与验证 | `tools/build-browser.mjs`、`tests/`、`package.json` |
 
-最近一次 `npm run build` 成功、`npm test` **125 通过、0 失败**，两版地图也在桌面和 390 像素宽手机视口检查过。这些测试不等于已证明游戏平衡或好玩。Railway 使用 `/data` 持久卷、`DATA_DIR=/data`、单实例；PostgreSQL 适配未在真实生产数据库验收，改存储前应查 `docs/ONLINE-SETUP.md` 并核对当前服务端配置。
+最近一次 `npm run build` 成功、`npm test` **137 通过、0 失败**，两版地图也在桌面和 390 像素宽手机视口检查过。这些测试不等于已证明游戏平衡或好玩。Railway 使用 `/data` 持久卷、`DATA_DIR=/data`、单实例；PostgreSQL 适配未在真实生产数据库验收，改存储前应查 `docs/ONLINE-SETUP.md` 并核对当前服务端配置。
 
 ## 资料阅读顺序与过时信息
 
 1. `AGENTS.md`：当前工作纪律、产品约定和凭据边界。
 2. `docs/ROUTE-PACING-12-STOPS.md`：当前地图结构、随机性和地图视觉调整。
-3. `docs/NEW-DEMO-FUN-AUDIT.md`、`docs/NEW-DEMO-PLAYTEST-2026-09-23.md`：新 Demo 可玩性诊断与自动试玩数据；结论仍待真实玩家验证。试玩脚本在 `tools/playtest-new-demo.mjs`。
+3. `docs/VARIETY-PASS-2026-09-24.md`、`docs/NEW-DEMO-FUN-AUDIT.md`、`docs/NEW-DEMO-PLAYTEST-2026-09-23.md`：新 Demo 可玩性诊断与自动试玩数据；结论仍待真实玩家验证。试玩脚本在 `tools/playtest-new-demo.mjs`、`tools/playtest-wa.mjs`。
 4. `docs/STAGE-SNAPSHOT-PVP.md`、`docs/WA-PVP-RULES.md`：历史构筑和 PvP 规则。
 5. `docs/CARD-ROLE-AND-MOTION-AUDIT-2026-09-23.md`、`docs/STS1-CARD-DESIGN-REPORT.md`：卡牌与表现参考。
 

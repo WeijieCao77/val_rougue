@@ -17,9 +17,9 @@ function evaluate(s) {
   if (s.phase === 'result') return s.outcome === 'win' ? 1e5 : -1e6;
   if (s.phase !== 'combat') return 1e5 + s.hp * 10;
   const b = s.battle;
-  return s.hp * 1.6 - b.enemyHp + b.enemyWeak * 2.5 + b.enemyVulnerable * 3 - (b.enemyStrength || 0) * 0.5 - (b.aim ? 6 : 0) - b.turn * 0.6 + b.powers.length * 6;
+  return s.hp * 1.6 - b.enemyHp + (b.enemyBurn || 0) * 2 + (b.deployables || []).reduce((v, d) => v + d.n * d.turns * 0.7, 0) + (b.selfStrength || 0) * 3 + b.enemyWeak * 2.5 + b.enemyVulnerable * 3 - (b.enemyStrength || 0) * 0.5 - (b.aim ? 6 : 0) - b.turn * 0.6 + b.powers.length * 6;
 }
-const key = s => { const b = s.battle; return [b.hand.map(c => c.id + (c.up ? '+' : '')).sort().join(','), b.energy, b.enemyHp, b.block, s.hp, b.enemyWeak, b.enemyVulnerable, b.enemyBlock, b.aim, b.enemyStrength, b.draw.length].join('|'); };
+const key = s => { const b = s.battle; return [b.hand.map(c => c.id + (c.up ? '+' : '')).sort().join(','), b.energy, b.enemyHp, b.block, s.hp, b.enemyWeak, b.enemyVulnerable, b.enemyBlock, b.aim, b.enemyStrength, b.draw.length, b.enemyBurn, b.plays, b.selfStrength, (b.deployables || []).length].join('|'); };
 
 function searchTurn(s, budget = 2000) {
   const seen = new Set(); let best = null, nodes = 0;
@@ -33,7 +33,8 @@ function searchTurn(s, budget = 2000) {
   dfs(s, []);
   return best.line;
 }
-const hitValue = id => (CARDS[id]?.effects || []).reduce((v, e) => v + (e.type === 'hit' ? e.n * e.times : e.type === 'block' ? e.n * 0.8 : e.type === 'draw' ? e.n * 3 : e.type === 'weak' || e.type === 'vulnerable' ? e.n * 3 : 2), 0) / ((CARDS[id]?.cost ?? 1) + 0.8);
+const effValue = e => e.type === 'combo' ? effValue(e.effect) * 0.7 : e.type === 'hit' ? e.n * e.times + (e.ifVuln || e.ifBurn || 0) * 0.5 : e.type === 'block' ? e.n * 0.8 : e.type === 'draw' ? e.n * 3 : e.type === 'weak' || e.type === 'vulnerable' ? e.n * 3 : e.type === 'burn' ? e.n * 2.2 : e.type === 'deploy' ? e.n * e.turns * 0.8 : e.type === 'overload' ? -4 * e.n : e.type === 'strength' ? 5 * e.n : ['burnMultiply', 'detonate', 'bodyslam', 'fireTurrets'].includes(e.type) ? 7 : 2;
+const hitValue = id => (CARDS[id]?.effects || []).reduce((v, e) => v + effValue(e), 0) / ((CARDS[id]?.cost ?? 1) + 0.8);
 
 function playRun(seed, region) {
   let s = createWaSeason(seed, false, region, seed);
@@ -82,6 +83,7 @@ function playRun(seed, region) {
     if (s.phase === 'event') { s = step(s, acts.find(a => a.choice === 'skip') || acts[0]); continue; }
     throw Error('unhandled phase ' + s.phase);
   }
+  log.deck = s.deck.map(c => c.id);
   if (!log.result) log.result = s.outcome || 'stopped';
   if (log.result === 'loss') log.diedAt = fight?.enemy;
   return log;

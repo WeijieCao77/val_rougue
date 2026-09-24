@@ -237,6 +237,12 @@ export const CARD_ART={
     "kind": "illustration",
     "concept": false
   },
+  "TK03": {
+    "path": "assets/special/TK03.svg",
+    "name": "飞刀",
+    "kind": "illustration",
+    "concept": false
+  },
   "AM01": {
     "path": "assets/players/AM01.png",
     "profileUrl": "https://www.vlr.gg/player/601/asuna",
@@ -755,7 +761,7 @@ export const CARD_ART={
   },
   "CNT01": {
     "path": "assets/special/CNT01.svg",
-    "name": "快速部署",
+    "name": "炮台架点",
     "kind": "illustration",
     "concept": false
   },
@@ -779,7 +785,7 @@ export const CARD_ART={
   },
   "CNT05": {
     "path": "assets/special/CNT05.svg",
-    "name": "压制火力",
+    "name": "屏障无人机",
     "kind": "illustration",
     "concept": false
   },
@@ -797,7 +803,7 @@ export const CARD_ART={
   },
   "CNT08": {
     "path": "assets/special/CNT08.svg",
-    "name": "情报优势",
+    "name": "集火指令",
     "kind": "illustration",
     "concept": false
   },
@@ -821,7 +827,7 @@ export const CARD_ART={
   },
   "CNT12": {
     "path": "assets/special/CNT12.svg",
-    "name": "全面压制",
+    "name": "以守代攻",
     "kind": "illustration",
     "concept": false
   },
@@ -845,13 +851,13 @@ export const CARD_ART={
   },
   "CNT16": {
     "path": "assets/special/CNT16.svg",
-    "name": "战略撤退",
+    "name": "架枪等待",
     "kind": "illustration",
     "concept": false
   },
   "CNT17": {
     "path": "assets/special/CNT17.svg",
-    "name": "信息封锁",
+    "name": "留枪",
     "kind": "illustration",
     "concept": false
   },
@@ -863,13 +869,13 @@ export const CARD_ART={
   },
   "CNT19": {
     "path": "assets/special/CNT19.svg",
-    "name": "连环计",
+    "name": "铁壁架点",
     "kind": "illustration",
     "concept": false
   },
   "CNT20": {
     "path": "assets/special/CNT20.svg",
-    "name": "火力侦察",
+    "name": "交叉火力网",
     "kind": "illustration",
     "concept": false
   },
@@ -881,13 +887,13 @@ export const CARD_ART={
   },
   "CNT22": {
     "path": "assets/special/CNT22.svg",
-    "name": "游击战术",
+    "name": "稳守反击",
     "kind": "illustration",
     "concept": false
   },
   "CNT23": {
     "path": "assets/special/CNT23.svg",
-    "name": "心理战",
+    "name": "阵地轮换",
     "kind": "illustration",
     "concept": false
   },
@@ -1103,7 +1109,7 @@ export const CARD_ART={
   },
   "AMT02": {
     "path": "assets/special/AMT02.svg",
-    "name": "破绽侦察",
+    "name": "飞刀出手",
     "kind": "illustration",
     "concept": false
   },
@@ -1121,7 +1127,7 @@ export const CARD_ART={
   },
   "AMT05": {
     "path": "assets/special/AMT05.svg",
-    "name": "烟雾推进",
+    "name": "弱点处决",
     "kind": "illustration",
     "concept": false
   },
@@ -1133,13 +1139,13 @@ export const CARD_ART={
   },
   "AMT07": {
     "path": "assets/special/AMT07.svg",
-    "name": "防守协同",
+    "name": "连续交火",
     "kind": "illustration",
     "concept": false
   },
   "AMT08": {
     "path": "assets/special/AMT08.svg",
-    "name": "快速换弹",
+    "name": "刀锋风暴",
     "kind": "illustration",
     "concept": false
   },
@@ -1163,13 +1169,13 @@ export const CARD_ART={
   },
   "AMT12": {
     "path": "assets/special/AMT12.svg",
-    "name": "预判闪避",
+    "name": "快速转点",
     "kind": "illustration",
     "concept": false
   },
   "AMT13": {
     "path": "assets/special/AMT13.svg",
-    "name": "火力侦察",
+    "name": "标记弱点",
     "kind": "illustration",
     "concept": false
   },
@@ -1187,7 +1193,7 @@ export const CARD_ART={
   },
   "AMT16": {
     "path": "assets/special/AMT16.svg",
-    "name": "诱敌深入",
+    "name": "一穿三",
     "kind": "illustration",
     "concept": false
   },
@@ -1199,7 +1205,7 @@ export const CARD_ART={
   },
   "AMT18": {
     "path": "assets/special/AMT18.svg",
-    "name": "突击路线",
+    "name": "节奏大师",
     "kind": "illustration",
     "concept": false
   },
@@ -1211,7 +1217,7 @@ export const CARD_ART={
   },
   "AMT20": {
     "path": "assets/special/AMT20.svg",
-    "name": "后撤防守",
+    "name": "肾上腺素",
     "kind": "illustration",
     "concept": false
   },
@@ -1235,7 +1241,7 @@ export const CARD_ART={
   },
   "AMT24": {
     "path": "assets/special/AMT24.svg",
-    "name": "爆发输出",
+    "name": "处决时刻",
     "kind": "illustration",
     "concept": false
   },
@@ -1451,7 +1457,7 @@ export const CARD_ART={
   },
   "EUT03": {
     "path": "assets/special/EUT03.svg",
-    "name": "信息侦察",
+    "name": "燃烧弹",
     "kind": "illustration",
     "concept": false
   },
@@ -1463,7 +1469,7 @@ export const CARD_ART={
   },
   "EUT05": {
     "path": "assets/special/EUT05.svg",
-    "name": "削弱阵线",
+    "name": "火墙封路",
     "kind": "illustration",
     "concept": false
   },
@@ -1499,19 +1505,19 @@ export const CARD_ART={
   },
   "EUT11": {
     "path": "assets/special/EUT11.svg",
-    "name": "快速突进",
+    "name": "点燃补枪",
     "kind": "illustration",
     "concept": false
   },
   "EUT12": {
     "path": "assets/special/EUT12.svg",
-    "name": "稳固防守",
+    "name": "助燃剂",
     "kind": "illustration",
     "concept": false
   },
   "EUT13": {
     "path": "assets/special/EUT13.svg",
-    "name": "双重打击",
+    "name": "引爆",
     "kind": "illustration",
     "concept": false
   },
@@ -1529,13 +1535,13 @@ export const CARD_ART={
   },
   "EUT16": {
     "path": "assets/special/EUT16.svg",
-    "name": "战利品",
+    "name": "纵火专家",
     "kind": "illustration",
     "concept": false
   },
   "EUT17": {
     "path": "assets/special/EUT17.svg",
-    "name": "防御工事",
+    "name": "焦土防线",
     "kind": "illustration",
     "concept": false
   },
@@ -1553,19 +1559,19 @@ export const CARD_ART={
   },
   "EUT20": {
     "path": "assets/special/EUT20.svg",
-    "name": "资源循环",
+    "name": "兴奋信标",
     "kind": "illustration",
     "concept": false
   },
   "EUT21": {
     "path": "assets/special/EUT21.svg",
-    "name": "致命弱点",
+    "name": "灼烧压制",
     "kind": "illustration",
     "concept": false
   },
   "EUT22": {
     "path": "assets/special/EUT22.svg",
-    "name": "战术撤退",
+    "name": "余烬追击",
     "kind": "illustration",
     "concept": false
   },
@@ -1781,7 +1787,7 @@ export const CARD_ART={
   },
   "PAT01": {
     "path": "assets/special/PAT01.svg",
-    "name": "快攻节奏",
+    "name": "全火力倾泻",
     "kind": "illustration",
     "concept": false
   },
@@ -1793,7 +1799,7 @@ export const CARD_ART={
   },
   "PAT03": {
     "path": "assets/special/PAT03.svg",
-    "name": "弱点暴露",
+    "name": "超频架点",
     "kind": "illustration",
     "concept": false
   },
@@ -1829,13 +1835,13 @@ export const CARD_ART={
   },
   "PAT09": {
     "path": "assets/special/PAT09.svg",
-    "name": "快速布局",
+    "name": "孤注一掷",
     "kind": "illustration",
     "concept": false
   },
   "PAT10": {
     "path": "assets/special/PAT10.svg",
-    "name": "控场节奏",
+    "name": "疾速连段",
     "kind": "illustration",
     "concept": false
   },
@@ -1847,7 +1853,7 @@ export const CARD_ART={
   },
   "PAT12": {
     "path": "assets/special/PAT12.svg",
-    "name": "先手压制",
+    "name": "飞刀雨",
     "kind": "illustration",
     "concept": false
   },
@@ -1865,7 +1871,7 @@ export const CARD_ART={
   },
   "PAT15": {
     "path": "assets/special/PAT15.svg",
-    "name": "信息优势",
+    "name": "炸药包",
     "kind": "illustration",
     "concept": false
   },
@@ -1883,13 +1889,13 @@ export const CARD_ART={
   },
   "PAT18": {
     "path": "assets/special/PAT18.svg",
-    "name": "稳固防守",
+    "name": "补位掩护",
     "kind": "illustration",
     "concept": false
   },
   "PAT19": {
     "path": "assets/special/PAT19.svg",
-    "name": "战术撤退",
+    "name": "节奏抢断",
     "kind": "illustration",
     "concept": false
   },
@@ -1901,7 +1907,7 @@ export const CARD_ART={
   },
   "PAT21": {
     "path": "assets/special/PAT21.svg",
-    "name": "资源调度",
+    "name": "临场超频",
     "kind": "illustration",
     "concept": false
   },
@@ -1925,7 +1931,7 @@ export const CARD_ART={
   },
   "PAT25": {
     "path": "assets/special/PAT25.svg",
-    "name": "快攻连携",
+    "name": "连击终结",
     "kind": "illustration",
     "concept": false
   }

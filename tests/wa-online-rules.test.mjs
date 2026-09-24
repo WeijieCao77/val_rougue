@@ -282,3 +282,23 @@ test('duel: SK02 draw with zero-cost card asserts exact drawn candidate and play
   assert.ok(afterHand.some(c => c.uid === candidate.uid));
   assert.ok(!afterHand.some(c => c.uid === zeroCard.uid));
 });
+
+test('duel: burn, turrets, combo and overload work between two players', () => {
+  const deckOf = (prefix, id) => Array.from({ length: 5 }, (_, i) => ({ uid: prefix + i, id, up: false }));
+  const snapA = { runId: 'rA', act: 1, version: 'wa-pvp-1', seed: 'sA', region: 'EMEA', deck: deckOf('a', 'EUT03'), skins: [], maxHp: 60, hp: 60, money: 0, actionsCount: 0 };
+  const snapB = { ...snapA, runId: 'rB', seed: 'sB', region: 'CN', deck: deckOf('b', 'CNT01') };
+  let m = createMatch(snapA, snapB, 'mech');
+  // Force seat 0 (burn deck) to act first for a deterministic script.
+  if (m.active !== 0) m = applyCommand(m, m.active, { type: 'end' });
+  m = applyCommand(m, 0, { type: 'play', uid: m.players[0].hand[0].uid });
+  assert.equal(m.players[1].burn, 4);
+  m = applyCommand(m, 0, { type: 'end' });
+  assert.equal(m.players[1].hp, 60 - 4, 'burn ticks at the start of the burning player\'s turn');
+  assert.equal(m.players[1].burn, 3);
+  m = applyCommand(m, 1, { type: 'play', uid: m.players[1].hand[0].uid });
+  assert.equal(m.players[1].deployables.length, 1);
+  const before = m.players[0].hp;
+  m = applyCommand(m, 1, { type: 'end' });
+  assert.equal(m.players[0].hp, before - 5, 'turret fires at the end of its owner\'s turn');
+  assert.equal(viewFor(m, 0).opponent.deployables[0].turns, 2);
+});

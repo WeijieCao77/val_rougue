@@ -37,7 +37,7 @@ test('all four regions contain 50 sourced players and 25 tactical cards',async()
   for(const effect of ['hit','block','draw','power'])assert.ok(r.start.some(c=>effects({id:c}).some(e=>e.type===effect)));
   const players=r.pool.filter(c=>CARDS[c].player),newPlayers=players.slice(18);assert.deepEqual(newPlayers.map(cardId=>CARDS[cardId].name),expanded.regions[id].map(source=>source.alias));
   for(const cardId of r.pool){const c=CARDS[cardId];if(c.player)allNames.push(c.name);if(c.player&&r.pool.indexOf(cardId)<18&&id!=='CN')assert.equal(names.get(r.name+'/'+c.name),c.role==='自由人'?'跨位置候选':c.role==='控场'?'控场／烟位':c.role);assert.ok(TACTICS[cardId].title);
-   for(const up of [false,true]){assert.ok(compactLines({id:cardId,up}).length<=3);for(const e of effects({id:cardId,up})){if(e.type==='hit')assert.ok(e.times>0);if(e.type!=='token')assert.ok(e.n>0);}}
+   for(const up of [false,true]){assert.ok(compactLines({id:cardId,up}).length<=3);for(const outer of effects({id:cardId,up})){const e=outer.type==='combo'?outer.effect:outer;assert.ok(e,'combo needs an inner effect');if(e.type==='hit')assert.ok(e.times>0);if(e.type==='detonate')assert.ok(e.per>0);else if(!['token','fireTurrets','bodyslam'].includes(e.type))assert.ok(e.n>0,cardId+' '+e.type);}}
   }
  }
  assert.equal(new Set(allNames.map(name=>name.toLowerCase())).size,200);
@@ -118,4 +118,17 @@ test('season opponents: sniper aim is broken by suppression, sentinel counter-fi
 });
 test('legacy tutorial enemies are untouched by season traits',()=>{
  for(const id of ['E01','E02','E03','E04','E05','EL01','B01'])assert.ok(!ENEMIES[id].trait&&!ENEMIES[id].look,id);
+});
+test('wa archetype tactics: burn ticks, turrets fire, combo needs an earlier card, overload costs next turn, retain stays',()=>{
+ const fight=hand=>{let s=createSeason('mech',false,'CN');s=step(s,{type:'chooseNode',key:s.map.starts[0]});s.battle.hand=hand.map(id=>instance(s,id));s.battle.energy=9;s.battle.enemyHp=60;s.battle.enemyBlock=0;return s;};
+ let s=fight(['EUT03','CNT01','CNT17']);
+ s=step(s,{type:'play',uid:s.battle.hand[0].uid});assert.equal(s.battle.enemyBurn,4);
+ s=step(s,{type:'play',uid:s.battle.hand[0].uid});assert.equal(s.battle.deployables.length,1);
+ s=step(s,{type:'end'});assert.equal(s.battle.enemyHp,60-5-4,'turret 5 then burn 4');assert.equal(s.battle.enemyBurn,3);
+ assert.ok(s.battle.hand.some(c=>c.id==='CNT17'),'retained card is still in hand');
+ s=fight(['AMT07','AMT07']);
+ s=step(s,{type:'play',uid:s.battle.hand[0].uid});assert.equal(s.battle.enemyHp,55,'no combo on the first card');
+ s=step(s,{type:'play',uid:s.battle.hand[0].uid});assert.equal(s.battle.enemyHp,45,'combo adds the second hit');
+ s=fight(['PAT01']);s=step(s,{type:'play',uid:s.battle.hand[0].uid});assert.equal(s.battle.enemyHp,48);s=step(s,{type:'end'});
+ if(s.phase==='combat')assert.equal(s.battle.energy,2,'overload 1');
 });

@@ -47,7 +47,8 @@ function isPermanentCard(id) {
   if (typeof id !== 'string') return false;
   const card = CARDS[id];
   if (!card) return false;
-  return card.player === true || id.startsWith('CU');
+  // Regional tactic cards (e.g. CNT01) are recruitable season cards too, so builds may contain them.
+  return card.player === true || card.trainable === true || id.startsWith('CU');
 }
 
 function validateDeck(deck) {
@@ -133,6 +134,12 @@ function createPlayerState(snapshot, seat, matchSeed) {
     block: 0,
     weak: 0,
     vulnerable: 0,
+    burn: 0,
+    strength: 0,
+    overload: 0,
+    overloadNext: 0,
+    plays: 0,
+    deployables: [],
     energy: 0,
     drawPile,
     hand: [],
@@ -219,16 +226,21 @@ function playCard(state, seat, uid) {
 
   player.hand.splice(cardIndex, 1);
   player.energy -= t.cost;
+  const playsBefore = player.plays || 0;
+  player.plays = playsBefore + 1;
+  const wasVuln = opponent.vulnerable > 0, wasBurning = (opponent.burn || 0) > 0;
+  const extra = (card.id === 'TK03' ? powerTotal(player, 'knife') : 0) + (playsBefore >= 2 ? powerTotal(player, 'comboAtk') : 0) + (player.strength || 0);
   player.roleCounts[t.role] = (player.roleCounts[t.role] || 0) + 1;
   const first = player.roleCounts[t.role] === 1;
   let bonus = (t.player && t.role === '决斗' && first) ? powerTotal(player, 'duel') : 0;
   const wasWeak = opponent.weak > 0;
   state.log.push(`玩家${seat} 打出 ${cardName(card)}。`);
 
-  for (const e of effects(card)) {
+  const list = effects(card).flatMap(e => e.type === 'combo' ? (playsBefore > 0 ? [e.effect] : []) : [e]);
+  for (const e of list) {
     if (e.type === 'hit') {
       for (let i = 0; i < e.times; i++) {
-        const dmg = damageCalc(e.n + bonus + (e.ifWeak && wasWeak ? e.ifWeak : 0), player.weak > 0, opponent.vulnerable > 0);
+        const dmg = damageCalc(e.n + bonus + extra + (e.ifWeak && wasWeak ? e.ifWeak : 0) + (e.ifVuln && wasVuln ? e.ifVuln : 0) + (e.ifBurn && wasBurning ? e.ifBurn : 0), player.weak > 0, opponent.vulnerable > 0);
         attackPlayer(state, seat, 1 - seat, dmg);
         bonus = 0;
         if (state.status === 'finished') break;
@@ -245,6 +257,30 @@ function playCard(state, seat, uid) {
       state.log.push(`对手易伤 +${e.n}。`);
     } else if (e.type === 'draw') {
       drawCards(state, seat, e.n);
+    } else if (e.type === 'burn') {
+      opponent.burn = (opponent.burn || 0) + e.n;
+      state.log.push(`对手燃烧 +${e.n}。`);
+    } else if (e.type === 'burnMultiply') {
+      opponent.burn = (opponent.burn || 0) * e.n;
+    } else if (e.type === 'detonate') {
+      const n = (opponent.burn || 0) * e.per;
+      opponent.burn = 0;
+      if (n) attackPlayer(state, seat, 1 - seat, damageCalc(n, player.weak > 0, opponent.vulnerable > 0));
+    } else if (e.type === 'deploy') {
+      player.deployables.push({ kind: e.kind, n: e.n, turns: e.turns });
+      state.log.push(e.kind === 'turret' ? `部署哨戒炮（${e.n}×${e.turns}）。` : `部署屏障无人机（${e.n}×${e.turns}）。`);
+    } else if (e.type === 'fireTurrets') {
+      for (const d of player.deployables) {
+        if (d.kind !== 'turret') continue;
+        attackPlayer(state, seat, 1 - seat, damageCalc(d.n, false, opponent.vulnerable > 0));
+        if (state.status === 'finished') break;
+      }
+    } else if (e.type === 'bodyslam') {
+      attackPlayer(state, seat, 1 - seat, damageCalc(player.block + (player.strength || 0), player.weak > 0, opponent.vulnerable > 0));
+    } else if (e.type === 'strength') {
+      player.strength = (player.strength || 0) + e.n;
+    } else if (e.type === 'overload') {
+      player.overloadNext = (player.overloadNext || 0) + e.n;
     } else if (e.type === 'token') {
       if (player.hand.length >= 10) {
         state.log.push('手牌已满，未生成临时牌。');
@@ -290,8 +326,21 @@ function playCard(state, seat, uid) {
 function beginTurn(state, seat) {
   const player = state.players[seat];
   player.block = 0;
-  player.energy = 3 + powerTotal(player, 'energy');
+  player.energy = Math.max(0, 3 + powerTotal(player, 'energy') - (player.overloadNext || 0));
+  player.overload = player.overloadNext || 0;
+  player.overloadNext = 0;
+  player.plays = 0;
   player.roleCounts = {};
+  const opponent = state.players[1 - seat];
+  const tick = powerTotal(player, 'burnTick');
+  if (tick) opponent.burn = (opponent.burn || 0) + tick;
+  // Burn on this player ticks at the start of their own turn and ignores block.
+  if (player.burn > 0) {
+    player.hp = Math.max(0, player.hp - player.burn);
+    state.log.push(`玩家${seat} 燃烧 -${player.burn} 声望。`);
+    player.burn--;
+    if (player.hp === 0) { state.status = 'finished'; state.winner = 1 - seat; return; }
+  }
   if (player.turnsTaken === 0 && player.skins.includes('SK01')) {
     player.block += 3;
     state.log.push('磨砂黑：获得 3 布防。');
@@ -312,15 +361,25 @@ function endTurn(state, seat) {
       return;
     }
   }
+  const kept = [];
   for (const card of player.hand) {
-    if (CARDS[card.id].zone === 'exhaustEnd' || CARDS[card.id].zone === 'temporary') {
+    if (CARDS[card.id].zone === 'retain') kept.push(card);
+    else if (CARDS[card.id].zone === 'exhaustEnd' || CARDS[card.id].zone === 'temporary') {
       player.exhaust.push(card);
       state.log.push(`${cardName(card)} 在回合末消耗。`);
     } else {
       player.discard.push(card);
     }
   }
-  player.hand = [];
+  player.hand = kept;
+  for (const d of player.deployables || []) {
+    if (d.kind === 'turret') {
+      attackPlayer(state, seat, 1 - seat, damageCalc(d.n, false, state.players[1 - seat].vulnerable > 0));
+      if (state.status === 'finished') return;
+    } else player.block += d.n;
+    d.turns--;
+  }
+  player.deployables = (player.deployables || []).filter(d => d.turns > 0);
   player.weak = Math.max(0, player.weak - 1);
   player.vulnerable = Math.max(0, player.vulnerable - 1);
 }
@@ -409,6 +468,10 @@ export function viewFor(match, seat) {
       block: me.block,
       weak: me.weak,
       vulnerable: me.vulnerable,
+      burn: me.burn || 0,
+      strength: me.strength || 0,
+      overload: me.overload || 0,
+      deployables: (me.deployables || []).map(d => ({ ...d })),
       energy: me.energy,
       hand: me.hand.map(c => ({ uid: c.uid, id: c.id, up: c.up })),
       drawCount: me.drawPile.length,
@@ -426,6 +489,10 @@ export function viewFor(match, seat) {
       block: opp.block,
       weak: opp.weak,
       vulnerable: opp.vulnerable,
+      burn: opp.burn || 0,
+      strength: opp.strength || 0,
+      overload: opp.overload || 0,
+      deployables: (opp.deployables || []).map(d => ({ ...d })),
       energy: opp.energy,
       handCount: opp.hand.length,
       drawCount: opp.drawPile.length,

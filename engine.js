@@ -1,4 +1,4 @@
-import {VERSION,CARDS,PLAYER_IDS,SKINS,ENEMIES,START,effects,cardName,REGIONS} from './content.js';
+import {VERSION,CARDS,PLAYER_IDS,SKINS,ENEMIES,START,effects,cardName,REGIONS,TACTICS} from './content.js';
 import {buildMap,availableNodes} from './season-map.js';
 import {CURSES,CURSE_RULES,EXTRA_STATUS_RULES} from './afflictions.js';
 export const clone = x => structuredClone(x);
@@ -29,6 +29,14 @@ export function offers(s,weights=[15,60,20,5],number=3,excluded=[]) {
   const pool=bins[cost]; result.push(pool[Math.floor(random(s)*pool.length)]);
  }
  return result;
+}
+// Season rewards always include one build-direction card (burn, deploy, combo...)
+// so every reward screen offers a real choice of direction.
+function withArchetype(s,list){
+ if(list.some(id=>TACTICS[id]?.archetype))return list;
+ const pool=REGIONS[s.region].pool.filter(id=>TACTICS[id]?.archetype&&eligible(s,id)&&!list.includes(id));
+ if(!pool.length||!list.length)return list;
+ return [...list.slice(0,-1),pool[Math.floor(random(s)*pool.length)]];
 }
 export function createRun(seed='first-season',tutorial=true) {
  const s={version:VERSION,seed:String(seed),tutorial,rng:seedHash(seed),rev:0,nextId:1,node:1,phase:'combat',hp:80,maxHp:80,money:60,deck:[],skins:[],logs:[],actions:[],wins:0,battle:null};
@@ -75,6 +83,9 @@ export function drawCards(s,n) {
 }
 function beginTurn(s) {
  const b=s.battle;b.turn++;b.block=0;b.energy=3+powerTotal(b,'energy');b.roleCounts={};
+ if(b.plays!==undefined)b.plays=0;
+ if(b.overloadNext){b.energy=Math.max(0,b.energy-b.overloadNext);b.overload=b.overloadNext;b.overloadNext=0;}else if(b.overload)b.overload=0;
+ const tick=powerTotal(b,'burnTick');if(tick){b.enemyBurn=(b.enemyBurn||0)+tick;}
  if(b.field)b.attackedThisTurn=false;
  const eco=b.turn===1&&b.field==='eco'?1:0;b.energy+=eco;
  if(b.turn===1&&s.skins.includes('SK01')){b.block=3;log(s,'磨砂黑：开局获得 3 格挡。');}
@@ -137,7 +148,7 @@ function winSeason(s) {
  const elite = node && node.kind==='elite' ? true : ENEMIES[s.battle.enemy].elite;
  const money = elite ? 35 : 20;
  s.money += money;
- s.reward={offers:offers(s,elite?[10,45,30,15]:undefined),elite:!!elite};
+ s.reward={offers:withArchetype(s,offers(s,elite?[10,45,30,15]:undefined)),elite:!!elite};
  s.phase='reward';
  log(s, `资金 +${money}。招募候选：${s.reward.offers.map(id=>CARDS[id].name).join('、')}。`);
 }
@@ -164,16 +175,21 @@ function play(s,uid) {
  const reason=canPlay(s,uid);if(reason)throw Error(reason);
  const b=s.battle,c=b.hand.splice(b.hand.findIndex(c=>c.uid===uid),1)[0],t=CARDS[c.id];
  b.energy-=t.cost;b.resolving=c;const first=!(b.roleCounts[t.role]||0);
+ // Plays-this-turn is only tracked in season mode so frozen legacy replays keep their exact state.
+ const playsBefore=b.plays||0;if(s.mode==='season')b.plays=playsBefore+1;
+ const wasVuln=b.enemyVulnerable>0,wasBurning=(b.enemyBurn||0)>0;
+ const knifeBonus=c.id==='TK03'?powerTotal(b,'knife'):0,comboBonus=playsBefore>=2?powerTotal(b,'comboAtk'):0;
  if(t.player)b.roleCounts[t.role]=(b.roleCounts[t.role]||0)+1;
  let bonus=t.player&&t.role==='决斗'&&first?powerTotal(b,'duel'):0;
  const wasWeak=b.enemyWeak>0;log(s,`打出 ${cardName(c)}，支付 ${t.cost} 行动点。`);
  for(const held of b.hand){const rule=CURSE_RULES[held.id];if(rule?.trigger==='onPlayLoseHp'){s.hp=Math.max(0,s.hp-rule.n);log(s,`${rule.name}：声望 -${rule.n}。`);if(!s.hp){lose(s,rule.name);b.resolving=null;return;}}}
- for(const e of effects(c)) {
+ const list=effects(c).flatMap(e=>e.type==='combo'?(playsBefore>0?[e.effect]:[]):[e]);
+ for(const e of list) {
   if(e.type==='hit'){
    let first=0;if(b.field==='highground'&&!b.attackedThisTurn){first=3;}
    if(b.field)b.attackedThisTurn=true;
    for(let i=0;i<e.times;i++){
-    strike(s,damage(e.n+bonus+first+fieldHitBonus(b,e.n,e.times)+(e.ifWeak&&wasWeak?e.ifWeak:0),b.weak>0,b.enemyVulnerable>0));bonus=0;first=0;
+    strike(s,damage(e.n+bonus+first+fieldHitBonus(b,e.n,e.times)+(e.ifWeak&&wasWeak?e.ifWeak:0)+(e.ifVuln&&wasVuln?e.ifVuln:0)+(e.ifBurn&&wasBurning?e.ifBurn:0)+(b.selfStrength||0)+knifeBonus+comboBonus,b.weak>0,b.enemyVulnerable>0));bonus=0;first=0;
     if(s.phase!=='combat'){b.resolving=null;return;}
    }
   }
@@ -181,6 +197,14 @@ function play(s,uid) {
   if(e.type==='weak'){b.enemyWeak+=e.n;log(s,`对手虚弱 +${e.n} 回合。`);if(b.aim){b.aim=0;log(s,'压制打断了对手的瞄准。');}}
   if(e.type==='vulnerable'){b.enemyVulnerable+=e.n;log(s,`对手易伤 +${e.n} 回合。`);}
   if(e.type==='draw')drawCards(s,e.n);
+  if(e.type==='burn'){b.enemyBurn=(b.enemyBurn||0)+e.n;log(s,`对手燃烧 +${e.n}。`);}
+  if(e.type==='burnMultiply'){b.enemyBurn=(b.enemyBurn||0)*e.n;log(s,`对手燃烧层数 ×${e.n}。`);}
+  if(e.type==='detonate'){const n=(b.enemyBurn||0)*e.per;b.enemyBurn=0;if(n){strike(s,damage(n,b.weak>0,b.enemyVulnerable>0));if(s.phase!=='combat'){b.resolving=null;return;}}}
+  if(e.type==='deploy'){(b.deployables||=[]).push({kind:e.kind,n:e.n,turns:e.turns});log(s,e.kind==='turret'?`部署哨戒炮（${e.n} 伤害 × ${e.turns} 回合）。`:`部署屏障无人机（${e.n} 布防 × ${e.turns} 回合）。`);}
+  if(e.type==='fireTurrets')for(const d of b.deployables||[]){if(d.kind!=='turret')continue;strike(s,damage(d.n,false,b.enemyVulnerable>0));if(s.phase!=='combat'){b.resolving=null;return;}}
+  if(e.type==='bodyslam'){strike(s,damage(b.block+(b.selfStrength||0),b.weak>0,b.enemyVulnerable>0));if(s.phase!=='combat'){b.resolving=null;return;}}
+  if(e.type==='strength'){b.selfStrength=(b.selfStrength||0)+e.n;log(s,`本场火力 +${e.n}。`);}
+  if(e.type==='overload'){b.overloadNext=(b.overloadNext||0)+e.n;log(s,`过载 ${e.n}：下回合行动点 -${e.n}。`);}
   if(e.type==='token'){
    if(b.hand.length>=10)log(s,'手牌已满，未生成临时牌。');else{b.hand.push(instance(s,e.id));log(s,`生成 ${CARDS[e.id].name}。`);}
   }
@@ -200,8 +224,15 @@ function play(s,uid) {
 function endTurn(s) {
  const b=s.battle;
  for(const c of b.hand){const rule=CURSE_RULES[c.id];if(rule?.trigger==='endTurnLoseHp'){s.hp=Math.max(0,s.hp-rule.n);log(s,`${rule.name}：直接失去 ${rule.n} 声望。`);if(!s.hp){lose(s,`${rule.name}耗尽声望`);return;}}}
- for(const c of b.hand){if(['temporary','exhaustEnd'].includes(CARDS[c.id].zone)){b.exhaust.push(c);log(s,`${cardName(c)} 在回合末消耗。`);}else b.discard.push(c);}
- b.hand=[];b.weak=Math.max(0,b.weak-1);b.enemyBlock=0;
+ const kept=[];
+ for(const c of b.hand){if(CARDS[c.id].zone==='retain')kept.push(c);else if(['temporary','exhaustEnd'].includes(CARDS[c.id].zone)){b.exhaust.push(c);log(s,`${cardName(c)} 在回合末消耗。`);}else b.discard.push(c);}
+ b.hand=kept;
+ if(b.deployables?.length){
+  for(const d of b.deployables){if(d.kind==='turret'){log(s,'哨戒炮开火。');strike(s,damage(d.n,false,b.enemyVulnerable>0));if(s.phase!=='combat')return;}else{b.block+=d.n;log(s,`屏障无人机：布防 +${d.n}。`);}d.turns--;}
+  b.deployables=b.deployables.filter(d=>d.turns>0);
+ }
+ if(b.enemyBurn>0){const n=b.enemyBurn;b.enemyHp=Math.max(0,b.enemyHp-n);b.enemyBurn--;log(s,`燃烧：对手防线 -${n}（剩余 ${b.enemyHp}）。`);if(!b.enemyHp){win(s);return;}checkEnemyHpTraits(s);}
+ b.weak=Math.max(0,b.weak-1);b.enemyBlock=0;
  log(s,`对手行动：${intentText(s)}。`);
  const acting=intent(s);
  if(b.field==='overtime'&&b.turn>=5)b.enemyStrength=(b.enemyStrength||0)+2;

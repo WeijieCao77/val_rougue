@@ -74,3 +74,4 @@
 .combat-target:has(.character-stage-host canvas) > .status-overlay,
 .enemy-art-container:has(.character-stage-host canvas) > .status-overlay,
 .ally-art-container:has(.character-stage-host canvas) > .status-overlay { opacity: 1 !important; z-index: 5; }
+.combat-target:has(.character-stage-host canvas) > .deploy-row { opacity: 1 !important; z-index: 5; }

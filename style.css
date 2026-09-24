@@ -1722,6 +1722,7 @@ body.home-mode img {
 .combat-target:has(.character-stage-host canvas) > .status-overlay,
 .enemy-art-container:has(.character-stage-host canvas) > .status-overlay,
 .ally-art-container:has(.character-stage-host canvas) > .status-overlay { opacity: 1 !important; z-index: 5; }
+.combat-target:has(.character-stage-host canvas) > .deploy-row { opacity: 1 !important; z-index: 5; }
 
 /* Shop scenes for both demos: an NPC at a booth, goods on a shelf with price
    tags, and a service counter. Uses only local CSS; the NPC figure is the
