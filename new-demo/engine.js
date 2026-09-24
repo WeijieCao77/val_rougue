@@ -395,13 +395,21 @@ export function observe(state) {
 
 // One enemy's intent. `pending` is firepower granted this turn by allies that
 // act earlier (e.g. a spotter's rally), so the preview matches the real hit.
-function intentText(b, e, pending = 0) {
+// `actual` (from incomingDamage) replaces hit numbers with the damage that lands.
+function intentText(b, e, pending = 0, actual = null) {
   if (!e.intent) return null;
   const parts = [];
   // Actions resolve in order, so a buff listed first already raises the hit after it.
   let strength = (e.statuses.strength || 0) + pending;
   if (b.field === 'overtime' && b.turn >= 5) strength += 2;
-  for (const act of e.intent) {
+  for (const [i, act] of e.intent.entries()) {
+    const hits = actual?.[i];
+    if (hits?.length && (act.type === 'hit' || act.type === 'snipe')) {
+      const same = hits.every(n => n === hits[0]);
+      if (act.type === 'hit') parts.push(same ? `攻击${hits[0]}×${hits.length}` : `攻击${hits.join('+')}`);
+      else parts.push(e.statuses.aim ? `重狙${hits[0]}（闪光可打断）` : `仓促射击${hits[0]}（瞄准已被打断）`);
+      continue;
+    }
     if (act.type === 'hit') parts.push(`攻击${enemyHitBase(b, act.n, act.times) + strength}×${act.times}`);
     else if (act.type === 'buff') { strength += act.n; parts.push(`强化火力+${act.n}`); }
     else if (act.type === 'rally') { strength += act.n; parts.push(`全队火力+${act.n}`); }
@@ -440,6 +448,69 @@ export function describeIntent(state) {
   const texts = describeIntents(state);
   if (living.length <= 1) return living[0] ? texts[living[0].uid] ?? null : null;
   return living.map(e => `${e.name}：${texts[e.uid] || '未知'}`).join('；');
+}
+
+// Damage the coming enemy turn actually deals, mirroring executeEnemyTurn and
+// dealDamageToPlayer: battlefield, strength (incl. buffs/rallies earlier in the
+// turn and overtime), our push stance, enemy weak, our vulnerable (incl. vuln
+// applied earlier in the turn), smoke and the one-shot flash. Our block is NOT
+// subtracted. byEnemy[uid] = {hits, total, acts} where acts[i] lists the hits
+// of intent action i.
+export function incomingDamage(state) {
+  const out = { total: 0, byEnemy: {} };
+  const b = state?.battle;
+  if (state?.phase !== 'combat' || !b) return out;
+  const living = livingEnemies(b);
+  const overtime = b.field === 'overtime' && b.turn >= 5 ? 2 : 0;
+  const sim = new Map(living.map(e => [e.uid, {
+    strength: (e.statuses.strength || 0) + overtime,
+    weak: (e.statuses.weak || 0) > 0,
+    smoke: e.statuses.smoke || 0,
+    flash: e.statuses.flash || 0,
+    aim: (e.statuses.aim || 0) > 0
+  }]));
+  let vuln = (b.statuses.player.vuln || 0) > 0;
+  const hit = (m, base) => {
+    let dmg = base + m.strength;
+    if (b.stance === 'push') dmg += 2;
+    if (m.weak) dmg = Math.floor(dmg * 0.75);
+    if (vuln) dmg = Math.floor(dmg * 1.5);
+    if (m.smoke > 0) dmg = Math.max(0, dmg - m.smoke);
+    if (m.flash > 0) { dmg = Math.max(0, dmg - 3 * m.flash); m.flash = 0; }
+    return dmg;
+  };
+  for (const e of living) {
+    if (!e.intent) continue;
+    const m = sim.get(e.uid);
+    const acts = [];
+    const hits = [];
+    for (const a of e.intent) {
+      const these = [];
+      if (a.type === 'hit') for (let i = 0; i < a.times; i++) these.push(hit(m, enemyHitBase(b, a.n, a.times)));
+      else if (a.type === 'snipe') { these.push(hit(m, m.aim ? enemyHitBase(b, a.n, 1) : Math.ceil(a.n / 3))); m.aim = false; }
+      else if (a.type === 'buff') m.strength += a.n;
+      else if (a.type === 'rally') for (const x of sim.values()) x.strength += a.n;
+      else if (a.type === 'vuln' && a.n > 0) vuln = true;
+      else if (a.type === 'aim') m.aim = true;
+      else if (a.type === 'cleanse') { m.weak = false; m.smoke = 0; m.flash = 0; }
+      acts.push(these.length ? these : null);
+      hits.push(...these);
+    }
+    const total = hits.reduce((n, x) => n + x, 0);
+    out.byEnemy[e.uid] = { hits, acts, total };
+    out.total += total;
+  }
+  return out;
+}
+
+// Intent text per living enemy with the damage numbers that will actually land.
+export function describeIntentsActual(state) {
+  const out = {};
+  if (state?.phase !== 'combat' || !state.battle) return out;
+  const b = state.battle;
+  const inc = incomingDamage(state);
+  for (const e of livingEnemies(b)) out[e.uid] = intentText(b, e, 0, inc.byEnemy[e.uid]?.acts || []);
+  return out;
 }
 
 export function preview(state, uid) {

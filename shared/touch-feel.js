@@ -76,9 +76,7 @@ export function attachCardDetail({ selector, render, delay = 350 }) {
     press.timer = setTimeout(() => {
       const current = press;
       press = null;
-      if (current?.el.isConnected && open(current.el)) {
-        try { navigator.vibrate?.(8); } catch {}
-      }
+      if (current?.el.isConnected) open(current.el);
     }, wait);
   }, true);
   document.addEventListener('pointermove', event => {
