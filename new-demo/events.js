@@ -142,7 +142,7 @@ export const EVENTS = {
 // likelier to contain equipment. money = [base, extra spread]; bonus is paid
 // when the crate holds no equipment (or every piece is already owned).
 export const CRATE_LOOT = {
-  small: { money: [20, 10], equip: 0.7, bonus: 25 },
-  medium: { money: [40, 15], equip: 0.85, bonus: 35 },
-  large: { money: [65, 20], equip: 1, bonus: 50 }
+  small: { money: [15, 10], equip: 0.35, bonus: 15 },
+  medium: { money: [30, 15], equip: 0.55, bonus: 25 },
+  large: { money: [50, 20], equip: 0.85, bonus: 40 }
 };

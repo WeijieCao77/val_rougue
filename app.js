@@ -9605,7 +9605,7 @@ function assignRooms(nodes, edges, random) {
   }
   // Fewer total stops would otherwise sharply reduce access to elite rewards.
   // These are this demo's room weights, not Slay the Spire's probabilities.
-  const weights = [['battle', 0.51], ['event', 0.20], ['shop', 0.08], ['rest', 0.08], ['elite', 0.13]];
+  const weights = [['battle', 0.49], ['event', 0.20], ['shop', 0.08], ['rest', 0.08], ['elite', 0.15]];
   for (const node of nodes) {
     if (BATTLE_FIXED_STEPS.includes(node.step)) { node.kind = 'battle'; continue; }
     if (node.step === SHOP_STEP) { node.kind = 'shop'; continue; }
@@ -9753,6 +9753,9 @@ function pickCandidates(s, kind, ctx) {
 function opsReason(s, ops, ctx) {
   const L = ctx.labels;
   let money = s.money, hp = s.hp, maxHp = s.maxHp;
+  // Paying only to heal makes no sense at full health.
+  const gains = (ops || []).filter(op => !(op.money < 0 || op.hp < 0 || op.maxHp < 0 || op.curse));
+  if (gains.length && gains.every(op => op.hp > 0 || op.healPct) && s.hp >= s.maxHp) return `${L.hp}已满`;
   for (const op of ops || []) {
     if (op.money < 0) { if (money < -op.money) return `${L.money}不足（需要 ${-op.money}）`; money += op.money; }
     if (op.hp < 0) { if (hp <= -op.hp) return `${L.hp}不足（需高于 ${-op.hp}）`; hp += op.hp; }
@@ -10337,12 +10340,13 @@ const WA_EVENTS = {
 };
 
 // Supply crates (补给箱): bigger crates are rarer, hold more money and are
-// likelier to contain a skin. Without a skin the crate pays `bonus` money and
+// likelier to contain a skin. Without a skin the crate pays `bonus` money and,
+// for medium and large crates,
 // offers one free card upgrade instead. money = [base, extra spread].
 const WA_CRATE_LOOT = {
-  small: { money: [20, 10], skin: 0.5, bonus: 20 },
-  medium: { money: [35, 15], skin: 0.7, bonus: 30 },
-  large: { money: [55, 20], skin: 0.9, bonus: 45 }
+  small: { money: [15, 10], skin: 0.25, bonus: 10, upgrade: false },
+  medium: { money: [25, 15], skin: 0.45, bonus: 20, upgrade: true },
+  large: { money: [40, 20], skin: 0.7, bonus: 30, upgrade: true }
 };
 
 return {WA_EVENT_POOLS,WA_EVENTS,WA_CRATE_LOOT};
@@ -10797,7 +10801,7 @@ function crateSeason(s,a){
   const loot=WA_CRATE_LOOT[s.crate.size],money=loot.money[0]+Math.floor(random(s)*(loot.money[1]+1));
   s.money+=money;const r={money,skin:null,bonusMoney:0,upgrade:false};
   if(random(s)<loot.skin)r.skin=WA_CTX.gainEquip(s);
-  if(!r.skin){r.bonusMoney=loot.bonus;s.money+=loot.bonus;r.upgrade=s.deck.some(c=>WA_CTX.upgradeable(s,c));}
+  if(!r.skin){r.bonusMoney=loot.bonus;s.money+=loot.bonus;r.upgrade=loot.upgrade&&s.deck.some(c=>WA_CTX.upgradeable(s,c));}
   s.crate.opened=true;s.crate.result=r;
   log(s,`打开补给箱：资金 +${money+r.bonusMoney}${r.skin?`，获得皮肤「${r.skin}」`:''}。`);
  } else if(a.choice==='leave'){

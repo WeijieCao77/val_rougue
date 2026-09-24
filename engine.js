@@ -447,7 +447,7 @@ function crateSeason(s,a){
   const loot=WA_CRATE_LOOT[s.crate.size],money=loot.money[0]+Math.floor(random(s)*(loot.money[1]+1));
   s.money+=money;const r={money,skin:null,bonusMoney:0,upgrade:false};
   if(random(s)<loot.skin)r.skin=WA_CTX.gainEquip(s);
-  if(!r.skin){r.bonusMoney=loot.bonus;s.money+=loot.bonus;r.upgrade=s.deck.some(c=>WA_CTX.upgradeable(s,c));}
+  if(!r.skin){r.bonusMoney=loot.bonus;s.money+=loot.bonus;r.upgrade=loot.upgrade&&s.deck.some(c=>WA_CTX.upgradeable(s,c));}
   s.crate.opened=true;s.crate.result=r;
   log(s,`打开补给箱：资金 +${money+r.bonusMoney}${r.skin?`，获得皮肤「${r.skin}」`:''}。`);
  } else if(a.choice==='leave'){

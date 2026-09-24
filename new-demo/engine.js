@@ -1537,8 +1537,15 @@ function generateEvent(state) {
   return { id, act: state.act };
 }
 
+// If every option is closed (e.g. nothing left to upgrade at full health), the
+// player may simply walk away so a run can never get stuck in an event.
+const WALK_AWAY = { id: 'walkAway', title: '离开', ops: [] };
+function eventOptionList(state) {
+  const options = EVENTS[state.event?.id]?.options || [];
+  return options.length && options.every(o => opsReason(state, o.ops, EVENT_CTX)) ? [...options, WALK_AWAY] : options;
+}
 function eventOption(state, id) {
-  return EVENTS[state.event?.id]?.options.find(o => o.id === id) || null;
+  return eventOptionList(state).find(o => o.id === id) || null;
 }
 
 function eventActions(state) {
@@ -1549,7 +1556,7 @@ function eventActions(state) {
     const opt = eventOption(state, ev.pending);
     return [...pickCandidates(state, pickKind(opt.ops), EVENT_CTX).map(c => ({ type: 'eventPick', uid: c.uid })), { type: 'eventBack' }];
   }
-  return def.options.filter(o => !opsReason(state, o.ops, EVENT_CTX)).map(o => ({ type: 'event', choice: o.id }));
+  return eventOptionList(state).filter(o => !opsReason(state, o.ops, EVENT_CTX)).map(o => ({ type: 'event', choice: o.id }));
 }
 
 // Everything the event screen needs: scene, options with generated effect text
@@ -1561,7 +1568,7 @@ export function describeEvent(state) {
   const pending = ev.pending ? eventOption(state, ev.pending) : null;
   return {
     id: ev.id, title: def.title, scene: def.scene,
-    options: def.options.map(o => ({ id: o.id, title: o.title, effects: describeOps(o.ops, EVENT_CTX), reason: opsReason(state, o.ops, EVENT_CTX), pick: pickKind(o.ops) })),
+    options: eventOptionList(state).map(o => ({ id: o.id, title: o.title, effects: describeOps(o.ops, EVENT_CTX), reason: opsReason(state, o.ops, EVENT_CTX), pick: pickKind(o.ops) })),
     pending: pending ? { id: pending.id, title: pending.title, effects: describeOps(pending.ops, EVENT_CTX), kind: pickKind(pending.ops), candidates: pickCandidates(state, pickKind(pending.ops), EVENT_CTX).map(c => c.uid) } : null
   };
 }

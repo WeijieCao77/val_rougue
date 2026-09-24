@@ -41,6 +41,9 @@ export function pickCandidates(s, kind, ctx) {
 export function opsReason(s, ops, ctx) {
   const L = ctx.labels;
   let money = s.money, hp = s.hp, maxHp = s.maxHp;
+  // Paying only to heal makes no sense at full health.
+  const gains = (ops || []).filter(op => !(op.money < 0 || op.hp < 0 || op.maxHp < 0 || op.curse));
+  if (gains.length && gains.every(op => op.hp > 0 || op.healPct) && s.hp >= s.maxHp) return `${L.hp}已满`;
   for (const op of ops || []) {
     if (op.money < 0) { if (money < -op.money) return `${L.money}不足（需要 ${-op.money}）`; money += op.money; }
     if (op.hp < 0) { if (hp <= -op.hp) return `${L.hp}不足（需高于 ${-op.hp}）`; hp += op.hp; }

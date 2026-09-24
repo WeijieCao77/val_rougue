@@ -113,10 +113,11 @@ export const WA_EVENTS = {
 };
 
 // Supply crates (补给箱): bigger crates are rarer, hold more money and are
-// likelier to contain a skin. Without a skin the crate pays `bonus` money and
+// likelier to contain a skin. Without a skin the crate pays `bonus` money and,
+// for medium and large crates,
 // offers one free card upgrade instead. money = [base, extra spread].
 export const WA_CRATE_LOOT = {
-  small: { money: [20, 10], skin: 0.5, bonus: 20 },
-  medium: { money: [35, 15], skin: 0.7, bonus: 30 },
-  large: { money: [55, 20], skin: 0.9, bonus: 45 }
+  small: { money: [15, 10], skin: 0.25, bonus: 10, upgrade: false },
+  medium: { money: [25, 15], skin: 0.45, bonus: 20, upgrade: true },
+  large: { money: [40, 20], skin: 0.7, bonus: 30, upgrade: true }
 };

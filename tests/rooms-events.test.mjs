@@ -145,6 +145,7 @@ test('Wa crate: skin or money plus a free training choice, deterministic', () =>
   // Skins full: money bonus and one free upgrade (or leave without it).
   const full = waAtCrate('wa-crate-b').s;
   full.skins = Object.keys(SKINS);
+  full.crate.size = 'medium'; // small crates pay money only
   const got = ok(waStep(full, { type: 'crate', choice: 'open' }));
   assert.equal(got.crate.result.skin, null);
   assert.ok(got.crate.result.bonusMoney > 0 && got.crate.result.upgrade);
@@ -352,4 +353,16 @@ test('same seed and actions give identical runs through unknown rooms, crates an
     s = ok(waStep(s, legal.find(x => x.type === 'play') || legal.find(x => x.type === 'seasonEvent' && x.choice !== 'skip') || legal.find(x => x.type !== 'abandon')));
   }
   assert.deepEqual(replay(s), s);
+});
+
+test('heal-only options close at full health; a fully closed new-demo event can still be left', () => {
+  const full = newEventState('camp', 2, 'full-hp'); full.hp = full.maxHp;
+  assert.match(describeEvent(full).options.find(o => o.id === 'off').reason, /生命已满/);
+  // Nothing to upgrade, full health: every camp option is closed.
+  const stuck = newEventState('camp', 2, 'stuck');
+  for (const c of stuck.deck) c.up = true;
+  stuck.hp = stuck.maxHp;
+  const legal = newLegal(stuck);
+  assert.deepEqual(legal, [{ type: 'event', choice: 'walkAway' }]);
+  assert.equal(ok(newStep(stuck, legal[0])).phase, 'map');
 });

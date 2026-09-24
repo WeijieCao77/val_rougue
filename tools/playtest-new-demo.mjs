@@ -270,7 +270,7 @@ function playRun(seed, team, policy) {
       } else {
         const opts = EVENTS[s.event.id].options.filter(o => all.some(x => x.choice === o.id));
         const best = opts.map(o => ({ o, v: policy === 'naive' ? (o.ops.length ? 1 : 0) : opsValue(s, o.ops) })).sort((x, y) => y.v - x.v)[0];
-        a = { type: 'event', choice: best.o.id };
+        a = best ? { type: 'event', choice: best.o.id } : all[0];
       }
       if (a.type === 'event') log.route[log.route.length - 1].event = `${s.event.id}:${a.choice}`;
       s = step(s, a);

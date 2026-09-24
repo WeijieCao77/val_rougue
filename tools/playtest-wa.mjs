@@ -11,6 +11,7 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((acc, v, i, all) =>
 const SEEDS = Number(args.seeds || 6);
 const ACTS = Number(args.acts || 3);
 const OUT = args.out || 'reports/playtest/wa.json';
+const SKIP_EVENTS = args.events === 'skip'; // --events skip: always decline events (A/B against older runs)
 
 const step = (s, a) => { const r = waAct(s, a); if (r.error) throw Error(`${JSON.stringify(a)}: ${r.error}`); r.state.logs = []; return r.state; };
 const legal = s => waLegalActions(s).map(({ rev, ...a }) => a);
@@ -128,8 +129,8 @@ function playRun(seed, region) {
     if (s.phase === 'event') {
       const opts = WA_EVENTS[s.eventId].options.filter(o => acts.some(a => a.choice === o.id));
       const best = opts.map(o => ({ o, v: opsValue(s, o.ops) })).sort((x, y) => y.v - x.v)[0];
-      (log.events ||= []).push(`${s.eventId}:${best && best.v > 0 ? best.o.id : 'skip'}`);
-      s = step(s, { type: 'seasonEvent', choice: best && best.v > 0 ? best.o.id : 'skip' });
+      (log.events ||= []).push(`${s.eventId}:${!SKIP_EVENTS && best && best.v > 0 ? best.o.id : 'skip'}`);
+      s = step(s, { type: 'seasonEvent', choice: !SKIP_EVENTS && best && best.v > 0 ? best.o.id : 'skip' });
       if (s.phase === 'combat') fight = { act: s.act, enemy: s.battle.enemy, hp0: s.hp, turns: 0, fromEvent: true };
       continue;
     }

@@ -96,7 +96,7 @@ function assignRooms(nodes, edges, random) {
   }
   // Fewer total stops would otherwise sharply reduce access to elite rewards.
   // These are this demo's room weights, not Slay the Spire's probabilities.
-  const weights = [['battle', 0.51], ['event', 0.20], ['shop', 0.08], ['rest', 0.08], ['elite', 0.13]];
+  const weights = [['battle', 0.49], ['event', 0.20], ['shop', 0.08], ['rest', 0.08], ['elite', 0.15]];
   for (const node of nodes) {
     if (BATTLE_FIXED_STEPS.includes(node.step)) { node.kind = 'battle'; continue; }
     if (node.step === SHOP_STEP) { node.kind = 'shop'; continue; }
