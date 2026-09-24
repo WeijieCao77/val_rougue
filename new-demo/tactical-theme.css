@@ -125,3 +125,4 @@ body {
 /* Older layers force single-line card text; tactical cards wrap. */
 .tc-text, .tc-text * { white-space: normal !important; overflow-wrap: anywhere; }
 .battle .hand-card .tc-text { display: block; -webkit-line-clamp: unset; }
+.tc-text .kw { white-space: nowrap !important; }
