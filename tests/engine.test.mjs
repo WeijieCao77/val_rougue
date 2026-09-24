@@ -11,7 +11,7 @@ function fixture(ids,enemy='B01'){
 test('content totals and five-role / cost distribution match approved demo',()=>{
  assert.equal(PLAYER_IDS.length,18);assert.equal(Object.keys(CARDS).length,322,'321 plus the TK03 knife token');
  assert.deepEqual([0,1,2,3].map(cost=>PLAYER_IDS.filter(id=>CARDS[id].cost===cost).length),[3,10,3,2]);
- assert.deepEqual(['决斗','哨位','控场','先锋','自由人'].map(role=>PLAYER_IDS.filter(id=>CARDS[id].role===role).length),[6,3,3,3,3]);
+ assert.deepEqual(['决斗','哨位','控场','先锋','自由人'].map(role=>PLAYER_IDS.filter(id=>CARDS[id].role===role).length),[6,4,4,4,0],'CHICHOO 哨位, Haodong 控场, AAAAY 先锋 per vlr.gg agent history (2026-09-24)');
 });
 test('tutorial defensive line: damage, block and expiry follow written example',()=>{
  let s=createRun('tutorial');s=playId(s,'CN11');s=playId(s,'CN07');s=playId(s,'CN03');
