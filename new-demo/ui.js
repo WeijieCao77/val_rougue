@@ -22,7 +22,7 @@ let presentationBusy = false;
 
 const typeMap = { attack: '攻击', skill: '技能', power: '能力', status: '状态' };
 const rarityMap = { common: '普通', uncommon: '罕见', rare: '稀有' };
-const tagMap = { basic: '基础通用', damage: '交火输出', utility: '战术道具', stance: '掩护前压', core: '构筑核心', hybrid: '混搭连接', response: '应对调度', status: '特殊', ...Object.fromEntries(Object.entries(ARCHETYPES).map(([k, v]) => [k, '流派·' + v])) };
+const tagMap = { basic: '基础通用', damage: '交火输出', utility: '战术道具', stance: '掩护前压', core: '构筑核心', hybrid: '混搭连接', response: '应对调度', status: '特殊', burn: '燃烧', deploy: '部署', combo: '连击', fortify: '布防', overload: '过载', execute: '处决', discover: '发现' };
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -90,7 +90,7 @@ function getCardDisplay(card, up = false) {
 
 // Build-direction label shown on the card's type strip.
 function tagLabel(def) {
-  return ARCHETYPES[def.tag] ? `OP·${ARCHETYPES[def.tag]}` : (tagMap[def.tag] || '');
+  return tagMap[def.tag] || '';
 }
 function cardHtml(id, { up = false, cost, badge, extraClass } = {}) {
   const def = getCardDefinition(id);
@@ -675,7 +675,7 @@ function renderReward(root) {
     <div class="phase-container">
       <div class="ops-eyebrow">DEBRIEF // 战后简报</div>
       <h2 class="ops-title">补充战术 · 三选一</h2>
-      <p class="reward-hint">三张牌来自不同方向：挑一张能和你现有牌组叠加的，或者跳过保持牌组精简。</p>
+
       <div class="reward-cards">
         ${rewardHtml}
       </div>
@@ -695,8 +695,8 @@ function quartermasterLine(shop) {
   const lines = state.money < 50
     ? ['手头紧？删掉一张基础牌也是变强，牌组越精越好抽到王牌。', '钱不够没关系，先看看柜台的服务。']
     : state.money >= 150
-      ? ['大客户！稀有货在最右边，能撑起一整套打法。', '预算充足，挑一张能和你现有牌叠起来的。']
-      : [sale ? `今天「${CARDS[sale.id]?.name}」半价，错过就没了。` : '都是刚到的货，看看哪张合你的打法。', '别只看伤害数字——燃烧、部署、连击，各有各的玩法。', `最便宜的只要 ${cheapest} 金币。`];
+      ? ['大客户来了，货都在架子上。', '预算充足？随便挑。']
+      : [sale ? `今天「${CARDS[sale.id]?.name}」半价，错过就没了。` : '都是刚到的货。', '慢慢看，不催你。', `最便宜的只要 ${cheapest} 金币。`];
   return lines[state.rev % lines.length];
 }
 

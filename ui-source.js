@@ -135,7 +135,7 @@ function battle(){
 }
 // Transfer market: an agent NPC at a booth, three contracts on the board, and a release desk.
 function agentLine(s){
- const left=s.shop.slots.filter(Boolean).length,lines=s.money<40?['预算见底了？先解约一个不合拍的，阵容反而更顺。','没钱也能谈——先看看离队服务。']:left===0?['这批合同都被你签完了，下一站再见。']:s.money>=90?['大手笔！最右边那份顶薪合同，能改变整套打法。','预算够用，挑一个能和现有阵容配合的人。']:['三份合同，三个价位。别只看数值，看他能和谁打出配合。','刚谈下来的新人，签不签随你。','转会窗口不等人，想好了就签字。'];
+ const left=s.shop.slots.filter(Boolean).length,lines=s.money<40?['预算见底了？先解约一个不合拍的，阵容反而更顺。','没钱也能谈——先看看离队服务。']:left===0?['这批合同都被你签完了，下一站再见。']:s.money>=90?['大手笔！顶薪合同在最右边。','预算够用，慢慢挑。']:['三份合同，三个价位。','刚谈下来的新人，签不签随你。','转会窗口不等人，想好了就签字。'];
  return lines[s.rev%lines.length];
 }
 function marketScene(s){

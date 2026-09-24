@@ -75,7 +75,7 @@ for (const [id, name, cost, effects, upgraded, zone, arch, title, scene] of CARD
   const row = EXPANSION_ROWS.find(r => r[0] === id);
   if (!row) throw Error('missing row ' + id);
   row.splice(1, row.length - 1, name, '战术', cost, effects, upgraded, zone);
-  EXPANSION_TACTICS[id] = { title, scene, origin: `赛区战术 · 流派·${ARCH[arch]}`, archetype: arch, note: '赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。' };
+  EXPANSION_TACTICS[id] = { title, scene, origin: '赛区战术', archetype: arch, note: '赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。' };
   changed++;
 }
 const path = new URL('../regional-expansion.js', import.meta.url);

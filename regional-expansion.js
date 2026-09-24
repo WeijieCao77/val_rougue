@@ -6346,7 +6346,7 @@ export const EXPANSION_TACTICS = {
   "CNT01": {
     "title": "炮台架点",
     "scene": "把自动炮台架在交叉口，每个回合都替你开火。",
-    "origin": "赛区战术 · 流派·部署",
+    "origin": "赛区战术",
     "archetype": "deploy",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -6371,7 +6371,7 @@ export const EXPANSION_TACTICS = {
   "CNT05": {
     "title": "屏障无人机",
     "scene": "无人机悬在身前，回合结束时自动撑起护盾。",
-    "origin": "赛区战术 · 流派·部署",
+    "origin": "赛区战术",
     "archetype": "deploy",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -6390,7 +6390,7 @@ export const EXPANSION_TACTICS = {
   "CNT08": {
     "title": "集火指令",
     "scene": "一声令下，所有已部署的炮台立即开火。",
-    "origin": "赛区战术 · 流派·部署",
+    "origin": "赛区战术",
     "archetype": "deploy",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -6415,7 +6415,7 @@ export const EXPANSION_TACTICS = {
   "CNT12": {
     "title": "以守代攻",
     "scene": "把掩体推到对手脸上：布防越厚，这一击越重。",
-    "origin": "赛区战术 · 流派·布防反击",
+    "origin": "赛区战术",
     "archetype": "fortify",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -6440,14 +6440,14 @@ export const EXPANSION_TACTICS = {
   "CNT16": {
     "title": "架枪等待",
     "scene": "准星不离拐角，这张牌可以留到对手露头的那一回合。",
-    "origin": "赛区战术 · 流派·布防反击",
+    "origin": "赛区战术",
     "archetype": "fortify",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "CNT17": {
     "title": "留枪",
     "scene": "子弹留给关键回合；不打出也不会被弃掉。",
-    "origin": "赛区战术 · 流派·布防反击",
+    "origin": "赛区战术",
     "archetype": "fortify",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -6460,14 +6460,14 @@ export const EXPANSION_TACTICS = {
   "CNT19": {
     "title": "铁壁架点",
     "scene": "先砌墙，再放无人机补位。",
-    "origin": "赛区战术 · 流派·部署",
+    "origin": "赛区战术",
     "archetype": "deploy",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "CNT20": {
     "title": "交叉火力网",
     "scene": "两台炮台交叉覆盖整条通道。",
-    "origin": "赛区战术 · 流派·部署",
+    "origin": "赛区战术",
     "archetype": "deploy",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -6480,14 +6480,14 @@ export const EXPANSION_TACTICS = {
   "CNT22": {
     "title": "稳守反击",
     "scene": "先稳住站位，再趁队友开枪时反打。",
-    "origin": "赛区战术 · 流派·连击",
+    "origin": "赛区战术",
     "archetype": "combo",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "CNT23": {
     "title": "阵地轮换",
     "scene": "跟在队友动作后换位，顺势摸到新的信息。",
-    "origin": "赛区战术 · 流派·连击",
+    "origin": "赛区战术",
     "archetype": "combo",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -6704,7 +6704,7 @@ export const EXPANSION_TACTICS = {
   "AMT02": {
     "title": "飞刀出手",
     "scene": "一次甩出两把飞刀，留在手里随时补刀。",
-    "origin": "赛区战术 · 流派·连击",
+    "origin": "赛区战术",
     "archetype": "combo",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -6723,7 +6723,7 @@ export const EXPANSION_TACTICS = {
   "AMT05": {
     "title": "弱点处决",
     "scene": "对手露出破绽的瞬间，一枪打满伤害。",
-    "origin": "赛区战术 · 流派·易伤处决",
+    "origin": "赛区战术",
     "archetype": "execute",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -6736,14 +6736,14 @@ export const EXPANSION_TACTICS = {
   "AMT07": {
     "title": "连续交火",
     "scene": "跟着上一个动作继续压枪，第二段伤害接上。",
-    "origin": "赛区战术 · 流派·连击",
+    "origin": "赛区战术",
     "archetype": "combo",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "AMT08": {
     "title": "刀锋风暴",
     "scene": "整场比赛，每一把飞刀都更致命。",
-    "origin": "赛区战术 · 流派·连击",
+    "origin": "赛区战术",
     "archetype": "combo",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -6768,14 +6768,14 @@ export const EXPANSION_TACTICS = {
   "AMT12": {
     "title": "快速转点",
     "scene": "接在队友动作后快速转点。",
-    "origin": "赛区战术 · 流派·连击",
+    "origin": "赛区战术",
     "archetype": "combo",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "AMT13": {
     "title": "标记弱点",
     "scene": "先标记，再趁着连续动作补一枪。",
-    "origin": "赛区战术 · 流派·易伤处决",
+    "origin": "赛区战术",
     "archetype": "execute",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -6794,7 +6794,7 @@ export const EXPANSION_TACTICS = {
   "AMT16": {
     "title": "一穿三",
     "scene": "连续动作打出节奏，三段扫射再来一轮。",
-    "origin": "赛区战术 · 流派·连击",
+    "origin": "赛区战术",
     "archetype": "combo",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -6807,7 +6807,7 @@ export const EXPANSION_TACTICS = {
   "AMT18": {
     "title": "节奏大师",
     "scene": "每回合第三张起，所有攻击伤害提高。",
-    "origin": "赛区战术 · 流派·连击",
+    "origin": "赛区战术",
     "archetype": "combo",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -6820,7 +6820,7 @@ export const EXPANSION_TACTICS = {
   "AMT20": {
     "title": "肾上腺素",
     "scene": "心跳加速，本场之后每一枪都更重。",
-    "origin": "赛区战术 · 流派·易伤处决",
+    "origin": "赛区战术",
     "archetype": "execute",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -6845,7 +6845,7 @@ export const EXPANSION_TACTICS = {
   "AMT24": {
     "title": "处决时刻",
     "scene": "对手易伤时，这一枪伤害翻倍。",
-    "origin": "赛区战术 · 流派·易伤处决",
+    "origin": "赛区战术",
     "archetype": "execute",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -7062,7 +7062,7 @@ export const EXPANSION_TACTICS = {
   "EUT03": {
     "title": "燃烧弹",
     "scene": "燃烧弹封住点位，火焰每回合都在烧。",
-    "origin": "赛区战术 · 流派·燃烧",
+    "origin": "赛区战术",
     "archetype": "burn",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -7075,7 +7075,7 @@ export const EXPANSION_TACTICS = {
   "EUT05": {
     "title": "火墙封路",
     "scene": "一道火墙既挡住进攻，也烧伤冲过来的人。",
-    "origin": "赛区战术 · 流派·燃烧",
+    "origin": "赛区战术",
     "archetype": "burn",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -7112,21 +7112,21 @@ export const EXPANSION_TACTICS = {
   "EUT11": {
     "title": "点燃补枪",
     "scene": "燃烧弹药打出的补枪。",
-    "origin": "赛区战术 · 流派·燃烧",
+    "origin": "赛区战术",
     "archetype": "burn",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT12": {
     "title": "助燃剂",
     "scene": "往火里再添一把，燃烧层数翻倍。",
-    "origin": "赛区战术 · 流派·燃烧",
+    "origin": "赛区战术",
     "archetype": "burn",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT13": {
     "title": "引爆",
     "scene": "把所有火点一次引爆，燃烧越多伤害越高。",
-    "origin": "赛区战术 · 流派·燃烧",
+    "origin": "赛区战术",
     "archetype": "burn",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -7145,14 +7145,14 @@ export const EXPANSION_TACTICS = {
   "EUT16": {
     "title": "纵火专家",
     "scene": "整场比赛，每回合开始都会补上一把火。",
-    "origin": "赛区战术 · 流派·燃烧",
+    "origin": "赛区战术",
     "archetype": "burn",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT17": {
     "title": "焦土防线",
     "scene": "守住点位，把地面烧成禁区。",
-    "origin": "赛区战术 · 流派·燃烧",
+    "origin": "赛区战术",
     "archetype": "burn",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -7171,21 +7171,21 @@ export const EXPANSION_TACTICS = {
   "EUT20": {
     "title": "兴奋信标",
     "scene": "信标亮起，本场之后每一枪都更重。",
-    "origin": "赛区战术 · 流派·易伤处决",
+    "origin": "赛区战术",
     "archetype": "execute",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT21": {
     "title": "灼烧压制",
     "scene": "火力与火焰一起压住对手。",
-    "origin": "赛区战术 · 流派·燃烧",
+    "origin": "赛区战术",
     "archetype": "burn",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "EUT22": {
     "title": "余烬追击",
     "scene": "对手身上还在燃烧时，追击伤害更高。",
-    "origin": "赛区战术 · 流派·燃烧",
+    "origin": "赛区战术",
     "archetype": "burn",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -7402,7 +7402,7 @@ export const EXPANSION_TACTICS = {
   "PAT01": {
     "title": "全火力倾泻",
     "scene": "把弹匣一次打空，下回合要花时间换弹。",
-    "origin": "赛区战术 · 流派·过载爆发",
+    "origin": "赛区战术",
     "archetype": "overload",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -7415,7 +7415,7 @@ export const EXPANSION_TACTICS = {
   "PAT03": {
     "title": "超频架点",
     "scene": "透支体能硬扛一波，下回合少一步行动。",
-    "origin": "赛区战术 · 流派·过载爆发",
+    "origin": "赛区战术",
     "archetype": "overload",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -7452,14 +7452,14 @@ export const EXPANSION_TACTICS = {
   "PAT09": {
     "title": "孤注一掷",
     "scene": "全队压上一波，赢下这回合，下回合再说。",
-    "origin": "赛区战术 · 流派·过载爆发",
+    "origin": "赛区战术",
     "archetype": "overload",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "PAT10": {
     "title": "疾速连段",
     "scene": "跟着节奏连续出手，还能顺手摸一张牌。",
-    "origin": "赛区战术 · 流派·连击",
+    "origin": "赛区战术",
     "archetype": "combo",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -7472,7 +7472,7 @@ export const EXPANSION_TACTICS = {
   "PAT12": {
     "title": "飞刀雨",
     "scene": "一把一把甩出去的飞刀，全是 0 费补刀。",
-    "origin": "赛区战术 · 流派·连击",
+    "origin": "赛区战术",
     "archetype": "combo",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -7491,7 +7491,7 @@ export const EXPANSION_TACTICS = {
   "PAT15": {
     "title": "炸药包",
     "scene": "炸药包把自己弹进点，下回合落地要缓一步。",
-    "origin": "赛区战术 · 流派·过载爆发",
+    "origin": "赛区战术",
     "archetype": "overload",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -7510,14 +7510,14 @@ export const EXPANSION_TACTICS = {
   "PAT18": {
     "title": "补位掩护",
     "scene": "队友出手后立刻补位掩护。",
-    "origin": "赛区战术 · 流派·连击",
+    "origin": "赛区战术",
     "archetype": "combo",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "PAT19": {
     "title": "节奏抢断",
     "scene": "抢在连续动作里打出一枪。",
-    "origin": "赛区战术 · 流派·连击",
+    "origin": "赛区战术",
     "archetype": "combo",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -7530,7 +7530,7 @@ export const EXPANSION_TACTICS = {
   "PAT21": {
     "title": "临场超频",
     "scene": "透支状态换来整场更强的火力。",
-    "origin": "赛区战术 · 流派·过载爆发",
+    "origin": "赛区战术",
     "archetype": "overload",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
@@ -7555,7 +7555,7 @@ export const EXPANSION_TACTICS = {
   "PAT25": {
     "title": "连击终结",
     "scene": "连续动作的最后一击。",
-    "origin": "赛区战术 · 流派·连击",
+    "origin": "赛区战术",
     "archetype": "combo",
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   }
