@@ -1,6 +1,7 @@
 import {VERSION,CARDS,PLAYER_IDS,SKINS,ENEMIES,START,effects,cardName,REGIONS,TACTICS} from './content.js';
 import {buildMap,availableNodes} from './season-map.js';
 import {CURSES,CURSE_RULES,EXTRA_STATUS_RULES} from './afflictions.js';
+import {CARD_RARITY,RARITY_ORDER} from './card-rarity.js';
 import {RULES_VERSION,ROLES,TRAIT_TUNING,OPENING_FREE,OPENING_TRADE,GEAR,SUPPLIES,ENERGY_GEAR,SUPPLY_RARITY_WEIGHTS,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,MAX_ASCENSION,ENEMY_TUNING,gearName} from './wa-rules.js';
 export const clone = x => structuredClone(x);
 const log = (s,text) => s.logs.push({node:s.node,turn:s.battle?.turn||0,text});
@@ -27,7 +28,8 @@ export const R = s => s?.mode==='season'&&(s.rules||0)>=1;
 export const hasGear = (s,id) => R(s)&&s.skins.includes(id);
 const has = hasGear;
 export const supplySlots = s => BASE_SUPPLY_SLOTS+(has(s,'GR61')?2:0);
-export const shopPrice = (s,n) => has(s,'GR60')?Math.floor(n*.75):n;
+// Market discount (会员积分卡). Card slot prices come from shopPrice(s,slot) below.
+export const marketPrice = (s,n) => has(s,'GR60')?Math.floor(n*.75):n;
 const DAMAGE_TYPES=['hit','bodyslam','detonate'];
 function gainBlock(s,n){
  const b=s.battle,extra=R(s)&&s.region==='EMEA'&&b.enemyWeak>0?TRAIT_TUNING.EMEA.block:0;
@@ -92,13 +94,54 @@ export function offers(s,weights=[15,60,20,5],number=3,excluded=[]) {
  }
  return result;
 }
+// Season-only rarity odds (common/uncommon/rare, percent), modelled on Slay the Spire:
+// rares are rare, elites pay better, and every reward without a rare adds +1% pity.
+export const RARITY_ODDS={normal:[60,37,3],elite:[50,40,10],boss:[0,0,100],shop:[54,37,9]};
+export const SHOP_PRICE_RANGE={common:[45,55],uncommon:[68,82],rare:[135,165]};
+export function rarityChances(s,kind='normal'){
+ const [c,u,r]=RARITY_ODDS[kind],pity=kind==='normal'||kind==='elite'?Math.min(c,s.rarePity||0):0;
+ return [c-pity,u,r+pity];
+}
+function rollRarity(s,kind){
+ const [c,u]=rarityChances(s,kind),roll=random(s)*100;
+ return roll<c?'common':roll<c+u?'uncommon':'rare';
+}
+// Falls back to the nearest tier (lower first) when the copy cap empties a tier.
+function pickOfRarity(s,rarity,taken){
+ const i=RARITY_ORDER.indexOf(rarity);
+ for(const k of [i,i-1,i+1,i-2,i+2].filter(k=>k>=0&&k<3)){
+  const pool=REGIONS[s.region].pool.filter(id=>CARD_RARITY[id]===RARITY_ORDER[k]&&eligible(s,id)&&!taken.includes(id));
+  if(pool.length)return pool[Math.floor(random(s)*pool.length)];
+ }
+ return null;
+}
+export function rarityOffers(s,kind='normal',number=3,excluded=[]){
+ const result=[];
+ for(let k=0;k<number;k++){const id=pickOfRarity(s,rollRarity(s,kind),[...result,...excluded]);if(!id)break;result.push(id);}
+ return result;
+}
+function updatePity(s,list){s.rarePity=list.some(id=>CARD_RARITY[id]==='rare')?0:(s.rarePity||0)+1;}
+function seasonShop(s){
+ const slots=[];
+ for(let k=0;k<3;k++){const id=pickOfRarity(s,rollRarity(s,'shop'),slots);if(id)slots.push(id);}
+ slots.sort((a,b)=>RARITY_ORDER.indexOf(CARD_RARITY[a])-RARITY_ORDER.indexOf(CARD_RARITY[b]));
+ const prices=slots.map(id=>{const [lo,hi]=SHOP_PRICE_RANGE[CARD_RARITY[id]];return lo+Math.floor(random(s)*(hi-lo+1));});
+ while(slots.length<3){slots.push(null);prices.push(null);}
+ return {slots,prices,removed:false};
+}
+// Legacy tutorial shops keep the fixed 40/65/90 cost tiers.
+export function shopPrice(s,slot){return s.shop?.prices?s.shop.prices[slot]:[40,65,90][slot];}
 // Season rewards always include one build-direction card (burn, deploy, combo...)
-// so every reward screen offers a real choice of direction.
+// so every reward screen offers a real choice of direction. The swap keeps the
+// replaced slot's rarity when possible and never overwrites a rolled rare.
 function withArchetype(s,list){
  if(list.some(id=>TACTICS[id]?.archetype))return list;
  const pool=REGIONS[s.region].pool.filter(id=>TACTICS[id]?.archetype&&eligible(s,id)&&!list.includes(id));
  if(!pool.length||!list.length)return list;
- return [...list.slice(0,-1),pool[Math.floor(random(s)*pool.length)]];
+ const swap=(i,from)=>{const next=[...list];next[i]=from[Math.floor(random(s)*from.length)];return next;};
+ for(let i=list.length-1;i>=0;i--){const same=pool.filter(id=>CARD_RARITY[id]===CARD_RARITY[list[i]]);if(same.length)return swap(i,same);}
+ const slot=list.findLastIndex(id=>CARD_RARITY[id]!=='rare'),fallback=pool.filter(id=>CARD_RARITY[id]!=='rare');
+ return slot<0||!fallback.length?list:swap(slot,fallback);
 }
 export function createRun(seed='first-season',tutorial=true) {
  const s={version:VERSION,seed:String(seed),tutorial,rng:seedHash(seed),rev:0,nextId:1,node:1,phase:'combat',hp:80,maxHp:80,money:60,deck:[],skins:[],logs:[],actions:[],wins:0,battle:null};
@@ -258,7 +301,7 @@ function winSeason(s) {
  const elite = node && node.kind==='elite' ? true : ENEMIES[s.battle.enemy].elite;
  const rules=R(s),money = rules&&has(s,'BX04') ? 0 : (elite ? 35 : 20)+(rules&&has(s,'GR07')?8:0);
  s.money += money;
- s.reward={offers:withArchetype(s,offers(s,elite?[10,45,30,15]:undefined,rules?3+(has(s,'GR26')?1:0)-(has(s,'BX07')?1:0):3)),elite:!!elite};
+ s.reward={offers:withArchetype(s,rarityOffers(s,elite?'elite':'normal',rules?3+(has(s,'GR26')?1:0)-(has(s,'BX07')?1:0):3)),elite:!!elite};updatePity(s,s.reward.offers);
  if(rules){
   if(elite){const g=rollGear(s);if(g){gainGear(s,g);s.reward.gear=g;}}
   s.reward.supply=null;
@@ -315,7 +358,7 @@ function play(s,uid) {
    let first=0;if(b.field==='highground'&&!b.attackedThisTurn){first=3;}
    if(b.field)b.attackedThisTurn=true;
    for(let i=0;i<e.times;i++){
-    strike(s,pd(s,e.n+bonus+first+amLeft+fieldHitBonus(b,e.n,e.times)+(e.ifWeak&&wasWeak?e.ifWeak:0)+(e.ifVuln&&wasVuln?e.ifVuln:0)+(e.ifBurn&&wasBurning?e.ifBurn:0)+(b.selfStrength||0)+knifeBonus+comboBonus));bonus=0;first=0;amLeft=0;
+    strike(s,pd(s,e.n+bonus+first+amLeft+fieldHitBonus(b,e.n,e.times)+(e.ifWeak&&wasWeak?e.ifWeak:0)+(e.ifVuln&&wasVuln?e.ifVuln:0)+(e.ifBurn&&wasBurning?e.ifBurn:0)+(b.selfStrength||0)+knifeBonus+comboBonus));bonus=0;first=0;if(!TRAIT_TUNING.AM.perHit)amLeft=0;
     if(s.phase!=='combat'){b.resolving=null;return;}
    }
   }
@@ -498,8 +541,8 @@ function perform(s,a) {
   }else throw Error('未知路线');break;
  case 'opponent':requirePhase('opponent');if(!['E04','EL01'].includes(a.id))throw Error('未知对手');startBattle(s,a.id);break;
  case 'buy':requirePhase('shop');{
-  const id=s.shop.slots[a.slot],price=shopPrice(s,[40,65,90][a.slot]);if(!id||!price)throw Error('该货位已售出');if(s.money<price)throw Error('资金不足');addPlayer(s,id);s.money-=price;s.shop.slots[a.slot]=null;log(s,`转会支出 ${price} 资金。`);break;}
- case 'remove':requirePhase('shop');if(s.shop.removed)throw Error('本次移除已使用');if(s.money<shopPrice(s,50))throw Error(`需要 ${shopPrice(s,50)} 资金`);{const reason=removalReason(s,a.uid);if(reason)throw Error(reason);const c=s.deck.find(c=>c.uid===a.uid),fee=shopPrice(s,50);log(s,`支付 ${fee} 资金，永久移除 ${cardName(c)}。`);s.money-=fee;s.deck=s.deck.filter(c=>c.uid!==a.uid);s.shop.removed=true;}break;
+  const id=s.shop.slots[a.slot],price=marketPrice(s,shopPrice(s,a.slot));if(!id||!price)throw Error('该货位已售出');if(s.money<price)throw Error('资金不足');addPlayer(s,id);s.money-=price;s.shop.slots[a.slot]=null;log(s,`转会支出 ${price} 资金。`);break;}
+ case 'remove':requirePhase('shop');if(s.shop.removed)throw Error('本次移除已使用');if(s.money<marketPrice(s,50))throw Error(`需要 ${marketPrice(s,50)} 资金`);{const reason=removalReason(s,a.uid);if(reason)throw Error(reason);const c=s.deck.find(c=>c.uid===a.uid),fee=marketPrice(s,50);log(s,`支付 ${fee} 资金，永久移除 ${cardName(c)}。`);s.money-=fee;s.deck=s.deck.filter(c=>c.uid!==a.uid);s.shop.removed=true;}break;
  case 'leaveShop':requirePhase('shop');advance(s);break;
  case 'activity':requirePhase('activity');
   if(a.choice==='fans'){if(has(s,'BX02'))throw Error('封闭训练协议：不能回复声望');const n=restHeal(s);if(n<=0)throw Error('声望已满');s.hp+=n;log(s,`粉丝见面会：恢复最大声望的 ${R(s)&&s.ascension>=5?20:30}%${has(s,'GR25')?' + 10':''}，实际 +${n} 声望。`);advance(s);}
@@ -520,8 +563,7 @@ function perform(s,a) {
   } else if(node.kind==='event'){
    startSeasonEvent(s);
   } else if(node.kind==='shop'){
-   const low=offers(s,[1,4,0,0],1),mid=offers(s,[0,0,1,0],1),high=offers(s,[0,0,0,1],1);
-   s.shop={slots:[low[0]||null,mid[0]||null,high[0]||null],removed:false};s.phase='shop';
+   s.shop=seasonShop(s);s.phase='shop';
    if(R(s)){
     const gear=[];for(let i=0;i<2;i++){const g=rollGear(s,undefined,gear);if(g)gear.push(g);}
     s.shop.gear=gear;const shopOnly=pick(s,gearPool(s,'shop'));if(shopOnly)s.shop.gear.push(shopOnly);
@@ -654,11 +696,11 @@ function performRules(s,a,requirePhase){
   if(s.phase==='result')throw Error('赛季已经结束');const old=s.skins[a.slot];if(!Number.isInteger(a.slot)||!old)throw Error('无效装备槽');
   const value=gearSellValue(old);s.money+=value;s.skins.splice(a.slot,1);log(s,`出售装备：${gearName(old)}，+${value} 资金。`);return true;}
  case 'buyGear':{
-  requirePhase('shop');const id=s.shop.gear?.[a.slot];if(!id)throw Error('该货位已售出');if(s.skins.length>=GEAR_SLOTS)throw Error('装备槽已满，请先出售一件');const price=shopPrice(s,GEAR_PRICES[GEAR[id].rarity]);
+  requirePhase('shop');const id=s.shop.gear?.[a.slot];if(!id)throw Error('该货位已售出');if(s.skins.length>=GEAR_SLOTS)throw Error('装备槽已满，请先出售一件');const price=marketPrice(s,GEAR_PRICES[GEAR[id].rarity]);
   if(s.money<price)throw Error('资金不足');s.money-=price;s.shop.gear[a.slot]=null;log(s,`购入装备，支出 ${price} 资金。`);gainGear(s,id);return true;}
  case 'buySupply':{
   requirePhase('shop');const id=s.shop.supplies?.[a.slot];if(!id)throw Error('该货位已售出');if(has(s,'BX08'))throw Error('禁用补给协议：不能获得补给品');
-  if(s.supplies.length>=supplySlots(s))throw Error('补给品栏位已满');const price=shopPrice(s,SUPPLY_PRICES[SUPPLIES[id].rarity]);
+  if(s.supplies.length>=supplySlots(s))throw Error('补给品栏位已满');const price=marketPrice(s,SUPPLY_PRICES[SUPPLIES[id].rarity]);
   if(s.money<price)throw Error('资金不足');s.money-=price;s.shop.supplies[a.slot]=null;s.supplies.push(id);log(s,`购入补给品：${SUPPLIES[id].name}，支出 ${price} 资金。`);return true;}
  }
  return false;
@@ -718,7 +760,7 @@ function startSeasonEvent(s) {
  const id = fresh[Math.floor(random(s)*fresh.length)];
  s.seenEvents.push(id);
  s.eventId = id;
- if (id==='trial') s.eventOffers = offers(s);
+ if (id==='trial') s.eventOffers = rarityOffers(s,'normal');
  s.phase='event';
  log(s, `事件：${SEASON_EVENTS[id].label}`);
 }
@@ -763,12 +805,12 @@ export function legalActions(s) {
  if(s.phase==='branch')actions.push({type:'branch',choice:'shop'},{type:'branch',choice:'activity'});
  if(s.phase==='opponent')actions.push({type:'opponent',id:'E04'},{type:'opponent',id:'EL01'});
  if(s.phase==='shop'){
-  s.shop.slots.forEach((id,slot)=>{if(id&&eligible(s,id)&&s.money>=shopPrice(s,[40,65,90][slot]))actions.push({type:'buy',slot});});
+  s.shop.slots.forEach((id,slot)=>{if(id&&eligible(s,id)&&s.money>=marketPrice(s,shopPrice(s,slot)))actions.push({type:'buy',slot});});
   if(R(s)){
-   (s.shop.gear||[]).forEach((id,slot)=>{if(id&&s.skins.length<GEAR_SLOTS&&s.money>=shopPrice(s,GEAR_PRICES[GEAR[id].rarity]))actions.push({type:'buyGear',slot});});
-   if(!has(s,'BX08')&&s.supplies.length<supplySlots(s))(s.shop.supplies||[]).forEach((id,slot)=>{if(id&&s.money>=shopPrice(s,SUPPLY_PRICES[SUPPLIES[id].rarity]))actions.push({type:'buySupply',slot});});
+   (s.shop.gear||[]).forEach((id,slot)=>{if(id&&s.skins.length<GEAR_SLOTS&&s.money>=marketPrice(s,GEAR_PRICES[GEAR[id].rarity]))actions.push({type:'buyGear',slot});});
+   if(!has(s,'BX08')&&s.supplies.length<supplySlots(s))(s.shop.supplies||[]).forEach((id,slot)=>{if(id&&s.money>=marketPrice(s,SUPPLY_PRICES[SUPPLIES[id].rarity]))actions.push({type:'buySupply',slot});});
   }
-  if(!s.shop.removed&&s.money>=shopPrice(s,50))for(const c of s.deck)if(!removalReason(s,c.uid))actions.push({type:'remove',uid:c.uid});actions.push({type:'leaveShop'});
+  if(!s.shop.removed&&s.money>=marketPrice(s,50))for(const c of s.deck)if(!removalReason(s,c.uid))actions.push({type:'remove',uid:c.uid});actions.push({type:'leaveShop'});
  }
  if(s.phase==='activity'){
   if(restHeal(s)>0)actions.push({type:'activity',choice:'fans'});

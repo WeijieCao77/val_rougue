@@ -282,7 +282,7 @@ function playCard(state, seat, uid) {
         const dmg = damageCalc(e.n + bonus + amLeft + extra + (e.ifWeak && wasWeak ? e.ifWeak : 0) + (e.ifVuln && wasVuln ? e.ifVuln : 0) + (e.ifBurn && wasBurning ? e.ifBurn : 0), player.weak > 0, opponent.vulnerable > 0);
         attackPlayer(state, seat, 1 - seat, dmg);
         bonus = 0;
-        amLeft = 0;
+        if (!TRAIT_TUNING.AM.perHit) amLeft = 0;
         if (state.status === 'finished') break;
       }
       if (state.status === 'finished') break;

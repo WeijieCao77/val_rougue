@@ -82,12 +82,15 @@ test('CN team play: third distinct role in a turn gives action points and a card
  s=playId(s,'CN14');assert.equal(s.battle.tt.cnDone,true);assert.equal(s.battle.energy,9-4+TRAIT_TUNING.CN.energy,'fourth role does not trigger again');
 });
 
-test('AM consecutive attack: third damaging card gets a first-hit bonus and applies vulnerable',()=>{
- let s=fight('AM',['CN03','CN07','CN03','CN03']);const hp=s.battle.enemyHp,base=CARDS.CN03.effects[0].n;
- s=playId(s,'CN03');s=playId(s,'CN07');assert.equal(s.battle.tt.dmg,1,'a block-only card is not a damaging card');
- s=playId(s,'CN03');assert.equal(s.battle.enemyVulnerable,0);
+test('AM consecutive attack: the nth damaging card each turn gets bonus damage and applies vulnerable',()=>{
+ const T=TRAIT_TUNING.AM,base=CARDS.CN03.effects[0].n;
+ let s=fight('AM',[...Array(T.nth).fill('CN03'),'CN07','CN04']);
+ for(let k=1;k<T.nth;k++)s=playId(s,'CN03');
+ s=playId(s,'CN07');assert.equal(s.battle.tt.dmg,T.nth-1,'a block-only card is not a damaging card');assert.equal(s.battle.enemyVulnerable,0);
  const before=s.battle.enemyHp;s=playId(s,'CN03');
- assert.equal(before-s.battle.enemyHp,base+TRAIT_TUNING.AM.bonus);assert.equal(s.battle.enemyVulnerable,TRAIT_TUNING.AM.vuln);assert.equal(hp-s.battle.enemyHp,base*2+base+TRAIT_TUNING.AM.bonus);
+ assert.equal(before-s.battle.enemyHp,base+T.bonus);assert.equal(s.battle.enemyVulnerable,T.vuln);
+ const multi=CARDS.CN04.effects[0],mid=s.battle.enemyHp;s=playId(s,'CN04');
+ assert.equal(mid-s.battle.enemyHp,Math.floor(multi.n*1.5)*multi.times,'later damaging cards get no bonus, only the vulnerable');
 });
 test('EMEA counter-press: extra block while the opponent is suppressed; first suppression each turn draws',()=>{
  let s=fight('EMEA',['CN07','CN10','CN10','CN07']);s.battle.draw=[instance(s,'EU03'),instance(s,'EU03')];

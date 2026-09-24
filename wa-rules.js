@@ -13,14 +13,14 @@ export const ROLES = ['决斗','哨位','控场','先锋','自由人'];
 // Numbers live here so the engine, PvP and the displayed text never disagree.
 export const TRAIT_TUNING = {
  CN:{roles:3,energy:2,draw:1},
- AM:{nth:3,bonus:5,vuln:1},
+ AM:{nth:2,bonus:3,vuln:1,perHit:true},
  EMEA:{block:1,draw:1},
  PAC:{every:3,energy:1,draw:0}
 };
 const T = TRAIT_TUNING;
 export const REGION_TRAITS = {
  CN:{name:'团队协同',icon:'team',text:`每回合打出第 ${T.CN.roles} 种不同定位（决斗／哨位／控场／先锋／自由人）的选手牌时，获得 ${T.CN.energy} 行动点并抽 ${T.CN.draw} 张牌。每回合一次。`},
- AM:{name:'连续进攻',icon:'chain',text:`每回合第 ${T.AM.nth} 张带伤害效果的牌：首段伤害 +${T.AM.bonus}，结算后对手易伤 ${T.AM.vuln} 回合。`},
+ AM:{name:'连续进攻',icon:'chain',text:`每回合第 ${T.AM.nth} 张带伤害效果的牌：${T.AM.perHit?'每段':'首段'}伤害 +${T.AM.bonus}，结算后对手易伤 ${T.AM.vuln} 回合。`},
  EMEA:{name:'压制反打',icon:'counter',text:`对手处于压制时，你每次获得布防额外 +${T.EMEA.block}。每回合第一次让对手陷入压制时，抽 ${T.EMEA.draw} 张牌。`},
  PAC:{name:'临时战术',icon:'improv',text:`你的每个回合开始时，手牌加入 1 张临时牌（补枪与临时部署轮流）。本场每打出 ${T.PAC.every} 张临时牌，获得 ${T.PAC.energy} 行动点${T.PAC.draw?`并抽 ${T.PAC.draw} 张牌`:''}。`}
 };
@@ -137,7 +137,7 @@ export const GEAR_SELL = {common:15,uncommon:25,rare:40,boss:50,shop:30};
 // stronger, so the opponents — not the new content — absorb that power.
 // Keyed by act, then opponent kind.
 export const ENEMY_TUNING = {
- 1:{normal:{hp:1.3,dmg:1.3},elite:{hp:1.3,dmg:1.3},boss:{hp:1.3,dmg:1.25}},
- 2:{normal:{hp:1.65,dmg:1.5},elite:{hp:1.65,dmg:1.5},boss:{hp:1.65,dmg:1.45}},
- 3:{normal:{hp:1.9,dmg:1.7},elite:{hp:1.9,dmg:1.7},boss:{hp:1.9,dmg:1.6}}
+ 1:{normal:{hp:1.35,dmg:1.4},elite:{hp:1.4,dmg:1.4},boss:{hp:1.4,dmg:1.35}},
+ 2:{normal:{hp:1.5,dmg:1.4},elite:{hp:1.5,dmg:1.4},boss:{hp:1.5,dmg:1.35}},
+ 3:{normal:{hp:1.7,dmg:1.55},elite:{hp:1.7,dmg:1.55},boss:{hp:1.7,dmg:1.5}}
 };
