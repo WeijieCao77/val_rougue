@@ -19,6 +19,9 @@ const assets = new Map([
   ['/shared/status-icons.js', ['shared/status-icons.js', 'text/javascript; charset=utf-8']],
   ['/shared/status-icons.css', ['shared/status-icons.css', 'text/css; charset=utf-8']],
   ['/shared/shop-scene.css', ['shared/shop-scene.css', 'text/css; charset=utf-8']],
+  ['/shared/sfx.js', ['shared/sfx.js', 'text/javascript; charset=utf-8']],
+  ['/shared/juice.js', ['shared/juice.js', 'text/javascript; charset=utf-8']],
+  ['/shared/juice.css', ['shared/juice.css', 'text/css; charset=utf-8']],
   ['/shared/models/soldier.glb', ['shared/models/soldier.glb', 'model/gltf-binary']],
   ['/shared/models/hazmat.glb', ['shared/models/hazmat.glb', 'model/gltf-binary']],
   ['/shared/models/enemy.glb', ['shared/models/enemy.glb', 'model/gltf-binary']],
@@ -48,6 +51,7 @@ const assets = new Map([
   ['/new/ui.js', ['new-demo/ui.js', 'text/javascript; charset=utf-8']],
   ['/new/art.js', ['new-demo/art.js', 'text/javascript; charset=utf-8']],
   ['/new/fx.js', ['new-demo/fx.js', 'text/javascript; charset=utf-8']],
+  ['/new/juice-hooks.js', ['new-demo/juice-hooks.js', 'text/javascript; charset=utf-8']],
   ['/new/presentation.css', ['new-demo/presentation.css', 'text/css; charset=utf-8']],
   ['/new/cover.css', ['new-demo/cover.css', 'text/css; charset=utf-8']],
   ['/new/battle-redesign.css', ['new-demo/battle-redesign.css', 'text/css; charset=utf-8']],
@@ -60,6 +64,8 @@ const assets = new Map([
   ['/new/cover.webp', ['new-demo/cover.webp', 'image/webp']],
   ['/new/style.css', ['new-demo/style.css', 'text/css; charset=utf-8']],
   ['/new/season-map.js', ['new-demo/season-map.js', 'text/javascript; charset=utf-8']],
+  ['/new/run-extras.js', ['new-demo/run-extras.js', 'text/javascript; charset=utf-8']],
+  ['/new/run-extras.css', ['new-demo/run-extras.css', 'text/css; charset=utf-8']],
 ]);
 
 const imageTypes = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', svg: 'image/svg+xml' };

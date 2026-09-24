@@ -450,6 +450,36 @@ dialog{color:var(--ink);border:1px solid #a99567;border-radius:8px;background:li
 .weapon-display:before,.weapon-display:after{display:none}
 @media(max-width:760px){.weapon-frame{width:160px;height:120px}.weapon-frame .weapon-ring{max-height:80px}}
 
+/* Card rarity = how often a card is offered (普通 steel / 罕见 blue / 稀有 gold).
+   It is a game-design marker, never a grade of the player pictured on the card. */
+.card,.hand-card{--rarity:#8d99a6;--rarity-deep:#4b5561}
+.card.rarity-uncommon,.hand-card.rarity-uncommon{--rarity:#5b9be6;--rarity-deep:#23497a}
+.card.rarity-rare,.hand-card.rarity-rare{--rarity:#e6bd4f;--rarity-deep:#7a5a14}
+.card-rarity{position:absolute;top:-6px;right:-6px;width:15px;height:15px;transform:rotate(45deg);border:2px solid #f3e7c4;outline:1px solid #3a2f20;border-radius:3px;background:linear-gradient(135deg,#fff8 0 18%,var(--rarity) 40%,var(--rarity-deep));box-shadow:0 2px 4px #0006;z-index:2}
+.hand-card .card-rarity{width:11px;height:11px;top:-4px;right:-4px;border-width:1.5px}
+.rarity-common .card-face{outline:1px solid #8d99a699;outline-offset:1px}
+.rarity-uncommon .card-face{outline:2px solid #5b9be6cc;outline-offset:1px}
+.rarity-rare .card-face{outline:2px solid #e6bd4f;outline-offset:1px;filter:drop-shadow(0 0 7px #e6bd4f66)}
+.rarity-rare .card-rarity{box-shadow:0 0 8px #ffd86a,0 2px 4px #0006}
+.rarity-caption{display:flex;align-items:center;justify-content:center;gap:6px;margin:9px 0 0;font-size:11px;letter-spacing:.5px;color:#c9d2da}
+.rarity-caption i{width:9px;height:9px;transform:rotate(45deg);border-radius:2px;background:var(--rarity);box-shadow:0 0 0 1px #f3e7c4aa}
+.rarity-caption.rarity-uncommon{color:#9cc6f7}
+.rarity-caption.rarity-rare{color:#f3d27a;font-weight:700}
+.contract-slot .rarity-caption{margin-top:6px}
+#card-tooltip .tip-rarity{margin:8px 0 0;padding-top:7px;border-top:1px solid #93836944;font-size:11px;color:#b8c2cc}
+#card-tooltip .tip-rarity.rarity-uncommon{color:#8dbdf5}#card-tooltip .tip-rarity.rarity-rare{color:#f0cf6a}
+#card-tooltip .tip-rarity small{display:block;font-size:9px;color:#8a9a9a;margin-top:2px}
+.rarity-filter-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;justify-content:center;align-items:center}
+.rarity-filter-tabs button{font-size:11px;padding:6px 10px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.rarity-filter-tabs button[data-ui$="-common"]::before,.rarity-filter-tabs button[data-ui$="-uncommon"]::before,.rarity-filter-tabs button[data-ui$="-rare"]::before{content:"";width:8px;height:8px;transform:rotate(45deg);border-radius:2px;background:#8d99a6}
+.rarity-filter-tabs button[data-ui$="-uncommon"]::before{background:#5b9be6}
+.rarity-filter-tabs button[data-ui$="-rare"]::before{background:#e6bd4f}
+.rarity-filter-tabs small{flex-basis:100%;text-align:center;font-size:10px;color:#8f9c9a}
+@keyframes rare-reveal{0%,100%{filter:drop-shadow(0 0 5px #e6bd4f55)}50%{filter:drop-shadow(0 0 14px #e6bd4fbb)}}
+.reward-cards .rarity-rare>.card-face{animation:rare-reveal 2.4s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.reward-cards .rarity-rare>.card-face{animation:none}}
+@media(max-width:720px){.rarity-filter-tabs{gap:4px}.rarity-filter-tabs button{font-size:10px;padding:4px 6px}.rarity-caption{font-size:10px;margin-top:6px}}
+
 /* combat-fx.css */
 .cfx-container {
   position: fixed;
@@ -1794,6 +1824,57 @@ body.home-mode img {
 .shop-scene .shelf-item .card-title { color: #2b1f0e; }
 .shop-scene .shelf-item .card-desc { color: #3a2c16; }
 .shop-scene .shelf-item .card-cost { color: #6d5a38; }
+
+/* Hit feedback + sound control shared by both demos (shared/juice.js, shared/sfx.js). */
+.juice-layer { position: fixed; inset: 0; pointer-events: none; z-index: 10002; overflow: hidden; contain: layout style; }
+.juice-num {
+  position: fixed; left: 0; top: 0; transform: translate(-50%, 0);
+  font: 800 22px/1 "Bahnschrift", "DIN Alternate", "Segoe UI", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums; letter-spacing: .02em; white-space: nowrap;
+  color: #f4f6f8; text-shadow: 0 1px 0 #0b0f14, 0 0 6px rgba(8, 12, 18, .85);
+  will-change: transform, opacity;
+}
+.juice-num.is-damage { color: #ffe1d6; }
+.juice-num.is-damage.tier-big, .juice-num.is-hurt.tier-big { color: #ff6a55; font-size: 30px; }
+.juice-num.is-damage.tier-kill, .juice-num.is-hurt.tier-kill { color: #ff4d3d; font-size: 34px; }
+.juice-num.is-hurt { color: #ff8a78; }
+.juice-num.is-block { color: #7cc4ff; font-size: 19px; }
+.juice-num.is-block::before { content: ""; display: inline-block; width: .62em; height: .72em; margin-right: .18em; vertical-align: -.04em; background: currentColor; clip-path: polygon(50% 0, 100% 18%, 92% 62%, 50% 100%, 8% 62%, 0 18%); }
+.juice-num.is-heal { color: #6fdc8c; font-size: 20px; }
+.juice-flash { position: fixed; border-radius: 10px; background: rgba(255, 110, 90, .26); box-shadow: inset 0 0 0 2px rgba(255, 150, 130, .55); }
+.juice-flash.is-hurt { background: rgba(255, 70, 60, .24); }
+.juice-flash.is-heal { background: rgba(90, 220, 130, .2); box-shadow: inset 0 0 0 2px rgba(110, 230, 150, .45); }
+.juice-ghost { position: fixed; transform-origin: 50% 100%; }
+.juice-ghost > * { box-sizing: border-box; }
+@media (max-width: 720px) {
+  .juice-num { font-size: 18px; }
+  .juice-num.is-damage.tier-big, .juice-num.is-hurt.tier-big { font-size: 24px; }
+  .juice-num.is-damage.tier-kill, .juice-num.is-hurt.tier-kill { font-size: 27px; }
+  .juice-num.is-block, .juice-num.is-heal { font-size: 16px; }
+}
+/* The juice layer owns HP/block numbers; hide the older duplicate labels. */
+.new-fx-layer .fx-damage, .new-fx-layer .damage-text, .new-fx-layer .block-text,
+.cfx-container .cfx-damage, .cfx-container .cfx-loss { display: none !important; }
+
+/* Speaker button + volume popover */
+.sfx-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; min-width: 34px; height: 34px; padding: 0; margin: 0;
+  border-radius: 8px; border: 1px solid rgba(160, 180, 200, .35);
+  background: rgba(16, 22, 30, .55); color: #d9e2ec; cursor: pointer; line-height: 0;
+}
+.sfx-toggle:hover, .sfx-toggle:focus-visible { border-color: rgba(200, 220, 240, .7); color: #fff; }
+.sfx-toggle.is-muted { color: #8b98a8; }
+.sfx-pop {
+  position: fixed; z-index: 10050; display: flex; flex-direction: column; gap: 8px; width: 190px;
+  padding: 10px 12px; border-radius: 10px; border: 1px solid #3e4d62;
+  background: #0c1118; color: #d9e2ec; font: 13px/1.3 system-ui, sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
+}
+.sfx-pop .sfx-row { display: flex; justify-content: space-between; align-items: baseline; }
+.sfx-pop output { color: #9fb3c8; font-variant-numeric: tabular-nums; }
+.sfx-pop input[type="range"] { width: 100%; margin: 0; accent-color: #58b4ff; }
+.sfx-pop .sfx-mute { padding: 6px 8px; border-radius: 6px; border: 1px solid #3e4d62; background: #16202c; color: inherit; cursor: pointer; }
 
 /* Wa demo: event scenes and supply crates. */
 .room-screen .event-scene{max-width:640px;margin:0 auto 6px;font-size:14px;line-height:1.9;color:#d9ceb2}

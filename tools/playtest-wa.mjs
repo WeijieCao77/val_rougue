@@ -52,7 +52,7 @@ function opsValue(s, ops) {
     if (op.maxHp) v += op.maxHp * (op.maxHp > 0 ? 1.5 : 2);
     if (op.equip) v += s.skins.length < 3 ? 20 : op.equip.fallback * 0.25;
     if (op.curse) v -= 15;
-    if (op.card) v += op.card === 'star' ? 8 : 5;
+    if (op.card) v += { rare: 9, uncommon: 6, common: 3 }[op.card] || 5;
     if (op.upgradeRandom) v += op.upgradeRandom * 5;
     if (op.transformRandom) v += op.transformRandom;
     if (op.pick) v += { upgrade: 7, remove: 8, transform: 3, duplicate: 6, cleanse: 14 }[op.pick] || 0;

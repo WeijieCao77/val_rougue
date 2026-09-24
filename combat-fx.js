@@ -1,4 +1,6 @@
 // combat-fx.js
+import {waHit} from './wa-juice.js';
+import {playSfx} from './shared/sfx.js';
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let fxContainer = null;
 let fxTimeouts = [];
@@ -242,6 +244,7 @@ export function playCombatFx(events, snapshot) {
     marker.style.left = '50%';
     marker.style.top = '20%';
     container.appendChild(marker);
+    events.forEach(evt=>{if(evt.kind==='attack')waHit(evt.target==='enemy'?enemyEl:allyEl,evt.target,evt.damage);else if(evt.kind==='loss')waHit(allyEl,'ally',evt.amount);});
     later(cleanupFX,600);
     return;
   }
@@ -256,18 +259,22 @@ export function playCombatFx(events, snapshot) {
           const to = evt.source === 'ally' ? positions.enemy : positions.ally;
           const label = evt.damage>0?`−${evt.damage}`:'';
           spawnRay(container, from, to, evt.source === 'ally' ? '#f5d17c' : '#ff826f', label, evt.absorbed,index%3,evt.target);
+          later(()=>{if(evt.damage>0)waHit(to.el,evt.target,evt.damage);else if(evt.absorbed>0)playSfx('block');},270);
           break;
         }
         case 'defense':
+          playSfx('block');
           if (evt.target === 'ally') spawnDefense(container, positions.ally, allyEl, evt.amount, 'ally');
           else spawnDefense(container, positions.enemy, enemyEl, evt.amount, 'enemy');
           break;
         case 'status':
+          playSfx('debuff');
           if (evt.target === 'enemy') spawnStatus(container, enemyEl, positions.enemy, evt.label, 'enemy');
           else spawnStatus(container, allyEl, positions.ally, evt.label, 'ally');
           break;
         case 'loss':
           spawnLoss(container, positions.ally, allyEl, evt.amount, 'ally');
+          waHit(allyEl,'ally',evt.amount);
           break;
         case 'power':
           spawnPower(container, allyEl, positions.ally, 'ally');

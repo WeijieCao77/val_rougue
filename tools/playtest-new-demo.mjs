@@ -5,13 +5,16 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createRun, legalActions, act, battleEnemies, describeEvent } from '../new-demo/engine.js';
 import { EVENTS } from '../new-demo/events.js';
-import { CARDS, TEAMS } from '../new-demo/content.js';
+import { CARDS, TEAMS, SUPPLIES, RELICS } from '../new-demo/content.js';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, v, i, all) => (v.startsWith('--') ? [...acc, [v.slice(2), all[i + 1]]] : acc), []));
 const SEEDS = Number(args.seeds || 10);
 const ACTS = Number(args.acts || 1);
 const OUT = args.out || 'reports/playtest/new-demo-act1.json';
 const POLICIES = (args.policies || 'smart,naive,random').split(',');
+// --opening 0 skips the 赛前准备 choice; --ascension N plays at that difficulty.
+const OPENING = args.opening !== '0';
+const ASCENSION = Number(args.ascension || 0);
 
 const costOf = c => (c.up && CARDS[c.id].upgradeCost !== undefined ? CARDS[c.id].upgradeCost : CARDS[c.id].cost);
 const step = (s, a) => { const r = act(s, a); if (r.error) throw Error(`${JSON.stringify(a)}: ${r.error}`); r.state.logs = []; return r.state; };
@@ -27,13 +30,23 @@ function evaluate(s, hpWeight) {
   if (s.phase === 'result') return -1e6;
   if (s.phase !== 'combat') return 1e5 + s.hp * 10;
   const b = s.battle;
-  return s.hp * hpWeight - enemyHpLeft(b) + enemyStatusValue(b) + b.powers.length * 6 + (b.powers.includes('barricade') ? b.playerBlock * 0.6 : 0);
+  return s.hp * hpWeight - enemyHpLeft(b) + enemyStatusValue(b) + b.powers.length * 6 + (b.powers.includes('barricade') ? b.playerBlock * 0.6 : 0) + squadValue(b);
+}
+
+// Team trait progress carried into the next turn is worth something.
+function squadValue(b) {
+  const sq = b.squad;
+  if (!sq) return 0;
+  if (sq.id === 'momentum') return sq.armed ? 7 : sq.n * 1.2;
+  if (sq.id === 'intel') return sq.n * 2;
+  if (sq.id === 'fortify') return b.playerBlock * 0.4; // part of the leftover block carries over
+  return 0;
 }
 
 function stateKey(s) {
   const b = s.battle;
   return [b.hand.map(c => c.id + (c.up ? '+' : '')).sort().join(','), b.energy, b.stance, battleEnemies(b).map(e => e.hp).join('/'), b.playerBlock, s.hp,
-    JSON.stringify(b.statuses) + JSON.stringify(battleEnemies(b).map(e => e.statuses)), b.powers.join(','), b.attackPlayedThisTurn, b.blockPlayedThisTurn, b.stanceSwitchUsedThisTurn, b.drawPile.length].join('|');
+    JSON.stringify(b.statuses) + JSON.stringify(battleEnemies(b).map(e => e.statuses)), b.powers.join(','), b.attackPlayedThisTurn, b.blockPlayedThisTurn, b.stanceSwitchUsedThisTurn, b.drawPile.length, JSON.stringify(b.squad || null)].join('|');
 }
 
 // Enumerate distinct play lines for this turn. Returns terminal outcomes.
@@ -52,7 +65,7 @@ function searchTurn(s, hpWeight, budget = 2500) {
       outcomes.push({ line, score: evaluate(ended, hpWeight), end: ended, pre: cur });
     }
     for (const a of legalActions(cur)) {
-      if (a.type === 'end' || (a.type === 'play' && cur.battle.playsThisTurn >= 40)) continue;
+      if (a.type === 'end' || a.type === 'useSupply' || (a.type === 'play' && cur.battle.playsThisTurn >= 40)) continue;
       dfs(step(cur, a), [...line, a]);
     }
   };
@@ -145,18 +158,77 @@ function pickCard(s, kind, uids) {
   const sorted = [...uids].sort((a, b) => val(a) - val(b));
   return ['remove', 'transform', 'cleanse'].includes(kind) ? sorted[0] : sorted[sorted.length - 1];
 }
+// Supplies: use them when the coming enemy turn is dangerous, and spend the
+// offensive ones early in elite/boss fights (or when every slot is full).
+const DEFENSIVE = ['P01', 'P11', 'P07', 'P17', 'P08', 'P05', 'P15'];
+const OFFENSIVE = ['P02', 'P04', 'P10', 'P03', 'P13', 'P14', 'P09', 'P12', 'P06', 'P16', 'P18'];
+function incomingDamage(s) {
+  let dmg = 0;
+  for (const e of battleEnemies(s.battle).filter(x => x.hp > 0)) for (const a of e.intent || []) if (a.type === 'hit') dmg += (a.n + (e.statuses.strength || 0)) * a.times; else if (a.type === 'snipe') dmg += a.n;
+  return Math.max(0, dmg - s.battle.playerBlock);
+}
+function supplyAction(s, kind) {
+  const legal = legalActions(s).filter(a => a.type === 'useSupply');
+  if (!legal.length) return null;
+  const ids = s.supplies;
+  const danger = s.hp - incomingDamage(s) < s.maxHp * 0.3 || s.hp < s.maxHp * 0.3;
+  const big = kind === 'elite' || kind === 'boss';
+  const full = ids.length >= 3;
+  const order = danger ? DEFENSIVE : (big && s.battle.turn <= 2) || (full && s.battle.turn === 1) ? OFFENSIVE : [];
+  for (const id of order) {
+    const index = ids.indexOf(id);
+    if (index < 0) continue;
+    const opts = legal.filter(a => a.index === index);
+    if (!opts.length) continue;
+    // Aimed supplies go to the enemy with the most HP.
+    const living = battleEnemies(s.battle).filter(e => e.hp > 0);
+    const target = living.slice().sort((a, b) => b.hp - a.hp)[0];
+    return opts.find(a => a.target === target?.uid) || opts[0];
+  }
+  return null;
+}
 
 function mulberry(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
 function playRun(seed, team, policy) {
-  let s = createRun(seed, team);
+  let s = createRun(seed, team, { opening: OPENING, ascension: ASCENSION });
   const rand = mulberry(seed.length * 7919 + team.length);
-  const log = { seed, team, policy, fights: [], route: [], rewards: [], result: null, finalDeck: null };
+  const log = { seed, team, policy, actsCleared: 0, opening: null, fights: [], route: [], rewards: [], result: null, finalDeck: null };
   let fight = null;
   let guard = 0;
   while (s.phase !== 'result' && guard++ < 5000) {
+    // Equipment slots full: replace the weakest piece if the new one ranks higher, else decline.
+    if (s.pendingRelics?.length) {
+      const rank = id => ({ common: 1, uncommon: 2, shop: 2, rare: 3, boss: 4 }[RELICS[id].tier] + (RELICS[id].energy ? 1 : 0));
+      let low = 0;
+      s.relics.forEach((r, i) => { if (rank(r.id) < rank(s.relics[low].id)) low = i; });
+      const a = rank(s.pendingRelics[0]) > rank(s.relics[low].id) ? { type: 'replaceRelic', index: low } : { type: 'declineRelic' };
+      (log.slotChoices ||= []).push(a.type);
+      s = step(s, a);
+      continue;
+    }
     if (s.act > ACTS) break;
-    if (s.phase === 'intermission') { if (s.act >= ACTS) { log.result = 'act-clear'; break; } s = step(s, { type: 'nextAct' }); continue; }
+    if (s.phase === 'intermission') { log.actsCleared = s.act; if (s.act >= ACTS) { log.result = 'act-clear'; break; } s = step(s, { type: 'nextAct' }); continue; }
+    // 赛前准备: take the first free bonus; card picks use the same card taste as rewards.
+    if (s.phase === 'opening') {
+      const all = legalActions(s);
+      const a = policy === 'random' ? all[Math.floor(rand() * all.length)] : all.find(x => s.opening.options.find(o => o.id === x.choice)?.group === 'free') || all[0];
+      log.opening = a.choice;
+      s = step(s, a);
+      continue;
+    }
+    if (s.phase === 'openingPick') {
+      const all = legalActions(s);
+      const idOf = x => s.deck.find(c => c.uid === x.uid)?.id;
+      let a;
+      if (s.opening.pick.kind === 'card') a = all.filter(x => x.id).sort((x, y) => cardValue(y.id) - cardValue(x.id))[0] || all[0];
+      else if (s.opening.pick.kind === 'remove') a = all.slice().sort((x, y) => cardValue(idOf(x)) - cardValue(idOf(y)))[0];
+      else a = all.slice().sort((x, y) => cardValue(idOf(y)) - cardValue(idOf(x)))[0];
+      if (policy === 'random') a = all[Math.floor(rand() * all.length)];
+      log.opening += ':' + (a.id || idOf(a) || 'skip');
+      s = step(s, a);
+      continue;
+    }
     if (s.phase === 'map') {
       const opts = legalActions(s);
       const nodes = opts.map(o => s.map.nodes.find(n => n.key === o.key));
@@ -177,6 +249,10 @@ function playRun(seed, team, policy) {
         fight = { act: s.act, idx, enemy: chosen.enemy || s.battle.encounter, kind: chosen.kind === 'event' ? 'ambush' : chosen.kind, group, hpStart: s.hp, turns: [], won: false };
       }
       continue;
+    }
+    if (s.phase === 'combat' && policy === 'smart' && !s.battle.pendingDiscover) {
+      const use = supplyAction(s, fight?.kind);
+      if (use) { (log.supplies ||= []).push(s.supplies[use.index]); s = step(s, use); continue; }
     }
     if (s.phase === 'combat') {
       const b = s.battle;
@@ -218,6 +294,17 @@ function playRun(seed, team, policy) {
       }
       continue;
     }
+    if (s.phase === 'reward' && s.battle.rewardSupply) {
+      const take = legalActions(s).find(a => a.type === 'takeSupply' && a.replace == null);
+      if (take && policy !== 'naive') { s = step(s, take); continue; }
+    }
+    if (s.phase === 'bossRelic') {
+      const all = legalActions(s).filter(a => a.id);
+      const a = policy === 'random' ? all[Math.floor(rand() * all.length)] : all.find(x => RELICS[x.id].energy && x.id !== 'R41') || all.find(x => x.id !== 'R41') || { type: 'bossRelic', id: null };
+      (log.relics ||= []).push(a.id);
+      s = step(s, a);
+      continue;
+    }
     if (s.phase === 'reward') {
       const pool = s.battle.rewardPool;
       let id = null;
@@ -234,7 +321,7 @@ function playRun(seed, team, policy) {
     if (s.phase === 'rest') {
       const ups = legalActions(s).filter(a => a.choice === 'upgrade');
       let a;
-      if (s.hp / s.maxHp < 0.55 || !ups.length) a = { type: 'rest', choice: 'heal' };
+      if (s.hp / s.maxHp < 0.55 || !ups.length) a = legalActions(s).find(x => x.choice === 'heal') || (ups.length ? ups[0] : { type: 'rest', choice: 'maxHp' });
       else a = ups.sort((x, y) => cardValue(s.deck.find(c => c.uid === y.uid).id) - cardValue(s.deck.find(c => c.uid === x.uid).id))[0];
       if (policy === 'random') { const all = legalActions(s); a = all[Math.floor(rand() * all.length)]; }
       log.route[log.route.length - 1].did = a.choice;
@@ -248,10 +335,12 @@ function playRun(seed, team, policy) {
         const buys = all.filter(x => x.type === 'buy').sort((x, y) => cardValue(y.id) - cardValue(x.id));
         const idOf = x => s.deck.find(c => c.uid === x.uid).id;
         const removes = all.filter(x => x.type === 'remove' && (!CARDS[idOf(x)] || (CARDS[idOf(x)].tag === 'basic' && cardValue(idOf(x)) < 6))).sort((x, y) => cardValue(idOf(x)) - cardValue(idOf(y)));
+        const gear = all.filter(x => x.type === 'buyRelic');
         if (removes.length && !log._removed?.includes(s.currentNode)) { a = removes[0]; log._removed = [...(log._removed || []), s.currentNode]; }
+        else if (gear.length) a = gear[0];
         else if (buys.length && cardValue(buys[0].id) > 7) a = buys[0];
       } else if (policy === 'random') a = all[Math.floor(rand() * all.length)];
-      if (a.type !== 'leave') (log.route[log.route.length - 1].shop ||= []).push(a.type === 'buy' ? 'buy ' + CARDS[a.id].name : a.type === 'remove' ? 'remove ' + (CARDS[s.deck.find(c => c.uid === a.uid).id]?.name || s.deck.find(c => c.uid === a.uid).id) : a.type);
+      if (a.type !== 'leave') (log.route[log.route.length - 1].shop ||= []).push(a.type === 'buy' ? 'buy ' + CARDS[a.id].name : a.type === 'buyRelic' ? 'gear ' + RELICS[s.shop.relics[a.index].id].name : a.type === 'buySupply' ? 'supply' : a.type === 'remove' ? 'remove ' + (CARDS[s.deck.find(c => c.uid === a.uid).id]?.name || s.deck.find(c => c.uid === a.uid).id) : a.type);
       s = step(s, a);
       continue;
     }
@@ -283,9 +372,11 @@ function playRun(seed, team, policy) {
     throw Error('unhandled phase ' + s.phase);
   }
   if (!log.result) log.result = s.phase === 'result' ? s.result : 'stopped';
+  if (log.result === 'win') log.actsCleared = 3;
   if (log.result === 'loss') log.diedAt = fight ? `${fight.enemy} act${fight.act} turn${fight.turns.length}` : '?';
   log.finalDeck = s.deck.map(c => (CARDS[c.id]?.name || c.id) + (c.up ? '+' : ''));
   log.hpEnd = s.hp; log.maxHp = s.maxHp;
+  log.gear = s.relics.map(r => r.id);
   delete log._removed;
   return log;
 }
@@ -293,7 +384,7 @@ function playRun(seed, team, policy) {
 const seeds = Array.from({ length: SEEDS }, (_, i) => `pt-${i + 1}`);
 const runs = [];
 const t0 = Date.now();
-for (const team of Object.keys(TEAMS)) for (const policy of POLICIES) for (const seed of seeds) runs.push(playRun(seed, team, policy));
+for (const team of (args.teams ? args.teams.split(',') : Object.keys(TEAMS))) for (const policy of POLICIES) for (const seed of seeds) runs.push(playRun(seed, team, policy));
 
 const summary = {};
 for (const r of runs) {
@@ -340,5 +431,7 @@ for (const r of runs.filter(r => r.policy === 'smart')) for (const f of r.fights
   }
 }
 const smartRuns = runs.filter(r => r.policy === 'smart');
+console.log('per-team smart act clears (act1 / act2 / full):');
+console.table(Object.fromEntries((args.teams ? args.teams.split(',') : Object.keys(TEAMS)).map(t => { const rs = smartRuns.filter(r => r.team === t); const c = n => `${rs.filter(r => r.actsCleared >= n).length}/${rs.length}`; return [t, { act1: c(1), act2: c(2), full: c(3) }]; })));
 console.log(`smart clear rate: ${smartRuns.filter(r => r.result === 'act-clear' || r.result === 'win').length}/${smartRuns.length}`);
 console.table(Object.fromEntries(Object.entries(cat).sort().map(([k, c]) => [k, { fights: c.fights, avgHpLost: +(c.hpLost / c.fights).toFixed(1), avgTurns: +(c.turns / c.fights).toFixed(1), deaths: c.losses }])));

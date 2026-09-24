@@ -417,6 +417,21 @@ export const TEAMS = {
   rotation: { id:'rotation', region:'PAC', name:'疾风调度组 · 调度', desc:'抽牌循环与姿态节奏。', startingDeck:[['TA01',1],['TA05',1],['TA28',1],['TA02',1],['TA08',1],['TA27',1],['TA02',1],['TA42',1],['TA74',1],['TA64',1]] }
 };
 
+// Team-exclusive passives ("队伍特质"): one per team, always active, with its own
+// per-combat counter. They make the same map play differently per team.
+// `max` is the counter's trigger point (shown as x/max); texts describe rules only.
+export const TEAM_TRAITS = {
+  momentum: { id:'momentum', team:'breach', name:'突击势能', unit:'势能', max:3,
+    text:'每打出一张攻击牌获得1点势能（每场战斗重置）。势能达到3时清零，并使你打出的下一张攻击牌伤害翻倍。' },
+  fortify: { id:'fortify', team:'anchor', name:'工事', unit:'工事', max:12,
+    text:'敌方回合结束后，你剩余布防的一半（向上取整，最多12）保留为工事，并入下回合的布防。' },
+  intel: { id:'intel', team:'utility', name:'情报', unit:'情报', max:6,
+    text:'你每打出一次给予烟雾或闪光的效果获得1点情报（范围效果只算1次）。情报达到6时立即抽1张牌、获得1点能量，然后清零。' },
+  dispatch: { id:'dispatch', team:'rotation', name:'机动调度', unit:'调度', max:1,
+    text:'每回合第一次切换姿态（手动或由卡牌触发）时抽1张牌；若是手动切换，则不消耗能量。' }
+};
+for (const t of Object.values(TEAM_TRAITS)) TEAMS[t.team].trait = t.id;
+
 // ----------------------------- Enemies -----------------------------
 // Each archetype has its own look, behaviour pattern and (often) a passive
 // trait, so fights ask for different answers. Act 2/3 versions are scaled
@@ -477,10 +492,10 @@ function scaleAction(a, k) {
 // ordinary fights, so act-1 numbers are raised per role before act scaling.
 // Buff/rally sizes stay as authored; only damage, block, heals and HP move.
 const DIFFICULTY = {
-  normal: { hp: 1.15, dmg: 1.3 },
-  member: { hp: 1.1, dmg: 1.2 },
-  elite: { hp: 1.03, dmg: 1.1 },
-  boss: { hp: 1.1, dmg: 1.25 }
+  normal: { hp: 1.35, dmg: 1.55 },
+  member: { hp: 1.25, dmg: 1.35 },
+  elite: { hp: 1.2, dmg: 1.45 },
+  boss: { hp: 1.4, dmg: 1.45 }
 };
 function roleOf(e) { return e.boss ? 'boss' : e.elite ? 'elite' : e.member ? 'member' : 'normal'; }
 function tuneEnemy(e, t) {
@@ -517,14 +532,14 @@ export const ENEMIES = {
   ...ACT1_ENEMIES,
   // Act 2/3 scaling sits on top of the act-1 difficulty pass, so it is milder
   // than before (was 1.35/1.25 and 1.75/1.5) to keep full runs winnable.
-  ...scaledAct('A2_', '二幕·', 1.25, 1.15),
-  A2_B01: tuneEnemy({ name:'晋级赛冠军卫队', look:'boss2', hp:165, boss:true, ordered:true, script:[[BL(18),H(6)],[BUFF(2),H(7,3)],[H(10),JAM('ST02',2)],[H(20)]] }, { hp: 1.05, dmg: 1.15 }),
-  ...scaledAct('A3_', '决赛·', 1.5, 1.3),
+  ...scaledAct('A2_', '二幕·', 1.45, 1.25),
+  A2_B01: tuneEnemy({ name:'晋级赛冠军卫队', look:'boss2', hp:165, boss:true, ordered:true, script:[[BL(18),H(6)],[BUFF(2),H(7,3)],[H(10),JAM('ST02',2)],[H(20)]] }, { hp: 1.4, dmg: 1.4 }),
+  ...scaledAct('A3_', '决赛·', 2.1, 1.55),
   // The two-phase final keeps its authored numbers bar a HP and damage cut: with the
   // full boss multiplier the bot lost 4 of 6 final fights.
   A3_B01: tuneEnemy({ name:'总决赛冠军卫队', look:'boss3', hp:165, boss:true, trait:{ id:'phase2' },
     script:[[H(14),JAM('ST03')],[WEAKP(1),H(6,3)],[BL(18),JAM('ST01',2)],[H(22)]],
-    phase2:[[BUFF(2),H(10,2)],[H(8,3),VULNP(1)],[BL(20),H(12)]] }, { hp: 0.82, dmg: 0.95 })
+    phase2:[[BUFF(2),H(10,2)],[H(8,3),VULNP(1)],[BL(20),H(12)]] }, { hp: 1.25, dmg: 1.3 })
 };
 
 // Multi-enemy encounters. `offset` staggers ordered scripts so members of the
@@ -554,21 +569,102 @@ export const FIELDS = {
   eco: { name: '经济局', text: '第一回合你多1点能量、多抽1张牌。' }
 };
 
-// ----------------------------- Relics -----------------------------
-export const RELICS = {
-  R01: { id:'R01', name:'随队医生', desc:'战斗结束后恢复8点生命。' },
-  R02: { id:'R02', name:'备用弹夹', desc:'每场战斗开始时抽1张牌。' },
-  R03: { id:'R03', name:'战术平板', desc:'每场战斗开始时获得1点能量。' },
-  R04: { id:'R04', name:'烟雾发生器', desc:'每场战斗开始时给予敌人3层烟雾。' },
-  R05: { id:'R05', name:'闪光发生器', desc:'每场战斗开始时给予敌人3层闪光。' },
-  R06: { id:'R06', name:'通讯耳机', desc:'每回合抽牌数+1（上限10）。' },
-  R07: { id:'R07', name:'护甲板', desc:'获得时最大生命+8。' },
-  R08: { id:'R08', name:'奖金加成', desc:'非战斗节点获得金币+15。' },
-  R09: { id:'R09', name:'战术手册', desc:'商店首次删牌免费。' },
-  R10: { id:'R10', name:'旧战术笔记', desc:'获得时随机获得一张基础牌。' },
-  R11: { id:'R11', name:'冠军戒指', desc:'每回合开始时获得2点布防。' },
-  R12: { id:'R12', name:'幸运护符', desc:'每场战斗开始时获得2点能量。' }
+// ----------------------------- Equipment (装备) -----------------------------
+// Run-long passive gear. Internal key stays `RELICS` / `R..` ids for saves.
+// tier: common / uncommon / rare (random drops weighted 50/33/17), shop (补给站专属),
+// boss (幕末决战后三选一). `energy: 1` marks gear that raises energy every turn.
+export const EQUIP_TIERS = {
+  common: { name: '普通', weight: 50 },
+  uncommon: { name: '罕见', weight: 33 },
+  rare: { name: '稀有', weight: 17 },
+  shop: { name: '补给站专属' },
+  boss: { name: '决战专属' }
 };
+const EQ = (id, tier, name, desc, extra = {}) => [id, { id, tier, name, desc, ...extra }];
+export const RELICS = Object.fromEntries([
+  // Common
+  EQ('R02', 'common', '备用弹夹', '每场战斗开始时抽1张牌。'),
+  EQ('R03', 'common', '战术平板', '每场战斗开始时获得1点能量。'),
+  EQ('R04', 'common', '烟雾发生器', '每场战斗开始时给予所有敌人3层烟雾。'),
+  EQ('R07', 'common', '护甲板', '获得时最大生命+8。'),
+  EQ('R08', 'common', '奖金加成', '离开事件、补给站、休整点时获得15金币。'),
+  EQ('R10', 'common', '旧战术笔记', '获得时随机获得一张基础牌。'),
+  EQ('R13', 'common', '沙袋掩体', '每场战斗第1回合获得10点布防。'),
+  EQ('R14', 'common', '破片弹头', '每场战斗开始时给予所有敌人1层易伤。'),
+  EQ('R15', 'common', '战地绷带', '每场战斗开始时回复2点生命。'),
+  EQ('R16', 'common', '反应装甲', '敌人每次攻击你时，对它造成3点伤害（无视布防）。'),
+  EQ('R17', 'common', '节拍器', '每场战斗每第3个回合开始时获得1点能量。'),
+  EQ('R18', 'common', '握把胶带', '你的每次布防效果+1。'),
+  EQ('R19', 'common', '枪口制退器', '你的攻击每段伤害+1。'),
+  EQ('R20', 'common', '战术计步器', '每累计打出10张牌，获得1点能量（跨战斗累计）。'),
+  // Uncommon
+  EQ('R01', 'uncommon', '随队医生', '战斗胜利后回复8点生命。'),
+  EQ('R05', 'uncommon', '闪光发生器', '每场战斗开始时给予所有敌人3层闪光。'),
+  EQ('R11', 'uncommon', '冠军臂章', '每回合开始时获得2点布防。'),
+  EQ('R21', 'uncommon', '肾上腺泵', '生命不高于最大生命一半时，你的攻击每段伤害+3。'),
+  EQ('R22', 'uncommon', '交叉掩护', '每回合打出第3张攻击牌时，获得4点布防。'),
+  EQ('R23', 'uncommon', '连射模块', '每回合打出第3张攻击牌时，本场战斗获得1层火力。'),
+  EQ('R24', 'uncommon', '残骸引爆器', '你每消耗一张牌，对随机一名敌人造成3点伤害。'),
+  EQ('R25', 'uncommon', '行军睡袋', '在休整点回复生命时额外回复10点。'),
+  EQ('R26', 'uncommon', '快速弹匣', '回合结束时，手牌中费用最高的一张牌保留到下回合。'),
+  EQ('R27', 'uncommon', '信号标记器', '你每次给予易伤时额外+1层。'),
+  EQ('R28', 'uncommon', '战术背包', '每场战斗第1回合多抽2张牌。'),
+  EQ('R29', 'uncommon', '预案卡', '每场战斗开始时，手牌中费用最高的一张牌本回合0费。'),
+  // Rare
+  EQ('R06', 'rare', '通讯耳机', '每回合开始时多抽1张牌。'),
+  EQ('R12', 'rare', '应急能量包', '每场战斗开始时获得2点能量。'),
+  EQ('R30', 'rare', '双发扳机', '每回合打出的第一张攻击牌，其效果额外结算一次。'),
+  EQ('R31', 'rare', '抗冲击背心', '每场战斗中你第一次因敌人攻击失去生命时，改为只失去1点。'),
+  EQ('R32', 'rare', '冷静头脑', '回合结束时未用完的能量保留到下回合。'),
+  EQ('R33', 'rare', '燃烧弹改装', '你每次给予燃烧时额外+2层。'),
+  EQ('R34', 'rare', '急救自注射器', '本局第一次生命归零时，改为回复至最大生命的一半（仅一次）。'),
+  EQ('R35', 'rare', '战术沙盘', '回合开始抽牌后，若手牌中没有攻击牌，从抽牌堆取1张攻击牌加入手牌。'),
+  // Shop exclusive
+  EQ('R09', 'shop', '战术手册', '每次进入补给站，第一次删牌免费。'),
+  EQ('R36', 'shop', '供应商会员卡', '补给站所有商品价格-20%。'),
+  EQ('R37', 'shop', '战术折叠刀', '每场战斗开始时将1张「飞刀」加入手牌。'),
+  EQ('R38', 'shop', '扩容战术背心', '补给品栏位+2。'),
+  // Boss (幕末决战后三选一): strong, most with a cost.
+  EQ('R40', 'boss', '超频战术背包', '每回合能量+1；每回合少抽1张牌。', { energy: 1 }),
+  EQ('R41', 'boss', '静默通讯协议', '每回合能量+1；看不到对手意图。', { energy: 1 }),
+  EQ('R42', 'boss', '无休整合同', '每回合能量+1；休整点不能回复生命。', { energy: 1 }),
+  EQ('R43', 'boss', '全频战术耳麦', '每回合多抽1张牌；每场战斗开始时将2张「失误」洗入抽牌堆。'),
+  EQ('R44', 'boss', '极限作战协议', '每回合能量+1；每场战斗开始时失去5点生命。', { energy: 1 }),
+  EQ('R45', 'boss', '定量火力协议', '每回合能量+1；每回合最多打出6张牌。', { energy: 1 }),
+  EQ('R46', 'boss', '加固工事组件', '回合开始时布防不再清空，只减少15点。'),
+  EQ('R47', 'boss', '悬赏猎手合同', '精英战敌人生命+25%；精英战胜利后额外获得1件装备。'),
+  EQ('R48', 'boss', '零薪合约', '每回合能量+1；战斗胜利不再获得金币。', { energy: 1 }),
+  EQ('R49', 'boss', '过载处理器', '每回合能量+1；每回合开始抽牌后随机弃掉1张手牌。', { energy: 1 }),
+  EQ('R50', 'boss', '战术复盘系统', '获得时随机升级牌组中的4张牌。')
+]);
+export const RELIC_IDS_BY_TIER = Object.fromEntries(Object.keys(EQUIP_TIERS).map(t => [t, Object.keys(RELICS).filter(id => RELICS[id].tier === t)]));
+
+// ----------------------------- Supplies (补给品) -----------------------------
+// One-use combat items. target: 'enemy' needs a chosen enemy when 2+ are alive.
+// `effects` reuse card effect types; a few special types live in the engine.
+export const SUPPLY_SLOTS = 3;
+const SP = (id, rarity, name, desc, effects, target = 'none') => [id, { id, rarity, name, desc, effects, target }];
+export const SUPPLIES = Object.fromEntries([
+  SP('P01', 'common', '急救注射器', '回复12点生命。', [heal(12)]),
+  SP('P02', 'common', '肾上腺素针', '本回合获得2点能量。', [energy(2)]),
+  SP('P03', 'common', '电击手雷', '对所有敌人造成10点伤害。', [atkAll(10)]),
+  SP('P04', 'common', '穿甲弹匣', '本回合你的攻击每段伤害+4。', [{ type: 'tempAttack', n: 4 }]),
+  SP('P05', 'common', '烟雾罐', '给予一名敌人4层烟雾。', [smoke(4)], 'enemy'),
+  SP('P06', 'common', '情报平板', '抽3张牌。', [draw(3)]),
+  SP('P07', 'common', '防弹插板', '获得12点布防。', [{ type: 'rawBlock', n: 12 }]),
+  SP('P08', 'common', '闪光弹', '给予一名敌人2层闪光。', [flash(2)], 'enemy'),
+  SP('P09', 'common', '破甲弹', '给予一名敌人3层易伤。', [vuln(3)], 'enemy'),
+  SP('P10', 'uncommon', '神经增强剂', '本场战斗获得2层火力。', [strength(2)]),
+  SP('P11', 'uncommon', '止血凝胶', '回复8点生命，并清除自身压制与易伤。', [heal(8), { type: 'cleansePlayer' }]),
+  SP('P12', 'uncommon', '干扰器', '清除一名敌人的全部火力与布防。', [{ type: 'disarm' }], 'enemy'),
+  SP('P13', 'uncommon', '燃烧瓶', '给予所有敌人5层燃烧。', [burnAll(5)]),
+  SP('P14', 'uncommon', '战术无人机', '部署一门哨戒炮：3回合内，每回合结束时对生命最低的敌人造成6点伤害。', [deploy('turret', 6, 3)]),
+  SP('P15', 'uncommon', '抑制弹', '给予一名敌人2层压制。', [weak(2)], 'enemy'),
+  SP('P16', 'rare', '战场补给包', '发现：从3张随机牌中选1张加入手牌，本回合0费。', [discover('any')]),
+  SP('P17', 'rare', '静默信号弹', '本回合所有敌人不执行意图。', [{ type: 'silenceEnemies' }]),
+  SP('P18', 'rare', '双倍弹药', '本回合你打出的下一张牌，其效果额外结算一次。', [{ type: 'replayNext' }])
+]);
+export const SUPPLY_IDS = Object.keys(SUPPLIES);
 
 // ----------------------------- describe function -----------------------------
 export function describe(card) {

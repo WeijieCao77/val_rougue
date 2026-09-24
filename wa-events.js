@@ -51,7 +51,7 @@ export const WA_EVENTS = {
       { id: 'report', title: '只买测试报告', ops: [{ money: -50 }, { upgradeRandom: 2 }] }] },
   pressRoom: { title: '赛前发布会', scene: '发布会上有记者追问上一场的失利。台下的镜头都在等一句够劲的回应。',
     options: [
-      { id: 'trash', title: '当众放狠话', ops: [{ card: 'star' }, { curse: 'CU02' }] },
+      { id: 'trash', title: '当众放狠话', ops: [{ card: 'rare' }, { curse: 'CU02' }] },
       { id: 'calm', title: '低调应对，早点收工', ops: [{ hp: 12 }] }] },
   poach: { title: '挖角传闻', scene: '一家财力雄厚的俱乐部开出高价挖人，经理问你：放人拿钱，还是加薪留人？',
     options: [
@@ -89,7 +89,7 @@ export const WA_EVENTS = {
       { id: 'sleep', title: '早点睡', ops: [{ hp: 20 }] }] },
   darkMarket: { title: '私下转会', scene: '一位中间人私下联系经理：窗口外的签约不走正规流程，但人确实能打。',
     options: [
-      { id: 'star', title: '签下神秘外援', ops: [{ money: -90 }, { card: 'star', up: true }] },
+      { id: 'star', title: '签下神秘外援', ops: [{ money: -90 }, { card: 'rare', up: true }] },
       { id: 'sell', title: '高价出售一人', ops: [{ pick: 'remove' }, { money: 60 }] }] },
   aceDuel: { title: '王牌单挑', scene: '对面的王牌点名要和你们打一场：“输的人把这赛段的奖金吐一半。”',
     options: [{ id: 'fight', title: '接下挑战', ops: [{ fight: 'elite', bonus: [{ upgradeRandom: 2 }, { money: 40 }] }] }] },
@@ -99,7 +99,7 @@ export const WA_EVENTS = {
       { id: 'apologize', title: '公开道歉并请假', ops: [{ money: -50 }, { healPct: 0.2 }] }] },
   veteran: { title: '老将的笔记本', scene: '一位即将退役的老将把一本翻烂的笔记塞给你：“要么拿走本子，要么我陪你们练一晚。”',
     options: [
-      { id: 'notes', title: '收下笔记', ops: [{ card: 'star' }] },
+      { id: 'notes', title: '收下笔记', ops: [{ card: 'rare' }] },
       { id: 'spar', title: '请他陪练', ops: [{ hp: -8 }, { pick: 'duplicate' }] }] },
   burnout: { title: '状态透支', scene: '连续几周高强度赛程，队员握鼠标的手开始发抖。',
     options: [

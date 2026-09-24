@@ -50,7 +50,10 @@ function choice(seed, values) {
   for (const char of String(seed)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return values[(hash >>> 0) % values.length];
 }
-export function buildMap(seed, act) {
+// Difficulty level 1+: some later ordinary fights become elites (never next to
+// another elite), so a run meets noticeably more of them.
+const ASC_ELITE_SHARE = 0.25;
+export function buildMap(seed, act, ascension = 0) {
   if (![1, 2, 3].includes(act)) throw Error('未知赛段');
   const map = generateRoute(seed, act);
   const actKey = key => `a${act}-${key}`;
@@ -60,6 +63,14 @@ export function buildMap(seed, act) {
   map.bossId = actKey(map.bossId);
   const byKey = new Map(map.nodes.map(node => [node.key, node]));
   const prefix = act === 1 ? '' : 'A' + act + '_';
+  if (ascension >= 1) {
+    for (const node of map.nodes) {
+      if (node.kind !== 'battle' || node.step < 4 || node.step > 10) continue;
+      const near = map.edges.filter(e => e.to === node.key || e.from === node.key).map(e => byKey.get(e.to === node.key ? e.from : e.to));
+      if (near.some(n => n?.kind === 'elite')) continue;
+      if (roll(seed + '|' + act + '|' + node.key + '|ascElite') < ASC_ELITE_SHARE) node.kind = 'elite';
+    }
+  }
   for (const node of map.nodes) {
     if (node.kind === 'battle') {
       const ids = node.step <= 2 ? (act === 1 ? ['E01'] : ['E01', 'E03', 'E06']) : node.step === 3 ? ['E02', 'E03', 'E06'] : ['E02', 'E03', 'E04', 'E05', 'E06'];

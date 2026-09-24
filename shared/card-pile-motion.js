@@ -50,6 +50,7 @@ export function flyCardsToPile(cards, pile, { stagger = 95, duration = 440, keep
 }
 
 export function flyCardsFromPile(cards, pile, { stagger = 125, duration = 430 } = {}) {
+  cards.slice(0, 10).forEach((_, i) => globalThis.gameSfx?.play('draw', { delay: reduced() ? 0 : i * stagger }));
   if (!cards.length || !pile || reduced()) return Promise.resolve();
   const overlay = layer();
   const source = center(pile.getBoundingClientRect());
