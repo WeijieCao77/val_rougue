@@ -56,6 +56,8 @@ const assets = new Map([
   ['/new/cover.webp', ['new-demo/cover.webp', 'image/webp']],
   ['/new/style.css', ['new-demo/style.css', 'text/css; charset=utf-8']],
   ['/new/season-map.js', ['new-demo/season-map.js', 'text/javascript; charset=utf-8']],
+  ['/new/run-extras.js', ['new-demo/run-extras.js', 'text/javascript; charset=utf-8']],
+  ['/new/run-extras.css', ['new-demo/run-extras.css', 'text/css; charset=utf-8']],
 ]);
 
 const imageTypes = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', svg: 'image/svg+xml' };

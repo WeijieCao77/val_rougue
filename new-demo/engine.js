@@ -1,6 +1,6 @@
 // new-demo/engine.js
 import { buildMap, availableNodes } from './season-map.js';
-import { CARDS, CARD_IDS, REGION_CARD_IDS, SHARED_CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, GROUPS, RELICS, ARCHETYPES } from './content.js';
+import { CARDS, CARD_IDS, REGION_CARD_IDS, SHARED_CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, GROUPS, RELICS, ARCHETYPES, TEAM_TRAITS, RELIC_IDS_BY_TIER, EQUIP_TIERS, SUPPLIES, SUPPLY_IDS, SUPPLY_SLOTS } from './content.js';
 import { CURSES, CURSE_RULES, EXTRA_STATUS_RULES } from '../afflictions.js';
 
 const VERSION = 'new-1';
@@ -46,8 +46,56 @@ function pushLog(state, event, data) {
   state.logs.push({ rev: state.rev, event, data: data ? deepClone(data) : null });
 }
 
-export function createRun(seed = String(Date.now()), team = 'breach') {
+// ----------------------------- Difficulty levels -----------------------------
+// Optional stacking challenge (0-10). Each level adds one rule on top of all
+// lower ones; level 0 is the base game. Unlocked per team by winning a run.
+export const MAX_ASCENSION = 10;
+export const ASCENSION_RULES = [
+  '基础难度，无附加规则。',
+  '地图上出现更多精英战。',
+  '普通敌人伤害 +10%。',
+  '精英伤害 +15%。',
+  '幕末决战对手伤害 +10%。',
+  '休整回复由最大生命的30%降为20%。',
+  '开局当前生命 -10%。',
+  '普通敌人生命 +10%。',
+  '精英与幕末决战对手生命 +10%。',
+  '开局牌组加入1张随机隐患。',
+  '幕末决战对手开局获得3层火力。'
+];
+const clampAscension = n => Math.max(0, Math.min(MAX_ASCENSION, Math.floor(Number(n) || 0)));
+
+export function restHealAmount(state) {
+  return Math.floor(state.maxHp * ((state.ascension || 0) >= 5 ? 0.2 : 0.3)) + (hasRelic(state, 'R25') ? 10 : 0);
+}
+
+// options: { ascension: 0-10, opening: true to start with the 赛前准备 choice }.
+// Without options the run is the base game and starts on the map.
+// ----------------------------- Equipment helpers -----------------------------
+export function hasRelic(state, id) {
+  return !!state?.relics?.some(r => r.id === id);
+}
+// Energy at the start of each turn: 3 plus boss gear marked `energy`.
+export function baseEnergy(state) {
+  return 3 + (state.relics || []).reduce((n, r) => n + (RELICS[r.id]?.energy || 0), 0);
+}
+function drawPerTurn(state) {
+  return 5 + (hasRelic(state, 'R43') ? 1 : 0) - (hasRelic(state, 'R40') ? 1 : 0);
+}
+export function playLimit(state) {
+  return hasRelic(state, 'R45') ? 6 : MAX_PLAYS_PER_TURN;
+}
+export function supplySlots(state) {
+  return SUPPLY_SLOTS + (hasRelic(state, 'R38') ? 2 : 0);
+}
+// 供应商会员卡: every shop price -20%.
+export function discounted(state, price) {
+  return hasRelic(state, 'R36') ? Math.floor(price * 0.8) : price;
+}
+
+export function createRun(seed = String(Date.now()), team = 'breach', options = {}) {
   const teamDef = TEAMS[team] || TEAMS.breach;
+  const ascension = clampAscension(options.ascension);
   const deck = [];
   for (const [id, count] of teamDef.startingDeck) {
     for (let i = 0; i < count; i++) {
@@ -77,10 +125,23 @@ export function createRun(seed = String(Date.now()), team = 'breach') {
     rngState: hashSeed(seed),
     stats: { wins: 0, losses: 0 },
     freeRemovalUsed: false,
-    checkpoint: null
+    checkpoint: null,
+    ascension,
+    supplies: [],
+    supplyChance: 40,
+    playedCount: 0
   };
-  state.map = buildMap(seed, 1);
-  pushLog(state, 'run_start');
+  state.map = buildMap(seed, 1, ascension);
+  if (ascension >= 6) state.hp = state.maxHp - Math.floor(state.maxHp * 0.1);
+  if (ascension >= 9) {
+    const curse = CURSES[Math.floor(nextRand(state) * CURSES.length)];
+    state.deck.push({ uid: nextUid(state), id: curse.id, up: false });
+  }
+  if (options.opening) {
+    state.phase = 'opening';
+    state.opening = generateOpening(state);
+  }
+  pushLog(state, 'run_start', { ascension });
   return state;
 }
 
@@ -190,7 +251,25 @@ function nextUid(state) {
 export function legalActions(state) {
   if (!state) return [];
   const actions = [];
-  if (state.phase === 'map') {
+  // A new piece of equipment with every slot full must be resolved first.
+  if (state.pendingRelics?.length) {
+    actions.push({ type: 'declineRelic' });
+    state.relics.forEach((_, index) => actions.push({ type: 'replaceRelic', index }));
+    return actions;
+  }
+  if (state.phase === 'opening') {
+    for (const o of state.opening?.options || []) actions.push({ type: 'opening', choice: o.id });
+  } else if (state.phase === 'openingPick') {
+    const pick = state.opening?.pick;
+    if (pick?.kind === 'card') {
+      actions.push({ type: 'openingPick', id: null });
+      for (const id of pick.cards) actions.push({ type: 'openingPick', id });
+    } else if (pick?.kind === 'remove') {
+      for (const c of state.deck) if (canRemoveCard(state, c.uid)) actions.push({ type: 'openingPick', uid: c.uid });
+    } else if (pick?.kind === 'upgrade') {
+      for (const c of state.deck) if (!c.up && CARDS[c.id]?.upgradeEffects?.length) actions.push({ type: 'openingPick', uid: c.uid });
+    }
+  } else if (state.phase === 'map') {
     const avail = availableNodes({ ...state, mode: 'season' });
     for (const n of avail) actions.push({ type: 'enter', key: n.key });
   } else if (state.phase === 'combat') {
@@ -200,13 +279,24 @@ export function legalActions(state) {
     const living = livingEnemies(b);
     for (const c of b.hand) {
       if (c.id in STATUS_CARDS) continue;
-      if (!(b.energy >= cardCost(c) && b.playsThisTurn < MAX_PLAYS_PER_TURN)) continue;
+      if (!(b.energy >= cardCost(c) && b.playsThisTurn < playLimit(state))) continue;
       if (living.length > 1 && cardNeedsTarget(c)) for (const e of living) actions.push({ type: 'play', uid: c.uid, target: e.uid });
       else actions.push({ type: 'play', uid: c.uid });
     }
-    if (b.energy >= 1 && !b.stanceSwitchUsedThisTurn) actions.push({ type: 'stance' });
+    if (b.energy >= manualStanceCost(b) && !b.stanceSwitchUsedThisTurn) actions.push({ type: 'stance' });
+    (state.supplies || []).forEach((id, index) => {
+      const sp = SUPPLIES[id];
+      if (!sp) return;
+      if (sp.target === 'enemy' && living.length > 1) for (const e of living) actions.push({ type: 'useSupply', index, target: e.uid });
+      else actions.push({ type: 'useSupply', index });
+    });
     actions.push({ type: 'end' });
   } else if (state.phase === 'reward') {
+    const pending = state.battle?.rewardSupply;
+    if (pending) {
+      if ((state.supplies || []).length < supplySlots(state)) actions.push({ type: 'takeSupply' });
+      else state.supplies.forEach((_, index) => actions.push({ type: 'takeSupply', replace: index }));
+    }
     actions.push({ type: 'reward', id: null });
     if (state.battle?.rewardPool) {
       for (const id of state.battle.rewardPool) actions.push({ type: 'reward', id });
@@ -217,7 +307,7 @@ export function legalActions(state) {
     if (shop) {
       for (let i = 0; i < shop.cards.length; i++) {
         const item = shop.cards[i];
-        if (state.money >= shopPrice(item)) actions.push({ type: 'buy', id: item.id, index: i });
+        if (state.money >= shopPrice(item, state)) actions.push({ type: 'buy', id: item.id, index: i });
       }
       const rmCost = removePrice(state);
       if (state.money >= rmCost) {
@@ -229,9 +319,11 @@ export function legalActions(state) {
         const quote = categoryUpgradeQuote(state, category);
         if (!quote.used && quote.count > 0 && state.money >= quote.price) actions.push({ type:'upgradeCategory', category });
       }
+      if (state.relics.length < RELIC_SLOTS) (shop.relics || []).forEach((item, index) => { if (state.money >= shopPrice(item, state)) actions.push({ type: 'buyRelic', index }); });
+      if ((state.supplies || []).length < supplySlots(state)) (shop.supplies || []).forEach((item, index) => { if (state.money >= shopPrice(item, state)) actions.push({ type: 'buySupply', index }); });
     }
   } else if (state.phase === 'rest') {
-    actions.push({ type: 'rest', choice: 'heal' });
+    if (!hasRelic(state, 'R42')) actions.push({ type: 'rest', choice: 'heal' });
     actions.push({ type: 'rest', choice: 'maxHp' });
     for (const c of state.deck) {
       if (!c.up && CARDS[c.id]?.upgradeEffects?.length) {
@@ -242,6 +334,9 @@ export function legalActions(state) {
     for (const ch of state.event.choices) actions.push({ type: 'event', choice: ch.id });
   } else if (state.phase === 'intermission') {
     actions.push({ type: 'nextAct' });
+  } else if (state.phase === 'bossRelic') {
+    actions.push({ type: 'bossRelic', id: null });
+    for (const id of state.bossRelic?.options || []) actions.push({ type: 'bossRelic', id });
   }
   return actions;
 }
@@ -281,6 +376,8 @@ export function observe(state) {
       discardPileCount: b.discardPile.length,
       exhaustPileCount: b.exhaustPile.length,
       powers: b.powers,
+      squad: b.squad ? { ...b.squad } : null,
+      supplies: (state.supplies || []).slice(),
       turn: b.turn
     };
   }
@@ -361,6 +458,7 @@ function stanceModifiers(b) {
 export function act(state, action) {
   if (!state || !action) return { state, error: '无效输入' };
   if (state.phase === 'result') return { state, error: '运行已结束' };
+  if (state.pendingRelics?.length && !['replaceRelic', 'declineRelic'].includes(action.type)) return { state, error: '请先处理新装备：替换一件或放弃' };
   const next = deepClone(state);
   next.rev = state.rev + 1;
   syncIn(next.battle);
@@ -385,6 +483,17 @@ function applyAction(state, action) {
     case 'rest': return restAction(state, action);
     case 'event': return eventChoice(state, action);
     case 'nextAct': return startNextAct(state);
+    case 'opening': return chooseOpening(state, action);
+    case 'useSupply': return useSupply(state, action);
+    case 'discardSupply': return discardSupply(state, action);
+    case 'takeSupply': return takeSupply(state, action);
+    case 'buyRelic': return buyRelic(state, action);
+    case 'buySupply': return buySupply(state, action);
+    case 'bossRelic': return chooseBossRelic(state, action);
+    case 'sellRelic': return sellRelic(state, action);
+    case 'replaceRelic': return replaceRelic(state, action);
+    case 'declineRelic': return declineRelic(state);
+    case 'openingPick': return chooseOpeningPick(state, action);
     default: return '未知操作';
   }
 }
@@ -413,24 +522,45 @@ function enterNode(state, action) {
   return null;
 }
 
+// Difficulty-level multipliers for one enemy (1 = unchanged).
+function ascensionMods(state, def) {
+  const a = state.ascension || 0;
+  const role = def.boss ? 'boss' : def.elite ? 'elite' : 'normal';
+  const dmg = role === 'normal' ? (a >= 2 ? 1.1 : 1) : role === 'elite' ? (a >= 3 ? 1.15 : 1) : (a >= 4 ? 1.1 : 1);
+  const hp = role === 'normal' ? (a >= 7 ? 1.1 : 1) : (a >= 8 ? 1.1 : 1);
+  return { dmg, hp, strength: role === 'boss' && a >= 10 ? 3 : 0 };
+}
+function scaleScript(script, k) {
+  if (k === 1) return deepClone(script);
+  return script.map(turn => turn.map(a => (a.type === 'hit' || a.type === 'snipe' ? { ...a, n: Math.round(a.n * k) } : { ...a })));
+}
+
 function createEnemy(state, member, index, label) {
   const def = getEnemyDef(member.id);
+  const mods = ascensionMods(state, def);
+  // 热身赛 opening bonus: enemies of the next few fights start weakened.
+  const warm = state.warmup > 0 ? 0.7 : 1;
+  const bounty = def.elite && hasRelic(state, 'R47') ? 1.25 : 1;
+  const hp = Math.max(1, Math.round(Math.round(def.hp * mods.hp * bounty) * warm));
+  const script = scaleScript(def.script, mods.dmg);
   const e = {
     uid: `e${index}`,
     id: member.id,
     name: label ? `${def.name}${label}` : def.name,
     look: def.look || null,
-    hp: def.hp,
-    maxHp: def.hp,
+    hp,
+    maxHp: hp,
     statuses: {},
-    script: def.ordered ? deepClone(def.script) : shuffledEnemyScript(def.script, state),
+    script: def.ordered ? script : shuffledEnemyScript(script, state),
     scriptIndex: member.offset || 0,
     intent: null,
     trait: def.trait ? deepClone(def.trait) : null,
     traitState: {},
     tempoCount: 0
   };
+  if (mods.dmg !== 1) e.dmgMul = mods.dmg;
   if (def.startBlock) e.statuses.block = def.startBlock;
+  if (mods.strength) e.statuses.strength = mods.strength;
   return e;
 }
 
@@ -441,7 +571,7 @@ function startBattle(state, node) {
   const deck = state.deck.map(c => ({ uid: c.uid, id: c.id, up: c.up }));
   shuffle(deck, state);
   const hand = [];
-  for (let i = 0; i < 5 && deck.length; i++) hand.push(deck.shift());
+  for (let i = 0; i < drawPerTurn(state) && deck.length; i++) hand.push(deck.shift());
   // Repeated member types get A/B/C suffixes so the player can tell them apart.
   const counts = {};
   for (const m of members) counts[m.id] = (counts[m.id] || 0) + 1;
@@ -455,7 +585,7 @@ function startBattle(state, node) {
     groupName: group ? group.name : null,
     enemies,
     turn: 1,
-    energy: 3,
+    energy: baseEnergy(state),
     stance: 'cover',
     stanceSwitchUsedThisTurn: false,
     attackPlayedThisTurn: false,
@@ -474,8 +604,10 @@ function startBattle(state, node) {
     rewardPool: null,
     rewardTaken: false,
     playerBlock: 0,
-    field: node.field || null
+    field: node.field || null,
+    squad: initSquad(state.team)
   };
+  if (state.warmup > 0) { state.warmup--; state.battle.warmup = true; }
   state.phase = 'combat';
   const b = state.battle;
   if (b.field === 'smoky') for (const e of enemies) addStatus(e, 'smoke', 2);
@@ -484,6 +616,8 @@ function startBattle(state, node) {
   applyRelicsAtBattleStart(state);
   if(state.phase!=='combat')return null;
   for(const card of opening){if(!hand.some(c=>c.uid===card.uid))continue;applyDrawAffliction(state,card);if(state.phase!=='combat')return null;}
+  afterTurnDraw(state);
+  if (state.phase !== 'combat') return null;
   for (const e of enemies) nextEnemyIntent(e);
   pushLog(state, 'battle_start', { enemy: node.enemy });
   return null;
@@ -550,11 +684,55 @@ function runDeployables(state) {
   b.deployables = (b.deployables || []).filter(d => d.turns > 0);
 }
 
+// Flat per-hit attack bonus from equipment and supplies.
+function gearAttackBonus(state) {
+  const b = state.battle;
+  let n = b.tempAttack || 0;
+  if (hasRelic(state, 'R19')) n += 1;
+  if (hasRelic(state, 'R21') && state.hp <= state.maxHp / 2) n += 3;
+  return n;
+}
+
+// ----------------------------- Team traits -----------------------------
+// b.squad holds the per-combat state of the team's exclusive passive.
+function initSquad(team) {
+  const id = TEAMS[team]?.trait;
+  if (!id || !TEAM_TRAITS[id]) return null;
+  if (id === 'momentum') return { id, n: 0, armed: false };
+  if (id === 'fortify') return { id, kept: 0 };
+  if (id === 'intel') return { id, n: 0 };
+  return { id, used: false };
+}
+const squadIs = (b, id) => b?.squad?.id === id;
+function manualStanceCost(b) {
+  return squadIs(b, 'dispatch') && !b.squad.used ? 0 : 1;
+}
+// 机动调度: the first stance switch of the turn draws a card.
+function onStanceSwitched(state) {
+  const b = state.battle;
+  if (!squadIs(b, 'dispatch') || b.squad.used) return;
+  b.squad.used = true;
+  drawCards(state, 1);
+  pushLog(state, 'squad', { id: 'dispatch' });
+}
+// 情报: every smoke/flash application (area effects count once).
+function gainIntel(state) {
+  const b = state.battle;
+  if (!squadIs(b, 'intel')) return;
+  b.squad.n++;
+  if (b.squad.n >= TEAM_TRAITS.intel.max) {
+    b.squad.n = 0;
+    b.energy += 1;
+    drawCards(state, 1);
+    pushLog(state, 'squad', { id: 'intel' });
+  }
+}
+
 function playCard(state, action) {
   if (state.phase !== 'combat') return '不在战斗阶段';
   const b = state.battle;
   if (b.pendingDiscover) return '请先选择发现的牌';
-  if (b.playsThisTurn >= MAX_PLAYS_PER_TURN) return '本回合打出牌数已达上限';
+  if (b.playsThisTurn >= playLimit(state)) return '本回合打出牌数已达上限';
   const idx = b.hand.findIndex(c => c.uid === action.uid);
   if (idx === -1) return '手牌中没有该牌';
   const card = b.hand[idx];
@@ -588,7 +766,9 @@ function playCard(state, action) {
     cardId: card.id,
     attackBonusUsed: false,
     blockBonusUsed: false,
-    target: target || living[0] || null
+    target: target || living[0] || null,
+    // 突击势能: an armed charge doubles every hit of the next attack card.
+    doubleDamage: def.type === 'attack' && squadIs(b, 'momentum') && b.squad.armed
   };
 
   b.energy -= cost;
@@ -600,6 +780,17 @@ function playCard(state, action) {
   for (const eff of effects) {
     applyEffect(state, eff, card, mods, context);
     if(state.phase!=='combat')return null;
+  }
+  // 双发扳机 (first attack card each turn) and 双倍弹药 (next card): resolve again.
+  let replays = 0;
+  if (def.type === 'attack' && !preAttackPlayed && hasRelic(state, 'R30')) replays++;
+  if (b.replayNext) { b.replayNext = false; replays++; }
+  for (let r = 0; r < replays && !allDead(b); r++) {
+    if (!(context.target && context.target.hp > 0)) context.target = alive(b)[0] || null;
+    for (const eff of effects) {
+      applyEffect(state, eff, card, mods, context);
+      if (state.phase !== 'combat') return null;
+    }
   }
 
   if (def.type === 'power') {
@@ -617,8 +808,32 @@ function playCard(state, action) {
     b.exhaustPile.push(card);
     if (b.powerStacks.dark_embrace) drawCards(state, b.powerStacks.dark_embrace);
     if (b.powerStacks.feel_no_pain) b.playerBlock += 3 * b.powerStacks.feel_no_pain;
+    if (hasRelic(state, 'R24')) {
+      const pool = alive(b);
+      if (pool.length) { const t = pool[Math.floor(nextRand(state) * pool.length)]; t.hp = Math.max(0, t.hp - 3); if (t.hp <= 0) pushLog(state, 'enemy_down', { enemy: t.uid }); checkEnemyHpTraits(state, t); }
+    }
   } else {
     b.discardPile.push(card);
+  }
+
+  // Equipment counters.
+  if (def.type === 'attack') {
+    b.attacksThisTurn = (b.attacksThisTurn || 0) + 1;
+    if (b.attacksThisTurn === 3) {
+      if (hasRelic(state, 'R22')) b.playerBlock += 4;
+      if (hasRelic(state, 'R23')) applyEffect(state, { type: 'strength', n: 1 }, card, mods, context);
+    }
+  }
+  state.playedCount = (state.playedCount || 0) + 1;
+  if (hasRelic(state, 'R20') && state.playedCount % 10 === 0) b.energy++;
+
+  if (def.type === 'attack' && squadIs(b, 'momentum')) {
+    if (context.doubleDamage) b.squad.armed = false;
+    if (++b.squad.n >= TEAM_TRAITS.momentum.max) {
+      b.squad.n = 0;
+      b.squad.armed = true;
+      pushLog(state, 'squad', { id: 'momentum' });
+    }
   }
 
   if (card.up && b.powers.includes('upgrade_core') && !b.upgradeEnergyUsedThisTurn) {
@@ -656,6 +871,8 @@ function applyEffect(state, eff, sourceCard, mods, context) {
   // Area version: resolve the effect once per living enemy, left to right.
   // Per-card bonuses (stance, first hit) apply to every enemy the sweep hits.
   if (eff.all) {
+    const intel = eff.type === 'smoke' || eff.type === 'flash';
+    if (intel) context.sweep = true;
     const saved = context.target;
     const snap = { attackBonusUsed: context.attackBonusUsed, highgroundUsed: context.highgroundUsed };
     let after = snap;
@@ -666,6 +883,7 @@ function applyEffect(state, eff, sourceCard, mods, context) {
       if (state.phase !== 'combat') break;
     }
     Object.assign(context, after, { target: saved && saved.hp > 0 ? saved : alive(b)[0] || saved });
+    if (intel) { context.sweep = false; if (state.phase === 'combat') gainIntel(state); }
     return;
   }
   const t = context.target && context.target.hp > 0 ? context.target : null;
@@ -695,6 +913,8 @@ function applyEffect(state, eff, sourceCard, mods, context) {
         if (i === 0 && bonus > 0) dmg += bonus;
         if (i === 0) dmg += firstHitBonus;
         if (clutchBonus > 0) dmg += clutchBonus;
+        dmg += gearAttackBonus(state);
+        if (context.doubleDamage) dmg *= 2;
         dealDamageToEnemy(state, t, dmg);
         checkEnemyHpTraits(state, t);
         if (t.hp <= 0) break;
@@ -715,7 +935,7 @@ function applyEffect(state, eff, sourceCard, mods, context) {
         }
         if (bonus > 0) context.blockBonusUsed = true;
       }
-      b.playerBlock += blk + bonus + (b.powerStacks.footwork || 0);
+      b.playerBlock += blk + bonus + (b.powerStacks.footwork || 0) + (hasRelic(state, 'R18') ? 1 : 0);
       break;
     }
     case 'smoke': {
@@ -727,6 +947,7 @@ function applyEffect(state, eff, sourceCard, mods, context) {
       }
       if (b.field === 'smoky' && !b.fieldSmokeUsedThisTurn) { n += 1; b.fieldSmokeUsedThisTurn = true; }
       addStatus(t, 'smoke', n);
+      if (!context.sweep) gainIntel(state);
       break;
     }
     case 'flash': {
@@ -738,13 +959,14 @@ function applyEffect(state, eff, sourceCard, mods, context) {
       }
       addStatus(t, 'flash', n);
       if (t.statuses.aim) { t.statuses.aim = 0; pushLog(state, 'aim_broken', { enemy: t.uid }); }
+      if (!context.sweep) gainIntel(state);
       break;
     }
     case 'weak':
       if (t) addStatus(t, 'weak', eff.n);
       break;
     case 'vuln':
-      if (t) addStatus(t, 'vuln', eff.n);
+      if (t) addStatus(t, 'vuln', eff.n + (hasRelic(state, 'R27') ? 1 : 0));
       break;
     case 'draw':
       drawCards(state, eff.n);
@@ -772,6 +994,7 @@ function applyEffect(state, eff, sourceCard, mods, context) {
       delete mods.attackBonus;
       delete mods.blockBonus;
       Object.assign(mods, stanceModifiers(b));
+      onStanceSwitched(state);
       break;
     case 'addCardToDiscard':
       for (let i = 0; i < eff.n; i++) {
@@ -816,7 +1039,27 @@ function applyEffect(state, eff, sourceCard, mods, context) {
       break;
     }
     case 'burn':
-      if (t) addStatus(t, 'burn', eff.n);
+      if (t) addStatus(t, 'burn', eff.n + (hasRelic(state, 'R33') ? 2 : 0));
+      break;
+    // Supply-only effects.
+    case 'tempAttack':
+      b.tempAttack = (b.tempAttack || 0) + eff.n;
+      break;
+    case 'rawBlock':
+      b.playerBlock += eff.n;
+      break;
+    case 'cleansePlayer':
+      b.statuses.player.weak = 0;
+      b.statuses.player.vuln = 0;
+      break;
+    case 'disarm':
+      if (t) { t.statuses.strength = 0; t.statuses.block = 0; }
+      break;
+    case 'silenceEnemies':
+      for (const e of alive(b)) e.intent = null;
+      break;
+    case 'replayNext':
+      b.replayNext = true;
       break;
     case 'burnMultiply':
       if (t) t.statuses.burn = (t.statuses.burn || 0) * eff.n;
@@ -956,7 +1199,7 @@ function checkEnemyHpTraits(state, e) {
     addStatus(e, 'block', 12);
     addStatus(e, 'strength', 2);
     const def = getEnemyDef(e.id);
-    e.script = deepClone(def.phase2);
+    e.script = scaleScript(def.phase2, e.dmgMul || 1);
     e.intent = e.script[0];
     e.scriptIndex = 1;
     pushLog(state, 'trait', { id: 'phase2', enemy: e.uid });
@@ -990,6 +1233,7 @@ function dealDamageToPlayer(state, e, baseDamage) {
     b.playerBlock -= blocked;
     dmg -= blocked;
   }
+  if (dmg > 1 && !b.vestUsed && hasRelic(state, 'R31')) { dmg = 1; b.vestUsed = true; }
   state.hp = Math.max(0, state.hp - dmg);
 }
 
@@ -1024,13 +1268,15 @@ function manualStance(state) {
   if (state.phase !== 'combat') return '不在战斗阶段';
   const b = state.battle;
   if (b.pendingDiscover) return '请先选择发现的牌';
-  if (b.energy < 1) return '能量不足';
+  const cost = manualStanceCost(b);
+  if (b.energy < cost) return '能量不足';
   if (b.stanceSwitchUsedThisTurn) return '本回合已切换过姿态';
-  b.energy--;
+  b.energy -= cost;
   b.stanceSwitchUsedThisTurn = true;
   switchStance(state);
   b.stanceChangedThisTurn = true;
-  pushLog(state, 'stance_switch');
+  onStanceSwitched(state);
+  pushLog(state, 'stance_switch', { cost });
   return null;
 }
 
@@ -1058,12 +1304,20 @@ function endTurn(state) {
     }
   }
   const kept = [];
+  // 快速弹匣: the priciest playable card stays in hand.
+  let magazine = null;
+  if (hasRelic(state, 'R26')) for (const card of b.hand) {
+    if (!CARDS[card.id] || card.temp || CARDS[card.id].retain) continue;
+    if (!magazine || cardCost({ ...card, free: false }) > cardCost({ ...magazine, free: false })) magazine = card;
+  }
   for (const card of b.hand) {
-    if (CARDS[card.id]?.retain) kept.push(card);
+    if (!card.temp) delete card.free;
+    if (CARDS[card.id]?.retain || card === magazine) kept.push(card);
     else if (card.temp) b.exhaustPile.push(card);
     else b.discardPile.push(card);
   }
   b.hand = kept;
+  const leftover = hasRelic(state, 'R32') ? b.energy : 0;
 
   runDeployables(state);
   if (allDead(b)) { finishBattleWin(state); return null; }
@@ -1085,6 +1339,7 @@ function endTurn(state) {
 
   executeEnemyTurn(state);
   if (state.phase !== 'combat') return null;
+  if (allDead(b)) { finishBattleWin(state); return null; }
 
   // Player vuln decays after enemy turn
   if (b.statuses.player.vuln > 0) b.statuses.player.vuln--;
@@ -1106,16 +1361,27 @@ function endTurn(state) {
   b.fieldSmokeUsedThisTurn = false;
   b.upgradeEnergyUsedThisTurn = false;
   b.turn++;
-  b.energy = Math.max(0, 3 - (b.overloadNext || 0));
+  b.attacksThisTurn = 0;
+  b.tempAttack = 0;
+  b.replayNext = false;
+  b.energy = Math.max(0, baseEnergy(state) - (b.overloadNext || 0)) + leftover;
   b.overload = b.overloadNext || 0;
   b.overloadNext = 0;
   if (!b.powers.includes('barricade')) {
-    b.playerBlock = 0;
+    // 工事: half of the block that survived the enemy turn stays (rounded up, max 12).
+    const kept = squadIs(b, 'fortify') ? Math.min(TEAM_TRAITS.fortify.max, Math.ceil(b.playerBlock / 2)) : 0;
+    if (squadIs(b, 'fortify')) b.squad.kept = kept;
+    // 加固工事组件: block only drops by 15.
+    b.playerBlock = hasRelic(state, 'R46') ? Math.max(kept, b.playerBlock - 15) : kept;
   }
+  if (squadIs(b, 'dispatch')) b.squad.used = false;
   applyTurnStartPowers(state);
   if (state.phase !== 'combat') return null;
   if (allDead(b)) { finishBattleWin(state); return null; }
-  drawCards(state, 5);
+  drawCards(state, drawPerTurn(state));
+  if (state.phase !== 'combat') return null;
+  afterTurnDraw(state);
+  if (state.phase !== 'combat') return null;
   for (const e of alive(b)) nextEnemyIntent(e);
   pushLog(state, 'end_turn', { turn: b.turn });
   return null;
@@ -1149,6 +1415,11 @@ function executeEnemyTurn(state) {
             finishBattleLoss(state);
             return;
           }
+        }
+        if (hasRelic(state, 'R16')) {
+          e.hp = Math.max(0, e.hp - 3);
+          if (e.hp <= 0) { pushLog(state, 'enemy_down', { enemy: e.uid }); break; }
+          checkEnemyHpTraits(state, e);
         }
       } else if (action.type === 'block') {
         addStatus(e, 'block', action.n);
@@ -1191,7 +1462,13 @@ function finishBattleWin(state) {
   for (const e of b.enemies || []) e.hp = Math.max(0, e.hp);
   const node = state.map.nodes.find(n => n.key === state.currentNode);
   const moneyReward = node?.kind === 'boss' ? 50 : node?.kind === 'elite' ? 35 : 20;
-  state.money += moneyReward;
+  if (!hasRelic(state, 'R48')) state.money += moneyReward;
+  // Elite wins always carry equipment (悬赏猎手合同 adds a second piece).
+  b.rewardRelics = [];
+  if (node?.kind === 'elite') {
+    for (let i = 0; i < (hasRelic(state, 'R47') ? 2 : 1); i++) { const id = grantRandomRelic(state); if (id) b.rewardRelics.push(id); }
+  }
+  rollSupplyDrop(state);
 
   // Generate reward pool (unique cards)
   const weights = { common: 10, uncommon: 4, rare: 1 };
@@ -1220,8 +1497,7 @@ function finishBattleWin(state) {
   b.rewardPool = pool;
   b.rewardTaken = false;
 
-  // Apply R01 heal
-  if (state.relics.some(r => r.id === 'R01')) {
+  if (hasRelic(state, 'R01')) {
     state.hp = Math.min(state.hp + 8, state.maxHp);
   }
 
@@ -1230,6 +1506,14 @@ function finishBattleWin(state) {
 }
 
 function finishBattleLoss(state) {
+  // 急救自注射器: the first lethal blow of the run leaves you at half health.
+  const injector = state.relics.find(r => r.id === 'R34' && !r.used);
+  if (injector && state.hp <= 0) {
+    injector.used = true;
+    state.hp = Math.floor(state.maxHp / 2);
+    pushLog(state, 'relic_trigger', { id: 'R34' });
+    return;
+  }
   state.phase = 'result';
   state.result = 'loss';
   state.stats.losses++;
@@ -1246,22 +1530,15 @@ function chooseReward(state, action) {
   }
   b.rewardTaken = true;
   const wasBoss = state.currentNode && state.map.nodes.find(n => n.key === state.currentNode)?.kind === 'boss';
-  if (wasBoss) {
-    grantRandomRelic(state);
-  }
   state.battle = null;
   completeNode(state);
   if (wasBoss) {
     state.hp = state.maxHp;
-    state.checkpoint = {
-      deck: deepClone(state.deck),
-      relics: deepClone(state.relics),
-      maxHp: state.maxHp,
-      money: state.money,
-      act: state.act
-    };
     if (state.act < 3) {
-      state.phase = 'intermission';
+      // 幕末决战奖励：从决战专属装备中三选一（可跳过）。
+      const pool = RELIC_IDS_BY_TIER.boss.filter(id => !hasRelic(state, id));
+      state.bossRelic = { options: pickDistinct(pool, 3, () => nextRand(state)) };
+      state.phase = 'bossRelic';
     } else {
       state.phase = 'result';
       state.result = 'win';
@@ -1285,14 +1562,73 @@ function completeNode(state) {
   }
 }
 
+// Random equipment by tier (普通50 / 罕见33 / 稀有17), never one already owned.
+// Returns the id, or null (and 100 gold) when every piece is owned.
+function rollRelicId(state, exclude = []) {
+  const tiers = ['common', 'uncommon', 'rare'];
+  const open = t => RELIC_IDS_BY_TIER[t].filter(id => !hasRelic(state, id) && !exclude.includes(id));
+  const avail = tiers.filter(t => open(t).length);
+  if (!avail.length) return null;
+  const total = avail.reduce((n, t) => n + EQUIP_TIERS[t].weight, 0);
+  let roll = nextRand(state) * total;
+  let tier = avail[avail.length - 1];
+  for (const t of avail) { roll -= EQUIP_TIERS[t].weight; if (roll < 0) { tier = t; break; } }
+  const ids = open(tier);
+  return ids[Math.floor(nextRand(state) * ids.length)];
+}
 function grantRandomRelic(state) {
-  const ids = Object.keys(RELICS);
-  const id = ids[Math.floor(nextRand(state) * ids.length)];
-  if (state.relics.some(r => r.id === id)) {
+  const id = rollRelicId(state, state.pendingRelics || []);
+  if (!id) {
     state.money += 100;
-    pushLog(state, 'duplicate_relic', { id });
-    return;
+    pushLog(state, 'duplicate_relic', {});
+    return null;
   }
+  acquireRelic(state, id);
+  return id;
+}
+
+// ----------------------------- Equipment slots -----------------------------
+// At most 6 pieces (决战专属 included). A new piece with every slot full waits in
+// `pendingRelics` until the player replaces one (sold for gold) or declines it.
+export const RELIC_SLOTS = 6;
+export const RELIC_SELL_VALUE = { common: 15, uncommon: 25, rare: 40, shop: 25, boss: 50 };
+export function relicSellValue(id) {
+  return RELIC_SELL_VALUE[RELICS[id]?.tier] || 0;
+}
+function acquireRelic(state, id) {
+  if (state.relics.length < RELIC_SLOTS && !(state.pendingRelics || []).length) { grantRelicById(state, id); return true; }
+  (state.pendingRelics ||= []).push(id);
+  return false;
+}
+function removeRelicAt(state, index) {
+  const [gone] = state.relics.splice(index, 1);
+  state.money += relicSellValue(gone.id);
+  pushLog(state, 'relic_sold', { id: gone.id });
+  return gone;
+}
+function sellRelic(state, action) {
+  if (state.phase === 'result') return '运行已结束';
+  if (state.phase === 'combat') return '战斗中不能出售装备';
+  if (!(action.index in state.relics)) return '无效装备槽';
+  removeRelicAt(state, action.index);
+  return null;
+}
+function replaceRelic(state, action) {
+  const id = state.pendingRelics?.[0];
+  if (!id) return '没有待处理的新装备';
+  if (!(action.index in state.relics)) return '无效装备槽';
+  removeRelicAt(state, action.index);
+  state.pendingRelics.shift();
+  grantRelicById(state, id);
+  return null;
+}
+function declineRelic(state) {
+  if (!state.pendingRelics?.length) return '没有待处理的新装备';
+  state.pendingRelics.shift();
+  return null;
+}
+
+function grantRelicById(state, id) {
   state.relics.push({ id, name: RELICS[id].name, desc: RELICS[id].desc });
   if (id === 'R07') {
     state.maxHp += 8;
@@ -1302,6 +1638,12 @@ function grantRandomRelic(state) {
     if (basicIds.length) {
       const cardId = basicIds[Math.floor(nextRand(state) * basicIds.length)];
       state.deck.push({ uid: nextUid(state), id: cardId, up: false });
+    }
+  } else if (id === 'R50') {
+    for (let i = 0; i < 4; i++) {
+      const candidates = state.deck.filter(c => !c.up && CARDS[c.id]?.upgradeEffects?.length);
+      if (!candidates.length) break;
+      candidates[Math.floor(nextRand(state) * candidates.length)].up = true;
     }
   }
   pushLog(state, 'relic_gained', { id });
@@ -1320,7 +1662,124 @@ function generateShop(state) {
   const saleIndex = Math.floor(nextRand(state) * cards.length);
   cards[saleIndex].sale = true;
   cards[saleIndex].price = Math.floor(cards[saleIndex].price / 2);
-  return { cards, categoryUpgradeUsed:false };
+  // Equipment shelf: two random pieces plus one 补给站专属; supplies: three.
+  const relics = [];
+  for (let i = 0; i < 2; i++) { const id = rollRelicId(state, relics.map(r => r.id)); if (id) relics.push({ id, price: RELIC_PRICES[RELICS[id].tier] }); }
+  const shopOnly = RELIC_IDS_BY_TIER.shop.filter(id => !hasRelic(state, id));
+  if (shopOnly.length) { const id = shopOnly[Math.floor(nextRand(state) * shopOnly.length)]; relics.push({ id, price: RELIC_PRICES.shop }); }
+  const supplies = [];
+  for (let i = 0; i < 3; i++) { const id = rollSupplyId(state); supplies.push({ id, price: SUPPLY_PRICES[SUPPLIES[id].rarity] }); }
+  return { cards, relics, supplies, categoryUpgradeUsed:false };
+}
+const RELIC_PRICES = { common: 140, uncommon: 190, rare: 250, shop: 160 };
+const SUPPLY_PRICES = { common: 45, uncommon: 70, rare: 95 };
+
+function buyRelic(state, action) {
+  if (state.phase !== 'shop' || !state.shop) return '不在补给站';
+  const item = state.shop.relics?.[action.index];
+  if (!item) return '无效索引';
+  const cost = shopPrice(item, state);
+  if (state.money < cost) return '金币不足';
+  if (state.relics.length >= RELIC_SLOTS) return '装备槽已满，请先出售一件装备';
+  state.money -= cost;
+  state.shop.relics.splice(action.index, 1);
+  grantRelicById(state, item.id);
+  return null;
+}
+function buySupply(state, action) {
+  if (state.phase !== 'shop' || !state.shop) return '不在补给站';
+  const item = state.shop.supplies?.[action.index];
+  if (!item) return '无效索引';
+  if (state.supplies.length >= supplySlots(state)) return '补给品栏位已满';
+  const cost = shopPrice(item, state);
+  if (state.money < cost) return '金币不足';
+  state.money -= cost;
+  state.shop.supplies.splice(action.index, 1);
+  state.supplies.push(item.id);
+  return null;
+}
+
+// ----------------------------- Supplies -----------------------------
+const SUPPLY_WEIGHTS = { common: 65, uncommon: 25, rare: 10 };
+function rollSupplyId(state) {
+  const total = SUPPLY_IDS.reduce((n, id) => n + SUPPLY_WEIGHTS[SUPPLIES[id].rarity], 0);
+  let roll = nextRand(state) * total;
+  for (const id of SUPPLY_IDS) { roll -= SUPPLY_WEIGHTS[SUPPLIES[id].rarity]; if (roll < 0) return id; }
+  return SUPPLY_IDS[0];
+}
+// Drop chance starts at 40%: -10 after a drop, +10 after a miss.
+function rollSupplyDrop(state) {
+  const b = state.battle;
+  const chance = state.supplyChance ?? 40;
+  if (nextRand(state) * 100 < chance) {
+    state.supplyChance = Math.max(0, chance - 10);
+    const id = rollSupplyId(state);
+    if ((state.supplies ||= []).length < supplySlots(state)) { state.supplies.push(id); b.rewardSupplyTaken = id; }
+    else b.rewardSupply = id;
+  } else {
+    state.supplyChance = Math.min(100, chance + 10);
+  }
+}
+function takeSupply(state, action) {
+  const b = state.battle;
+  if (state.phase !== 'reward' || !b?.rewardSupply) return '没有待领取的补给品';
+  if (action.replace != null) {
+    if (!(action.replace in state.supplies)) return '无效栏位';
+    state.supplies[action.replace] = b.rewardSupply;
+  } else {
+    if (state.supplies.length >= supplySlots(state)) return '补给品栏位已满';
+    state.supplies.push(b.rewardSupply);
+  }
+  b.rewardSupplyTaken = b.rewardSupply;
+  b.rewardSupply = null;
+  return null;
+}
+function discardSupply(state, action) {
+  if (state.phase === 'result') return '运行已结束';
+  if (!(state.supplies && action.index in state.supplies)) return '无效栏位';
+  state.supplies.splice(action.index, 1);
+  return null;
+}
+export function supplyNeedsTarget(id) {
+  return SUPPLIES[id]?.target === 'enemy';
+}
+function useSupply(state, action) {
+  if (state.phase !== 'combat') return '只能在战斗中使用';
+  const b = state.battle;
+  if (b.pendingDiscover) return '请先选择发现的牌';
+  const id = state.supplies?.[action.index];
+  const sp = SUPPLIES[id];
+  if (!sp) return '无效栏位';
+  const living = alive(b);
+  let target = null;
+  if (sp.target === 'enemy') {
+    if (action.target != null) { target = living.find(e => e.uid === action.target); if (!target) return '目标无效'; }
+    else if (living.length === 1) target = living[0];
+    else return '请选择目标';
+  }
+  state.supplies.splice(action.index, 1);
+  // Supplies are not cards: no stance, first-attack or trait bonuses.
+  const context = { preAttackPlayed: true, preBlockPlayed: true, preStanceChanged: b.stanceChangedThisTurn, preCount: b.playsThisTurn, cardId: id, attackBonusUsed: true, blockBonusUsed: true, target: target || living[0] || null, doubleDamage: false };
+  for (const eff of sp.effects) {
+    applyEffect(state, eff, { id, up: false }, {}, context);
+    if (state.phase !== 'combat') return null;
+  }
+  pushLog(state, 'use_supply', { id, target: target?.uid || null });
+  if (allDead(b)) finishBattleWin(state);
+  return null;
+}
+
+// ----------------------------- Boss equipment -----------------------------
+function chooseBossRelic(state, action) {
+  if (state.phase !== 'bossRelic' || !state.bossRelic) return '当前没有决战奖励';
+  if (action.id != null) {
+    if (!state.bossRelic.options.includes(action.id)) return '不是可选的装备';
+    acquireRelic(state, action.id);
+  }
+  state.bossRelic = null;
+  state.checkpoint = { deck: deepClone(state.deck), relics: deepClone(state.relics), maxHp: state.maxHp, money: state.money, act: state.act };
+  state.phase = 'intermission';
+  return null;
 }
 
 export function categoryUpgradeQuote(state, category) {
@@ -1330,8 +1789,9 @@ export function categoryUpgradeQuote(state, category) {
   return {count:targets.length, price, used:!!state.shop?.categoryUpgradeUsed};
 }
 
-export function shopPrice(item) {
-  return item.price ?? priceOf(item.id);
+export function shopPrice(item, state = null) {
+  const base = item.price ?? priceOf(item.id);
+  return state ? discounted(state, base) : base;
 }
 
 function priceOf(cardId) {
@@ -1339,11 +1799,11 @@ function priceOf(cardId) {
   return rarity === 'rare' ? 150 : rarity === 'uncommon' ? 100 : 50;
 }
 
-function removePrice(state) {
+export function removePrice(state) {
   if (state.relics.some(r => r.id === 'R09') && !state.freeRemovalUsed) {
     return 0;
   }
-  return 75;
+  return discounted(state, 75);
 }
 
 function buyCard(state, action) {
@@ -1351,7 +1811,7 @@ function buyCard(state, action) {
   const idx = action.index;
   const item = state.shop.cards[idx];
   if (!item) return '无效索引';
-  const cost = shopPrice(item);
+  const cost = shopPrice(item, state);
   if (state.money < cost) return '金币不足';
   state.money -= cost;
   state.deck.push({ uid: nextUid(state), id: item.id, up: false });
@@ -1401,7 +1861,8 @@ function leaveShop(state) {
 function restAction(state, action) {
   if (state.phase !== 'rest') return '不在休息阶段';
   if (action.choice === 'heal') {
-    state.hp = Math.min(state.hp + Math.floor(state.maxHp * 0.3), state.maxHp);
+    if (hasRelic(state, 'R42')) return '无休整合同：休整点不能回复生命';
+    state.hp = Math.min(state.hp + restHealAmount(state), state.maxHp);
   } else if (action.choice === 'maxHp') {
     state.maxHp += 8;
     state.hp = Math.min(state.hp + 8, state.maxHp);
@@ -1426,13 +1887,13 @@ function restAction(state, action) {
 
 function generateEvent(state) {
   const events = [
-    { id: 'ev1', text: '你发现了一处废弃的战术装备。', choices: [{ id: 'take', text: '拆走装备（失去6点生命，获得随机遗物）' }, { id: 'leave', text: '离开' }] },
+    { id: 'ev1', text: '你发现了一处废弃的战术装备。', choices: [{ id: 'take', text: '拆走装备（失去6点生命，获得随机装备）' }, { id: 'leave', text: '离开' }] },
     { id: 'ev2', text: '一位老将提出指导训练。', choices: [{ id: 'train', text: '接受训练（升级一张随机牌）' }, { id: 'skip', text: '拒绝' }] },
     { id: 'ev3', text: '你找到一个补给箱。', choices: [{ id: 'heal', text: '使用医疗补给（恢复15点生命）' }, { id: 'money', text: '拿走钱（获得50金币）' }] },
     { id: 'ev4', text: '临时训练赛给了你一次检验新战术的机会。', choices: [{ id: 'scrim', text: '高强度训练（失去8点生命，随机升级一张牌）' }, { id: 'rest', text: '恢复体能（花20金币，回复8点生命）' }] },
     { id: 'ev5', text: '赞助商提出两份不同的赛季合同。', choices: [{ id: 'cash', text: '密集商务活动（最大生命-4，获得70金币）' }, { id: 'fans', text: '粉丝见面会（花50金币，最大生命+4）' }] },
-    { id: 'ev6', text: '分析师发现了一份旧赛季的战术数据库。', choices: [{ id: 'scout', text: '购买情报（花35金币，获得随机遗物）' }, { id: 'sell', text: '出售情报（失去6点生命，获得30金币）' }] },
-    { id: 'ev7', text: '一份高风险合作合同摆在桌上。', choices: [{ id: 'accept', text: '获得随机遗物，并加入一张随机俱乐部隐患' }, { id: 'decline', text: '谢绝合作' }] }
+    { id: 'ev6', text: '分析师发现了一份旧赛季的战术数据库。', choices: [{ id: 'scout', text: '购买情报（花35金币，获得随机装备）' }, { id: 'sell', text: '出售情报（失去6点生命，获得30金币）' }] },
+    { id: 'ev7', text: '一份高风险合作合同摆在桌上。', choices: [{ id: 'accept', text: '获得随机装备，并加入一张随机俱乐部隐患' }, { id: 'decline', text: '谢绝合作' }] }
   ];
   return events[Math.floor(nextRand(state) * events.length)];
 }
@@ -1490,12 +1951,131 @@ function eventChoice(state, action) {
   return null;
 }
 
+// ----------------------------- 赛前准备 (opening choice) -----------------------------
+// Four options per run, drawn by seed: two free small bonuses, one trade-off
+// with a bigger reward and the always-offered 热身赛. Cards offered by the
+// card-choice options are fixed when the options are generated.
+export const OPENING_POOLS = {
+  free: {
+    maxhp: '最大生命 +8',
+    gold: '获得 100 金币',
+    remove: '从牌组中删除 1 张牌',
+    upgrade: '升级牌组中的 1 张牌',
+    uncommon: '从 3 张罕见牌中选 1 张加入牌组'
+  },
+  trade: {
+    hpForRare: '失去 10% 最大生命，从 3 张稀有牌中选 1 张加入牌组',
+    curseForRelic: '牌组加入 1 张随机隐患，获得 1 件随机装备',
+    goldForRelics: '失去全部金币，获得 2 件随机装备'
+  },
+  steady: { warmup: '热身赛：接下来 3 场战斗中，敌人开局生命 -30%' }
+};
+
+function localRng(str) {
+  const box = { rngState: hashSeed(str) };
+  return () => nextRand(box);
+}
+function pickDistinct(list, n, rand) {
+  const pool = list.slice();
+  const out = [];
+  while (out.length < n && pool.length) out.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]);
+  return out;
+}
+function teamCardPool(state, rarity) {
+  const regional = REGION_CARD_IDS[TEAMS[state.team]?.region] || REGION_CARD_IDS.AM;
+  return [...SHARED_CARD_IDS, ...regional].filter(id => CARDS[id].rarity === rarity);
+}
+
+function generateOpening(state) {
+  const rand = localRng(`${state.seed}|opening|${state.team}`);
+  const free = pickDistinct(Object.keys(OPENING_POOLS.free), 2, rand);
+  const trade = pickDistinct(Object.keys(OPENING_POOLS.trade), 1, rand);
+  const options = [
+    ...free.map(id => ({ id, group: 'free', text: OPENING_POOLS.free[id] })),
+    ...trade.map(id => ({ id, group: 'trade', text: OPENING_POOLS.trade[id] })),
+    { id: 'warmup', group: 'steady', text: OPENING_POOLS.steady.warmup }
+  ];
+  for (const o of options) {
+    if (o.id === 'uncommon') o.cards = pickDistinct(teamCardPool(state, 'uncommon'), 3, rand);
+    if (o.id === 'hpForRare') o.cards = pickDistinct(teamCardPool(state, 'rare'), 3, rand);
+  }
+  return { options, pick: null, chosen: null };
+}
+
+// A random (tier-weighted) piece the run does not own yet.
+function grantNewRelic(state) {
+  grantRandomRelic(state);
+}
+
+function finishOpening(state) {
+  state.phase = 'map';
+  state.opening.pick = null;
+  pushLog(state, 'opening', { choice: state.opening.chosen });
+}
+
+function chooseOpening(state, action) {
+  if (state.phase !== 'opening' || !state.opening) return '不在赛前准备阶段';
+  const option = state.opening.options.find(o => o.id === action.choice);
+  if (!option) return '无效选择';
+  state.opening.chosen = option.id;
+  switch (option.id) {
+    case 'maxhp': state.maxHp += 8; state.hp += 8; break;
+    case 'gold': state.money += 100; break;
+    case 'remove':
+      if (!state.deck.some(c => canRemoveCard(state, c.uid))) break;
+      state.phase = 'openingPick'; state.opening.pick = { kind: 'remove' }; return null;
+    case 'upgrade':
+      if (!state.deck.some(c => !c.up && CARDS[c.id]?.upgradeEffects?.length)) break;
+      state.phase = 'openingPick'; state.opening.pick = { kind: 'upgrade' }; return null;
+    case 'uncommon':
+      state.phase = 'openingPick'; state.opening.pick = { kind: 'card', cards: option.cards.slice() }; return null;
+    case 'hpForRare': {
+      const loss = Math.floor(state.maxHp * 0.1);
+      state.maxHp -= loss;
+      state.hp = Math.min(state.hp, state.maxHp);
+      state.phase = 'openingPick'; state.opening.pick = { kind: 'card', cards: option.cards.slice() }; return null;
+    }
+    case 'curseForRelic': {
+      const curse = CURSES[Math.floor(nextRand(state) * CURSES.length)];
+      state.deck.push({ uid: nextUid(state), id: curse.id, up: false });
+      pushLog(state, 'curse_gained', { id: curse.id });
+      grantNewRelic(state);
+      break;
+    }
+    case 'goldForRelics': state.money = 0; grantNewRelic(state); grantNewRelic(state); break;
+    case 'warmup': state.warmup = 3; break;
+    default: return '无效选择';
+  }
+  finishOpening(state);
+  return null;
+}
+
+function chooseOpeningPick(state, action) {
+  if (state.phase !== 'openingPick' || !state.opening?.pick) return '当前没有待选的牌';
+  const pick = state.opening.pick;
+  if (pick.kind === 'card') {
+    if (action.id != null) {
+      if (!pick.cards.includes(action.id)) return '不是可选的牌';
+      state.deck.push({ uid: nextUid(state), id: action.id, up: false });
+    }
+  } else if (pick.kind === 'remove') {
+    if (!canRemoveCard(state, action.uid)) return '无法移除该牌';
+    state.deck.splice(state.deck.findIndex(c => c.uid === action.uid), 1);
+  } else if (pick.kind === 'upgrade') {
+    const card = state.deck.find(c => c.uid === action.uid);
+    if (!card || card.up || !CARDS[card.id]?.upgradeEffects?.length) return '无效升级目标';
+    card.up = true;
+  }
+  finishOpening(state);
+  return null;
+}
+
 function startNextAct(state) {
   if (state.phase !== 'intermission') return '不在幕间阶段';
   if (state.act >= 3) return '已是最终幕';
   state.act++;
   state.hp = state.maxHp;
-  state.map = buildMap(state.seed, state.act);
+  state.map = buildMap(state.seed, state.act, state.ascension || 0);
   state.currentNode = null;
   state.completed = [];
   state.checkpoint = null;
@@ -1513,7 +2093,36 @@ function applyRelicsAtBattleStart(state) {
       case 'R04': for (const e of alive(b)) addStatus(e, 'smoke', 3); break;
       case 'R05': for (const e of alive(b)) addStatus(e, 'flash', 3); break;
       case 'R12': b.energy += 2; break;
+      case 'R13': b.playerBlock += 10; break;
+      case 'R14': for (const e of alive(b)) addStatus(e, 'vuln', 1 + (hasRelic(state, 'R27') ? 1 : 0)); break;
+      case 'R15': state.hp = Math.min(state.maxHp, state.hp + 2); break;
+      case 'R28': drawCards(state, 2); break;
+      case 'R37': if (b.hand.length < MAX_HAND) b.hand.push({ uid: nextUid(state), id: 'TK01', up: false }); break;
+      case 'R43':
+        for (let i = 0; i < 2; i++) b.drawPile.splice(Math.floor(nextRand(state) * (b.drawPile.length + 1)), 0, { uid: nextUid(state), id: 'ST01', up: false });
+        break;
+      case 'R44': state.hp = Math.max(1, state.hp - 5); break;
     }
+    if (state.phase !== 'combat') return;
+  }
+  // 预案卡: the priciest card in the opening hand costs 0 this turn.
+  if (hasRelic(state, 'R29')) {
+    let best = null;
+    for (const c of b.hand) if (CARDS[c.id] && (!best || cardCost(c) > cardCost(best))) best = c;
+    if (best && cardCost(best) > 0) best.free = true;
+  }
+}
+
+// Start-of-turn gear that looks at the freshly drawn hand.
+function afterTurnDraw(state) {
+  const b = state.battle;
+  if (hasRelic(state, 'R35') && !b.hand.some(c => CARDS[c.id]?.type === 'attack') && b.hand.length < MAX_HAND) {
+    const idx = b.drawPile.findIndex(c => CARDS[c.id]?.type === 'attack');
+    if (idx >= 0) b.hand.push(b.drawPile.splice(idx, 1)[0]);
+  }
+  if (hasRelic(state, 'R49') && b.hand.length) {
+    const i = Math.floor(nextRand(state) * b.hand.length);
+    b.discardPile.push(b.hand.splice(i, 1)[0]);
   }
 }
 
@@ -1534,5 +2143,6 @@ function applyTurnStartPowers(state) {
   for (const rel of state.relics) {
     if (rel.id === 'R06') drawCards(state, 1);
     else if (rel.id === 'R11') b.playerBlock += 2;
+    else if (rel.id === 'R17' && b.turn % 3 === 0) b.energy += 1;
   }
 }
