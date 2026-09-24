@@ -1,5 +1,10 @@
 import { CARDS } from './content.js';
 
+// Totals across the enemy roster; single-enemy battles also carry flat fields.
+const enemyList = b => (Array.isArray(b?.enemies) ? b.enemies : b ? [{ hp: b.enemyHp || 0, statuses: b.statuses?.enemy || {} }] : []);
+const enemyHpTotal = b => enemyList(b).reduce((sum, e) => sum + Math.max(0, e.hp || 0), 0);
+const enemyStatusTotal = (b, key) => enemyList(b).reduce((sum, e) => sum + (e.statuses?.[key] || 0), 0);
+
 let currentSession = null;
 let sessionCounter = 0;
 
@@ -46,13 +51,15 @@ export function captureCombatPresentation(root, state, action) {
   const fallbackY = window.innerHeight/2;
   const q = (sel) => root.querySelector(sel);
   const playerBox = q('#player-box');
-  const enemyBox = q('#enemy-box');
+  const aimed = action?.target ? q(`[data-enemy-uid="${action.target}"]`) : null;
+  const enemyBox = aimed || q('#enemy-box') || q('.enemy-unit:not(.is-dead)');
   const drawPile = q('#pile-draw');
   const discardPile = q('#pile-discard');
   const exhaustPile = q('#pile-exhaust');
   const capture = {
     playerBox: getCenter(playerBox, fallbackX, fallbackY),
     enemyBox: getCenter(enemyBox, fallbackX, fallbackY),
+    enemyBoxes: Object.fromEntries([...root.querySelectorAll('[data-enemy-uid]')].map(el => [el.dataset.enemyUid, getCenter(el, fallbackX, fallbackY)])),
     drawPile: getCenter(drawPile, fallbackX, fallbackY),
     discardPile: getCenter(discardPile, fallbackX, fallbackY),
     exhaustPile: getCenter(exhaustPile, fallbackX, fallbackY),
@@ -365,7 +372,7 @@ export async function animateCombatTransition(prevState, nextState, action, capt
       session.animations.push(lineAnim);
 
       // Damage number
-      const damage = Math.max(0, prev.battle.enemyHp - next.battle.enemyHp);
+      const damage = Math.max(0, enemyHpTotal(prev.battle) - enemyHpTotal(next.battle));
       if (damage > 0) {
         createFx(session, 'damage', {
           x: eb.x, y: eb.y - 30,
@@ -471,8 +478,8 @@ export async function animateCombatTransition(prevState, nextState, action, capt
     // Enemy status effects with new animation
     const enemyStatusKeys = ['smoke', 'flash', 'weak', 'vuln', 'block'];
     for (const key of enemyStatusKeys) {
-      const prevVal = prev.battle.statuses.enemy[key] || 0;
-      const nextVal = next.battle.statuses.enemy[key] || 0;
+      const prevVal = enemyStatusTotal(prev.battle, key);
+      const nextVal = enemyStatusTotal(next.battle, key);
       if (nextVal > prevVal) {
         if (key === 'smoke') {
           createFx(session, 'smoke', {
@@ -618,7 +625,7 @@ export async function animateCombatTransition(prevState, nextState, action, capt
     }
 
     // Victory effect
-    if (next.battle.enemyHp <= 0 && prev.battle.enemyHp > 0) {
+    if (enemyHpTotal(next.battle) <= 0 && enemyHpTotal(prev.battle) > 0) {
       createFx(session, 'victory', {
         x: window.innerWidth/2, y: window.innerHeight/2,
         text: '胜利！',

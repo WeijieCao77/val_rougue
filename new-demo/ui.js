@@ -1,4 +1,4 @@
-import { createRun, act, legalActions, observe, preview, describeIntent, categoryUpgradeQuote, shopPrice } from './engine.js';
+import { createRun, act, legalActions, observe, preview, describeIntent, describeIntents, battleEnemies, livingEnemies, cardNeedsTarget, cardHitsAll, categoryUpgradeQuote, shopPrice } from './engine.js';
 import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS, TRAITS, FIELDS, ARCHETYPES } from './content.js';
 import { statusBadges, statusBadge, statusIcon, highlightKeywords } from '/shared/status-icons.js';
 import { ACTS } from './season-map.js';
@@ -135,7 +135,7 @@ function renderGuideModal() {
     <p><strong>目标：</strong>沿赛季路线打过三幕。每场胜利挑一张牌，把初始牌组逐渐改成自己的战术组合。</p>
     <p><strong>队伍：</strong>突破擅长直接攻击；架点靠布防抵伤；道具协同用烟雾和闪光；调度靠抽牌和能量连招。新手可先选突破。</p>
     <p><strong>路线：</strong>点亮起的节点前进。⚔ 比赛、☠ 强敌、? 未知、⇄ 补给、✚ 休整、👑 幕末决赛。</p>
-    <p><strong>战斗：</strong>先看敌人下一步意图，再按费用出牌。攻击造成伤害，技能负责布防、道具或抽牌，能力打出后整场生效。点牌再按执行，或拖到战场。</p>
+    <p><strong>战斗：</strong>先看敌人下一步意图，再按费用出牌。攻击造成伤害，技能负责布防、道具或抽牌，能力打出后整场生效。点牌再按执行，或拖到战场。遇到多名对手时，攻击和减益牌要点选目标（或直接拖到那名对手身上），“所有敌人”的范围牌无需目标；敌方回合每名在场对手依次行动。</p>
     <p><strong>回合：</strong>每回合通常有3能量；结束回合时没打出的手牌进入弃牌堆，消耗牌打出后本场不再抽到。布防抵消伤害，回合后清掉。前压/掩护姿态可以切换，但要花1能量。</p>
   </div></div>`;
   const overlay = modalRoot.querySelector('#guide-overlay');
@@ -425,24 +425,50 @@ function renderMap(root) {
   }
 }
 
+// A card waiting for a target: selected, affordable, aimed, and 2+ enemies alive.
+function aimingCard(b, playableUids) {
+  if (!selectedCardUid || !playableUids.has(selectedCardUid)) return null;
+  const card = b.hand.find(c => c.uid === selectedCardUid);
+  if (!card || livingEnemies(b).length < 2 || !cardNeedsTarget(card)) return null;
+  return card;
+}
+
+function enemyUnitHtml(e, { intentText, aiming, isPrimary }) {
+  const dead = e.hp <= 0;
+  const st = e.statuses || {};
+  const badges = dead ? '' : statusBadges([['block', st.block], ['strength', st.strength], ['aim', st.aim], ['burn', st.burn], ['smoke', st.smoke], ['flash', st.flash], ['weak', st.weak], ['vuln', st.vuln]]);
+  const traitInfo = !dead && e.trait && TRAITS[e.trait.id];
+  const traitHtml = traitInfo ? `<span class="trait-tag" tabindex="0" title="${escapeHtml(traitInfo.text(e.trait.n))}">${statusIcon(traitInfo.icon)}${escapeHtml(traitInfo.name)}${e.trait.id === 'tempo' ? ` ${e.tempoCount || 0}/${e.trait.n}` : ''}</span>` : '';
+  const pct = Math.max(0, Math.min(100, e.hp / e.maxHp * 100));
+  return `<div class="enemy-unit${dead ? ' is-dead' : ''}${aiming && !dead ? ' targetable' : ''}" data-enemy-uid="${escapeHtml(e.uid)}"${isPrimary ? ' id="enemy-box"' : ''} role="button" tabindex="${dead ? -1 : 0}" aria-label="${escapeHtml(e.name)}${dead ? '（已淘汰）' : ''}">
+      <div class="intent">${dead ? '已淘汰' : highlightKeywords(intentText || '未知')}</div>
+      <div class="fighter-figure enemy-figure${dead ? ' is-dead' : ''}" data-character-variant="${escapeHtml(e.look || e.id)}">${dead ? '' : combatArt(e.id, 'enemy')}</div>
+      <div class="unit-hud enemy-hud">
+        <div class="enemy-name">${escapeHtml(e.name)}</div>
+        ${traitHtml}
+        <div class="enemy-hp" data-hp="${e.hp}"><div class="hp-bar"><i style="width:${pct}%"></i></div><span>${e.hp}/${e.maxHp}</span></div>
+        <div class="status-row" aria-label="对手状态">${badges}</div>
+      </div>
+    </div>`;
+}
+
 function renderCombat(root) {
   const b = state.battle;
   if (!b) return;
-  const enemyDef = getEnemyDef(b.enemyId) || {};
-  const intentStr = describeIntent(state) || '未知';
-  const enemyBadges = statusBadges([['block', b.statuses.enemy.block], ['strength', b.statuses.enemy.strength], ['aim', b.statuses.enemy.aim], ['burn', b.statuses.enemy.burn], ['smoke', b.statuses.enemy.smoke], ['flash', b.statuses.enemy.flash], ['weak', b.statuses.enemy.weak], ['vuln', b.statuses.enemy.vuln]]);
-  const playerBadges = statusBadges([['block', b.playerBlock], ['strength', b.powerStacks.inflame], ['overload', b.overload], ['weak', b.statuses.player.weak], ['vuln', b.statuses.player.vuln]]);
-  const deployHtml = (b.deployables || []).map(d => `<span class="deploy-chip" tabindex="0" title="${d.kind === 'turret' ? `哨戒炮：回合结束时造成${d.n + 3 * (b.powerStacks.turret_core || 0)}点伤害` : `屏障无人机：回合结束时获得${d.n}点布防`}，剩余${d.turns}回合">${statusIcon(d.kind === 'turret' ? 'sentry' : 'block')}<b>${d.kind === 'turret' ? d.n + 3 * (b.powerStacks.turret_core || 0) : d.n}</b><small>×${d.turns}</small></span>`).join('');
-  const discoverHtml = b.pendingDiscover ? `<div class="discover-overlay" role="dialog" aria-label="发现一张牌"><div class="discover-panel"><h3>${statusIcon('discover')} 发现：选一张加入手牌</h3><p>本回合 0 费，打出后消耗。</p><div class="discover-options">${b.pendingDiscover.options.map(id => `<button class="discover-card tc-pick" data-discover="${id}">${cardHtml(id, { cost: 0, badge: '本回合 0 费' })}</button>`).join('')}</div></div></div>` : '';
-  const traitInfo = b.trait && TRAITS[b.trait.id];
-  const traitHtml = traitInfo ? `<div class="trait-row"><span class="trait-tag" tabindex="0" title="${escapeHtml(traitInfo.text(b.trait.n))}">${statusIcon(traitInfo.icon)}${escapeHtml(traitInfo.name)}${b.trait.id === 'tempo' ? ` ${b.tempoCount}/${b.trait.n}` : ''}</span></div>` : '';
-  const field = b.field && FIELDS[b.field];
-  const fieldHtml = field ? `<div class="battlefield-strip"><span class="battlefield-tag" tabindex="0" title="${escapeHtml(field.text)}">战场：<b>${escapeHtml(field.name)}</b> · ${escapeHtml(field.text)}</span></div>` : '';
+  const enemies = battleEnemies(b);
+  const living = enemies.filter(e => e.hp > 0);
+  const intents = describeIntents(state);
   const legal = legalActions(state);
   const playableUids = new Set(legal.filter(a => a.type === 'play').map(a => a.uid));
   const canStance = legal.some(a => a.type === 'stance');
+  const aimCard = aimingCard(b, playableUids);
+  const playerBadges = statusBadges([['strength', b.powerStacks.inflame], ['overload', b.overload], ['weak', b.statuses.player.weak], ['vuln', b.statuses.player.vuln]]);
+  const turretDmg = d => d.n + 3 * (b.powerStacks.turret_core || 0);
+  const deployHtml = (b.deployables || []).map(d => `<span class="deploy-chip" tabindex="0" title="${d.kind === 'turret' ? `哨戒炮：回合结束时对生命最低的敌人造成${turretDmg(d)}点伤害` : `屏障无人机：回合结束时获得${d.n}点布防`}，剩余${d.turns}回合">${statusIcon(d.kind === 'turret' ? 'sentry' : 'block')}<b>${d.kind === 'turret' ? turretDmg(d) : d.n}</b><small>×${d.turns}</small></span>`).join('');
+  const discoverHtml = b.pendingDiscover ? `<div class="discover-overlay" role="dialog" aria-label="发现一张牌"><div class="discover-panel"><h3>${statusIcon('discover')} 发现：选一张加入手牌</h3><p>本回合 0 费，打出后消耗。</p><div class="discover-options">${b.pendingDiscover.options.map(id => `<button class="discover-card tc-pick" data-discover="${id}">${cardHtml(id, { cost: 0, badge: '本回合 0 费' })}</button>`).join('')}</div></div></div>` : '';
+  const field = b.field && FIELDS[b.field];
+  const fieldHtml = field ? `<span class="battlefield-tag" tabindex="0" title="${escapeHtml(field.text)}">战场：<b>${escapeHtml(field.name)}</b> · ${escapeHtml(field.text)}</span>` : '';
   const allyArt = combatArt(state.team, 'ally');
-  const enemyArt = combatArt(b.enemyId, 'enemy');
   const handHtml = b.hand.map((card, idx) => {
     const display = getCardDisplay(card, card.up);
     if (!display) return '';
@@ -455,64 +481,61 @@ function renderCombat(root) {
     </div>`;
   }).join('');
 
-  let previewHtml = '';
-  if (selectedCardUid) {
+  let hintHtml = '';
+  if (aimCard) hintHtml = `<div class="arena-hint aiming-hint">选择目标：点击一名敌人打出「${escapeHtml(getCardDisplay(aimCard, aimCard.up).name)}」</div>`;
+  else if (selectedCardUid) {
     const card = b.hand.find(c => c.uid === selectedCardUid);
-    if (card) {
-      const fullDesc = describeCardFull(card);
-      previewHtml = `<div class="preview-panel">${escapeHtml(fullDesc)}</div>`;
-    }
+    if (card) hintHtml = `<div class="arena-hint preview-panel">${escapeHtml(describeCardFull(card))}</div>`;
   }
-
-  const pileCounts = {
-    draw: b.drawPile.length,
-    discard: b.discardPile.length,
-    exhaust: b.exhaustPile.length,
-  };
+  const firstLiving = living[0]?.uid;
 
   root.innerHTML = `
-    ${guideStrip('combat', '先看对手意图，再看手牌费用和效果。点牌后“执行战术”，或把牌拖向战场；不想再出牌就结束回合。')}
-    ${fieldHtml}
-    <div class="battle" data-presentation-busy="${presentationBusy}">
-      <div class="enemy-area">
-        <div class="enemy-art-container" data-character-variant="${escapeHtml(enemyDef.look || b.enemyId)}">${enemyArt}<div class="status-overlay" aria-label="对手状态">${enemyBadges}</div></div>
-        <div class="enemy-box" id="enemy-box">
-          <div class="enemy-name">${escapeHtml(b.enemyName)}</div>
-          ${traitHtml}
-          <div class="enemy-hp" data-hp="${b.enemyHp}">
-            <div class="hp-bar"><i style="width:${b.enemyHp/b.enemyMaxHp*100}%"></i></div>
-            <span>${b.enemyHp}/${b.enemyMaxHp}</span>
+    ${guideStrip('combat', living.length > 1 ? '这是多人对局：攻击和减益要先选目标。点牌后点击敌人，或直接把牌拖到那名敌人身上；范围牌无需目标。' : '先看对手意图，再看手牌费用和效果。点牌后“执行战术”，或把牌拖向战场；不想再出牌就结束回合。')}
+    <div class="battle arena${aimCard ? ' aiming' : ''}" data-enemies="${enemies.length}" data-presentation-busy="${presentationBusy}">
+      <div class="arena-top">
+        <div class="arena-turn"><b>第 ${b.turn} 回合</b>${b.groupName ? `<span>${escapeHtml(b.groupName)} · ${living.length}/${enemies.length} 名在场</span>` : ''}</div>
+        ${fieldHtml}
+        ${hintHtml}
+      </div>
+      <div class="arena-floor">
+        <section class="ally-zone" aria-label="我方">
+          <div class="ally-unit">
+            <div class="status-row ally-status" aria-label="我方状态">${playerBadges}${deployHtml ? `<span class="deploy-row" aria-label="已部署">${deployHtml}</span>` : ''}</div>
+            <div class="fighter-figure ally-figure">${allyArt}</div>
           </div>
-          <div class="intent">${highlightKeywords(intentStr)}</div>
+          <div class="ally-hud" id="player-box">
+            <div class="energy-orb" title="能量"><b>${b.energy}</b><small>/3</small></div>
+            <div class="ally-vitals">
+              <div class="hp-line"><span class="value">HP ${state.hp}/${state.maxHp}</span><div class="hp-bar"><i style="width:${state.hp / state.maxHp * 100}%"></i></div></div>
+              <div class="block-value" data-block="${b.playerBlock}"><span class="mini-armor" aria-hidden="true"></span><span>布防 ${b.playerBlock}</span></div>
+            </div>
+            <div class="stance-chip">
+              <div class="stance-name" title="${b.stance === 'cover' ? '掩护：每回合第一次布防+3' : '前压：每回合第一次攻击+3，但每次受到攻击+2'}">${b.stance === 'cover' ? '掩护' : '前压'}<small>${b.stance === 'cover' ? '首次布防+3' : '首攻+3 · 受击+2'}</small></div>
+              <button class="btn" id="btn-stance" ${canStance ? '' : 'disabled'} title="切换姿态：1费，每回合一次">${b.stanceSwitchUsedThisTurn ? '已切换' : '切换 1费'}</button>
+            </div>
+          </div>
+        </section>
+        <section class="enemy-zone" aria-label="对手" data-count="${enemies.length}">
+          ${enemies.map(e => enemyUnitHtml(e, { intentText: intents[e.uid], aiming: !!aimCard, isPrimary: e.uid === firstLiving })).join('')}
+        </section>
+      </div>
+      <div class="arena-hud">
+        <div class="hud-left">
+          <button class="pile-btn" data-pile="draw" id="pile-draw"><b>${b.drawPile.length}</b><span>抽牌堆</span></button>
         </div>
-      </div>
-      <div class="player-area">
-        <div class="ally-art-container">${allyArt}<div class="status-overlay" aria-label="我方状态">${playerBadges}</div>${deployHtml ? `<div class="deploy-row" aria-label="已部署">${deployHtml}</div>` : ''}</div>
-        <div class="player-box" id="player-box">
-          <div class="label">队伍状态</div>
-          <div class="value">HP ${state.hp}/${state.maxHp}</div>
-          <div class="hp-bar"><i style="width:${state.hp/state.maxHp*100}%"></i></div>
-          <div>能量 ${b.energy}/3</div>
-          <div class="block-value" data-block="${b.playerBlock}"><span class="mini-armor" aria-hidden="true"></span><span>布防 ${b.playerBlock}</span></div>
+        <div class="hand-area" id="hand-area" role="list" style="--slots:${Math.max(1, b.hand.length)}">
+          ${handHtml}
         </div>
-        <div class="stance-box">
-          <div>姿态：${b.stance === 'cover' ? '掩护' : '前压'}</div>
-          <div style="font-size:0.8rem">${b.stance === 'cover' ? '掩护首次布防+3' : '前压首次攻击+3，每次受到攻击+2'}</div>
-          <button class="btn" id="btn-stance" ${canStance ? '' : 'disabled'}>切换姿态（1费，每回合一次）${b.stanceSwitchUsedThisTurn ? '已用' : ''}</button>
+        <div class="hud-right">
+          <div class="ops-actions">
+            <button class="btn primary" id="btn-play" ${selectedCardUid && playableUids.has(selectedCardUid) ? '' : 'disabled'}>${aimCard ? '选择目标' : '执行战术'}</button>
+            <button class="btn" id="btn-end">结束回合 <small>E</small></button>
+          </div>
+          <div class="hud-piles">
+            <button class="pile-btn" data-pile="discard" id="pile-discard"><b>${b.discardPile.length}</b><span>弃牌堆</span></button>
+            <button class="pile-btn" data-pile="exhaust" id="pile-exhaust"><b>${b.exhaustPile.length}</b><span>消耗堆</span></button>
+          </div>
         </div>
-      </div>
-      <div class="pile-display">
-        <button class="pile-btn" data-pile="draw" id="pile-draw">抽牌堆 (${pileCounts.draw})</button>
-        <button class="pile-btn" data-pile="discard" id="pile-discard">弃牌堆 (${pileCounts.discard})</button>
-        <button class="pile-btn" data-pile="exhaust" id="pile-exhaust">消耗堆 (${pileCounts.exhaust})</button>
-      </div>
-      <div class="battle-actions">
-        <button class="btn primary" id="btn-play" ${selectedCardUid && playableUids.has(selectedCardUid) ? '' : 'disabled'}>执行战术 (Enter)</button>
-        <button class="btn" id="btn-end">结束回合 (E)</button>
-        ${previewHtml}
-      </div>
-      <div class="hand-area" id="hand-area" role="list" style="--slots:${Math.max(1,b.hand.length)}">
-        ${handHtml}
       </div>
     </div>
     ${discoverHtml}
@@ -520,72 +543,86 @@ function renderCombat(root) {
   root.querySelectorAll('[data-discover]').forEach(el => el.addEventListener('click', () => dispatch({ type: 'discover', id: el.dataset.discover })));
   bindGuideStrip(root, 'combat');
 
-  // attach events
-  const enemyBox = document.getElementById('enemy-box');
-  enemyBox.addEventListener('click', () => { if (selectedCardUid && playableUids.has(selectedCardUid) && !presentationBusy) dispatch({ type: 'play', uid: selectedCardUid }); });
-  const playerBox = document.getElementById('player-box');
-  playerBox.addEventListener('click', () => { if (selectedCardUid && playableUids.has(selectedCardUid) && !presentationBusy) dispatch({ type: 'play', uid: selectedCardUid }); });
+  const needsPick = card => card && living.length > 1 && cardNeedsTarget(card);
+  const selectedCard = () => b.hand.find(c => c.uid === selectedCardUid);
+  // Play the selected card; `target` is an enemy uid or null.
+  const playSelected = target => {
+    const card = selectedCard();
+    if (!card || !playableUids.has(card.uid) || presentationBusy) return false;
+    if (needsPick(card) && !target) { showNotice('这张牌需要目标：点击一名敌人'); return false; }
+    return dispatch(target && cardNeedsTarget(card) ? { type: 'play', uid: card.uid, target } : { type: 'play', uid: card.uid });
+  };
 
-  document.getElementById('btn-play').addEventListener('click', () => {
-    if (selectedCardUid && playableUids.has(selectedCardUid) && !presentationBusy) {
-      dispatch({ type: 'play', uid: selectedCardUid });
-    }
+  root.querySelectorAll('.enemy-unit:not(.is-dead)').forEach(unit => {
+    const fire = () => { if (selectedCardUid) playSelected(unit.dataset.enemyUid); };
+    unit.addEventListener('click', fire);
+    unit.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); fire(); } });
+  });
+  root.querySelector('.ally-zone').addEventListener('click', event => {
+    if (event.target.closest('button')) return;
+    if (selectedCardUid) playSelected(null);
   });
 
+  document.getElementById('btn-play').addEventListener('click', () => playSelected(null));
   document.getElementById('btn-end').addEventListener('click', () => { if (!presentationBusy) dispatch({ type: 'end' }); });
-
   document.getElementById('btn-stance').addEventListener('click', () => {
     if (canStance && !presentationBusy) dispatch({ type: 'stance' });
   });
 
-  document.querySelectorAll('.pile-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+  root.querySelectorAll('.pile-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
       if (presentationBusy) return;
-      const kind = btn.dataset.pile;
-      showPileModal(kind);
+      showPileModal(btn.dataset.pile);
     });
   });
 
   // Selection stays game-specific; dragging uses the same full-card gesture as Wa.
+  const select = uid => {
+    const handScroll = root.querySelector('#hand-area')?.scrollLeft || 0;
+    selectedCardUid = uid;
+    renderCombat(root);
+    root.querySelector('#hand-area').scrollLeft = handScroll;
+  };
   root.querySelectorAll('.hand-card.shared-card').forEach(el => {
-    el.addEventListener('click', () => {
-      if (presentationBusy) return;
-      const handScroll = root.querySelector('#hand-area')?.scrollLeft || 0;
-      selectedCardUid = el.dataset.uid;
-      renderCombat(root);
-      root.querySelector('#hand-area').scrollLeft = handScroll;
-    });
+    el.addEventListener('click', () => { if (!presentationBusy) select(el.dataset.uid); });
     el.addEventListener('keydown', event => {
       if (presentationBusy || !['Enter',' '].includes(event.key)) return;
       event.preventDefault();event.stopPropagation();
-      const handScroll = root.querySelector('#hand-area')?.scrollLeft || 0;
-      selectedCardUid = el.dataset.uid;
-      renderCombat(root);
-      root.querySelector('#hand-area').scrollLeft = handScroll;
+      select(el.dataset.uid);
     });
   });
   const hand = root.querySelector('#hand-area');
+  const battleEl = root.querySelector('.battle');
   const clearDrop = () => root.querySelectorAll('.drop-ready').forEach(el => el.classList.remove('drop-ready'));
-  // One enemy per fight: like Slay the Spire, releasing a dragged card anywhere
-  // above the hand plays it; the highlighted side follows what the card does.
-  const targetsEnemy = card => { const d = CARDS[card.id]; return d?.type === 'attack' || (d?.effects || []).some(e => ['attack', 'weak', 'vuln', 'smoke', 'flash', 'burn', 'detonate'].includes(e.type)); };
+  // One living enemy: like Slay the Spire, releasing a dragged card anywhere
+  // above the hand plays it. Two or more: aimed cards must land on an enemy.
+  const targetsEnemy = card => cardNeedsTarget(card) || cardHitsAll(card) || CARDS[card.id]?.type === 'attack';
+  const unitAt = point => document.elementFromPoint(point.x, point.y)?.closest('.enemy-unit:not(.is-dead)') || null;
   const zoneAt = (point, card) => {
+    if (needsPick(card)) return unitAt(point);
     const handTop = hand.getBoundingClientRect().top;
     if (point.y > handTop - 10 || point.startY - point.y < 60) return null;
-    return card && targetsEnemy(card) ? root.querySelector('.enemy-area') : root.querySelector('.player-area');
+    return targetsEnemy(card) ? root.querySelector('.enemy-zone') : root.querySelector('.ally-zone');
   };
   attachCardGesture(hand, {
     getCard: el => b.hand.find(card => card.uid === el.dataset.uid),
     canDrag: card => !presentationBusy && playableUids.has(card.uid),
-    onStart: (card, el) => { selectedCardUid = card.uid; el.classList.add('selected'); },
+    onStart: (card, el) => {
+      selectedCardUid = card.uid; el.classList.add('selected');
+      if (needsPick(card)) { battleEl.classList.add('aiming'); root.querySelectorAll('.enemy-unit:not(.is-dead)').forEach(u => u.classList.add('targetable')); }
+    },
     onMove: (card, point) => { clearDrop(); zoneAt(point, card)?.classList.add('drop-ready'); },
     onDrop: (card, point) => {
       const zone = zoneAt(point, card); clearDrop();
       if (!zone || presentationBusy || !playableUids.has(card.uid)) return false;
       selectedCardUid = card.uid;
-      return dispatch({ type: 'play', uid: card.uid });
+      const target = zone.dataset.enemyUid;
+      return dispatch(target && cardNeedsTarget(card) ? { type: 'play', uid: card.uid, target } : { type: 'play', uid: card.uid });
     },
-    onEnd: clearDrop,
+    onEnd: (card, point, landed) => {
+      clearDrop();
+      if (!landed && !aimCard) { battleEl.classList.remove('aiming'); root.querySelectorAll('.enemy-unit.targetable').forEach(u => u.classList.remove('targetable')); }
+    },
   });
 }
 
@@ -651,11 +688,13 @@ function combatKeyHandler(e) {
       renderCombat(document.getElementById('game-root'));
     }
   } else if (e.key === 'Enter') {
+    if (e.target.closest?.('.enemy-unit, .hand-card, button')) return;
     e.preventDefault();
     const legal = legalActions(state);
     const playableUids = new Set(legal.filter(a => a.type === 'play').map(a => a.uid));
     if (selectedCardUid && playableUids.has(selectedCardUid)) {
-      dispatch({ type: 'play', uid: selectedCardUid });
+      if (aimingCard(state.battle, playableUids)) showNotice('这张牌需要目标：点击一名敌人');
+      else dispatch({ type: 'play', uid: selectedCardUid });
     }
   } else if (e.key.toLowerCase() === 'e') {
     dispatch({ type: 'end' });
@@ -1224,6 +1263,7 @@ async function handlePlayCardTimeline(prev, next, action, capture, reducedMotion
     const cardType = getCardType(playedCard);
     const pb = capture.playerBox;
     const eb = capture.enemyBox;
+    const hits = enemyHpDrops(prev, next);
     const dcp = capture.discardPile;
     const ep = capture.exhaustPile;
     const isExhaust = playedCard && next.battle?.exhaustPile?.some(c => c.uid === playedCard.uid);
@@ -1286,7 +1326,7 @@ async function handlePlayCardTimeline(prev, next, action, capture, reducedMotion
       session.animations.push(flashAnim);
       await delay(100);
 
-      // Bullet line
+      // Bullet line (to the aimed enemy; area hits get their own rings below)
       const dx = eb.x - pb.x;
       const dy = eb.y - pb.y;
       const dist = Math.sqrt(dx*dx + dy*dy);
@@ -1313,42 +1353,28 @@ async function handlePlayCardTimeline(prev, next, action, capture, reducedMotion
       session.animations.push(lineAnim);
       await delay(350);
 
-      // Enemy hit effect
-      const hitRing = document.createElement('div');
-      hitRing.className = 'new-fx-node hit-ring';
-      hitRing.style.position = 'absolute';
-      hitRing.style.left = (eb.x - 30) + 'px';
-      hitRing.style.top = (eb.y - 30) + 'px';
-      hitRing.style.width = '60px';
-      hitRing.style.height = '60px';
-      hitRing.style.borderRadius = '50%';
-      hitRing.style.border = '3px solid rgba(255,255,255,0.9)';
-      hitRing.style.pointerEvents = 'none';
-      hitRing.style.zIndex = '9999';
-      session.root.appendChild(hitRing);
-      const ringAnim = hitRing.animate([
-        { transform: 'scale(0)', opacity: 1 },
-        { transform: 'scale(2)', opacity: 0 }
-      ], { duration: 300, easing: 'ease-out', fill: 'forwards' });
-      session.animations.push(ringAnim);
-
-      // Damage number
-      const damage = Math.max(0, prev.battle.enemyHp - (next.battle?.enemyHp ?? 0));
-      if (damage > 0) {
-        const dmgEl = document.createElement('div');
-        dmgEl.className = 'new-fx-node fx-damage';
-        dmgEl.textContent = `-${damage}`;
-        dmgEl.style.position = 'absolute';
-        dmgEl.style.left = (eb.x - 20) + 'px';
-        dmgEl.style.top = (eb.y - 50) + 'px';
-        dmgEl.style.pointerEvents = 'none';
-        dmgEl.style.zIndex = '9999';
-        session.root.appendChild(dmgEl);
-        const dmgAnim = dmgEl.animate([
-          { transform: 'translateY(0)', opacity: 1 },
-          { transform: 'translateY(-40px)', opacity: 0 }
-        ], { duration: 500, easing: 'ease-out', fill: 'forwards' });
-        session.animations.push(dmgAnim);
+      // Enemy hit effect and damage number on every enemy that lost HP
+      const marks = hits.length ? hits.map(h => ({ at: capture.enemyBoxes?.[h.uid] || eb, damage: h.damage })) : [{ at: eb, damage: 0 }];
+      for (const { at, damage } of marks) {
+        const hitRing = document.createElement('div');
+        hitRing.className = 'new-fx-node hit-ring';
+        Object.assign(hitRing.style, { position: 'absolute', left: (at.x - 30) + 'px', top: (at.y - 30) + 'px', width: '60px', height: '60px', borderRadius: '50%', border: '3px solid rgba(255,255,255,0.9)', pointerEvents: 'none', zIndex: '9999' });
+        session.root.appendChild(hitRing);
+        session.animations.push(hitRing.animate([
+          { transform: 'scale(0)', opacity: 1 },
+          { transform: 'scale(2)', opacity: 0 }
+        ], { duration: 300, easing: 'ease-out', fill: 'forwards' }));
+        if (damage > 0) {
+          const dmgEl = document.createElement('div');
+          dmgEl.className = 'new-fx-node fx-damage';
+          dmgEl.textContent = `-${damage}`;
+          Object.assign(dmgEl.style, { position: 'absolute', left: (at.x - 20) + 'px', top: (at.y - 50) + 'px', pointerEvents: 'none', zIndex: '9999' });
+          session.root.appendChild(dmgEl);
+          session.animations.push(dmgEl.animate([
+            { transform: 'translateY(0)', opacity: 1 },
+            { transform: 'translateY(-40px)', opacity: 0 }
+          ], { duration: 500, easing: 'ease-out', fill: 'forwards' }));
+        }
       }
       await delay(300);
 
@@ -1519,31 +1545,24 @@ async function handleEndTurnTimeline(prev, next, action, capture, reducedMotion)
     const eb = capture.enemyBox;
     const playerDamage = Math.max(0, prev.hp - next.hp);
 
-    // Enemy attack line regardless of damage to show action
-    const dx = pb.x - eb.x;
-    const dy = pb.y - eb.y;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-    const line = document.createElement('div');
-    line.className = 'new-fx-node';
-    line.style.position = 'absolute';
-    line.style.left = eb.x + 'px';
-    line.style.top = eb.y + 'px';
-    line.style.width = dist + 'px';
-    line.style.height = '2px';
-    line.style.background = 'rgba(255,87,34,0.7)';
-    line.style.transformOrigin = '0 50%';
-    line.style.transform = `rotate(${angle}deg)`;
-    line.style.pointerEvents = 'none';
-    line.style.zIndex = '9999';
-    session.root.appendChild(line);
-    const lineAnim = line.animate([
-      { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 },
-      { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0.8, offset: 0.4 },
-      { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0.2, offset: 0.7 },
-      { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 }
-    ], { duration: 500, easing: 'ease-out', fill: 'forwards' });
-    session.animations.push(lineAnim);
+    // Enemy attack lines regardless of damage to show each living enemy acting
+    const shooters = livingEnemies(prev.battle).map(e => capture.enemyBoxes?.[e.uid]).filter(Boolean);
+    (shooters.length ? shooters : [eb]).forEach((from, i) => {
+      const dx = pb.x - from.x;
+      const dy = pb.y - from.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      const line = document.createElement('div');
+      line.className = 'new-fx-node';
+      Object.assign(line.style, { position: 'absolute', left: from.x + 'px', top: from.y + 'px', width: dist + 'px', height: '2px', background: 'rgba(255,87,34,0.7)', transformOrigin: '0 50%', transform: `rotate(${angle}deg)`, pointerEvents: 'none', zIndex: '9999' });
+      session.root.appendChild(line);
+      session.animations.push(line.animate([
+        { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 },
+        { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0.8, offset: 0.4 },
+        { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0.2, offset: 0.7 },
+        { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 }
+      ], { duration: 500, delay: i * 120, easing: 'ease-out', fill: 'forwards' }));
+    });
 
     if (playerDamage > 0) {
       // Player hit effect only if damage occurs
@@ -1592,10 +1611,17 @@ async function handleEndTurnTimeline(prev, next, action, capture, reducedMotion)
   }
 }
 
+// HP each enemy lost between two states (area cards hit several).
+function enemyHpDrops(prev, next) {
+  const after = new Map(battleEnemies(next?.battle).map(e => [e.uid, e.hp]));
+  return battleEnemies(prev?.battle).map(e => ({ uid: e.uid, damage: Math.max(0, e.hp - (after.get(e.uid) ?? 0)) })).filter(h => h.damage > 0);
+}
+const totalEnemyHp = b => battleEnemies(b).reduce((sum, e) => sum + Math.max(0, e.hp), 0);
+
 function applyCombatFx(prev, next) {
   if (!prev?.battle || !next?.battle) return;
-  const prevEnemyHp = prev.battle.enemyHp;
-  const nextEnemyHp = next.battle.enemyHp;
+  const prevEnemyHp = totalEnemyHp(prev.battle);
+  const nextEnemyHp = totalEnemyHp(next.battle);
   const prevPlayerHp = prev.hp;
   const nextPlayerHp = next.hp;
   const prevBlock = prev.battle.playerBlock || 0;
@@ -1647,7 +1673,14 @@ function initGlobalTooltip() {
     if (!text) return;
     tooltip.textContent = text;
     tooltip.style.display = 'block';
-    const rect = target.getBoundingClientRect();
+    // Phones: a tapped hand card already shows its text in the arena hint; a
+    // floating tooltip there would cover the action buttons.
+    if (target.closest('.arena .hand-card') && innerWidth <= 720) { hideTooltip(); return; }
+    let rect = target.getBoundingClientRect();
+    // Hand cards: show the text in the open space at the top of the battlefield,
+    // never over the stance/action buttons beside the hand.
+    const floor = target.closest('.arena .hand-card') && innerWidth > 720 ? document.querySelector('.arena-floor') : null;
+    if (floor) { const f = floor.getBoundingClientRect(); rect = { left: f.left, width: f.width, top: f.top + tooltip.offsetHeight + 10, bottom: f.top }; }
     let left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2;
     let top = rect.top - tooltip.offsetHeight - 5;
     const margin = 10;

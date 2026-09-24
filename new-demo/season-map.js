@@ -35,6 +35,16 @@ const roomNames = { battle: '常规比赛', elite: '高压强敌', event: '未�
 const battleNames = { E01: '新秀步枪', E02: '远点狙击', E03: '突破双枪', E04: '哨位架枪', E05: '烟雾控场', E06: '前哨侦察' };
 // Keys of FIELDS in content.js; kept here to avoid a map→content import cycle.
 const FIELD_IDS = ['corridor', 'longrange', 'smoky', 'highground', 'overtime', 'eco'];
+// Multi-enemy encounters (GROUPS in content.js). From step 3 on, roughly a third
+// of ordinary and elite fights become group fights, chosen by seed.
+const NORMAL_GROUPS = { G01: '步枪火力组', G02: '侦察突击组', G03: '自动炮塔阵', G04: '交叉狙击组' };
+const ELITE_GROUPS = { GE1: '王牌狙击小组' };
+const GROUP_SHARE = 0.35;
+function roll(seed) {
+  let hash = 2166136261;
+  for (const char of String(seed)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  return ((hash >>> 0) % 1000) / 1000;
+}
 function choice(seed, values) {
   let hash = 2166136261;
   for (const char of String(seed)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
@@ -58,9 +68,16 @@ export function buildMap(seed, act) {
       const id = choice(seed + '|' + act + '|' + node.key + '|enemy', fresh.length ? fresh : ids);
       node.enemy = prefix + id;
       node.name = battleNames[id];
+      if (node.step >= 3 && roll(seed + '|' + act + '|' + node.key + '|group') < GROUP_SHARE) {
+        const gid = choice(seed + '|' + act + '|' + node.key + '|groupId', Object.keys(NORMAL_GROUPS));
+        node.enemy = prefix + gid;
+        node.name = NORMAL_GROUPS[gid];
+        node.group = true;
+      }
       if (node.step > 2) node.field = choice(seed + '|' + act + '|' + node.key + '|field', FIELD_IDS);
     } else if (node.kind === 'elite') {
       node.enemy = prefix + choice(seed + '|' + act + '|' + node.key + '|elite', ['EL01', 'EL02']);
+      if (roll(seed + '|' + act + '|' + node.key + '|group') < GROUP_SHARE) { node.enemy = prefix + choice(seed + '|' + act + '|' + node.key + '|groupId', Object.keys(ELITE_GROUPS)); node.group = true; }
       node.field = choice(seed + '|' + act + '|' + node.key + '|field', FIELD_IDS);
       node.name = roomNames.elite;
     } else if (node.kind === 'boss') {

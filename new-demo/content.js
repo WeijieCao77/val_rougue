@@ -40,12 +40,22 @@ const attackFromBlock = (mult = 1) => ({ type: 'attackFromBlock', mult });
 const discover = (pool) => ({ type: 'discover', pool });
 const strength = (n) => ({ type: 'strength', n });
 const overload = (n) => ({ type: 'overload', n });
+// Area versions: resolve once for every living enemy.
+const atkAll = (n, times = 1) => ({ type: 'attack', n, times, all: true });
+const smokeAll = (n) => ({ type: 'smoke', n, all: true });
+const flashAll = (n) => ({ type: 'flash', n, all: true });
+const burnAll = (n) => ({ type: 'burn', n, all: true });
 
 // ----------------------------- Effect formatting -----------------------------
 function formatEffects(effects) {
   if (!effects || effects.length === 0) return '';
   const parts = [];
   for (const eff of effects) {
+    if (eff.all) {
+      const single = formatEffects([{ ...eff, all: false }]);
+      parts.push(single.startsWith('造成') ? '对所有敌人' + single : single.replace('给予', '给予所有敌人'));
+      continue;
+    }
     switch (eff.type) {
       case 'attack':
         parts.push(eff.times > 1 ? `造成${eff.n}点伤害${eff.times}次` : `造成${eff.n}点伤害`);
@@ -190,7 +200,7 @@ function powerDesc(powerId) {
     dark_embrace: '每消耗一张牌，抽1张牌',
     knife_master: '你的飞刀伤害+3',
     feel_no_pain: '每消耗一张牌，获得3点布防',
-    burn_core: '每回合开始时给予敌人3层燃烧',
+    burn_core: '每回合开始时给予所有敌人3层燃烧',
     turret_core: '你的哨戒炮每次开火伤害+3',
     combo_core: '每回合第3张及之后的牌，攻击伤害+3'
   };
@@ -368,7 +378,13 @@ const defs = [
 
   { id:'TA118', name:'战术研判', cost:1, type:'skill', tag:'discover', rarity:'uncommon', effects:[discover('attack')], upgradeEffects:[discover('attack'), draw(1)] },
   { id:'TA119', name:'情报共享', cost:0, type:'skill', tag:'discover', rarity:'uncommon', effects:[discover('skill'), exhaustSelf()], exhaust:true, upgradeEffects:[discover('any'), exhaustSelf()] },
-  { id:'TA120', name:'临场指挥', cost:1, type:'skill', tag:'discover', rarity:'rare', effects:[discover('any'), block(4)], upgradeEffects:[discover('any'), block(8)] }
+  { id:'TA120', name:'临场指挥', cost:1, type:'skill', tag:'discover', rarity:'rare', effects:[discover('any'), block(4)], upgradeEffects:[discover('any'), block(8)] },
+
+  // Area answers for group fights (hit every living enemy; no target needed).
+  { id:'TA121', name:'扫射全场', cost:1, type:'attack', tag:'damage', rarity:'common', effects:[atkAll(7)], upgradeEffects:[atkAll(10)] },
+  { id:'TA122', name:'烟幕覆盖', cost:1, type:'skill', tag:'utility', rarity:'uncommon', effects:[smokeAll(2), block(3)], upgradeEffects:[smokeAll(3), block(5)] },
+  { id:'TA123', name:'燃烧地带', cost:1, type:'skill', tag:'burn', rarity:'uncommon', effects:[burnAll(3)], upgradeEffects:[burnAll(5)] },
+  { id:'TA124', name:'闪光齐爆', cost:1, type:'skill', tag:'utility', rarity:'common', effects:[flashAll(2)], upgradeEffects:[flashAll(3)] }
 ];
 
 // Tokens created during a fight (never offered as rewards).
@@ -414,6 +430,10 @@ const VULNP = n => ({ type: 'vuln', n });
 const AIM = () => ({ type: 'aim' });
 const SNIPE = n => ({ type: 'snipe', n });
 const CLEANSE = () => ({ type: 'cleanse' });
+// Support intents for group members.
+const HEAL = n => ({ type: 'heal', n });     // heal the most wounded living ally (may be itself)
+const GUARD = n => ({ type: 'guard', n });   // block on the lowest-HP other ally (itself if alone)
+const RALLY = n => ({ type: 'rally', n });   // every living ally, itself included, gains firepower
 
 export const TRAITS = {
   berserk: { name: '背水一战', icon: 'enrage', text: n => `生命首次降到一半以下时，获得${n}层火力。` },
@@ -425,8 +445,8 @@ export const TRAITS = {
   sniper: { name: '狙击位', icon: 'aim', text: () => '瞄准一回合后打出重狙；在它开枪前给予闪光可以打断瞄准，让这一枪只剩三分之一伤害。' }
 };
 
-const ACT1_ENEMIES = {
-  E01: { name:'新秀步枪组', look:'rookie', hp:50, script:[[H(12)],[BUFF(2),H(7)],[BL(6),H(9)]] },
+const ACT1_BASE = {
+  E01: { name:'新秀步枪组', look:'rookie', hp:54, script:[[H(13)],[BUFF(2),H(7)],[BL(6),H(9)]] },
   E02: { name:'远点狙击手', look:'sniper', hp:48, ordered:true, trait:{ id:'sniper' }, script:[[AIM(),BL(5)],[SNIPE(24)],[H(8)]] },
   E03: { name:'突破手双枪', look:'rusher', hp:56, trait:{ id:'berserk', n:4 }, script:[[H(5,3)],[H(12)],[BL(6),H(9)]] },
   E04: { name:'哨位架枪组', look:'sentinel', hp:50, startBlock:10, trait:{ id:'thorns', n:2 }, script:[[BL(6),H(6)],[H(13)],[BL(5),H(8)]] },
@@ -434,16 +454,48 @@ const ACT1_ENEMIES = {
   E06: { name:'前哨侦察兵', look:'recon', hp:54, trait:{ id:'enrageOnSkill', n:1 }, script:[[H(10)],[BL(8),H(6)],[H(4,2)]] },
   EL01:{ name:'王牌突击手', look:'ace', hp:90, elite:true, trait:{ id:'ritual', n:1 }, script:[[H(13),JAM('ST03')],[H(6,3)],[BL(12),H(5)]] },
   EL02:{ name:'战术指挥官', look:'igl', hp:84, elite:true, ordered:true, script:[[BUFF(2),BL(10)],[H(9,2)],[CLEANSE(),BL(15),JAM('ST02')],[H(18)]] },
-  B01: { name:'资格赛冠军卫队', look:'boss1', hp:120, boss:true, trait:{ id:'tempo', n:18 }, script:[[WEAKP(1),H(8)],[JAM('ST02',2),BL(12)],[H(5,3)],[H(14)]] }
+  B01: { name:'资格赛冠军卫队', look:'boss1', hp:120, boss:true, trait:{ id:'tempo', n:18 }, script:[[WEAKP(1),H(8)],[JAM('ST02',2),BL(12)],[H(5,3)],[H(14)]] },
+
+  // Group members (never met alone). Each group asks a different targeting question.
+  M01: { name:'步枪手', look:'rookie', hp:24, member:true, script:[[H(6)],[H(4,2)],[BL(5),H(5)]] },
+  M02: { name:'战地医疗兵', look:'controller', hp:26, member:true, script:[[HEAL(9),H(3)],[GUARD(8)],[H(6)]] },
+  M03: { name:'观察手', look:'recon', hp:26, member:true, ordered:true, script:[[RALLY(1),H(3)],[RALLY(1),BL(6)]] },
+  M04: { name:'冲锋手', look:'rusher', hp:22, member:true, script:[[H(8)],[H(4,2)],[H(10)]] },
+  M05: { name:'自动炮塔', look:'sentinel', hp:22, member:true, ordered:true, script:[[JAM('ST01'),BL(5)],[H(10)]] },
+  M06: { name:'交叉狙击手', look:'sniper', hp:26, member:true, ordered:true, trait:{ id:'sniper' }, script:[[AIM(),BL(4)],[SNIPE(18)]] },
+  M07: { name:'王牌狙击手', look:'ace', hp:42, member:true, elite:true, ordered:true, trait:{ id:'sniper' }, script:[[AIM(),BL(6)],[SNIPE(22)],[H(8)]] },
+  M08: { name:'护卫盾手', look:'sentinel', hp:44, member:true, elite:true, startBlock:10, trait:{ id:'thorns', n:2 }, script:[[GUARD(12),H(6)],[H(12)],[GUARD(10),H(7)]] }
 };
 
 function scaleAction(a, k) {
   const r = n => Math.max(1, Math.round(n * k));
-  if (a.type === 'hit') return { ...a, n: r(a.n) };
-  if (a.type === 'block' || a.type === 'snipe') return { ...a, n: r(a.n) };
-  if (a.type === 'buff') return { ...a, n: a.n + (k > 1.5 ? 2 : 1) };
+  if (['hit', 'block', 'snipe', 'heal', 'guard'].includes(a.type)) return { ...a, n: r(a.n) };
+  if (a.type === 'buff' || a.type === 'rally') return { ...a, n: a.n + (k > 1.5 ? 2 : 1) };
   return { ...a };
 }
+// Difficulty pass (2026-09-24): the smart playtest bot lost almost no HP in
+// ordinary fights, so act-1 numbers are raised per role before act scaling.
+// Buff/rally sizes stay as authored; only damage, block, heals and HP move.
+const DIFFICULTY = {
+  normal: { hp: 1.15, dmg: 1.3 },
+  member: { hp: 1.1, dmg: 1.2 },
+  elite: { hp: 1.03, dmg: 1.1 },
+  boss: { hp: 1.1, dmg: 1.25 }
+};
+function roleOf(e) { return e.boss ? 'boss' : e.elite ? 'elite' : e.member ? 'member' : 'normal'; }
+function tuneEnemy(e, t) {
+  const keep = a => (a.type === 'buff' || a.type === 'rally' ? { ...a } : null);
+  const tuneAct = a => keep(a) || scaleAction(a, t.dmg);
+  return {
+    ...e,
+    hp: Math.round(e.hp * t.hp),
+    startBlock: e.startBlock ? Math.round(e.startBlock * t.dmg) : undefined,
+    script: e.script.map(turn => turn.map(tuneAct)),
+    phase2: e.phase2 ? e.phase2.map(turn => turn.map(tuneAct)) : undefined
+  };
+}
+const ACT1_ENEMIES = Object.fromEntries(Object.entries(ACT1_BASE).map(([id, e]) => [id, tuneEnemy(e, DIFFICULTY[roleOf(e)])]));
+
 function scaledAct(prefix, label, hpK, dmgK) {
   const out = {};
   for (const [id, e] of Object.entries(ACT1_ENEMIES)) {
@@ -463,13 +515,34 @@ function scaledAct(prefix, label, hpK, dmgK) {
 
 export const ENEMIES = {
   ...ACT1_ENEMIES,
-  ...scaledAct('A2_', '二幕·', 1.35, 1.25),
-  A2_B01: { name:'晋级赛冠军卫队', look:'boss2', hp:165, boss:true, ordered:true, script:[[BL(18),H(6)],[BUFF(2),H(7,3)],[H(10),JAM('ST02',2)],[H(20)]] },
-  ...scaledAct('A3_', '决赛·', 1.75, 1.5),
-  A3_B01: { name:'总决赛冠军卫队', look:'boss3', hp:165, boss:true, trait:{ id:'phase2' },
+  // Act 2/3 scaling sits on top of the act-1 difficulty pass, so it is milder
+  // than before (was 1.35/1.25 and 1.75/1.5) to keep full runs winnable.
+  ...scaledAct('A2_', '二幕·', 1.25, 1.15),
+  A2_B01: tuneEnemy({ name:'晋级赛冠军卫队', look:'boss2', hp:165, boss:true, ordered:true, script:[[BL(18),H(6)],[BUFF(2),H(7,3)],[H(10),JAM('ST02',2)],[H(20)]] }, { hp: 1.05, dmg: 1.15 }),
+  ...scaledAct('A3_', '决赛·', 1.5, 1.3),
+  // The two-phase final keeps its authored numbers bar a HP and damage cut: with the
+  // full boss multiplier the bot lost 4 of 6 final fights.
+  A3_B01: tuneEnemy({ name:'总决赛冠军卫队', look:'boss3', hp:165, boss:true, trait:{ id:'phase2' },
     script:[[H(14),JAM('ST03')],[WEAKP(1),H(6,3)],[BL(18),JAM('ST01',2)],[H(22)]],
-    phase2:[[BUFF(2),H(10,2)],[H(8,3),VULNP(1)],[BL(20),H(12)]] }
+    phase2:[[BUFF(2),H(10,2)],[H(8,3),VULNP(1)],[BL(20),H(12)]] }, { hp: 0.82, dmg: 0.95 })
 };
+
+// Multi-enemy encounters. `offset` staggers ordered scripts so members of the
+// same type do not all fire on the same turn. Act 2/3 versions reuse the
+// scaled members (A2_M01 ...).
+const ACT1_GROUPS = {
+  G01: { name:'步枪火力组', members:[{ id:'M01' }, { id:'M02' }, { id:'M01' }] },
+  G02: { name:'侦察突击组', members:[{ id:'M04' }, { id:'M03' }, { id:'M04' }] },
+  G03: { name:'自动炮塔阵', members:[{ id:'M05', offset:0 }, { id:'M05', offset:1 }, { id:'M05', offset:0 }] },
+  G04: { name:'交叉狙击组', members:[{ id:'M06', offset:0 }, { id:'M06', offset:1 }] },
+  GE1: { name:'王牌狙击小组', elite:true, members:[{ id:'M08' }, { id:'M07' }] }
+};
+function groupsFor(prefix, label) {
+  return Object.fromEntries(Object.entries(ACT1_GROUPS).map(([id, g]) => [prefix + id, { ...g, name: label + g.name, members: g.members.map(m => ({ ...m, id: prefix + m.id })) }]));
+}
+export const GROUPS = { ...ACT1_GROUPS, ...groupsFor('A2_', '二幕·'), ...groupsFor('A3_', '决赛·') };
+export const NORMAL_GROUP_IDS = ['G01', 'G02', 'G03', 'G04'];
+export const ELITE_GROUP_IDS = ['GE1'];
 
 // Battlefield modifiers rolled per ordinary/elite fight (not the first two stops or bosses).
 export const FIELDS = {
