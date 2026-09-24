@@ -568,58 +568,58 @@ export const CARD_ART={
     "kind": "photo"
   },
   "CN19": {
-    "path": "assets/players/CN19.svg",
+    "path": "assets/players/CN19.png",
+    "profileUrl": "https://www.vlr.gg/player/51244/jieni7",
     "name": "Jieni7",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN20": {
-    "path": "assets/players/CN20.svg",
+    "path": "assets/players/CN20.png",
+    "profileUrl": "https://www.vlr.gg/player/39697/cb",
     "name": "cb",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN21": {
-    "path": "assets/players/CN21.svg",
+    "path": "assets/players/CN21.png",
+    "profileUrl": "https://www.vlr.gg/player/4770/fengf",
     "name": "FengF",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN22": {
-    "path": "assets/players/CN22.svg",
+    "path": "assets/players/CN22.png",
+    "profileUrl": "https://www.vlr.gg/player/36415/viva",
     "name": "Viva",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN23": {
-    "path": "assets/players/CN23.svg",
+    "path": "assets/players/CN23.png",
+    "profileUrl": "https://www.vlr.gg/player/10821/delb",
     "name": "deLb",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN24": {
-    "path": "assets/players/CN24.svg",
+    "path": "assets/players/CN24.png",
+    "profileUrl": "https://www.vlr.gg/player/10698/nephh",
     "name": "nephh",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN25": {
-    "path": "assets/players/CN25.svg",
+    "path": "assets/players/CN25.png",
+    "profileUrl": "https://www.vlr.gg/player/4885/whzy",
     "name": "whzy",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN26": {
-    "path": "assets/players/CN26.svg",
+    "path": "assets/players/CN26.png",
+    "profileUrl": "https://www.vlr.gg/player/4774/knight",
     "name": "Knight",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN27": {
-    "path": "assets/players/CN27.svg",
+    "path": "assets/players/CN27.png",
+    "profileUrl": "https://www.vlr.gg/player/48878/rushia",
     "name": "rushia",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN28": {
     "path": "assets/players/CN28.svg",
@@ -628,16 +628,16 @@ export const CARD_ART={
     "concept": true
   },
   "CN29": {
-    "path": "assets/players/CN29.svg",
+    "path": "assets/players/CN29.png",
+    "profileUrl": "https://www.vlr.gg/player/11524/nicc",
     "name": "Nicc",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN30": {
-    "path": "assets/players/CN30.svg",
+    "path": "assets/players/CN30.png",
+    "profileUrl": "https://www.vlr.gg/player/4705/flex1n",
     "name": "Flex1n",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN31": {
     "path": "assets/players/CN31.svg",
@@ -646,10 +646,10 @@ export const CARD_ART={
     "concept": true
   },
   "CN32": {
-    "path": "assets/players/CN32.svg",
+    "path": "assets/players/CN32.png",
+    "profileUrl": "https://www.vlr.gg/player/4382/sscary",
     "name": "sScary",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN33": {
     "path": "assets/players/CN33.svg",
@@ -658,10 +658,10 @@ export const CARD_ART={
     "concept": true
   },
   "CN34": {
-    "path": "assets/players/CN34.svg",
+    "path": "assets/players/CN34.png",
+    "profileUrl": "https://www.vlr.gg/player/37927/happywei",
     "name": "happywei",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN35": {
     "path": "assets/players/CN35.svg",
@@ -670,16 +670,16 @@ export const CARD_ART={
     "concept": true
   },
   "CN36": {
-    "path": "assets/players/CN36.svg",
+    "path": "assets/players/CN36.png",
+    "profileUrl": "https://www.vlr.gg/player/37489/lysoar",
     "name": "Lysoar",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN37": {
-    "path": "assets/players/CN37.svg",
+    "path": "assets/players/CN37.png",
+    "profileUrl": "https://www.vlr.gg/player/24308/wsleo",
     "name": "WsLeo",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN38": {
     "path": "assets/players/CN38.svg",
@@ -688,52 +688,52 @@ export const CARD_ART={
     "concept": true
   },
   "CN39": {
-    "path": "assets/players/CN39.svg",
+    "path": "assets/players/CN39.png",
+    "profileUrl": "https://www.vlr.gg/player/36670/obone",
     "name": "OBONE",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN40": {
-    "path": "assets/players/CN40.svg",
+    "path": "assets/players/CN40.png",
+    "profileUrl": "https://www.vlr.gg/player/41054/guang",
     "name": "GuanG",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN41": {
-    "path": "assets/players/CN41.svg",
+    "path": "assets/players/CN41.png",
+    "profileUrl": "https://www.vlr.gg/player/46460/ezeir",
     "name": "Ezeir",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN42": {
-    "path": "assets/players/CN42.svg",
+    "path": "assets/players/CN42.png",
+    "profileUrl": "https://www.vlr.gg/player/34181/green",
     "name": "Green",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN43": {
-    "path": "assets/players/CN43.svg",
+    "path": "assets/players/CN43.png",
+    "profileUrl": "https://www.vlr.gg/player/3519/jkuro",
     "name": "jkuro",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN44": {
-    "path": "assets/players/CN44.svg",
+    "path": "assets/players/CN44.png",
+    "profileUrl": "https://www.vlr.gg/player/16924/stew",
     "name": "stew",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN45": {
-    "path": "assets/players/CN45.svg",
+    "path": "assets/players/CN45.png",
+    "profileUrl": "https://www.vlr.gg/player/49476/zhe",
     "name": "zhe",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN46": {
-    "path": "assets/players/CN46.svg",
+    "path": "assets/players/CN46.png",
+    "profileUrl": "https://www.vlr.gg/player/12365/coconut",
     "name": "coconut",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN47": {
     "path": "assets/players/CN47.svg",
@@ -742,10 +742,10 @@ export const CARD_ART={
     "concept": true
   },
   "CN48": {
-    "path": "assets/players/CN48.svg",
+    "path": "assets/players/CN48.png",
+    "profileUrl": "https://www.vlr.gg/player/14125/spring",
     "name": "Spring",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CN49": {
     "path": "assets/players/CN49.svg",
@@ -754,10 +754,10 @@ export const CARD_ART={
     "concept": true
   },
   "CN50": {
-    "path": "assets/players/CN50.svg",
+    "path": "assets/players/CN50.png",
+    "profileUrl": "https://www.vlr.gg/player/43007/qiutian",
     "name": "qiutiaN",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "CNT01": {
     "path": "assets/special/CNT01.svg",
@@ -910,100 +910,100 @@ export const CARD_ART={
     "concept": false
   },
   "AM19": {
-    "path": "assets/players/AM19.svg",
+    "path": "assets/players/AM19.png",
+    "profileUrl": "https://www.vlr.gg/player/3885/valyn",
     "name": "valyn",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM20": {
-    "path": "assets/players/AM20.svg",
+    "path": "assets/players/AM20.png",
+    "profileUrl": "https://www.vlr.gg/player/15500/trent",
     "name": "trent",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM21": {
-    "path": "assets/players/AM21.svg",
+    "path": "assets/players/AM21.png",
+    "profileUrl": "https://www.vlr.gg/player/3993/jawgemo",
     "name": "jawgemo",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM22": {
-    "path": "assets/players/AM22.svg",
+    "path": "assets/players/AM22.png",
+    "profileUrl": "https://www.vlr.gg/player/30470/kyu",
     "name": "Kyu",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM23": {
-    "path": "assets/players/AM23.svg",
+    "path": "assets/players/AM23.png",
+    "profileUrl": "https://www.vlr.gg/player/1265/johnqt",
     "name": "johnqt",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM24": {
-    "path": "assets/players/AM24.svg",
+    "path": "assets/players/AM24.png",
+    "profileUrl": "https://www.vlr.gg/player/36245/n4rrate",
     "name": "N4RRATE",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM25": {
-    "path": "assets/players/AM25.svg",
+    "path": "assets/players/AM25.png",
+    "profileUrl": "https://www.vlr.gg/player/5395/cortezia",
     "name": "cortezia",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM26": {
-    "path": "assets/players/AM26.svg",
+    "path": "assets/players/AM26.png",
+    "profileUrl": "https://www.vlr.gg/player/8419/reduxx",
     "name": "reduxx",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM27": {
-    "path": "assets/players/AM27.svg",
+    "path": "assets/players/AM27.png",
+    "profileUrl": "https://www.vlr.gg/player/21668/verno",
     "name": "Verno",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM28": {
-    "path": "assets/players/AM28.svg",
+    "path": "assets/players/AM28.png",
+    "profileUrl": "https://www.vlr.gg/player/7603/mazino",
     "name": "Mazino",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM29": {
-    "path": "assets/players/AM29.svg",
+    "path": "assets/players/AM29.png",
+    "profileUrl": "https://www.vlr.gg/player/727/saadhak",
     "name": "Saadhak",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM30": {
-    "path": "assets/players/AM30.svg",
+    "path": "assets/players/AM30.png",
+    "profileUrl": "https://www.vlr.gg/player/41135/dantedeu5",
     "name": "Dantedeu5",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM31": {
-    "path": "assets/players/AM31.svg",
+    "path": "assets/players/AM31.png",
+    "profileUrl": "https://www.vlr.gg/player/11921/silentzz",
     "name": "silentzz",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM32": {
-    "path": "assets/players/AM32.svg",
+    "path": "assets/players/AM32.png",
+    "profileUrl": "https://www.vlr.gg/player/21659/sato",
     "name": "Sato",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM33": {
-    "path": "assets/players/AM33.svg",
+    "path": "assets/players/AM33.png",
+    "profileUrl": "https://www.vlr.gg/player/21251/blowz",
     "name": "blowz",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM34": {
-    "path": "assets/players/AM34.svg",
+    "path": "assets/players/AM34.png",
+    "profileUrl": "https://www.vlr.gg/player/29243/neon",
     "name": "Neon",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM35": {
     "path": "assets/players/AM35.svg",
@@ -1012,46 +1012,46 @@ export const CARD_ART={
     "concept": true
   },
   "AM36": {
-    "path": "assets/players/AM36.svg",
+    "path": "assets/players/AM36.png",
+    "profileUrl": "https://www.vlr.gg/player/13823/pxs",
     "name": "PxS",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM37": {
-    "path": "assets/players/AM37.svg",
+    "path": "assets/players/AM37.png",
+    "profileUrl": "https://www.vlr.gg/player/6193/cauanzin",
     "name": "cauanzin",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM38": {
-    "path": "assets/players/AM38.svg",
+    "path": "assets/players/AM38.png",
+    "profileUrl": "https://www.vlr.gg/player/683/pancada",
     "name": "pANcada",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM39": {
-    "path": "assets/players/AM39.svg",
+    "path": "assets/players/AM39.png",
+    "profileUrl": "https://www.vlr.gg/player/28716/lukxo",
     "name": "lukxo",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM40": {
-    "path": "assets/players/AM40.svg",
+    "path": "assets/players/AM40.png",
+    "profileUrl": "https://www.vlr.gg/player/3983/virtyy",
     "name": "Virtyy",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM41": {
-    "path": "assets/players/AM41.svg",
+    "path": "assets/players/AM41.png",
+    "profileUrl": "https://www.vlr.gg/player/10557/darker",
     "name": "Darker",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM42": {
-    "path": "assets/players/AM42.svg",
+    "path": "assets/players/AM42.png",
+    "profileUrl": "https://www.vlr.gg/player/619/c0m",
     "name": "C0M",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM43": {
     "path": "assets/players/AM43.svg",
@@ -1060,34 +1060,34 @@ export const CARD_ART={
     "concept": true
   },
   "AM44": {
-    "path": "assets/players/AM44.svg",
+    "path": "assets/players/AM44.png",
+    "profileUrl": "https://www.vlr.gg/player/8873/dgzin",
     "name": "dgzin",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM45": {
-    "path": "assets/players/AM45.svg",
+    "path": "assets/players/AM45.png",
+    "profileUrl": "https://www.vlr.gg/player/8373/okeanos",
     "name": "okeanos",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM46": {
-    "path": "assets/players/AM46.svg",
+    "path": "assets/players/AM46.png",
+    "profileUrl": "https://www.vlr.gg/player/826/supamen",
     "name": "supamen",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM47": {
-    "path": "assets/players/AM47.svg",
+    "path": "assets/players/AM47.png",
+    "profileUrl": "https://www.vlr.gg/player/11225/ethan",
     "name": "Ethan",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM48": {
-    "path": "assets/players/AM48.svg",
+    "path": "assets/players/AM48.png",
+    "profileUrl": "https://www.vlr.gg/player/5132/mada",
     "name": "mada",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AM49": {
     "path": "assets/players/AM49.svg",
@@ -1096,10 +1096,10 @@ export const CARD_ART={
     "concept": true
   },
   "AM50": {
-    "path": "assets/players/AM50.svg",
+    "path": "assets/players/AM50.png",
+    "profileUrl": "https://www.vlr.gg/player/11118/skuba",
     "name": "skuba",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "AMT01": {
     "path": "assets/special/AMT01.svg",
@@ -1252,82 +1252,82 @@ export const CARD_ART={
     "concept": false
   },
   "EU19": {
-    "path": "assets/players/EU19.svg",
+    "path": "assets/players/EU19.png",
+    "profileUrl": "https://www.vlr.gg/player/9780/jamppi",
     "name": "Jamppi",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU20": {
-    "path": "assets/players/EU20.svg",
+    "path": "assets/players/EU20.png",
+    "profileUrl": "https://www.vlr.gg/player/33902/sayonara",
     "name": "Sayonara",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU21": {
-    "path": "assets/players/EU21.svg",
+    "path": "assets/players/EU21.png",
+    "profileUrl": "https://www.vlr.gg/player/5554/profek",
     "name": "PROFEK",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU22": {
-    "path": "assets/players/EU22.svg",
+    "path": "assets/players/EU22.png",
+    "profileUrl": "https://www.vlr.gg/player/4521/unfake",
     "name": "UNFAKE",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU23": {
-    "path": "assets/players/EU23.svg",
+    "path": "assets/players/EU23.png",
+    "profileUrl": "https://www.vlr.gg/player/14681/kamo",
     "name": "kamo",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU24": {
-    "path": "assets/players/EU24.svg",
+    "path": "assets/players/EU24.png",
+    "profileUrl": "https://www.vlr.gg/player/18350/miniboo",
     "name": "MiniBoo",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU25": {
-    "path": "assets/players/EU25.svg",
+    "path": "assets/players/EU25.png",
+    "profileUrl": "https://www.vlr.gg/player/1885/purp0",
     "name": "purp0",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU26": {
-    "path": "assets/players/EU26.svg",
+    "path": "assets/players/EU26.png",
+    "profileUrl": "https://www.vlr.gg/player/24628/wayne",
     "name": "wayne",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU27": {
-    "path": "assets/players/EU27.svg",
+    "path": "assets/players/EU27.png",
+    "profileUrl": "https://www.vlr.gg/player/40591/comeback",
     "name": "ComeBack",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU28": {
-    "path": "assets/players/EU28.svg",
+    "path": "assets/players/EU28.png",
+    "profileUrl": "https://www.vlr.gg/player/8044/mrfalin",
     "name": "MrFaliN",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU29": {
-    "path": "assets/players/EU29.svg",
+    "path": "assets/players/EU29.png",
+    "profileUrl": "https://www.vlr.gg/player/1139/qraxs",
     "name": "qRaxs",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU30": {
-    "path": "assets/players/EU30.svg",
+    "path": "assets/players/EU30.png",
+    "profileUrl": "https://www.vlr.gg/player/8369/yetujey",
     "name": "yetujey",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU31": {
-    "path": "assets/players/EU31.svg",
+    "path": "assets/players/EU31.png",
+    "profileUrl": "https://www.vlr.gg/player/12793/xeus",
     "name": "xeus",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU32": {
     "path": "assets/players/EU32.svg",
@@ -1336,28 +1336,28 @@ export const CARD_ART={
     "concept": true
   },
   "EU33": {
-    "path": "assets/players/EU33.svg",
+    "path": "assets/players/EU33.png",
+    "profileUrl": "https://www.vlr.gg/player/15735/krostaly",
     "name": "KROSTALY",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU34": {
-    "path": "assets/players/EU34.svg",
+    "path": "assets/players/EU34.png",
+    "profileUrl": "https://www.vlr.gg/player/10114/baha",
     "name": "baha",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU35": {
-    "path": "assets/players/EU35.svg",
+    "path": "assets/players/EU35.png",
+    "profileUrl": "https://www.vlr.gg/player/12928/veqaj",
     "name": "Veqaj",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU36": {
-    "path": "assets/players/EU36.svg",
+    "path": "assets/players/EU36.png",
+    "profileUrl": "https://www.vlr.gg/player/5565/ros",
     "name": "Rosé",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU37": {
     "path": "assets/players/EU37.svg",
@@ -1366,46 +1366,46 @@ export const CARD_ART={
     "concept": true
   },
   "EU38": {
-    "path": "assets/players/EU38.svg",
+    "path": "assets/players/EU38.png",
+    "profileUrl": "https://www.vlr.gg/player/24344/loita",
     "name": "Loita",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU39": {
-    "path": "assets/players/EU39.svg",
+    "path": "assets/players/EU39.png",
+    "profileUrl": "https://www.vlr.gg/player/565/starxo",
     "name": "starxo",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU40": {
-    "path": "assets/players/EU40.svg",
+    "path": "assets/players/EU40.png",
+    "profileUrl": "https://www.vlr.gg/player/23169/minny",
     "name": "Minny",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU41": {
-    "path": "assets/players/EU41.svg",
+    "path": "assets/players/EU41.png",
+    "profileUrl": "https://www.vlr.gg/player/18400/bipo",
     "name": "bipo",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU42": {
-    "path": "assets/players/EU42.svg",
+    "path": "assets/players/EU42.png",
+    "profileUrl": "https://www.vlr.gg/player/8286/glyph",
     "name": "GLYPH",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU43": {
-    "path": "assets/players/EU43.svg",
+    "path": "assets/players/EU43.png",
+    "profileUrl": "https://www.vlr.gg/player/4181/cloud",
     "name": "Cloud",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU44": {
-    "path": "assets/players/EU44.svg",
+    "path": "assets/players/EU44.png",
+    "profileUrl": "https://www.vlr.gg/player/34684/westside",
     "name": "westside",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU45": {
     "path": "assets/players/EU45.svg",
@@ -1414,34 +1414,34 @@ export const CARD_ART={
     "concept": true
   },
   "EU46": {
-    "path": "assets/players/EU46.svg",
+    "path": "assets/players/EU46.png",
+    "profileUrl": "https://www.vlr.gg/player/6959/flickless",
     "name": "Flickless",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU47": {
-    "path": "assets/players/EU47.svg",
+    "path": "assets/players/EU47.png",
+    "profileUrl": "https://www.vlr.gg/player/5550/grubinho",
     "name": "GRUBINHO",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU48": {
-    "path": "assets/players/EU48.svg",
+    "path": "assets/players/EU48.png",
+    "profileUrl": "https://www.vlr.gg/player/384/shao",
     "name": "Shao",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU49": {
-    "path": "assets/players/EU49.svg",
+    "path": "assets/players/EU49.png",
+    "profileUrl": "https://www.vlr.gg/player/29867/hiro",
     "name": "hiro",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EU50": {
-    "path": "assets/players/EU50.svg",
+    "path": "assets/players/EU50.png",
+    "profileUrl": "https://www.vlr.gg/player/4544/filu",
     "name": "Filu",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "EUT01": {
     "path": "assets/special/EUT01.svg",
@@ -1594,10 +1594,10 @@ export const CARD_ART={
     "concept": false
   },
   "PA19": {
-    "path": "assets/players/PA19.svg",
+    "path": "assets/players/PA19.png",
+    "profileUrl": "https://www.vlr.gg/player/1916/free1ng",
     "name": "free1ng",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA20": {
     "path": "assets/players/PA20.svg",
@@ -1606,40 +1606,40 @@ export const CARD_ART={
     "concept": true
   },
   "PA21": {
-    "path": "assets/players/PA21.svg",
+    "path": "assets/players/PA21.png",
+    "profileUrl": "https://www.vlr.gg/player/485/stax",
     "name": "stax",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA22": {
-    "path": "assets/players/PA22.svg",
+    "path": "assets/players/PA22.png",
+    "profileUrl": "https://www.vlr.gg/player/31207/carpe",
     "name": "carpe",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA23": {
-    "path": "assets/players/PA23.svg",
+    "path": "assets/players/PA23.png",
+    "profileUrl": "https://www.vlr.gg/player/29833/izu",
     "name": "iZu",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA24": {
-    "path": "assets/players/PA24.svg",
+    "path": "assets/players/PA24.png",
+    "profileUrl": "https://www.vlr.gg/player/13039/meteor",
     "name": "Meteor",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA25": {
-    "path": "assets/players/PA25.svg",
+    "path": "assets/players/PA25.png",
+    "profileUrl": "https://www.vlr.gg/player/804/buzz",
     "name": "BuZz",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA26": {
-    "path": "assets/players/PA26.svg",
+    "path": "assets/players/PA26.png",
+    "profileUrl": "https://www.vlr.gg/player/773/lakia",
     "name": "Lakia",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA27": {
     "path": "assets/players/PA27.svg",
@@ -1654,136 +1654,136 @@ export const CARD_ART={
     "concept": true
   },
   "PA29": {
-    "path": "assets/players/PA29.svg",
+    "path": "assets/players/PA29.png",
+    "profileUrl": "https://www.vlr.gg/player/488/rb",
     "name": "Rb",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA30": {
-    "path": "assets/players/PA30.svg",
+    "path": "assets/players/PA30.png",
+    "profileUrl": "https://www.vlr.gg/player/31828/francis",
     "name": "Francis",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA31": {
-    "path": "assets/players/PA31.svg",
+    "path": "assets/players/PA31.png",
+    "profileUrl": "https://www.vlr.gg/player/42772/xross",
     "name": "Xross",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA32": {
-    "path": "assets/players/PA32.svg",
+    "path": "assets/players/PA32.png",
+    "profileUrl": "https://www.vlr.gg/player/31829/ivy",
     "name": "Ivy",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA33": {
-    "path": "assets/players/PA33.svg",
+    "path": "assets/players/PA33.png",
+    "profileUrl": "https://www.vlr.gg/player/21438/ssees",
     "name": "SSeeS",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA34": {
-    "path": "assets/players/PA34.svg",
+    "path": "assets/players/PA34.png",
+    "profileUrl": "https://www.vlr.gg/player/13002/akame",
     "name": "akame",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA35": {
-    "path": "assets/players/PA35.svg",
+    "path": "assets/players/PA35.png",
+    "profileUrl": "https://www.vlr.gg/player/29841/caedye",
     "name": "Caedye",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA36": {
-    "path": "assets/players/PA36.svg",
+    "path": "assets/players/PA36.png",
+    "profileUrl": "https://www.vlr.gg/player/29843/yatsuka",
     "name": "yatsuka",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA37": {
-    "path": "assets/players/PA37.svg",
+    "path": "assets/players/PA37.png",
+    "profileUrl": "https://www.vlr.gg/player/27254/leviathan",
     "name": "Leviathan",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA38": {
-    "path": "assets/players/PA38.svg",
+    "path": "assets/players/PA38.png",
+    "profileUrl": "https://www.vlr.gg/player/13784/killua",
     "name": "killua",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA39": {
-    "path": "assets/players/PA39.svg",
+    "path": "assets/players/PA39.png",
+    "profileUrl": "https://www.vlr.gg/player/25255/primmie",
     "name": "Primmie",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA40": {
-    "path": "assets/players/PA40.svg",
+    "path": "assets/players/PA40.png",
+    "profileUrl": "https://www.vlr.gg/player/42901/thyy",
     "name": "thyy",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA41": {
-    "path": "assets/players/PA41.svg",
+    "path": "assets/players/PA41.png",
+    "profileUrl": "https://www.vlr.gg/player/1430/crazyguy",
     "name": "crazyguy",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA42": {
-    "path": "assets/players/PA42.svg",
+    "path": "assets/players/PA42.png",
+    "profileUrl": "https://www.vlr.gg/player/8497/monyet",
     "name": "monyet",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA43": {
-    "path": "assets/players/PA43.svg",
+    "path": "assets/players/PA43.png",
+    "profileUrl": "https://www.vlr.gg/player/4866/kushy",
     "name": "Kushy",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA44": {
-    "path": "assets/players/PA44.svg",
+    "path": "assets/players/PA44.png",
+    "profileUrl": "https://www.vlr.gg/player/7049/natz",
     "name": "naTz",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA45": {
-    "path": "assets/players/PA45.svg",
+    "path": "assets/players/PA45.png",
+    "profileUrl": "https://www.vlr.gg/player/7437/kellys",
     "name": "kellyS",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA46": {
-    "path": "assets/players/PA46.svg",
+    "path": "assets/players/PA46.png",
+    "profileUrl": "https://www.vlr.gg/player/4056/sylvan",
     "name": "Sylvan",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA47": {
-    "path": "assets/players/PA47.svg",
+    "path": "assets/players/PA47.png",
+    "profileUrl": "https://www.vlr.gg/player/29839/tenten",
     "name": "TenTen",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA48": {
-    "path": "assets/players/PA48.svg",
+    "path": "assets/players/PA48.png",
+    "profileUrl": "https://www.vlr.gg/player/4874/berserx",
     "name": "BerserX",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA49": {
-    "path": "assets/players/PA49.svg",
+    "path": "assets/players/PA49.png",
+    "profileUrl": "https://www.vlr.gg/player/2334/jessievash",
     "name": "JessieVash",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PA50": {
-    "path": "assets/players/PA50.svg",
+    "path": "assets/players/PA50.png",
+    "profileUrl": "https://www.vlr.gg/player/7754/xavi8k",
     "name": "xavi8k",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo"
   },
   "PAT01": {
     "path": "assets/special/PAT01.svg",

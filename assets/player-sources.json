@@ -1,6 +1,6 @@
 {
-  "checkedOn": "2026-09-22T15:57:58Z",
-  "sourceNote": "71 VLR profile photos and glacier official Wolves announcement reproduced by Sina. Source availability is not a license grant.",
+  "checkedOn": "2026-09-24T08:23:40Z",
+  "sourceNote": "71 VLR profile photos and glacier official Wolves announcement reproduced by Sina; 112 further VLR profile photos added 2026-09-24 for expansion-roster players (same vlr.gg/owcdn.net source). Source availability is not a license grant.",
   "players": [
     {
       "id": "AM01",
@@ -653,6 +653,1014 @@
       "profileName": "d4v41",
       "sourceUrl": "https://owcdn.net/img/69735f207c9bf.png",
       "path": "assets/players/PA18.png"
+    },
+    {
+      "id": "CN19",
+      "name": "Jieni7",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/51244/jieni7",
+      "profileName": "Jieni7",
+      "sourceUrl": "https://owcdn.net/img/67e2e8846d5a5.png",
+      "path": "assets/players/CN19.png"
+    },
+    {
+      "id": "CN20",
+      "name": "cb",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/39697/cb",
+      "profileName": "cb",
+      "sourceUrl": "https://owcdn.net/img/6780f19239654.png",
+      "path": "assets/players/CN20.png"
+    },
+    {
+      "id": "CN21",
+      "name": "FengF",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/4770/fengf",
+      "profileName": "FengF",
+      "sourceUrl": "https://owcdn.net/img/67f0f41260680.png",
+      "path": "assets/players/CN21.png"
+    },
+    {
+      "id": "CN22",
+      "name": "Viva",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/36415/viva",
+      "profileName": "Viva",
+      "sourceUrl": "https://owcdn.net/img/6782527d74487.png",
+      "path": "assets/players/CN22.png"
+    },
+    {
+      "id": "CN23",
+      "name": "deLb",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/10821/delb",
+      "profileName": "deLb",
+      "sourceUrl": "https://owcdn.net/img/677fbe994eb91.png",
+      "path": "assets/players/CN23.png"
+    },
+    {
+      "id": "CN24",
+      "name": "nephh",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/10698/nephh",
+      "profileName": "nephh",
+      "sourceUrl": "https://owcdn.net/img/677fdff5be5db.png",
+      "path": "assets/players/CN24.png"
+    },
+    {
+      "id": "CN25",
+      "name": "whzy",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/4885/whzy",
+      "profileName": "whzy",
+      "sourceUrl": "https://owcdn.net/img/677fdfcb36dac.png",
+      "path": "assets/players/CN25.png"
+    },
+    {
+      "id": "CN26",
+      "name": "Knight",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/4774/knight",
+      "profileName": "Knight",
+      "sourceUrl": "https://owcdn.net/img/677fdffe244c5.png",
+      "path": "assets/players/CN26.png"
+    },
+    {
+      "id": "CN27",
+      "name": "rushia",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/48878/rushia",
+      "profileName": "rushia",
+      "sourceUrl": "https://owcdn.net/img/677fdfeb6f40b.png",
+      "path": "assets/players/CN27.png"
+    },
+    {
+      "id": "CN29",
+      "name": "Nicc",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/11524/nicc",
+      "profileName": "Nicc",
+      "sourceUrl": "https://owcdn.net/img/6782611e6a470.png",
+      "path": "assets/players/CN29.png"
+    },
+    {
+      "id": "CN30",
+      "name": "Flex1n",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/4705/flex1n",
+      "profileName": "Flex1n",
+      "sourceUrl": "https://owcdn.net/img/678260fd260da.png",
+      "path": "assets/players/CN30.png"
+    },
+    {
+      "id": "CN32",
+      "name": "sScary",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/4382/sscary",
+      "profileName": "sScary",
+      "sourceUrl": "https://owcdn.net/img/651eec4e16bdd.png",
+      "path": "assets/players/CN32.png"
+    },
+    {
+      "id": "CN34",
+      "name": "happywei",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/37927/happywei",
+      "profileName": "happywei",
+      "sourceUrl": "https://owcdn.net/img/6782528e85d4c.png",
+      "path": "assets/players/CN34.png"
+    },
+    {
+      "id": "CN36",
+      "name": "Lysoar",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/37489/lysoar",
+      "profileName": "Lysoar",
+      "sourceUrl": "https://owcdn.net/img/677d1df2d375a.png",
+      "path": "assets/players/CN36.png"
+    },
+    {
+      "id": "CN37",
+      "name": "WsLeo",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/24308/wsleo",
+      "profileName": "WsLeo",
+      "sourceUrl": "https://owcdn.net/img/6585b7ad2cb28.png",
+      "path": "assets/players/CN37.png"
+    },
+    {
+      "id": "CN39",
+      "name": "OBONE",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/36670/obone",
+      "profileName": "OBONE",
+      "sourceUrl": "https://owcdn.net/img/6780f17d5f806.png",
+      "path": "assets/players/CN39.png"
+    },
+    {
+      "id": "CN40",
+      "name": "GuanG",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/41054/guang",
+      "profileName": "GuanG",
+      "sourceUrl": "https://owcdn.net/img/6780f1a2e0d06.png",
+      "path": "assets/players/CN40.png"
+    },
+    {
+      "id": "CN41",
+      "name": "Ezeir",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/46460/ezeir",
+      "profileName": "Ezeir",
+      "sourceUrl": "https://owcdn.net/img/6780f19ae199e.png",
+      "path": "assets/players/CN41.png"
+    },
+    {
+      "id": "CN42",
+      "name": "Green",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/34181/green",
+      "profileName": "GREEN",
+      "sourceUrl": "https://owcdn.net/img/658658c275a25.png",
+      "path": "assets/players/CN42.png"
+    },
+    {
+      "id": "CN43",
+      "name": "jkuro",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/3519/jkuro",
+      "profileName": "jkuro",
+      "sourceUrl": "https://owcdn.net/img/6780d3d43a117.png",
+      "path": "assets/players/CN43.png"
+    },
+    {
+      "id": "CN44",
+      "name": "stew",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/16924/stew",
+      "profileName": "stew",
+      "sourceUrl": "https://owcdn.net/img/6780d408e3835.png",
+      "path": "assets/players/CN44.png"
+    },
+    {
+      "id": "CN45",
+      "name": "zhe",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/49476/zhe",
+      "profileName": "zhe",
+      "sourceUrl": "https://owcdn.net/img/6739e1d4086dd.png",
+      "path": "assets/players/CN45.png"
+    },
+    {
+      "id": "CN46",
+      "name": "coconut",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/12365/coconut",
+      "profileName": "coconut",
+      "sourceUrl": "https://owcdn.net/img/6782529707e67.png",
+      "path": "assets/players/CN46.png"
+    },
+    {
+      "id": "CN48",
+      "name": "Spring",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/14125/spring",
+      "profileName": "Spring",
+      "sourceUrl": "https://owcdn.net/img/677d1dbded193.png",
+      "path": "assets/players/CN48.png"
+    },
+    {
+      "id": "CN50",
+      "name": "qiutiaN",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/43007/qiutian",
+      "profileName": "qiutiaN",
+      "sourceUrl": "https://owcdn.net/img/6a230284a8142.png",
+      "path": "assets/players/CN50.png"
+    },
+    {
+      "id": "AM19",
+      "name": "valyn",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/3885/valyn",
+      "profileName": "valyn",
+      "sourceUrl": "https://owcdn.net/img/65e4660ee20e5.png",
+      "path": "assets/players/AM19.png"
+    },
+    {
+      "id": "AM20",
+      "name": "trent",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/15500/trent",
+      "profileName": "trent",
+      "sourceUrl": "https://owcdn.net/img/65e466071ca19.png",
+      "path": "assets/players/AM20.png"
+    },
+    {
+      "id": "AM21",
+      "name": "jawgemo",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/3993/jawgemo",
+      "profileName": "jawgemo",
+      "sourceUrl": "https://owcdn.net/img/64169400bfed7.png",
+      "path": "assets/players/AM21.png"
+    },
+    {
+      "id": "AM22",
+      "name": "Kyu",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/30470/kyu",
+      "profileName": "Kyu",
+      "sourceUrl": "https://owcdn.net/img/688c62cf8c6b1.png",
+      "path": "assets/players/AM22.png"
+    },
+    {
+      "id": "AM23",
+      "name": "johnqt",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/1265/johnqt",
+      "profileName": "johnqt",
+      "sourceUrl": "https://owcdn.net/img/69741441b9923.png",
+      "path": "assets/players/AM23.png"
+    },
+    {
+      "id": "AM24",
+      "name": "N4RRATE",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/36245/n4rrate",
+      "profileName": "N4RRATE",
+      "sourceUrl": "https://owcdn.net/img/6974146682328.png",
+      "path": "assets/players/AM24.png"
+    },
+    {
+      "id": "AM25",
+      "name": "cortezia",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/5395/cortezia",
+      "profileName": "cortezia",
+      "sourceUrl": "https://owcdn.net/img/69741432dd5e2.png",
+      "path": "assets/players/AM25.png"
+    },
+    {
+      "id": "AM26",
+      "name": "reduxx",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/8419/reduxx",
+      "profileName": "Reduxx",
+      "sourceUrl": "https://owcdn.net/img/6974144d86cdb.png",
+      "path": "assets/players/AM26.png"
+    },
+    {
+      "id": "AM27",
+      "name": "Verno",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/21668/verno",
+      "profileName": "Verno",
+      "sourceUrl": "https://owcdn.net/img/69742b3c25b7c.png",
+      "path": "assets/players/AM27.png"
+    },
+    {
+      "id": "AM28",
+      "name": "Mazino",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/7603/mazino",
+      "profileName": "Mazino",
+      "sourceUrl": "https://owcdn.net/img/69742ba0b7d17.png",
+      "path": "assets/players/AM28.png"
+    },
+    {
+      "id": "AM29",
+      "name": "Saadhak",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/727/saadhak",
+      "profileName": "saadhak",
+      "sourceUrl": "https://owcdn.net/img/69e6509789324.png",
+      "path": "assets/players/AM29.png"
+    },
+    {
+      "id": "AM30",
+      "name": "Dantedeu5",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/41135/dantedeu5",
+      "profileName": "Dantedeu5",
+      "sourceUrl": "https://owcdn.net/img/69e64fdcabd75.png",
+      "path": "assets/players/AM30.png"
+    },
+    {
+      "id": "AM31",
+      "name": "silentzz",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/11921/silentzz",
+      "profileName": "silentzz",
+      "sourceUrl": "https://owcdn.net/img/69e650a00dd36.png",
+      "path": "assets/players/AM31.png"
+    },
+    {
+      "id": "AM32",
+      "name": "Sato",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/21659/sato",
+      "profileName": "Sato",
+      "sourceUrl": "https://owcdn.net/img/69234b72ce3db.png",
+      "path": "assets/players/AM32.png"
+    },
+    {
+      "id": "AM33",
+      "name": "blowz",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/21251/blowz",
+      "profileName": "blowz",
+      "sourceUrl": "https://owcdn.net/img/69234aef86f4b.png",
+      "path": "assets/players/AM33.png"
+    },
+    {
+      "id": "AM34",
+      "name": "Neon",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/29243/neon",
+      "profileName": "Neon",
+      "sourceUrl": "https://owcdn.net/img/69234b3d0a58d.png",
+      "path": "assets/players/AM34.png"
+    },
+    {
+      "id": "AM36",
+      "name": "PxS",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/13823/pxs",
+      "profileName": "PxS",
+      "sourceUrl": "https://owcdn.net/img/69720304c50e4.png",
+      "path": "assets/players/AM36.png"
+    },
+    {
+      "id": "AM37",
+      "name": "cauanzin",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/6193/cauanzin",
+      "profileName": "cauanzin",
+      "sourceUrl": "https://owcdn.net/img/69e024587afee.png",
+      "path": "assets/players/AM37.png"
+    },
+    {
+      "id": "AM38",
+      "name": "pANcada",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/683/pancada",
+      "profileName": "pANcada",
+      "sourceUrl": "https://owcdn.net/img/6889ddd3735b1.png",
+      "path": "assets/players/AM38.png"
+    },
+    {
+      "id": "AM39",
+      "name": "lukxo",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/28716/lukxo",
+      "profileName": "lukxo",
+      "sourceUrl": "https://owcdn.net/img/69e023fe3a5b8.png",
+      "path": "assets/players/AM39.png"
+    },
+    {
+      "id": "AM40",
+      "name": "Virtyy",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/3983/virtyy",
+      "profileName": "Virtyy",
+      "sourceUrl": "https://owcdn.net/img/69e023c039e74.png",
+      "path": "assets/players/AM40.png"
+    },
+    {
+      "id": "AM41",
+      "name": "Darker",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/10557/darker",
+      "profileName": "Darker",
+      "sourceUrl": "https://owcdn.net/img/69e02450abf75.png",
+      "path": "assets/players/AM41.png"
+    },
+    {
+      "id": "AM42",
+      "name": "C0M",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/619/c0m",
+      "profileName": "C0M",
+      "sourceUrl": "https://owcdn.net/img/641693c3a0312.png",
+      "path": "assets/players/AM42.png"
+    },
+    {
+      "id": "AM44",
+      "name": "dgzin",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/8873/dgzin",
+      "profileName": "dgzin",
+      "sourceUrl": "https://owcdn.net/img/689e1886cc5ed.png",
+      "path": "assets/players/AM44.png"
+    },
+    {
+      "id": "AM45",
+      "name": "okeanos",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/8373/okeanos",
+      "profileName": "Okeanos",
+      "sourceUrl": "https://owcdn.net/img/696ef74e20c0e.png",
+      "path": "assets/players/AM45.png"
+    },
+    {
+      "id": "AM46",
+      "name": "supamen",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/826/supamen",
+      "profileName": "supamen",
+      "sourceUrl": "https://owcdn.net/img/67b5554423542.png",
+      "path": "assets/players/AM46.png"
+    },
+    {
+      "id": "AM47",
+      "name": "Ethan",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/11225/ethan",
+      "profileName": "Ethan",
+      "sourceUrl": "https://owcdn.net/img/6974068bad561.png",
+      "path": "assets/players/AM47.png"
+    },
+    {
+      "id": "AM48",
+      "name": "mada",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/5132/mada",
+      "profileName": "mada",
+      "sourceUrl": "https://owcdn.net/img/697406cf6b086.png",
+      "path": "assets/players/AM48.png"
+    },
+    {
+      "id": "AM50",
+      "name": "skuba",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/11118/skuba",
+      "profileName": "skuba",
+      "sourceUrl": "https://owcdn.net/img/6974067806f34.png",
+      "path": "assets/players/AM50.png"
+    },
+    {
+      "id": "EU19",
+      "name": "Jamppi",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/9780/jamppi",
+      "profileName": "Jamppi",
+      "sourceUrl": "https://owcdn.net/img/6977a6f130128.png",
+      "path": "assets/players/EU19.png"
+    },
+    {
+      "id": "EU20",
+      "name": "Sayonara",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/33902/sayonara",
+      "profileName": "Sayonara",
+      "sourceUrl": "https://owcdn.net/img/6977a7018811e.png",
+      "path": "assets/players/EU20.png"
+    },
+    {
+      "id": "EU21",
+      "name": "PROFEK",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/5554/profek",
+      "profileName": "PROFEK",
+      "sourceUrl": "https://owcdn.net/img/6977a6e4ea727.png",
+      "path": "assets/players/EU21.png"
+    },
+    {
+      "id": "EU22",
+      "name": "UNFAKE",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/4521/unfake",
+      "profileName": "UNFAKE",
+      "sourceUrl": "https://owcdn.net/img/6977a6f8ca2b2.png",
+      "path": "assets/players/EU22.png"
+    },
+    {
+      "id": "EU23",
+      "name": "kamo",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/14681/kamo",
+      "profileName": "kamo",
+      "sourceUrl": "https://owcdn.net/img/697355a36ffa7.png",
+      "path": "assets/players/EU23.png"
+    },
+    {
+      "id": "EU24",
+      "name": "MiniBoo",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/18350/miniboo",
+      "profileName": "MiniBoo",
+      "sourceUrl": "https://owcdn.net/img/697356d4e6f01.png",
+      "path": "assets/players/EU24.png"
+    },
+    {
+      "id": "EU25",
+      "name": "purp0",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/1885/purp0",
+      "profileName": "purp0",
+      "sourceUrl": "https://owcdn.net/img/6973563baf5bc.png",
+      "path": "assets/players/EU25.png"
+    },
+    {
+      "id": "EU26",
+      "name": "wayne",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/24628/wayne",
+      "profileName": "wayne",
+      "sourceUrl": "https://owcdn.net/img/6980b5b5e4e7a.png",
+      "path": "assets/players/EU26.png"
+    },
+    {
+      "id": "EU27",
+      "name": "ComeBack",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/40591/comeback",
+      "profileName": "ComeBack",
+      "sourceUrl": "https://owcdn.net/img/69778b427222d.png",
+      "path": "assets/players/EU27.png"
+    },
+    {
+      "id": "EU28",
+      "name": "MrFaliN",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/8044/mrfalin",
+      "profileName": "MrFaliN",
+      "sourceUrl": "https://owcdn.net/img/697aba35e69bd.png",
+      "path": "assets/players/EU28.png"
+    },
+    {
+      "id": "EU29",
+      "name": "qRaxs",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/1139/qraxs",
+      "profileName": "qRaxs",
+      "sourceUrl": "https://owcdn.net/img/65dbc2508d984.png",
+      "path": "assets/players/EU29.png"
+    },
+    {
+      "id": "EU30",
+      "name": "yetujey",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/8369/yetujey",
+      "profileName": "yetujey",
+      "sourceUrl": "https://owcdn.net/img/697ab948ca75e.png",
+      "path": "assets/players/EU30.png"
+    },
+    {
+      "id": "EU31",
+      "name": "xeus",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/12793/xeus",
+      "profileName": "xeus",
+      "sourceUrl": "https://owcdn.net/img/697ab97a4855f.png",
+      "path": "assets/players/EU31.png"
+    },
+    {
+      "id": "EU33",
+      "name": "KROSTALY",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/15735/krostaly",
+      "profileName": "KROSTALY",
+      "sourceUrl": "https://owcdn.net/img/697aba0af3cd9.png",
+      "path": "assets/players/EU33.png"
+    },
+    {
+      "id": "EU34",
+      "name": "baha",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/10114/baha",
+      "profileName": "baha",
+      "sourceUrl": "https://owcdn.net/img/697aba5dec2dc.png",
+      "path": "assets/players/EU34.png"
+    },
+    {
+      "id": "EU35",
+      "name": "Veqaj",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/12928/veqaj",
+      "profileName": "Veqaj",
+      "sourceUrl": "https://owcdn.net/img/689668c152fdd.png",
+      "path": "assets/players/EU35.png"
+    },
+    {
+      "id": "EU36",
+      "name": "Rosé",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/5565/ros",
+      "profileName": "Rosé",
+      "sourceUrl": "https://owcdn.net/img/6979757c1322c.png",
+      "path": "assets/players/EU36.png"
+    },
+    {
+      "id": "EU38",
+      "name": "Loita",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/24344/loita",
+      "profileName": "Loita",
+      "sourceUrl": "https://owcdn.net/img/6979752e8d3fa.png",
+      "path": "assets/players/EU38.png"
+    },
+    {
+      "id": "EU39",
+      "name": "starxo",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/565/starxo",
+      "profileName": "starxo",
+      "sourceUrl": "https://owcdn.net/img/697767895bac5.png",
+      "path": "assets/players/EU39.png"
+    },
+    {
+      "id": "EU40",
+      "name": "Minny",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/23169/minny",
+      "profileName": "Minny",
+      "sourceUrl": "https://owcdn.net/img/697765bb6904c.png",
+      "path": "assets/players/EU40.png"
+    },
+    {
+      "id": "EU41",
+      "name": "bipo",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/18400/bipo",
+      "profileName": "bipo",
+      "sourceUrl": "https://owcdn.net/img/697767f365fc0.png",
+      "path": "assets/players/EU41.png"
+    },
+    {
+      "id": "EU42",
+      "name": "GLYPH",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/8286/glyph",
+      "profileName": "GLYPH",
+      "sourceUrl": "https://owcdn.net/img/697768b42430b.png",
+      "path": "assets/players/EU42.png"
+    },
+    {
+      "id": "EU43",
+      "name": "Cloud",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/4181/cloud",
+      "profileName": "Cloud",
+      "sourceUrl": "https://owcdn.net/img/646bd06211000.png",
+      "path": "assets/players/EU43.png"
+    },
+    {
+      "id": "EU44",
+      "name": "westside",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/34684/westside",
+      "profileName": "westside",
+      "sourceUrl": "https://owcdn.net/img/6636bf8d94177.png",
+      "path": "assets/players/EU44.png"
+    },
+    {
+      "id": "EU46",
+      "name": "Flickless",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/6959/flickless",
+      "profileName": "Flickless",
+      "sourceUrl": "https://owcdn.net/img/678094302930e.png",
+      "path": "assets/players/EU46.png"
+    },
+    {
+      "id": "EU47",
+      "name": "GRUBINHO",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/5550/grubinho",
+      "profileName": "grubinho",
+      "sourceUrl": "https://owcdn.net/img/65e74c58670b1.png",
+      "path": "assets/players/EU47.png"
+    },
+    {
+      "id": "EU48",
+      "name": "Shao",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/384/shao",
+      "profileName": "Shao",
+      "sourceUrl": "https://owcdn.net/img/6792501581f4f.png",
+      "path": "assets/players/EU48.png"
+    },
+    {
+      "id": "EU49",
+      "name": "hiro",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/29867/hiro",
+      "profileName": "hiro",
+      "sourceUrl": "https://owcdn.net/img/67925026116a0.png",
+      "path": "assets/players/EU49.png"
+    },
+    {
+      "id": "EU50",
+      "name": "Filu",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/4544/filu",
+      "profileName": "Filu",
+      "sourceUrl": "https://owcdn.net/img/65c29d43a833b.png",
+      "path": "assets/players/EU50.png"
+    },
+    {
+      "id": "PA19",
+      "name": "free1ng",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/1916/free1ng",
+      "profileName": "free1ng",
+      "sourceUrl": "https://owcdn.net/img/676b9d177fab9.png",
+      "path": "assets/players/PA19.png"
+    },
+    {
+      "id": "PA21",
+      "name": "stax",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/485/stax",
+      "profileName": "stax",
+      "sourceUrl": "https://owcdn.net/img/696cbe19de8ff.png",
+      "path": "assets/players/PA21.png"
+    },
+    {
+      "id": "PA22",
+      "name": "carpe",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/31207/carpe",
+      "profileName": "carpe",
+      "sourceUrl": "https://owcdn.net/img/696cbea3e5601.png",
+      "path": "assets/players/PA22.png"
+    },
+    {
+      "id": "PA23",
+      "name": "iZu",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/29833/izu",
+      "profileName": "iZu",
+      "sourceUrl": "https://owcdn.net/img/696cbeb2ce31f.png",
+      "path": "assets/players/PA23.png"
+    },
+    {
+      "id": "PA24",
+      "name": "Meteor",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/13039/meteor",
+      "profileName": "Meteor",
+      "sourceUrl": "https://owcdn.net/img/696cbecabc2af.png",
+      "path": "assets/players/PA24.png"
+    },
+    {
+      "id": "PA25",
+      "name": "BuZz",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/804/buzz",
+      "profileName": "BuZz",
+      "sourceUrl": "https://owcdn.net/img/696cbe96ec066.png",
+      "path": "assets/players/PA25.png"
+    },
+    {
+      "id": "PA26",
+      "name": "Lakia",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/773/lakia",
+      "profileName": "Lakia",
+      "sourceUrl": "https://owcdn.net/img/65f66e9636e73.png",
+      "path": "assets/players/PA26.png"
+    },
+    {
+      "id": "PA29",
+      "name": "Rb",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/488/rb",
+      "profileName": "Rb",
+      "sourceUrl": "https://owcdn.net/img/69d5f87b7c32d.png",
+      "path": "assets/players/PA29.png"
+    },
+    {
+      "id": "PA30",
+      "name": "Francis",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/31828/francis",
+      "profileName": "Francis",
+      "sourceUrl": "https://owcdn.net/img/69d5f885417ec.png",
+      "path": "assets/players/PA30.png"
+    },
+    {
+      "id": "PA31",
+      "name": "Xross",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/42772/xross",
+      "profileName": "Xross",
+      "sourceUrl": "https://owcdn.net/img/69d5f8a5ee90d.png",
+      "path": "assets/players/PA31.png"
+    },
+    {
+      "id": "PA32",
+      "name": "Ivy",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/31829/ivy",
+      "profileName": "Ivy",
+      "sourceUrl": "https://owcdn.net/img/69d5f899c514c.png",
+      "path": "assets/players/PA32.png"
+    },
+    {
+      "id": "PA33",
+      "name": "SSeeS",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/21438/ssees",
+      "profileName": "SSeeS",
+      "sourceUrl": "https://owcdn.net/img/674037e9c4e3c.png",
+      "path": "assets/players/PA33.png"
+    },
+    {
+      "id": "PA34",
+      "name": "akame",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/13002/akame",
+      "profileName": "Akame",
+      "sourceUrl": "https://owcdn.net/img/674037c47365d.png",
+      "path": "assets/players/PA34.png"
+    },
+    {
+      "id": "PA35",
+      "name": "Caedye",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/29841/caedye",
+      "profileName": "Caedye",
+      "sourceUrl": "https://owcdn.net/img/682d95ad8a7a4.png",
+      "path": "assets/players/PA35.png"
+    },
+    {
+      "id": "PA36",
+      "name": "yatsuka",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/29843/yatsuka",
+      "profileName": "yatsuka",
+      "sourceUrl": "https://owcdn.net/img/682d95bed801b.png",
+      "path": "assets/players/PA36.png"
+    },
+    {
+      "id": "PA37",
+      "name": "Leviathan",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/27254/leviathan",
+      "profileName": "Leviathan",
+      "sourceUrl": "https://owcdn.net/img/6944046a70e0c.png",
+      "path": "assets/players/PA37.png"
+    },
+    {
+      "id": "PA38",
+      "name": "killua",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/13784/killua",
+      "profileName": "Killua",
+      "sourceUrl": "https://owcdn.net/img/6944048d3e33c.png",
+      "path": "assets/players/PA38.png"
+    },
+    {
+      "id": "PA39",
+      "name": "Primmie",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/25255/primmie",
+      "profileName": "primmie",
+      "sourceUrl": "https://owcdn.net/img/6944047b31bc9.png",
+      "path": "assets/players/PA39.png"
+    },
+    {
+      "id": "PA40",
+      "name": "thyy",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/42901/thyy",
+      "profileName": "thyy",
+      "sourceUrl": "https://owcdn.net/img/69440472837f1.png",
+      "path": "assets/players/PA40.png"
+    },
+    {
+      "id": "PA41",
+      "name": "crazyguy",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/1430/crazyguy",
+      "profileName": "crazyguy",
+      "sourceUrl": "https://owcdn.net/img/6821f7746590a.png",
+      "path": "assets/players/PA41.png"
+    },
+    {
+      "id": "PA42",
+      "name": "monyet",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/8497/monyet",
+      "profileName": "Monyet",
+      "sourceUrl": "https://owcdn.net/img/6821f747b910a.png",
+      "path": "assets/players/PA42.png"
+    },
+    {
+      "id": "PA43",
+      "name": "Kushy",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/4866/kushy",
+      "profileName": "Kushy",
+      "sourceUrl": "https://owcdn.net/img/6821f764bd20a.png",
+      "path": "assets/players/PA43.png"
+    },
+    {
+      "id": "PA44",
+      "name": "naTz",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/7049/natz",
+      "profileName": "natz",
+      "sourceUrl": "https://owcdn.net/img/6821f7ca302fc.png",
+      "path": "assets/players/PA44.png"
+    },
+    {
+      "id": "PA45",
+      "name": "kellyS",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/7437/kellys",
+      "profileName": "kellyS",
+      "sourceUrl": "https://owcdn.net/img/6a0a2508dc57f.png",
+      "path": "assets/players/PA45.png"
+    },
+    {
+      "id": "PA46",
+      "name": "Sylvan",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/4056/sylvan",
+      "profileName": "Sylvan",
+      "sourceUrl": "https://owcdn.net/img/6757d389c06f5.png",
+      "path": "assets/players/PA46.png"
+    },
+    {
+      "id": "PA47",
+      "name": "TenTen",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/29839/tenten",
+      "profileName": "TenTen",
+      "sourceUrl": "https://owcdn.net/img/67a4c0aec6320.png",
+      "path": "assets/players/PA47.png"
+    },
+    {
+      "id": "PA48",
+      "name": "BerserX",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/4874/berserx",
+      "profileName": "BerserX",
+      "sourceUrl": "https://owcdn.net/img/67fe138f478b7.png",
+      "path": "assets/players/PA48.png"
+    },
+    {
+      "id": "PA49",
+      "name": "JessieVash",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/2334/jessievash",
+      "profileName": "JessieVash",
+      "sourceUrl": "https://owcdn.net/img/65a8f7396035a.png",
+      "path": "assets/players/PA49.png"
+    },
+    {
+      "id": "PA50",
+      "name": "xavi8k",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/7754/xavi8k",
+      "profileName": "xavi8k",
+      "sourceUrl": "https://owcdn.net/img/6a1960983a0b5.png",
+      "path": "assets/players/PA50.png"
     }
   ]
 }
