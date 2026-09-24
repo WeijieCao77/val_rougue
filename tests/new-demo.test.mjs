@@ -94,9 +94,9 @@ function totalBattleCards(battle) {
 
 // ----------------------------- Tests -----------------------------
 
-test('content: 120 shared (87 core + 33 archetype) plus four 75-card regional pools and 19 afflictions', () => {
-  assert.equal(CARD_IDS.length, 420);
-  assert.equal(new Set(CARD_IDS).size, 420);
+test('content: 124 shared (87 core + 33 archetype + 4 area) plus four 75-card regional pools and 19 afflictions', () => {
+  assert.equal(CARD_IDS.length, 424);
+  assert.equal(new Set(CARD_IDS).size, 424);
   assert.equal(Object.keys(STATUS_CARDS).length, 19);
   for (const id of CARD_IDS) {
     const c = CARDS[id];
@@ -669,11 +669,11 @@ test('battlefield modifiers change both sides and the preview shows it', () => {
 });
 
 test('every map battle has a known enemy and later fights carry a battlefield', async () => {
-  const { ENEMIES, FIELDS } = await import('../new-demo/content.js');
+  const { ENEMIES, GROUPS, FIELDS } = await import('../new-demo/content.js');
   for (const seed of ['a', 'b', 'c']) for (const actNo of [1, 2, 3]) {
     const map = buildMap(seed, actNo);
     for (const node of map.nodes) {
-      if (['battle', 'elite', 'boss'].includes(node.kind)) assert.ok(ENEMIES[node.enemy], node.enemy);
+      if (['battle', 'elite', 'boss'].includes(node.kind)) assert.ok(ENEMIES[node.enemy] || GROUPS[node.enemy]?.members.every(m => ENEMIES[m.id]), node.enemy);
       if (node.kind === 'elite' || (node.kind === 'battle' && node.step > 2)) assert.ok(FIELDS[node.field], `${node.key} field`);
     }
   }
@@ -742,4 +742,131 @@ test('discover pauses play until a choice is made; the found card is free and ex
   assert.ok(legalActions(s).some(a => a.uid === found.uid), 'free even with 0 energy');
   s = act(s, { type: 'play', uid: found.uid }).state;
   if (s.phase === 'combat') assert.ok(s.battle.exhaustPile.some(c => c.uid === found.uid));
+});
+
+// ----------------------------- Group fights -----------------------------
+function createGroupBattle(groupId, { handCards = [], energy = 3, seed = 'group-fixture' } = {}) {
+  const run = createRun(seed);
+  run.map = { nodes: [{ key: 'g-node', kind: 'battle', enemy: groupId, step: 5 }], edges: [], starts: ['g-node'], bossId: 'x' };
+  const s = act(run, { type: 'enter', key: 'g-node' }).state;
+  s.battle.hand = handCards.map((id, i) => ({ uid: `h${i}`, id, up: false }));
+  s.battle.energy = energy;
+  return s;
+}
+const quiet = s => { for (const e of s.battle.enemies) { e.intent = [{ type: 'block', n: 0 }]; e.script = [[{ type: 'block', n: 0 }]]; } return s; };
+
+test('group fights keep one roster per enemy and drop the single-enemy mirror', () => {
+  const s = createGroupBattle('G01');
+  assert.equal(s.battle.enemies.length, 3);
+  assert.deepEqual(s.battle.enemies.map(e => e.uid), ['e0', 'e1', 'e2']);
+  assert.ok(s.battle.enemies.every(e => e.intent && e.hp > 0 && e.look));
+  assert.ok(s.battle.enemies[0].name.endsWith(' A'), 'repeated members are lettered');
+  assert.equal(s.battle.enemyHp, undefined);
+  assert.equal(s.battle.statuses.enemy, undefined);
+});
+
+test('legalActions lists one play per living target for aimed cards, one for area and self cards', () => {
+  const s = createGroupBattle('G01', { handCards: ['TA01', 'TA121', 'TA02'] });
+  const plays = legalActions(s).filter(a => a.type === 'play');
+  assert.deepEqual(plays.filter(a => a.uid === 'h0').map(a => a.target), ['e0', 'e1', 'e2']);
+  assert.deepEqual(plays.filter(a => a.uid === 'h1'), [{ type: 'play', uid: 'h1' }]);
+  assert.deepEqual(plays.filter(a => a.uid === 'h2'), [{ type: 'play', uid: 'h2' }]);
+  s.battle.enemies[1].hp = 0;
+  assert.deepEqual(legalActions(s).filter(a => a.uid === 'h0').map(a => a.target), ['e0', 'e2'], 'dead enemies are not targets');
+  assert.ok(engine.cardNeedsTarget('TA22') && !engine.cardNeedsTarget('TA121') && !engine.cardNeedsTarget('TA116'));
+});
+
+test('aimed cards need a valid target in group fights and only touch that enemy', () => {
+  let s = quiet(createGroupBattle('G01', { handCards: ['TA22', 'TA22'] }));
+  s.battle.enemies.forEach(e => { e.statuses = {}; });
+  assert.match(act(s, { type: 'play', uid: 'h0' }).error, /目标/);
+  assert.match(act(s, { type: 'play', uid: 'h0', target: 'nope' }).error, /目标/);
+  const hp = s.battle.enemies.map(e => e.hp);
+  s = act(s, { type: 'play', uid: 'h0', target: 'e1' }).state;
+  assert.deepEqual(s.battle.enemies.map(e => e.hp), [hp[0], hp[1] - 5, hp[2]]);
+  assert.equal(s.battle.enemies[1].statuses.vuln, 2);
+  assert.equal(s.battle.enemies[0].statuses.vuln || 0, 0);
+});
+
+test('area cards hit every living enemy; burn ticks per enemy', () => {
+  let s = quiet(createGroupBattle('G03', { handCards: ['TA121', 'TA123'] }));
+  s.battle.enemies.forEach(e => { e.statuses = {}; });
+  s.battle.enemies[2].hp = 5;
+  const hp = s.battle.enemies.map(e => e.hp);
+  s = act(s, { type: 'play', uid: 'h0' }).state;
+  assert.deepEqual(s.battle.enemies.map(e => e.hp), [hp[0] - 7, hp[1] - 7, 0]);
+  s = act(s, { type: 'play', uid: 'h1' }).state;
+  assert.deepEqual(s.battle.enemies.map(e => e.statuses.burn || 0), [3, 3, 0], 'dead enemies are skipped');
+  s = act(s, { type: 'end' }).state;
+  assert.deepEqual(s.battle.enemies.map(e => e.hp), [hp[0] - 10, hp[1] - 10, 0]);
+  assert.match(CARDS.TA121.text, /对所有敌人造成7点伤害/);
+  assert.match(CARDS.TA122.text, /给予所有敌人2层烟雾/);
+});
+
+test('support enemies heal, guard and rally their allies', () => {
+  let s = quiet(createGroupBattle('G01'));
+  const [a, medic] = s.battle.enemies;
+  a.hp = 2;
+  medic.intent = [{ type: 'heal', n: 9 }, { type: 'guard', n: 8 }];
+  s.battle.enemies[2].hp = s.battle.enemies[2].maxHp - 4;
+  s.battle.enemies.forEach(e => { e.statuses = {}; });
+  assert.match(engine.describeIntents(s)[medic.uid], /治疗伤势最重的队友9，为队友布防8/);
+  s = act(s, { type: 'end' }).state;
+  assert.equal(s.battle.enemies[0].hp, 11, 'heal goes to the most wounded ally');
+  assert.equal(s.battle.enemies[0].statuses.block, 8, 'guard goes to the lowest-HP other ally');
+  assert.equal(s.battle.enemies[1].statuses.block || 0, 0);
+
+  s = quiet(createGroupBattle('G02'));
+  s.battle.enemies.forEach(e => { e.statuses = {}; });
+  const [r1, spotter, r2] = s.battle.enemies;
+  spotter.intent = [{ type: 'rally', n: 2 }];
+  r2.intent = [{ type: 'hit', n: 5, times: 1 }];
+  const intents = engine.describeIntents(s);
+  assert.equal(intents[r2.uid], '攻击7×1', 'rally from an earlier ally shows in the later hit');
+  assert.equal(intents[r1.uid], '布防0');
+  const hp = s.hp;
+  s = act(s, { type: 'end' }).state;
+  assert.equal(s.hp, hp - 7);
+  assert.deepEqual(s.battle.enemies.map(e => e.statuses.strength), [2, 2, 2]);
+});
+
+test('killing one enemy keeps the fight going; the fight is won only when all are down', () => {
+  let s = quiet(createGroupBattle('G04', { handCards: ['TA25', 'TA25'], energy: 4 }));
+  s.battle.enemies.forEach(e => { e.hp = 10; e.statuses = {}; });
+  s = act(s, { type: 'play', uid: 'h0', target: 'e0' }).state;
+  assert.equal(s.phase, 'combat');
+  assert.equal(s.battle.enemies[0].hp, 0);
+  assert.deepEqual(legalActions(s).filter(a => a.type === 'play').map(a => a.target), [undefined], 'one survivor: target implied');
+  s = act(s, { type: 'play', uid: 'h1' }).state;
+  assert.equal(s.phase, 'reward');
+  assert.equal(s.battle.rewardPool.length, 3);
+});
+
+test('turrets shoot the lowest-HP living enemy; dead enemies do not act', () => {
+  let s = quiet(createGroupBattle('G01', { handCards: ['TA95'] }));
+  s.battle.enemies.forEach((e, i) => { e.hp = [20, 9, 15][i]; e.statuses = {}; });
+  s = act(s, { type: 'play', uid: 'h0' }).state;
+  const hp = s.hp;
+  s = act(s, { type: 'end' }).state;
+  assert.deepEqual(s.battle.enemies.map(e => e.hp), [20, 4, 15]);
+  s.battle.enemies[1].hp = 0;
+  s.battle.enemies[1].intent = [{ type: 'hit', n: 30, times: 1 }];
+  s.battle.enemies[1].script = [[{ type: 'hit', n: 30, times: 1 }]];
+  s = act(s, { type: 'end' }).state;
+  assert.equal(s.hp, hp, 'the dead enemy never fires');
+  assert.equal(s.battle.enemies[2].hp, 10, 'next shot moves to the new lowest');
+});
+
+test('group placement on maps is deterministic and covers roughly a third of later fights', async () => {
+  const { GROUPS } = await import('../new-demo/content.js');
+  let groups = 0, later = 0;
+  for (let i = 0; i < 30; i++) for (const a of [1, 2, 3]) {
+    const m = buildMap(`grp-${i}`, a);
+    assert.deepEqual(m, buildMap(`grp-${i}`, a));
+    for (const n of m.nodes) {
+      if (n.kind === 'battle' && n.step < 3) assert.ok(!GROUPS[n.enemy], 'no groups in the first two steps');
+      if ((n.kind === 'battle' && n.step >= 3) || n.kind === 'elite') { later++; if (GROUPS[n.enemy]) groups++; }
+    }
+  }
+  assert.ok(groups / later > 0.25 && groups / later < 0.45, `${groups}/${later}`);
 });

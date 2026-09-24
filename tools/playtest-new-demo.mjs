@@ -3,17 +3,22 @@
 // Usage: node tools/playtest-new-demo.mjs [--seeds 10] [--acts 1] [--out reports/playtest/x.json]
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { createRun, legalActions, act } from '../new-demo/engine.js';
+import { createRun, legalActions, act, battleEnemies } from '../new-demo/engine.js';
 import { CARDS, TEAMS } from '../new-demo/content.js';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, v, i, all) => (v.startsWith('--') ? [...acc, [v.slice(2), all[i + 1]]] : acc), []));
 const SEEDS = Number(args.seeds || 10);
 const ACTS = Number(args.acts || 1);
 const OUT = args.out || 'reports/playtest/new-demo-act1.json';
+const POLICIES = (args.policies || 'smart,naive,random').split(',');
 
 const costOf = c => (c.up && CARDS[c.id].upgradeCost !== undefined ? CARDS[c.id].upgradeCost : CARDS[c.id].cost);
 const step = (s, a) => { const r = act(s, a); if (r.error) throw Error(`${JSON.stringify(a)}: ${r.error}`); r.state.logs = []; return r.state; };
-const enemyStatusValue = b => (b.statuses.enemy.burn || 0) * 2 + (b.deployables || []).reduce((v, d) => v + d.n * d.turns * 0.7, 0) - (b.statuses.enemy.strength || 0) * 2 + (b.statuses.enemy.vuln || 0) * 3 + (b.statuses.enemy.weak || 0) * 2.5 + (b.statuses.enemy.smoke || 0) * 1.5 + (b.statuses.enemy.flash || 0) * 2.5 - (b.statuses.enemy.block || 0) * 0.9;
+// Group fights: every living enemy counts; a kill is worth extra because it
+// removes that enemy's future damage (the bot's reason to focus fire).
+const oneEnemyValue = st => (st.burn || 0) * 2 - (st.strength || 0) * 2 + (st.vuln || 0) * 3 + (st.weak || 0) * 2.5 + (st.smoke || 0) * 1.5 + (st.flash || 0) * 2.5 - (st.block || 0) * 0.9;
+const enemyStatusValue = b => (b.deployables || []).reduce((v, d) => v + d.n * d.turns * 0.7, 0) + battleEnemies(b).filter(e => e.hp > 0).reduce((v, e) => v + oneEnemyValue(e.statuses) - 8, 0);
+const enemyHpLeft = b => battleEnemies(b).reduce((v, e) => v + Math.max(0, e.hp), 0);
 
 // Score the state right after the enemy turn resolved (1-ply lookahead on the
 // revealed intent). HP is worth more than enemy HP, as a careful player plays.
@@ -21,13 +26,13 @@ function evaluate(s, hpWeight) {
   if (s.phase === 'result') return -1e6;
   if (s.phase !== 'combat') return 1e5 + s.hp * 10;
   const b = s.battle;
-  return s.hp * hpWeight - b.enemyHp + enemyStatusValue(b) + b.powers.length * 6 + (b.powers.includes('barricade') ? b.playerBlock * 0.6 : 0);
+  return s.hp * hpWeight - enemyHpLeft(b) + enemyStatusValue(b) + b.powers.length * 6 + (b.powers.includes('barricade') ? b.playerBlock * 0.6 : 0);
 }
 
 function stateKey(s) {
   const b = s.battle;
-  return [b.hand.map(c => c.id + (c.up ? '+' : '')).sort().join(','), b.energy, b.stance, b.enemyHp, b.playerBlock, s.hp,
-    JSON.stringify(b.statuses), b.powers.join(','), b.attackPlayedThisTurn, b.blockPlayedThisTurn, b.stanceSwitchUsedThisTurn, b.drawPile.length].join('|');
+  return [b.hand.map(c => c.id + (c.up ? '+' : '')).sort().join(','), b.energy, b.stance, battleEnemies(b).map(e => e.hp).join('/'), b.playerBlock, s.hp,
+    JSON.stringify(b.statuses) + JSON.stringify(battleEnemies(b).map(e => e.statuses)), b.powers.join(','), b.attackPlayedThisTurn, b.blockPlayedThisTurn, b.stanceSwitchUsedThisTurn, b.drawPile.length].join('|');
 }
 
 // Enumerate distinct play lines for this turn. Returns terminal outcomes.
@@ -86,6 +91,7 @@ function cardValue(id) {
   if (d.type === 'power') return { tactical_core: 9, attack_core: 8, defense_core: 6, tactical_master: 11, inflame: 9, footwork: 7, barricade: 5, clutch_core: 6, final_push: 6, dark_embrace: 4, smoke_core: 5, flash_core: 5, upgrade_core: 4, knife_master: 5, feel_no_pain: 6, burn_core: 9, turret_core: 5, combo_core: 6 }[d.power] || 5;
   let v = 0;
   const walk = (e, m = 1) => {
+    if (e.all) m *= 1.5; // area effects: worth more across a run with group fights
     if (e.type === 'attack') v += e.n * (e.times || 1) * m;
     else if (e.type === 'block') v += e.n * 0.8 * m;
     else if (e.type === 'draw') v += e.n * 3.5 * m;
@@ -135,12 +141,16 @@ function playRun(seed, team, policy) {
       const chosen = s.map.nodes.find(n => n.key === pick.key);
       log.route.push({ step: chosen.step, options: nodes.map(n => n.kind), chose: chosen.kind, enemy: chosen.enemy, hp: s.hp, maxHp: s.maxHp, money: s.money });
       s = step(s, pick);
-      if (s.phase === 'combat') fight = { act: s.act, enemy: s.battle.enemyId, kind: chosen.kind, hpStart: s.hp, turns: [], won: false };
+      if (s.phase === 'combat') {
+        const idx = log.fights.filter(f => f.act === s.act).length;
+        const group = (s.battle.enemies?.length || 1) > 1;
+        fight = { act: s.act, idx, enemy: chosen.enemy, kind: chosen.kind, group, hpStart: s.hp, turns: [], won: false };
+      }
       continue;
     }
     if (s.phase === 'combat') {
       const b = s.battle;
-      const turnInfo = { turn: b.turn, intent: JSON.stringify(b.enemyIntent), hand: b.hand.map(c => c.id), energy: b.energy };
+      const turnInfo = { turn: b.turn, intent: JSON.stringify(battleEnemies(b).filter(e => e.hp > 0).map(e => e.intent)), hand: b.hand.map(c => c.id), energy: b.energy };
       const playableCost = b.hand.filter(c => c.id in CARDS).reduce((sum, c) => sum + costOf(c), 0);
       turnInfo.canPlayWholeHand = playableCost <= b.energy;
       let line;
@@ -238,7 +248,7 @@ function playRun(seed, team, policy) {
 const seeds = Array.from({ length: SEEDS }, (_, i) => `pt-${i + 1}`);
 const runs = [];
 const t0 = Date.now();
-for (const team of Object.keys(TEAMS)) for (const policy of ['smart', 'naive', 'random']) for (const seed of seeds) runs.push(playRun(seed, team, policy));
+for (const team of Object.keys(TEAMS)) for (const policy of POLICIES) for (const seed of seeds) runs.push(playRun(seed, team, policy));
 
 const summary = {};
 for (const r of runs) {
@@ -274,3 +284,16 @@ mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, JSON.stringify({ generatedAt: new Date().toISOString(), seeds, acts: ACTS, summary, runs }, null, 1));
 console.log(`done in ${((Date.now() - t0) / 1000).toFixed(1)}s -> ${OUT}`);
 console.table(Object.fromEntries(Object.entries(summary).map(([k, g]) => [k, { clears: `${g.clears}/${g.runs}`, turnsPerFight: g.avgFightTurns, hpLost: g.avgHpLostPerFight, wholeHand: g.wholeHandPct + '%', gap5: g.gap5Pct + '%', gap10: g.gap10Pct + '%', stance: g.stancePct + '%', deaths: JSON.stringify(g.deaths) }])));
+
+// Per-category HP cost for the smart policy: what a fight of each kind costs.
+const cat = {};
+for (const r of runs.filter(r => r.policy === 'smart')) for (const f of r.fights) {
+  const kind = f.kind === 'battle' ? (f.act === 1 && f.idx < 2 ? 'first2' : 'normal') : f.kind;
+  for (const k of [`act${f.act}/${kind}`, ...(f.group ? [`act${f.act}/${f.kind}-group`] : [])]) {
+    const c = (cat[k] ||= { fights: 0, hpLost: 0, losses: 0, turns: 0 });
+    c.fights++; c.hpLost += f.turns.reduce((s, t) => s + t.hpLost, 0); c.turns += f.turns.length; if (!f.won) c.losses++;
+  }
+}
+const smartRuns = runs.filter(r => r.policy === 'smart');
+console.log(`smart clear rate: ${smartRuns.filter(r => r.result === 'act-clear' || r.result === 'win').length}/${smartRuns.length}`);
+console.table(Object.fromEntries(Object.entries(cat).sort().map(([k, c]) => [k, { fights: c.fights, avgHpLost: +(c.hpLost / c.fights).toFixed(1), avgTurns: +(c.turns / c.fights).toFixed(1), deaths: c.losses }])));

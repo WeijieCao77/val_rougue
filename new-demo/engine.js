@@ -1,6 +1,6 @@
 // new-demo/engine.js
 import { buildMap, availableNodes } from './season-map.js';
-import { CARDS, CARD_IDS, REGION_CARD_IDS, SHARED_CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, RELICS, ARCHETYPES } from './content.js';
+import { CARDS, CARD_IDS, REGION_CARD_IDS, SHARED_CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, GROUPS, RELICS, ARCHETYPES } from './content.js';
 import { CURSES, CURSE_RULES, EXTRA_STATUS_RULES } from '../afflictions.js';
 
 const VERSION = 'new-1';
@@ -88,6 +88,94 @@ function getEnemyDef(id) {
   return ENEMIES[id] || null;
 }
 
+// ----------------------------- Enemy roster -----------------------------
+// A battle holds `enemies: [{uid, id, name, look, hp, maxHp, statuses, script,
+// scriptIndex, intent, trait, traitState, tempoCount}]`. Single-enemy fights use
+// the same array with one entry; for them the battle also carries the older flat
+// mirror fields (enemyHp, statuses.enemy, enemyIntent, trait ...) so saves, tools
+// and tests written against that shape keep working. The mirror is written after
+// every action and, for one-enemy fights only, read back before the next one.
+const MIRROR_KEYS = ['enemyId', 'enemyName', 'enemyHp', 'enemyMaxHp', 'enemyScript', 'enemyScriptIndex', 'enemyIntent', 'trait', 'traitState', 'tempoCount'];
+
+function enemyFromMirror(b, base = {}) {
+  return {
+    ...base,
+    uid: base.uid || 'e0',
+    id: b.enemyId,
+    name: b.enemyName,
+    look: base.look ?? getEnemyDef(b.enemyId)?.look ?? null,
+    hp: b.enemyHp,
+    maxHp: b.enemyMaxHp ?? b.enemyHp,
+    statuses: b.statuses?.enemy || {},
+    script: b.enemyScript || [],
+    scriptIndex: b.enemyScriptIndex || 0,
+    intent: b.enemyIntent ?? null,
+    trait: b.trait ?? null,
+    traitState: b.traitState || {},
+    tempoCount: b.tempoCount || 0
+  };
+}
+
+// Read-only view of the roster (never mutates the battle).
+export function battleEnemies(b) {
+  if (!b) return [];
+  if (!Array.isArray(b.enemies)) return 'enemyHp' in b ? [enemyFromMirror(b)] : [];
+  if (b.enemies.length === 1 && 'enemyHp' in b) return [enemyFromMirror(b, b.enemies[0])];
+  return b.enemies;
+}
+
+export function livingEnemies(b) {
+  return battleEnemies(b).filter(e => e.hp > 0);
+}
+
+function syncIn(b) {
+  if (!b) return;
+  const list = battleEnemies(b);
+  if (list.length) b.enemies = list;
+}
+
+function syncOut(b) {
+  if (!b || !Array.isArray(b.enemies)) return;
+  if (b.enemies.length === 1) {
+    const e = b.enemies[0];
+    Object.assign(b, { enemyId: e.id, enemyName: e.name, enemyHp: e.hp, enemyMaxHp: e.maxHp, enemyScript: e.script, enemyScriptIndex: e.scriptIndex, enemyIntent: e.intent, trait: e.trait, traitState: e.traitState, tempoCount: e.tempoCount });
+    b.statuses.enemy = e.statuses;
+  } else {
+    for (const k of MIRROR_KEYS) delete b[k];
+    delete b.statuses.enemy;
+  }
+}
+
+const alive = b => b.enemies.filter(e => e.hp > 0);
+const allDead = b => b.enemies.every(e => e.hp <= 0);
+const addStatus = (e, key, n) => { e.statuses[key] = (e.statuses[key] || 0) + n; };
+
+// Effects that act on one chosen enemy. `all: true` turns them into area effects.
+const TARGET_EFFECTS = new Set(['attack', 'weak', 'vuln', 'smoke', 'flash', 'burn', 'burnMultiply', 'detonate', 'purgeEnemyStatus', 'attackFromBlock', 'attackScaledByUpgradedHand']);
+const TARGET_CONDITIONS = new Set(['enemy_smoke', 'enemy_flash', 'enemy_smoke_or_flash', 'enemy_vuln', 'enemy_burn']);
+function effectNeedsTarget(e) {
+  if (!e || e.all) return false;
+  if (TARGET_EFFECTS.has(e.type)) return true;
+  if (e.type === 'conditional') return TARGET_CONDITIONS.has(e.condition) || effectNeedsTarget(e.effect);
+  if (e.type === 'repeat') return effectNeedsTarget(e.effect);
+  return false;
+}
+function cardEffects(card) {
+  const def = CARDS[card.id];
+  return card.up && def.upgradeEffects?.length ? def.upgradeEffects : def.effects;
+}
+// True when the card must be aimed at one enemy (implied while only one is alive).
+export function cardNeedsTarget(idOrCard, up = false) {
+  const card = typeof idOrCard === 'string' ? { id: idOrCard, up } : idOrCard;
+  if (!CARDS[card.id]) return false;
+  return cardEffects(card).some(effectNeedsTarget);
+}
+export function cardHitsAll(idOrCard, up = false) {
+  const card = typeof idOrCard === 'string' ? { id: idOrCard, up } : idOrCard;
+  if (!CARDS[card.id]) return false;
+  return cardEffects(card).some(e => e.all);
+}
+
 // Discovered cards cost 0 until played or the turn ends.
 function cardCost(c) {
   if (c.free) return 0;
@@ -109,9 +197,12 @@ export function legalActions(state) {
     const b = state.battle;
     if (!b) return [];
     if (b.pendingDiscover) return b.pendingDiscover.options.map(id => ({ type: 'discover', id }));
+    const living = livingEnemies(b);
     for (const c of b.hand) {
       if (c.id in STATUS_CARDS) continue;
-      if (b.energy >= cardCost(c) && b.playsThisTurn < MAX_PLAYS_PER_TURN) actions.push({ type: 'play', uid: c.uid });
+      if (!(b.energy >= cardCost(c) && b.playsThisTurn < MAX_PLAYS_PER_TURN)) continue;
+      if (living.length > 1 && cardNeedsTarget(c)) for (const e of living) actions.push({ type: 'play', uid: c.uid, target: e.uid });
+      else actions.push({ type: 'play', uid: c.uid });
     }
     if (b.energy >= 1 && !b.stanceSwitchUsedThisTurn) actions.push({ type: 'stance' });
     actions.push({ type: 'end' });
@@ -168,27 +259,24 @@ export function observe(state) {
   if (!state) return null;
   if (state.phase === 'combat' && state.battle) {
     const b = state.battle;
+    const intents = describeIntents(state);
+    const enemies = battleEnemies(b).map(e => ({
+      uid: e.uid, id: e.id, name: e.name, look: e.look, hp: e.hp, maxHp: e.maxHp, alive: e.hp > 0,
+      smoke: e.statuses.smoke || 0, flash: e.statuses.flash || 0, weak: e.statuses.weak || 0, vuln: e.statuses.vuln || 0,
+      block: e.statuses.block || 0, strength: e.statuses.strength || 0, burn: e.statuses.burn || 0,
+      intent: intents[e.uid] || null, trait: e.trait?.id || null
+    }));
     return {
       kind: 'combat',
       playerHp: state.hp,
       playerMaxHp: state.maxHp,
       energy: b.energy,
       stance: b.stance,
-      enemy: {
-        id: b.enemyId,
-        name: b.enemyName,
-        hp: b.enemyHp,
-        maxHp: b.enemyMaxHp,
-        smoke: b.statuses.enemy.smoke || 0,
-        flash: b.statuses.enemy.flash || 0,
-        weak: b.statuses.enemy.weak || 0,
-        vuln: b.statuses.enemy.vuln || 0,
-        block: b.statuses.enemy.block || 0,
-        intent: describeIntent(state)
-      },
+      enemy: enemies.find(e => e.alive) || enemies[0] || null,
+      enemies,
       playerStatuses: b.statuses.player,
       playerBlock: b.playerBlock,
-      hand: b.hand.map(c => { const def = CARDS[c.id]; return { uid: c.uid, id: c.id, name: def.name, cost: cardCost(c), text: c.up ? def.upgradeText || def.text : def.text }; }),
+      hand: b.hand.map(c => { const def = CARDS[c.id]; return { uid: c.uid, id: c.id, name: def.name, cost: cardCost(c), text: c.up ? def.upgradeText || def.text : def.text, needsTarget: !!def.effects && cardNeedsTarget(c) }; }),
       drawPileCount: b.drawPile.length,
       discardPileCount: b.discardPile.length,
       exhaustPileCount: b.exhaustPile.length,
@@ -202,16 +290,20 @@ export function observe(state) {
   return state;
 }
 
-export function describeIntent(state) {
-  if (state.phase !== 'combat' || !state.battle?.enemyIntent) return null;
+// One enemy's intent. `pending` is firepower granted this turn by allies that
+// act earlier (e.g. a spotter's rally), so the preview matches the real hit.
+function intentText(b, e, pending = 0) {
+  if (!e.intent) return null;
   const parts = [];
   // Actions resolve in order, so a buff listed first already raises the hit after it.
-  const b = state.battle;
-  let strength = b.statuses.enemy.strength || 0;
+  let strength = (e.statuses.strength || 0) + pending;
   if (b.field === 'overtime' && b.turn >= 5) strength += 2;
-  for (const act of b.enemyIntent) {
+  for (const act of e.intent) {
     if (act.type === 'hit') parts.push(`攻击${enemyHitBase(b, act.n, act.times) + strength}×${act.times}`);
     else if (act.type === 'buff') { strength += act.n; parts.push(`强化火力+${act.n}`); }
+    else if (act.type === 'rally') { strength += act.n; parts.push(`全队火力+${act.n}`); }
+    else if (act.type === 'heal') parts.push(`治疗伤势最重的队友${act.n}`);
+    else if (act.type === 'guard') parts.push(`为队友布防${act.n}`);
     else if (act.type === 'block') parts.push(`布防${act.n}`);
     else if (act.type === 'jam') parts.push(`塞入${act.n || 1}张「${STATUS_CARDS[act.id]?.name || act.id}」`);
     else if (act.type === 'weak') parts.push(`施加压制${act.n}`);
@@ -219,11 +311,32 @@ export function describeIntent(state) {
     else if (act.type === 'aim') parts.push('瞄准（下回合重狙）');
     else if (act.type === 'snipe') {
       const full = enemyHitBase(b, act.n, 1) + strength;
-      parts.push(b.statuses.enemy.aim ? `重狙${full}（闪光可打断）` : `仓促射击${Math.ceil(act.n / 3) + strength}（瞄准已被打断）`);
+      parts.push(e.statuses.aim ? `重狙${full}（闪光可打断）` : `仓促射击${Math.ceil(act.n / 3) + strength}（瞄准已被打断）`);
     }
     else if (act.type === 'cleanse') parts.push('清除自身负面状态');
   }
   return parts.join('，');
+}
+
+// Intent text per living enemy uid, in acting order.
+export function describeIntents(state) {
+  const out = {};
+  if (state?.phase !== 'combat' || !state.battle) return out;
+  const b = state.battle;
+  let pending = 0;
+  for (const e of livingEnemies(b)) {
+    out[e.uid] = intentText(b, e, pending);
+    for (const a of e.intent || []) if (a.type === 'rally') pending += a.n;
+  }
+  return out;
+}
+
+export function describeIntent(state) {
+  if (state?.phase !== 'combat' || !state.battle) return null;
+  const living = livingEnemies(state.battle);
+  const texts = describeIntents(state);
+  if (living.length <= 1) return living[0] ? texts[living[0].uid] ?? null : null;
+  return living.map(e => `${e.name}：${texts[e.uid] || '未知'}`).join('；');
 }
 
 export function preview(state, uid) {
@@ -233,7 +346,9 @@ export function preview(state, uid) {
   const def = CARDS[card.id];
   return {
     card: { uid, id: card.id, name: def.name, cost: cardCost(card), text: card.up && def.upgradeText ? def.upgradeText : def.text },
-    stance: state.battle.stance
+    stance: state.battle.stance,
+    needsTarget: cardNeedsTarget(card),
+    hitsAll: cardHitsAll(card)
   };
 }
 
@@ -248,8 +363,10 @@ export function act(state, action) {
   if (state.phase === 'result') return { state, error: '运行已结束' };
   const next = deepClone(state);
   next.rev = state.rev + 1;
+  syncIn(next.battle);
   const err = applyAction(next, action);
   if (err) return { state, error: err };
+  syncOut(next.battle);
   return { state: next };
 }
 
@@ -296,21 +413,47 @@ function enterNode(state, action) {
   return null;
 }
 
+function createEnemy(state, member, index, label) {
+  const def = getEnemyDef(member.id);
+  const e = {
+    uid: `e${index}`,
+    id: member.id,
+    name: label ? `${def.name}${label}` : def.name,
+    look: def.look || null,
+    hp: def.hp,
+    maxHp: def.hp,
+    statuses: {},
+    script: def.ordered ? deepClone(def.script) : shuffledEnemyScript(def.script, state),
+    scriptIndex: member.offset || 0,
+    intent: null,
+    trait: def.trait ? deepClone(def.trait) : null,
+    traitState: {},
+    tempoCount: 0
+  };
+  if (def.startBlock) e.statuses.block = def.startBlock;
+  return e;
+}
+
 function startBattle(state, node) {
-  const def = getEnemyDef(node.enemy);
-  if (!def) return '敌人未找到';
+  const group = GROUPS[node.enemy];
+  const members = group ? group.members : [{ id: node.enemy }];
+  if (!members.length || members.some(m => !getEnemyDef(m.id))) return '敌人未找到';
   const deck = state.deck.map(c => ({ uid: c.uid, id: c.id, up: c.up }));
   shuffle(deck, state);
   const hand = [];
   for (let i = 0; i < 5 && deck.length; i++) hand.push(deck.shift());
+  // Repeated member types get A/B/C suffixes so the player can tell them apart.
+  const counts = {};
+  for (const m of members) counts[m.id] = (counts[m.id] || 0) + 1;
+  const seen = {};
+  const enemies = members.map((m, i) => {
+    const label = counts[m.id] > 1 ? ' ' + 'ABC'[(seen[m.id] = (seen[m.id] || 0) + 1) - 1] : '';
+    return createEnemy(state, m, i, label);
+  });
   state.battle = {
-    enemyId: node.enemy,
-    enemyName: def.name,
-    enemyHp: def.hp,
-    enemyMaxHp: def.hp,
-    enemyScript: def.ordered ? deepClone(def.script) : shuffledEnemyScript(def.script, state),
-    enemyScriptIndex: 0,
-    enemyIntent: null,
+    encounter: node.enemy,
+    groupName: group ? group.name : null,
+    enemies,
     turn: 1,
     energy: 3,
     stance: 'cover',
@@ -327,35 +470,31 @@ function startBattle(state, node) {
     powers: [],
     powerStacks: {},
     powerCards: [],
-    statuses: { player: {}, enemy: {} },
+    statuses: { player: {} },
     rewardPool: null,
     rewardTaken: false,
     playerBlock: 0,
-    field: node.field || null,
-    trait: def.trait ? deepClone(def.trait) : null,
-    traitState: {},
-    tempoCount: 0
+    field: node.field || null
   };
   state.phase = 'combat';
   const b = state.battle;
-  if (def.startBlock) b.statuses.enemy.block = def.startBlock;
-  if (b.field === 'smoky') b.statuses.enemy.smoke = 2;
+  if (b.field === 'smoky') for (const e of enemies) addStatus(e, 'smoke', 2);
   const opening=hand.slice();
   if (b.field === 'eco') { b.energy += 1; drawCards(state, 1); }
   applyRelicsAtBattleStart(state);
   if(state.phase!=='combat')return null;
   for(const card of opening){if(!hand.some(c=>c.uid===card.uid))continue;applyDrawAffliction(state,card);if(state.phase!=='combat')return null;}
-  nextEnemyIntent(state);
+  for (const e of enemies) nextEnemyIntent(e);
   pushLog(state, 'battle_start', { enemy: node.enemy });
   return null;
 }
 
-function nextEnemyIntent(state) {
-  const b = state.battle;
-  const script = b.enemyScript;
-  const idx = b.enemyScriptIndex % script.length;
-  b.enemyScriptIndex++;
-  b.enemyIntent = script[idx];
+function nextEnemyIntent(e) {
+  const script = e.script;
+  if (!script.length) { e.intent = e.intent || null; return; }
+  const idx = e.scriptIndex % script.length;
+  e.scriptIndex++;
+  e.intent = script[idx];
 }
 
 function chooseDiscover(state, action) {
@@ -383,15 +522,30 @@ function discoverOptions(state, pool) {
   return out;
 }
 
+// Deployed turrets always shoot the living enemy with the lowest current HP
+// (leftmost on ties): deterministic, consumes no RNG, and finishes weakened foes.
+function turretTarget(b) {
+  let best = null;
+  for (const e of alive(b)) if (!best || e.hp < best.hp) best = e;
+  return best;
+}
+
 // End-of-player-turn automation: deployed turrets fire, barriers add block.
 function turretDamage(b, d) { return d.n + 3 * (b.powerStacks.turret_core || 0); }
+function fireTurret(state, d) {
+  const b = state.battle;
+  const t = turretTarget(b);
+  if (!t) return;
+  dealDamageToEnemy(state, t, turretDamage(b, d));
+  checkEnemyHpTraits(state, t);
+}
 function runDeployables(state) {
   const b = state.battle;
   for (const d of b.deployables || []) {
-    if (d.kind === 'turret') { dealDamageToEnemy(state, turretDamage(b, d)); checkEnemyHpTraits(state); }
+    if (d.kind === 'turret') fireTurret(state, d);
     else b.playerBlock += d.n;
     d.turns--;
-    if (b.enemyHp <= 0) break;
+    if (allDead(b)) break;
   }
   b.deployables = (b.deployables || []).filter(d => d.turns > 0);
 }
@@ -410,6 +564,18 @@ function playCard(state, action) {
   const cost = cardCost(card);
   if (b.energy < cost) return '能量不足';
 
+  const living = alive(b);
+  let target = null;
+  if (cardNeedsTarget(card)) {
+    if (action.target != null) {
+      target = living.find(e => e.uid === action.target);
+      if (!target) return '目标无效';
+    } else if (living.length === 1) target = living[0];
+    else return '请选择目标';
+  } else if (action.target != null) {
+    target = living.find(e => e.uid === action.target) || null;
+  }
+
   const preAttackPlayed = b.attackPlayedThisTurn;
   const preBlockPlayed = b.blockPlayedThisTurn;
   const preStanceChanged = b.stanceChangedThisTurn;
@@ -421,7 +587,8 @@ function playCard(state, action) {
     preCount: b.playsThisTurn,
     cardId: card.id,
     attackBonusUsed: false,
-    blockBonusUsed: false
+    blockBonusUsed: false,
+    target: target || living[0] || null
   };
 
   b.energy -= cost;
@@ -466,29 +633,45 @@ function playCard(state, action) {
   if (isBlock) b.blockPlayedThisTurn = true;
   if (effects.some(e => e.type === 'stanceSwitch')) b.stanceChangedThisTurn = true;
 
-  if (b.enemyHp > 0 && b.trait?.id === 'enrageOnSkill' && def.type === 'skill') {
-    b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + b.trait.n;
-  }
-  if (b.enemyHp > 0 && b.trait?.id === 'tempo' && ++b.tempoCount >= b.trait.n) {
-    b.tempoCount = 0;
-    b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + 2;
-    b.statuses.enemy.block = (b.statuses.enemy.block || 0) + 8;
-    pushLog(state, 'trait', { id: 'tempo' });
+  for (const e of alive(b)) {
+    if (e.trait?.id === 'enrageOnSkill' && def.type === 'skill') addStatus(e, 'strength', e.trait.n);
+    if (e.trait?.id === 'tempo' && ++e.tempoCount >= e.trait.n) {
+      e.tempoCount = 0;
+      addStatus(e, 'strength', 2);
+      addStatus(e, 'block', 8);
+      pushLog(state, 'trait', { id: 'tempo', enemy: e.uid });
+    }
   }
 
-  if (b.enemyHp <= 0) {
-    b.enemyHp = 0;
+  if (allDead(b)) {
     finishBattleWin(state);
     return null;
   }
-  pushLog(state, 'play_card', { uid: card.uid, id: card.id });
+  pushLog(state, 'play_card', { uid: card.uid, id: card.id, target: target?.uid || null });
   return null;
 }
 
 function applyEffect(state, eff, sourceCard, mods, context) {
   const b = state.battle;
+  // Area version: resolve the effect once per living enemy, left to right.
+  // Per-card bonuses (stance, first hit) apply to every enemy the sweep hits.
+  if (eff.all) {
+    const saved = context.target;
+    const snap = { attackBonusUsed: context.attackBonusUsed, highgroundUsed: context.highgroundUsed };
+    let after = snap;
+    for (const e of alive(b)) {
+      Object.assign(context, snap, { target: e });
+      applyEffect(state, { ...eff, all: false }, sourceCard, mods, context);
+      after = { attackBonusUsed: context.attackBonusUsed, highgroundUsed: context.highgroundUsed };
+      if (state.phase !== 'combat') break;
+    }
+    Object.assign(context, after, { target: saved && saved.hp > 0 ? saved : alive(b)[0] || saved });
+    return;
+  }
+  const t = context.target && context.target.hp > 0 ? context.target : null;
   switch (eff.type) {
     case 'attack': {
+      if (!t) break;
       let baseDamage = eff.n;
       let bonus = 0;
       if (!context.attackBonusUsed) {
@@ -499,7 +682,7 @@ function applyEffect(state, eff, sourceCard, mods, context) {
         if (bonus > 0) context.attackBonusUsed = true;
       }
       const times = eff.times || 1;
-      const clutchBonus = (b.powers.includes('clutch_core') && ((b.statuses.enemy.smoke || 0) > 0 || (b.statuses.enemy.flash || 0) > 0)) ? 2 * (b.powerStacks.clutch_core || 1) : 0;
+      const clutchBonus = (b.powers.includes('clutch_core') && ((t.statuses.smoke || 0) > 0 || (t.statuses.flash || 0) > 0)) ? 2 * (b.powerStacks.clutch_core || 1) : 0;
       let fieldBonus = 0;
       if (b.field === 'corridor' && times > 1) fieldBonus += 1;
       if (b.field === 'longrange' && baseDamage >= 10) fieldBonus += 3;
@@ -512,11 +695,11 @@ function applyEffect(state, eff, sourceCard, mods, context) {
         if (i === 0 && bonus > 0) dmg += bonus;
         if (i === 0) dmg += firstHitBonus;
         if (clutchBonus > 0) dmg += clutchBonus;
-        dealDamageToEnemy(state, dmg);
-        checkEnemyHpTraits(state);
-        if (b.enemyHp <= 0) break;
-        if (b.trait?.id === 'thorns') {
-          damagePlayerDirect(state, b.trait.n);
+        dealDamageToEnemy(state, t, dmg);
+        checkEnemyHpTraits(state, t);
+        if (t.hp <= 0) break;
+        if (t.trait?.id === 'thorns') {
+          damagePlayerDirect(state, t.trait.n);
           if (state.phase !== 'combat') return;
         }
       }
@@ -536,30 +719,32 @@ function applyEffect(state, eff, sourceCard, mods, context) {
       break;
     }
     case 'smoke': {
+      if (!t) break;
       let n = eff.n;
       if (b.powers.includes('smoke_core') && !b.smokeBonusUsedThisTurn) {
         n += 2;
         b.smokeBonusUsedThisTurn = true;
       }
       if (b.field === 'smoky' && !b.fieldSmokeUsedThisTurn) { n += 1; b.fieldSmokeUsedThisTurn = true; }
-      b.statuses.enemy.smoke = (b.statuses.enemy.smoke || 0) + n;
+      addStatus(t, 'smoke', n);
       break;
     }
     case 'flash': {
+      if (!t) break;
       let n = eff.n;
       if (b.powers.includes('flash_core') && !b.flashBonusUsedThisTurn) {
         n += 2;
         b.flashBonusUsedThisTurn = true;
       }
-      b.statuses.enemy.flash = (b.statuses.enemy.flash || 0) + n;
-      if (b.statuses.enemy.aim) { b.statuses.enemy.aim = 0; pushLog(state, 'aim_broken'); }
+      addStatus(t, 'flash', n);
+      if (t.statuses.aim) { t.statuses.aim = 0; pushLog(state, 'aim_broken', { enemy: t.uid }); }
       break;
     }
     case 'weak':
-      b.statuses.enemy.weak = (b.statuses.enemy.weak || 0) + eff.n;
+      if (t) addStatus(t, 'weak', eff.n);
       break;
     case 'vuln':
-      b.statuses.enemy.vuln = (b.statuses.enemy.vuln || 0) + eff.n;
+      if (t) addStatus(t, 'vuln', eff.n);
       break;
     case 'draw':
       drawCards(state, eff.n);
@@ -604,7 +789,7 @@ function applyEffect(state, eff, sourceCard, mods, context) {
       b.statuses.player[eff.id] = Math.max(0, (b.statuses.player[eff.id] || 0) - eff.n);
       break;
     case 'purgeEnemyStatus':
-      b.statuses.enemy[eff.id] = Math.max(0, (b.statuses.enemy[eff.id] || 0) - eff.n);
+      if (t) t.statuses[eff.id] = Math.max(0, (t.statuses[eff.id] || 0) - eff.n);
       break;
     case 'upgradeRandomInHand': {
       const candidates = b.hand.filter(c => !c.up && CARDS[c.id]?.upgradeEffects?.length);
@@ -631,14 +816,15 @@ function applyEffect(state, eff, sourceCard, mods, context) {
       break;
     }
     case 'burn':
-      b.statuses.enemy.burn = (b.statuses.enemy.burn || 0) + eff.n;
+      if (t) addStatus(t, 'burn', eff.n);
       break;
     case 'burnMultiply':
-      b.statuses.enemy.burn = (b.statuses.enemy.burn || 0) * eff.n;
+      if (t) t.statuses.burn = (t.statuses.burn || 0) * eff.n;
       break;
     case 'detonate': {
-      const stacks = b.statuses.enemy.burn || 0;
-      b.statuses.enemy.burn = 0;
+      if (!t) break;
+      const stacks = t.statuses.burn || 0;
+      t.statuses.burn = 0;
       if (stacks > 0) applyEffect(state, { type: 'attack', n: stacks * eff.per }, sourceCard, mods, context);
       break;
     }
@@ -648,9 +834,8 @@ function applyEffect(state, eff, sourceCard, mods, context) {
     case 'fireTurrets':
       for (const d of b.deployables || []) {
         if (d.kind !== 'turret') continue;
-        dealDamageToEnemy(state, turretDamage(b, d));
-        checkEnemyHpTraits(state);
-        if (b.enemyHp <= 0) break;
+        fireTurret(state, d);
+        if (allDead(b)) break;
       }
       break;
     case 'attackFromBlock':
@@ -687,15 +872,17 @@ function applyEffect(state, eff, sourceCard, mods, context) {
 
 function checkCondition(state, cond, context) {
   const b = state.battle;
+  const t = context.target && context.target.hp > 0 ? context.target : null;
+  const st = t ? t.statuses : {};
   switch (cond) {
     case 'enemy_intends_attack':
-      return b.enemyIntent.some(a => a.type === 'hit');
+      return alive(b).some(e => (e.intent || []).some(a => a.type === 'hit'));
     case 'enemy_smoke':
-      return (b.statuses.enemy.smoke || 0) > 0;
+      return (st.smoke || 0) > 0;
     case 'enemy_flash':
-      return (b.statuses.enemy.flash || 0) > 0;
+      return (st.flash || 0) > 0;
     case 'enemy_smoke_or_flash':
-      return (b.statuses.enemy.smoke || 0) > 0 || (b.statuses.enemy.flash || 0) > 0;
+      return (st.smoke || 0) > 0 || (st.flash || 0) > 0;
     case 'prev_played_attack':
       return context.preAttackPlayed;
     case 'first_attack_this_turn':
@@ -711,29 +898,30 @@ function checkCondition(state, cond, context) {
     case 'combo':
       return context.preCount > 0;
     case 'enemy_vuln':
-      return (b.statuses.enemy.vuln || 0) > 0;
+      return (st.vuln || 0) > 0;
     case 'enemy_burn':
-      return (b.statuses.enemy.burn || 0) > 0;
+      return (st.burn || 0) > 0;
     default:
       return false;
   }
 }
 
-function dealDamageToEnemy(state, dmg) {
+function dealDamageToEnemy(state, e, dmg) {
   const b = state.battle;
   let final = dmg;
   if (b.statuses.player.weak > 0) {
     final = Math.floor(final * 0.75);
   }
-  if (b.statuses.enemy.vuln > 0) {
+  if (e.statuses.vuln > 0) {
     final = Math.floor(final * 1.5);
   }
-  if (b.statuses.enemy.block > 0) {
-    const blocked = Math.min(b.statuses.enemy.block, final);
-    b.statuses.enemy.block -= blocked;
+  if (e.statuses.block > 0) {
+    const blocked = Math.min(e.statuses.block, final);
+    e.statuses.block -= blocked;
     final -= blocked;
   }
-  b.enemyHp = Math.max(0, b.enemyHp - final);
+  e.hp = Math.max(0, e.hp - final);
+  if (e.hp <= 0) pushLog(state, 'enemy_down', { enemy: e.uid });
 }
 
 // Battlefield modifiers that change a single enemy hit before strength.
@@ -753,50 +941,49 @@ function damagePlayerDirect(state, n) {
   if (state.hp <= 0) finishBattleLoss(state);
 }
 
-// Passive traits that react to the enemy's HP dropping.
-function checkEnemyHpTraits(state) {
-  const b = state.battle;
-  const trait = b.trait;
-  if (!trait || b.enemyHp <= 0) return;
-  if (trait.id === 'berserk' && !b.traitState.berserk && b.enemyHp <= b.enemyMaxHp / 2) {
-    b.traitState.berserk = true;
-    b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + trait.n;
-    pushLog(state, 'trait', { id: 'berserk' });
+// Passive traits that react to an enemy's HP dropping.
+function checkEnemyHpTraits(state, e) {
+  const trait = e.trait;
+  if (!trait || e.hp <= 0) return;
+  if (trait.id === 'berserk' && !e.traitState.berserk && e.hp <= e.maxHp / 2) {
+    e.traitState.berserk = true;
+    addStatus(e, 'strength', trait.n);
+    pushLog(state, 'trait', { id: 'berserk', enemy: e.uid });
   }
-  if (trait.id === 'phase2' && !b.traitState.phase2 && b.enemyHp <= b.enemyMaxHp / 2) {
-    b.traitState.phase2 = true;
-    for (const k of ['weak', 'vuln', 'smoke', 'flash']) b.statuses.enemy[k] = 0;
-    b.statuses.enemy.block = (b.statuses.enemy.block || 0) + 12;
-    b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + 2;
-    const def = getEnemyDef(b.enemyId);
-    b.enemyScript = deepClone(def.phase2);
-    b.enemyIntent = b.enemyScript[0];
-    b.enemyScriptIndex = 1;
-    pushLog(state, 'trait', { id: 'phase2' });
+  if (trait.id === 'phase2' && !e.traitState.phase2 && e.hp <= e.maxHp / 2) {
+    e.traitState.phase2 = true;
+    for (const k of ['weak', 'vuln', 'smoke', 'flash']) e.statuses[k] = 0;
+    addStatus(e, 'block', 12);
+    addStatus(e, 'strength', 2);
+    const def = getEnemyDef(e.id);
+    e.script = deepClone(def.phase2);
+    e.intent = e.script[0];
+    e.scriptIndex = 1;
+    pushLog(state, 'trait', { id: 'phase2', enemy: e.uid });
   }
 }
 
-function dealDamageToPlayer(state, baseDamage) {
+function dealDamageToPlayer(state, e, baseDamage) {
   const b = state.battle;
-  let dmg = baseDamage + (b.statuses.enemy.strength || 0);
+  let dmg = baseDamage + (e.statuses.strength || 0);
   // Push stance bonus to incoming damage: +2 raw damage per hit before smoke/flash/block
   if (b.stance === 'push') {
     dmg += 2;
   }
-  if (b.statuses.enemy.weak > 0) {
+  if (e.statuses.weak > 0) {
     dmg = Math.floor(dmg * 0.75);
   }
   if (b.statuses.player.vuln > 0) {
     dmg = Math.floor(dmg * 1.5);
   }
-  const smoke = b.statuses.enemy.smoke || 0;
+  const smoke = e.statuses.smoke || 0;
   if (smoke > 0) {
     dmg = Math.max(0, dmg - smoke);
   }
-  const flash = b.statuses.enemy.flash || 0;
+  const flash = e.statuses.flash || 0;
   if (flash > 0) {
     dmg = Math.max(0, dmg - 3 * flash);
-    b.statuses.enemy.flash = 0;
+    e.statuses.flash = 0;
   }
   if (b.playerBlock > 0) {
     const blocked = Math.min(b.playerBlock, dmg);
@@ -879,20 +1066,22 @@ function endTurn(state) {
   b.hand = kept;
 
   runDeployables(state);
-  if (b.enemyHp <= 0) { b.enemyHp = 0; finishBattleWin(state); return null; }
-  // Burn ticks at the start of the enemy turn and ignores block.
-  if (b.statuses.enemy.burn > 0) {
-    b.enemyHp = Math.max(0, b.enemyHp - b.statuses.enemy.burn);
-    b.statuses.enemy.burn--;
-    checkEnemyHpTraits(state);
-    if (b.enemyHp <= 0) { finishBattleWin(state); return null; }
+  if (allDead(b)) { finishBattleWin(state); return null; }
+  // Burn ticks on each enemy at the start of the enemy turn and ignores block.
+  for (const e of alive(b)) {
+    if (!(e.statuses.burn > 0)) continue;
+    e.hp = Math.max(0, e.hp - e.statuses.burn);
+    e.statuses.burn--;
+    if (e.hp <= 0) pushLog(state, 'enemy_down', { enemy: e.uid });
+    checkEnemyHpTraits(state, e);
   }
+  if (allDead(b)) { finishBattleWin(state); return null; }
 
   // Player turn ends: decrement player weak only
   if (b.statuses.player.weak > 0) b.statuses.player.weak--;
 
   // Enemy vuln decays before enemy turn
-  if (b.statuses.enemy.vuln > 0) b.statuses.enemy.vuln--;
+  for (const e of alive(b)) if (e.statuses.vuln > 0) e.statuses.vuln--;
 
   executeEnemyTurn(state);
   if (state.phase !== 'combat') return null;
@@ -901,8 +1090,10 @@ function endTurn(state) {
   if (b.statuses.player.vuln > 0) b.statuses.player.vuln--;
 
   // Enemy turn ends: decrement enemy weak/smoke (vuln already handled)
-  if (b.statuses.enemy.weak > 0) b.statuses.enemy.weak--;
-  if (b.statuses.enemy.smoke > 0) b.statuses.enemy.smoke--;
+  for (const e of alive(b)) {
+    if (e.statuses.weak > 0) e.statuses.weak--;
+    if (e.statuses.smoke > 0) e.statuses.smoke--;
+  }
 
   // Prepare next player turn
   b.attackPlayedThisTurn = false;
@@ -922,55 +1113,82 @@ function endTurn(state) {
     b.playerBlock = 0;
   }
   applyTurnStartPowers(state);
+  if (state.phase !== 'combat') return null;
+  if (allDead(b)) { finishBattleWin(state); return null; }
   drawCards(state, 5);
-  nextEnemyIntent(state);
+  for (const e of alive(b)) nextEnemyIntent(e);
   pushLog(state, 'end_turn', { turn: b.turn });
   return null;
 }
 
+// Support actions pick their ally when they resolve.
+function mostWounded(b) {
+  let best = null;
+  for (const e of alive(b)) if (!best || e.maxHp - e.hp > best.maxHp - best.hp) best = e;
+  return best;
+}
+function guardTarget(b, self) {
+  const others = alive(b).filter(e => e !== self);
+  if (!others.length) return self;
+  return others.reduce((m, e) => (e.hp < m.hp ? e : m));
+}
+
 function executeEnemyTurn(state) {
   const b = state.battle;
-  if (b.field === 'overtime' && b.turn >= 5) b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + 2;
-  for (const action of b.enemyIntent) {
-    if (state.phase !== 'combat') return;
-    if (action.type === 'hit') {
-      for (let i = 0; i < action.times; i++) {
-        dealDamageToPlayer(state, enemyHitBase(b, action.n, action.times));
-        if (state.hp <= 0) {
-          finishBattleLoss(state);
-          return;
+  if (b.field === 'overtime' && b.turn >= 5) for (const e of alive(b)) addStatus(e, 'strength', 2);
+  // Each living enemy acts left to right with its revealed intent.
+  for (const e of b.enemies) {
+    if (e.hp <= 0 || !e.intent) continue;
+    for (const action of e.intent) {
+      if (state.phase !== 'combat') return;
+      if (e.hp <= 0) break;
+      if (action.type === 'hit') {
+        for (let i = 0; i < action.times; i++) {
+          dealDamageToPlayer(state, e, enemyHitBase(b, action.n, action.times));
+          if (state.hp <= 0) {
+            finishBattleLoss(state);
+            return;
+          }
         }
+      } else if (action.type === 'block') {
+        addStatus(e, 'block', action.n);
+      } else if (action.type === 'guard') {
+        addStatus(guardTarget(b, e), 'block', action.n);
+      } else if (action.type === 'heal') {
+        const t = mostWounded(b);
+        if (t) t.hp = Math.min(t.maxHp, t.hp + action.n);
+      } else if (action.type === 'rally') {
+        for (const ally of alive(b)) addStatus(ally, 'strength', action.n);
+      } else if (action.type === 'jam') {
+        const n = action.n || 1;
+        for (let i = 0; i < n; i++) {
+          b.discardPile.push({ uid: nextUid(state), id: action.id, up: false });
+        }
+      } else if (action.type === 'weak') {
+        b.statuses.player.weak = (b.statuses.player.weak || 0) + action.n;
+      } else if (action.type === 'buff') {
+        // Permanent for this fight: every later hit gains this much damage.
+        addStatus(e, 'strength', action.n);
+      } else if (action.type === 'vuln') {
+        b.statuses.player.vuln = (b.statuses.player.vuln || 0) + action.n;
+      } else if (action.type === 'aim') {
+        e.statuses.aim = 1;
+      } else if (action.type === 'snipe') {
+        const aimed = (e.statuses.aim || 0) > 0;
+        e.statuses.aim = 0;
+        dealDamageToPlayer(state, e, aimed ? enemyHitBase(b, action.n, 1) : Math.ceil(action.n / 3));
+        if (state.hp <= 0) { finishBattleLoss(state); return; }
+      } else if (action.type === 'cleanse') {
+        for (const k of ['weak', 'vuln', 'smoke', 'flash']) e.statuses[k] = 0;
       }
-    } else if (action.type === 'block') {
-      b.statuses.enemy.block = (b.statuses.enemy.block || 0) + action.n;
-    } else if (action.type === 'jam') {
-      const n = action.n || 1;
-      for (let i = 0; i < n; i++) {
-        b.discardPile.push({ uid: nextUid(state), id: action.id, up: false });
-      }
-    } else if (action.type === 'weak') {
-      b.statuses.player.weak = (b.statuses.player.weak || 0) + action.n;
-    } else if (action.type === 'buff') {
-      // Permanent for this fight: every later hit gains this much damage.
-      b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + action.n;
-    } else if (action.type === 'vuln') {
-      b.statuses.player.vuln = (b.statuses.player.vuln || 0) + action.n;
-    } else if (action.type === 'aim') {
-      b.statuses.enemy.aim = 1;
-    } else if (action.type === 'snipe') {
-      const aimed = (b.statuses.enemy.aim || 0) > 0;
-      b.statuses.enemy.aim = 0;
-      dealDamageToPlayer(state, aimed ? enemyHitBase(b, action.n, 1) : Math.ceil(action.n / 3));
-      if (state.hp <= 0) { finishBattleLoss(state); return; }
-    } else if (action.type === 'cleanse') {
-      for (const k of ['weak', 'vuln', 'smoke', 'flash']) b.statuses.enemy[k] = 0;
     }
+    if (e.trait?.id === 'ritual') addStatus(e, 'strength', e.trait.n);
   }
-  if (b.trait?.id === 'ritual') b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + b.trait.n;
 }
 
 function finishBattleWin(state) {
   const b = state.battle;
+  for (const e of b.enemies || []) e.hp = Math.max(0, e.hp);
   const node = state.map.nodes.find(n => n.key === state.currentNode);
   const moneyReward = node?.kind === 'boss' ? 50 : node?.kind === 'elite' ? 35 : 20;
   state.money += moneyReward;
@@ -1008,7 +1226,7 @@ function finishBattleWin(state) {
   }
 
   state.phase = 'reward';
-  pushLog(state, 'battle_won', { enemy: b.enemyId });
+  pushLog(state, 'battle_won', { enemy: b.encounter || b.enemies?.[0]?.id || b.enemyId });
 }
 
 function finishBattleLoss(state) {
@@ -1292,8 +1510,8 @@ function applyRelicsAtBattleStart(state) {
     switch (rel.id) {
       case 'R02': drawCards(state, 1); break;
       case 'R03': b.energy += 1; break;
-      case 'R04': b.statuses.enemy.smoke = (b.statuses.enemy.smoke || 0) + 3; break;
-      case 'R05': b.statuses.enemy.flash = (b.statuses.enemy.flash || 0) + 3; break;
+      case 'R04': for (const e of alive(b)) addStatus(e, 'smoke', 3); break;
+      case 'R05': for (const e of alive(b)) addStatus(e, 'flash', 3); break;
       case 'R12': b.energy += 2; break;
     }
   }
@@ -1310,7 +1528,7 @@ function applyTurnStartPowers(state) {
     } else if (p === 'final_push') {
       b.playerBlock += 3 * stacks;
     } else if (p === 'burn_core') {
-      b.statuses.enemy.burn = (b.statuses.enemy.burn || 0) + 3 * stacks;
+      for (const e of alive(b)) addStatus(e, 'burn', 3 * stacks);
     }
   }
   for (const rel of state.relics) {

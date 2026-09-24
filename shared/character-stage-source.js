@@ -109,16 +109,21 @@ export function clearCharacterStages() {
 // -----------------------------------------------------------------------------
 // WebGL detection
 // -----------------------------------------------------------------------------
+// Probed once: every probe opens a real GL context, and combat re-renders mount
+// up to four stages, which used to exhaust the browser's context budget.
+let webGLAvailable = null;
 function isWebGLAvailable() {
+  if (webGLAvailable !== null) return webGLAvailable;
   try {
     const canvas = document.createElement('canvas');
-    return !!(
-      window.WebGLRenderingContext &&
-      (canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
-    );
+    const gl = window.WebGLRenderingContext &&
+      (canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+    webGLAvailable = !!gl;
+    gl?.getExtension?.('WEBGL_lose_context')?.loseContext();
   } catch (e) {
-    return false;
+    webGLAvailable = false;
   }
+  return webGLAvailable;
 }
 
 // -----------------------------------------------------------------------------
@@ -541,6 +546,9 @@ function createThreeStage(container, side, variant, block) {
       ring.material.dispose();
     });
     renderer.dispose();
+    // Up to four stages remount on every combat render; free the GL context now
+    // instead of waiting for GC so the browser never hits its context limit.
+    try { renderer.forceContextLoss(); } catch {}
     if (canvas.parentNode === container) {
       container.removeChild(canvas);
     }

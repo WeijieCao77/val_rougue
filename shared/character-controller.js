@@ -4,9 +4,11 @@ let hosts = [];
 let scheduled = false;
 
 function targets() {
+  // New demo: one ally slot plus one slot per living enemy (1-3). Dead enemies
+  // keep their panel for layout but get no figure.
   if (document.querySelector('.battle')) return [
-    { element: document.querySelector('.battle .ally-art-container'), side: 'ally', variant: 'tactical', block: Number(document.querySelector('.block-value')?.dataset.block || 0) > 0 },
-    { element: document.querySelector('.battle .enemy-art-container'), side: 'enemy', variant: document.querySelector('.battle .enemy-art-container')?.dataset.characterVariant || 'E01', block: false },
+    { element: document.querySelector('.battle .ally-figure, .battle .ally-art-container'), side: 'ally', variant: 'tactical', block: Number(document.querySelector('.block-value')?.dataset.block || 0) > 0 },
+    ...[...document.querySelectorAll('.battle .enemy-figure:not(.is-dead), .battle .enemy-art-container')].map(element => ({ element, side: 'enemy', variant: element.dataset.characterVariant || 'E01', block: false })),
   ];
   const npc = document.querySelector('.npc-stage[data-npc]');
   if (npc) return [{ element: npc, side: 'npc', variant: npc.dataset.npc, block: false }];
@@ -48,10 +50,14 @@ globalThis.characterStages = {
     refresh();
     if (action.type === 'end') { playCharacterCue('enemy', 'attack'); return; }
     if (action.type !== 'play') return;
-    const enemyDamaged = (next.battle?.enemyHp ?? 0) < (previous.battle?.enemyHp ?? 0);
+    // New-demo battles may hold several enemies; compare roster totals.
+    const roster = b => (Array.isArray(b?.enemies) ? b.enemies : null);
+    const hpOf = b => roster(b) ? roster(b).reduce((s, e) => s + Math.max(0, e.hp), 0) : (b?.enemyHp ?? 0);
+    const guardOf = b => roster(b) ? roster(b).reduce((s, e) => s + (e.statuses?.block || 0), 0) : (b?.statuses?.enemy?.block ?? 0);
+    const enemyDamaged = hpOf(next.battle) < hpOf(previous.battle);
     const enemyGuardBroken = mode === 'wa'
       ? (next.battle?.enemyBlock ?? 0) < (previous.battle?.enemyBlock ?? 0)
-      : (next.battle?.statuses?.enemy?.block ?? 0) < (previous.battle?.statuses?.enemy?.block ?? 0);
+      : guardOf(next.battle) < guardOf(previous.battle);
     const playerBlockGain = mode === 'wa'
       ? (next.battle?.block ?? 0) > (previous.battle?.block ?? 0)
       : (next.battle?.playerBlock ?? 0) > (previous.battle?.playerBlock ?? 0);
