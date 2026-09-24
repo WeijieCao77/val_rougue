@@ -48,6 +48,10 @@ const assets = new Map([
   ['/new/regional-cards.js', ['new-demo/regional-cards.js', 'text/javascript; charset=utf-8']],
   ['/afflictions.js', ['afflictions.js', 'text/javascript; charset=utf-8']],
   ['/shared-route-generator.js', ['shared-route-generator.js', 'text/javascript; charset=utf-8']],
+  ['/shared-unknown-room.js', ['shared-unknown-room.js', 'text/javascript; charset=utf-8']],
+  ['/shared-event-core.js', ['shared-event-core.js', 'text/javascript; charset=utf-8']],
+  ['/new/events.js', ['new-demo/events.js', 'text/javascript; charset=utf-8']],
+  ['/new/rooms.css', ['new-demo/rooms.css', 'text/css; charset=utf-8']],
   ['/new/ui.js', ['new-demo/ui.js', 'text/javascript; charset=utf-8']],
   ['/new/art.js', ['new-demo/art.js', 'text/javascript; charset=utf-8']],
   ['/new/fx.js', ['new-demo/fx.js', 'text/javascript; charset=utf-8']],
@@ -64,6 +68,8 @@ const assets = new Map([
   ['/new/cover.webp', ['new-demo/cover.webp', 'image/webp']],
   ['/new/style.css', ['new-demo/style.css', 'text/css; charset=utf-8']],
   ['/new/season-map.js', ['new-demo/season-map.js', 'text/javascript; charset=utf-8']],
+  ['/new/run-extras.js', ['new-demo/run-extras.js', 'text/javascript; charset=utf-8']],
+  ['/new/run-extras.css', ['new-demo/run-extras.css', 'text/css; charset=utf-8']],
 ]);
 
 const imageTypes = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', svg: 'image/svg+xml' };

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS } from '../new-demo/content.js';
+import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, RELICS, SUPPLIES } from '../new-demo/content.js';
 import * as engine from '../new-demo/engine.js';
 import { createRun, act, legalActions, categoryUpgradeQuote } from '../new-demo/engine.js';
 import { buildMap } from '../new-demo/season-map.js';
@@ -869,4 +869,390 @@ test('group placement on maps is deterministic and covers roughly a third of lat
     }
   }
   assert.ok(groups / later > 0.25 && groups / later < 0.45, `${groups}/${later}`);
+});
+
+// ----------------------------- Team traits -----------------------------
+const withSquad = (s, squad) => { s.battle.squad = squad; return s; };
+const noHit = [{ type: 'block', n: 0 }];
+
+test('每支队伍都有专属特质，开局牌组能触发它', () => {
+  assert.deepEqual(Object.values(TEAMS).map(t => t.trait), ['momentum', 'fortify', 'intel', 'dispatch']);
+  for (const team of Object.keys(TEAMS)) {
+    const run = createRun('trait-' + team, team);
+    const s = act(run, { type: 'enter', key: run.map.starts[0] }).state;
+    assert.equal(s.battle.squad.id, TEAMS[team].trait);
+    const ids = TEAMS[team].startingDeck.map(([id]) => id);
+    if (team === 'breach') assert.ok(ids.filter(id => CARDS[id].type === 'attack').length >= 6);
+    if (team === 'utility') assert.ok(ids.filter(id => CARDS[id].effects.some(e => e.type === 'smoke' || e.type === 'flash')).length >= 4);
+    if (team === 'rotation') assert.ok(ids.some(id => CARDS[id].effects.some(e => e.type === 'stanceSwitch')));
+  }
+});
+
+test('突击势能：每3张攻击牌后，下一张攻击牌伤害翻倍', () => {
+  let s = withSquad(createTestBattle({ handCards: ['TA05', 'TA05', 'TA05', 'TA05', 'TA05', 'TA02'], enemyHp: 100, energy: 3 }), { id: 'momentum', n: 0, armed: false });
+  for (let i = 0; i < 3; i++) s = playCardById(s, 'TA05');
+  assert.equal(s.battle.enemyHp, 88);
+  assert.deepEqual(s.battle.squad, { id: 'momentum', n: 0, armed: true });
+  s = playCardById(s, 'TA02');
+  assert.equal(s.battle.squad.armed, true, 'skills do not spend the charge');
+  s = playCardById(s, 'TA05');
+  assert.equal(s.battle.enemyHp, 80, 'doubled hit: 4×2');
+  assert.deepEqual(s.battle.squad, { id: 'momentum', n: 1, armed: false });
+});
+
+test('工事：敌方回合后剩余布防的一半（向上取整，最多12）保留到下回合', () => {
+  let s = withSquad(createTestBattle({ enemyHp: 50, playerBlock: 16, enemyIntent: [{ type: 'hit', n: 5, times: 1 }] }), { id: 'fortify', kept: 0 });
+  s.battle.enemyScript = [noHit];
+  s = endTurn(s);
+  assert.equal(s.hp, 80);
+  assert.equal(s.battle.playerBlock, 6);
+  assert.equal(s.battle.squad.kept, 6);
+  s.battle.playerBlock = 40;
+  s = endTurn(s);
+  assert.equal(s.battle.playerBlock, 12, 'capped at 12');
+  const plain = endTurn(createTestBattle({ enemyHp: 50, playerBlock: 15, enemyIntent: noHit }));
+  assert.equal(plain.battle.playerBlock, 0, 'other teams lose block as before');
+});
+
+test('情报：每次给予烟雾或闪光+1，满6抽1张牌并获得1能量；范围效果只算一次', () => {
+  let s = withSquad(createTestBattle({ handCards: ['TA66', 'TA12', 'TA66'], drawPile: ['TA01', 'TA01'], enemyHp: 50, energy: 3 }), { id: 'intel', n: 3 });
+  s = playCardById(s, 'TA66');
+  assert.equal(s.battle.squad.n, 5);
+  s = playCardById(s, 'TA12');
+  assert.equal(s.battle.squad.n, 0, 'the 6th point triggers and resets');
+  s = playCardById(s, 'TA66');
+  assert.equal(s.battle.squad.n, 2);
+  assert.equal(s.battle.energy, 3 - 1 - 1 - 1 + 1);
+  assert.equal(s.battle.hand.length, 1, 'drew one card');
+  let g = createGroupBattle('G01', { handCards: ['TA122'], seed: 'intel-group' });
+  g.battle.squad = { id: 'intel', n: 0 };
+  g = act(g, { type: 'play', uid: 'h0' }).state;
+  assert.equal(g.battle.squad.n, 1);
+});
+
+test('机动调度：每回合第一次切换姿态抽1张牌，手动切换不耗能量', () => {
+  let s = withSquad(createTestBattle({ handCards: ['TA64'], drawPile: ['TA01', 'TA01', 'TA01'], enemyHp: 50, energy: 0 }), { id: 'dispatch', used: false });
+  assert.ok(legalActions(s).some(a => a.type === 'stance'), 'free manual switch at 0 energy');
+  s = act(s, { type: 'stance' }).state;
+  assert.equal(s.battle.energy, 0);
+  assert.equal(s.battle.stance, 'push');
+  assert.equal(s.battle.hand.length, 2);
+  s.battle.energy = 1;
+  s = playCardById(s, 'TA64');
+  assert.equal(s.battle.hand.length, 1, 'second switch this turn draws nothing');
+  s.battle.enemyIntent = noHit; s.battle.enemyScript = [noHit];
+  s = endTurn(s);
+  assert.equal(s.battle.squad.used, false, 'resets each turn');
+  const other = createTestBattle({ enemyHp: 50, energy: 0 });
+  assert.ok(!legalActions(other).some(a => a.type === 'stance'), 'others still pay 1');
+});
+
+// ----------------------------- 赛前准备 -----------------------------
+test('赛前准备：按种子给出2个免费、1个代价、1个热身选项，结果可复现', () => {
+  const a = createRun('open-1', 'anchor', { opening: true });
+  const b = createRun('open-1', 'anchor', { opening: true });
+  assert.equal(a.phase, 'opening');
+  assert.deepEqual(a.opening, b.opening);
+  assert.deepEqual(a.opening.options.map(o => o.group), ['free', 'free', 'trade', 'steady']);
+  assert.deepEqual(legalActions(a).map(x => x.choice), a.opening.options.map(o => o.id));
+  const seen = new Set();
+  for (let i = 0; i < 40; i++) for (const o of createRun('open-v' + i, 'breach', { opening: true }).opening.options) seen.add(o.id);
+  assert.ok(seen.size >= 8, 'options vary across seeds');
+  assert.equal(createRun('open-1', 'anchor').phase, 'map', 'without the option runs start on the map');
+});
+
+test('赛前准备：各选项效果与后续选牌阶段', () => {
+  const make = id => { const s = createRun('open-fx', 'breach', { opening: true }); s.opening.options[0] = { id, group: 'free', text: id, cards: id === 'uncommon' ? ['TA22', 'TA27', 'TA29'] : undefined }; return s; };
+  let s = act(make('maxhp'), { type: 'opening', choice: 'maxhp' }).state;
+  assert.equal(s.maxHp, 88); assert.equal(s.hp, 88); assert.equal(s.phase, 'map');
+  s = act(make('gold'), { type: 'opening', choice: 'gold' }).state;
+  assert.equal(s.money, 200);
+  s = act(make('remove'), { type: 'opening', choice: 'remove' }).state;
+  assert.equal(s.phase, 'openingPick');
+  const before = s.deck.length;
+  s = act(s, legalActions(s)[0]).state;
+  assert.equal(s.deck.length, before - 1); assert.equal(s.phase, 'map');
+  s = act(make('upgrade'), { type: 'opening', choice: 'upgrade' }).state;
+  s = act(s, legalActions(s)[0]).state;
+  assert.equal(s.deck.filter(c => c.up).length, 1);
+  s = act(make('uncommon'), { type: 'opening', choice: 'uncommon' }).state;
+  assert.ok(act(s, { type: 'openingPick', id: 'TA01' }).error);
+  s = act(s, { type: 'openingPick', id: 'TA27' }).state;
+  assert.ok(s.deck.some(c => c.id === 'TA27'));
+  const trade = createRun('open-fx', 'breach', { opening: true });
+  trade.opening.options[2] = { id: 'hpForRare', group: 'trade', text: '', cards: ['TA41', 'TA65'] };
+  s = act(trade, { type: 'opening', choice: 'hpForRare' }).state;
+  assert.equal(s.maxHp, 72);
+  s = act(s, { type: 'openingPick', id: null }).state;
+  assert.equal(s.phase, 'map', 'card choices can be skipped');
+  trade.opening.options[2] = { id: 'goldForRelics', group: 'trade', text: '' };
+  s = act(trade, { type: 'opening', choice: 'goldForRelics' }).state;
+  assert.equal(s.money, 0); assert.equal(s.relics.length, 2); assert.notEqual(s.relics[0].id, s.relics[1].id);
+  trade.opening.options[2] = { id: 'curseForRelic', group: 'trade', text: '' };
+  s = act(trade, { type: 'opening', choice: 'curseForRelic' }).state;
+  assert.equal(s.relics.length, 1); assert.ok(s.deck.some(c => STATUS_CARDS[c.id]?.curse));
+  s = act(trade, { type: 'opening', choice: 'warmup' }).state;
+  assert.equal(s.warmup, 3);
+  s = act(s, { type: 'enter', key: s.map.starts[0] }).state;
+  delete s.battle.enemyHp; const e = s.battle.enemies[0];
+  assert.equal(e.maxHp, Math.round(ENEMIES[e.id].hp * 0.7));
+  assert.equal(s.warmup, 2);
+});
+
+// ----------------------------- 难度等级 -----------------------------
+test('难度等级：0级与原版完全一致，各级规则叠加生效', () => {
+  const base = createRun('asc-seed', 'utility');
+  const zero = createRun('asc-seed', 'utility', { ascension: 0 });
+  assert.deepEqual(zero, base);
+  assert.equal(engine.ASCENSION_RULES.length, 11);
+  const a6 = createRun('asc-seed', 'utility', { ascension: 6 });
+  assert.equal(a6.hp, 72); assert.equal(a6.maxHp, 80);
+  assert.equal(engine.restHealAmount(a6), 16);
+  assert.equal(engine.restHealAmount(base), 24);
+  const a9 = createRun('asc-seed', 'utility', { ascension: 9 });
+  assert.equal(a9.deck.length, base.deck.length + 1);
+  assert.ok(STATUS_CARDS[a9.deck.at(-1).id].curse);
+  let e0 = 0, e1 = 0;
+  for (let i = 0; i < 20; i++) for (const a of [1, 2, 3]) {
+    e0 += buildMap('asc-map-' + i, a).nodes.filter(n => n.kind === 'elite').length;
+    e1 += buildMap('asc-map-' + i, a, 1).nodes.filter(n => n.kind === 'elite').length;
+  }
+  assert.ok(e1 > e0 * 1.3, `elites ${e0} -> ${e1}`);
+});
+
+test('难度等级：敌人生命与伤害按类别提高，10级决战对手开局3层火力', () => {
+  const fight = (asc, enemy, kind) => {
+    const run = createRun('asc-fight', 'breach', { ascension: asc });
+    run.map = { nodes: [{ key: 'x', kind, enemy, step: 5 }], edges: [], starts: ['x'], bossId: 'x' };
+    return act(run, { type: 'enter', key: 'x' }).state.battle.enemies[0];
+  };
+  const hits = e => e.script.flat().filter(a => a.type === 'hit').map(a => a.n).sort((x, y) => x - y);
+  const n0 = fight(0, 'E01', 'battle'), n2 = fight(2, 'E01', 'battle'), n7 = fight(7, 'E01', 'battle');
+  assert.deepEqual(hits(n2), hits(n0).map(n => Math.round(n * 1.1)));
+  assert.equal(n2.maxHp, n0.maxHp);
+  assert.equal(n7.maxHp, Math.round(n0.maxHp * 1.1));
+  const el0 = fight(0, 'EL01', 'elite'), el3 = fight(3, 'EL01', 'elite'), el8 = fight(8, 'EL01', 'elite');
+  assert.deepEqual(hits(el3), hits(el0).map(n => Math.round(n * 1.15)));
+  assert.equal(el8.maxHp, Math.round(el0.maxHp * 1.1));
+  const b0 = fight(0, 'B01', 'boss'), b4 = fight(4, 'B01', 'boss'), b10 = fight(10, 'B01', 'boss');
+  assert.deepEqual(hits(b4), hits(b0).map(n => Math.round(n * 1.1)));
+  assert.equal(b0.statuses.strength || 0, 0);
+  assert.equal(b10.statuses.strength, 3);
+  assert.equal(fight(3, 'E01', 'battle').maxHp, n0.maxHp, 'elite rules leave normal fights alone');
+});
+
+// ----------------------------- 装备 / 补给品 / 决战奖励 -----------------------------
+const gear = (s, ...ids) => { for (const id of ids) s.relics.push({ id, name: RELICS[id].name, desc: RELICS[id].desc }); return s; };
+function soloFight(kind, enemy, { seed = 'gear-fight', relics = [], supplies = [], team = 'breach' } = {}) {
+  const run = createRun(seed, team);
+  gear(run, ...relics);
+  run.supplies = supplies.slice();
+  run.map = { nodes: [{ key: 'x', kind, enemy, step: 5 }], edges: [], starts: ['x'], bossId: 'x' };
+  return act(run, { type: 'enter', key: 'x' }).state;
+}
+const winNow = s => { delete s.battle.enemyHp; for (const e of s.battle.enemies) e.hp = 1; s.battle.hand = [{ uid: 'k', id: 'TA121', up: false }]; s.battle.energy = 3; return act(s, { type: 'play', uid: 'k' }).state; };
+
+test('装备与补给品：数量、等级与原创命名', () => {
+  const ids = Object.keys(RELICS);
+  assert.ok(ids.length >= 45 && ids.length <= 50, `${ids.length}`);
+  const count = t => ids.filter(id => RELICS[id].tier === t).length;
+  assert.ok(count('common') >= 10 && count('uncommon') >= 8 && count('rare') >= 6 && count('shop') >= 3);
+  assert.ok(count('boss') >= 10 && count('boss') <= 12);
+  const supplies = Object.keys(SUPPLIES);
+  assert.ok(supplies.length >= 15 && supplies.length <= 20);
+  for (const x of [...Object.values(RELICS), ...Object.values(SUPPLIES)]) {
+    assert.ok(x.name && x.desc, x.id);
+    assert.doesNotMatch(x.name + x.desc, /遗物|药水|无畏契约|VCT/);
+  }
+});
+
+test('精英战胜利必得1件不重复的装备，随机装备按普通/罕见/稀有加权', () => {
+  const s = winNow(soloFight('elite', 'EL01'));
+  assert.equal(s.phase, 'reward');
+  assert.equal(s.relics.length, 1);
+  assert.deepEqual(s.battle.rewardRelics, [s.relics[0].id]);
+  assert.ok(['common', 'uncommon', 'rare'].includes(RELICS[s.relics[0].id].tier));
+  const tally = { common: 0, uncommon: 0, rare: 0 };
+  for (let i = 0; i < 300; i++) tally[RELICS[winNow(soloFight('elite', 'EL01', { seed: 'tier-' + i })).relics[0].id].tier]++;
+  assert.ok(tally.common > tally.uncommon && tally.uncommon > tally.rare && tally.rare > 20, JSON.stringify(tally));
+  let owned = soloFight('elite', 'EL01', { seed: 'dupe' });
+  const all = ['common', 'uncommon', 'rare'].flatMap(t => Object.keys(RELICS).filter(id => RELICS[id].tier === t));
+  gear(owned, ...all.slice(0, -1));
+  owned = winNow(owned);
+  assert.equal(owned.pendingRelics[0], all.at(-1), 'never offers a duplicate (slots are full, so it waits)');
+});
+
+test('幕末决战后从3件决战专属装备中选1件或跳过，然后进入幕间', () => {
+  let s = winNow(soloFight('boss', 'B01'));
+  s = act(s, { type: 'reward', id: null }).state;
+  assert.equal(s.phase, 'bossRelic');
+  const opts = s.bossRelic.options;
+  assert.equal(new Set(opts).size, 3);
+  assert.ok(opts.every(id => RELICS[id].tier === 'boss'));
+  const took = act(s, { type: 'bossRelic', id: opts[0] }).state;
+  assert.equal(took.phase, 'intermission');
+  assert.ok(took.relics.some(r => r.id === opts[0]));
+  assert.ok(took.checkpoint.relics.some(r => r.id === opts[0]));
+  const skipped = act(s, { type: 'bossRelic', id: null }).state;
+  assert.equal(skipped.phase, 'intermission');
+  assert.ok(act(s, { type: 'bossRelic', id: 'R02' }).error);
+});
+
+test('决战装备：能量+1、抽牌变化与代价', () => {
+  let s = soloFight('battle', 'E01', { relics: ['R40'] });
+  assert.equal(s.battle.energy, 4);
+  assert.equal(s.battle.hand.length, 4, '超频战术背包 draws one fewer');
+  s = soloFight('battle', 'E01', { relics: ['R43'] });
+  assert.equal(s.battle.hand.length, 6);
+  assert.equal(s.battle.drawPile.filter(c => c.id === 'ST01').length, 2);
+  s = soloFight('battle', 'E01', { relics: ['R44'] });
+  assert.equal(s.hp, 75); assert.equal(s.battle.energy, 4);
+  const rest = gear(createRun('no-rest'), 'R42'); rest.phase = 'rest';
+  assert.ok(!legalActions(rest).some(a => a.choice === 'heal'));
+  assert.ok(act(rest, { type: 'rest', choice: 'heal' }).error);
+  s = soloFight('battle', 'E01', { relics: ['R45'] });
+  s.battle.hand = Array.from({ length: 8 }, (_, i) => ({ uid: 'q' + i, id: 'TA05', up: false }));
+  delete s.battle.enemyHp; s.battle.enemies[0].hp = 999;
+  for (let i = 0; i < 6; i++) s = act(s, { type: 'play', uid: 'q' + i }).state;
+  assert.ok(!legalActions(s).some(a => a.type === 'play'), 'at most 6 cards per turn');
+  const zero = winNow(soloFight('battle', 'E01', { relics: ['R48'] }));
+  assert.equal(zero.money, 100, '零薪合约: no combat gold');
+});
+
+test('装备效果：双发扳机、抗冲击背心、反应装甲、快速弹匣、急救自注射器、预案卡', () => {
+  let s = soloFight('battle', 'E01', { relics: ['R30'] });
+  delete s.battle.enemyHp; s.battle.enemies[0].hp = 100; s.battle.enemies[0].statuses = {};
+  s.battle.hand = [{ uid: 'a', id: 'TA19', up: false }, { uid: 'b', id: 'TA19', up: false }];
+  s.battle.stance = 'cover';
+  s = act(s, { type: 'play', uid: 'a' }).state;
+  assert.equal(s.battle.enemyHp, 100 - 18, 'first attack resolves twice');
+  s = act(s, { type: 'play', uid: 'b' }).state;
+  assert.equal(s.battle.enemyHp, 100 - 27);
+
+  s = soloFight('battle', 'E01', { relics: ['R31', 'R16'] });
+  delete s.battle.enemyHp; const e = s.battle.enemies[0];
+  e.intent = [{ type: 'hit', n: 20, times: 1 }]; e.script = [[{ type: 'block', n: 0 }]]; e.statuses = {}; e.hp = 50;
+  s.battle.hand = []; s.battle.playerBlock = 0;
+  s = act(s, { type: 'end' }).state;
+  assert.equal(s.hp, 79, 'vest turns the first hit into 1');
+  assert.equal(s.battle.enemyHp, 47, 'reactive armour hits back for 3');
+
+  s = soloFight('battle', 'E01', { relics: ['R26'] });
+  delete s.battle.enemyHp; s.battle.enemies[0].intent = [{ type: 'block', n: 0 }];
+  s.battle.hand = [{ uid: 'c1', id: 'TA05', up: false }, { uid: 'c2', id: 'TA10', up: false }];
+  s = act(s, { type: 'end' }).state;
+  assert.ok(s.battle.hand.some(c => c.uid === 'c2'), 'priciest card kept');
+  assert.ok(!s.battle.hand.some(c => c.uid === 'c1'));
+
+  s = soloFight('battle', 'E01', { relics: ['R34'] });
+  s.hp = 3;
+  delete s.battle.enemyHp; s.battle.enemies[0].intent = [{ type: 'hit', n: 30, times: 1 }]; s.battle.enemies[0].statuses = {};
+  s.battle.hand = [];
+  s = act(s, { type: 'end' }).state;
+  assert.equal(s.phase, 'combat');
+  assert.equal(s.hp, 40);
+  assert.ok(s.relics.find(r => r.id === 'R34').used);
+
+  s = soloFight('battle', 'E01', { relics: ['R29'] });
+  const pricey = s.battle.hand.reduce((m, c) => (CARDS[c.id].cost > CARDS[m.id].cost ? c : m));
+  assert.equal(pricey.free, true);
+});
+
+test('补给品：掉落概率40%起并±10，栏位满时可替换或放弃', () => {
+  let s = soloFight('battle', 'E01', { seed: 'drop-a' });
+  s.supplyChance = 100;
+  s = winNow(s);
+  assert.equal(s.supplies.length, 1);
+  assert.equal(s.supplyChance, 90);
+  s = soloFight('battle', 'E01', { seed: 'drop-b' });
+  s.supplyChance = 0;
+  s = winNow(s);
+  assert.equal(s.supplies.length, 0);
+  assert.equal(s.supplyChance, 10);
+  assert.equal(createRun('x').supplyChance, 40);
+  s = soloFight('battle', 'E01', { seed: 'drop-c', supplies: ['P01', 'P02', 'P03'] });
+  s.supplyChance = 100;
+  s = winNow(s);
+  const found = s.battle.rewardSupply;
+  assert.ok(found);
+  assert.deepEqual(legalActions(s).filter(a => a.type === 'takeSupply').map(a => a.replace), [0, 1, 2]);
+  const replaced = act(s, { type: 'takeSupply', replace: 1 }).state;
+  assert.deepEqual(replaced.supplies, ['P01', found, 'P03']);
+  const skipped = act(s, { type: 'reward', id: null }).state;
+  assert.deepEqual(skipped.supplies, ['P01', 'P02', 'P03']);
+  const dropped = act(skipped, { type: 'discardSupply', index: 0 }).state;
+  assert.deepEqual(dropped.supplies, ['P02', 'P03']);
+});
+
+test('补给品：战斗中使用，需目标的在多名敌人时必须选目标', () => {
+  let s = createGroupBattle('G01', { seed: 'supply-group' });
+  s.supplies = ['P09', 'P03', 'P01'];
+  s.hp = 50;
+  assert.match(act(s, { type: 'useSupply', index: 0 }).error, /目标/);
+  s = act(s, { type: 'useSupply', index: 0, target: 'e1' }).state;
+  assert.equal(s.battle.enemies[1].statuses.vuln, 3);
+  assert.deepEqual(s.supplies, ['P03', 'P01']);
+  const hp = s.battle.enemies.map(e => e.hp);
+  s = act(s, { type: 'useSupply', index: 0 }).state;
+  assert.deepEqual(s.battle.enemies.map(e => e.hp), hp.map((h, i) => Math.max(0, h - (i === 1 ? 15 : 10))));
+  s = act(s, { type: 'useSupply', index: 0 }).state;
+  assert.equal(s.hp, 62);
+  assert.equal(s.supplies.length, 0);
+  const outside = createRun('out'); outside.supplies = ['P01'];
+  assert.ok(act(outside, { type: 'useSupply', index: 0 }).error, 'only in combat');
+});
+
+test('补给站：卖2件随机装备+1件补给站专属装备和3件补给品，会员卡打八折', () => {
+  let s = createRun('shop-gear');
+  s.money = 1000;
+  s.map = { nodes: [{ key: 'sh', kind: 'shop', step: 6 }], edges: [], starts: ['sh'], bossId: 'x' };
+  s = act(s, { type: 'enter', key: 'sh' }).state;
+  assert.equal(s.shop.relics.length, 3);
+  assert.equal(RELICS[s.shop.relics[2].id].tier, 'shop');
+  assert.equal(s.shop.supplies.length, 3);
+  const shopOnly = s.shop.relics[2];
+  s = act(s, { type: 'buyRelic', index: 2 }).state;
+  assert.equal(s.money, 1000 - shopOnly.price);
+  assert.ok(s.relics.some(r => r.id === shopOnly.id));
+  const before = s.money;
+  const withCard = gear(s, 'R36');
+  const item = withCard.shop.supplies[0];
+  const next = act(withCard, { type: 'buySupply', index: 0 }).state;
+  assert.equal(next.money, before - Math.floor(item.price * 0.8));
+  assert.equal(next.supplies.length, 1);
+  next.supplies = ['P01', 'P01', 'P01'];
+  assert.match(act(next, { type: 'buySupply', index: 0 }).error, /栏位/);
+});
+
+test('装备槽：最多6件，槽满时替换（按品级折算金币）或放弃新装备，随时可出售', () => {
+  let s = soloFight('elite', 'EL01', { seed: 'slots', relics: ['R02', 'R03', 'R13', 'R01', 'R06', 'R40'] });
+  assert.equal(engine.RELIC_SLOTS, 6);
+  s = winNow(s);
+  assert.equal(s.relics.length, 6);
+  assert.equal(s.pendingRelics.length, 1);
+  const newcomer = s.pendingRelics[0];
+  const legal = legalActions(s);
+  assert.deepEqual(legal.map(a => a.type), ['declineRelic', ...Array(6).fill('replaceRelic')]);
+  assert.match(act(s, { type: 'reward', id: null }).error, /新装备/);
+  const money = s.money;
+  const replaced = act(s, { type: 'replaceRelic', index: 5 }).state;
+  assert.equal(replaced.money, money + 50, 'boss piece sells for 50');
+  assert.ok(!replaced.relics.some(r => r.id === 'R40'));
+  assert.ok(replaced.relics.some(r => r.id === newcomer));
+  assert.equal(replaced.pendingRelics.length, 0);
+  const declined = act(s, { type: 'declineRelic' }).state;
+  assert.equal(declined.money, money);
+  assert.ok(!declined.relics.some(r => r.id === newcomer));
+  const sold = act(declined, { type: 'sellRelic', index: 0 }).state;
+  assert.equal(sold.money, money + 15, 'common sells for 15');
+  assert.equal(sold.relics.length, 5);
+  assert.equal(engine.relicSellValue('R06'), 40);
+  assert.equal(engine.relicSellValue('R01'), 25);
+  // Shop gear needs a free slot.
+  const shop = gear(createRun('slot-shop'), 'R02', 'R03', 'R13', 'R01', 'R06', 'R40');
+  shop.money = 999;
+  shop.map = { nodes: [{ key: 'sh', kind: 'shop', step: 6 }], edges: [], starts: ['sh'], bossId: 'x' };
+  const inShop = act(shop, { type: 'enter', key: 'sh' }).state;
+  assert.ok(!legalActions(inShop).some(a => a.type === 'buyRelic'));
+  assert.match(act(inShop, { type: 'buyRelic', index: 0 }).error, /装备槽已满/);
 });

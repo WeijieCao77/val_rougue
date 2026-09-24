@@ -303,6 +303,9 @@ function chooseAction(state) {
       return chooseEventUpgradeCardAction(state);
     case 'eventCleanse':
       return chooseEventCleanseCardAction(state);
+    case 'eventPick':
+    case 'crate':
+      return legalActions(state)[0] || null;
     default:
       return null;
   }

@@ -14,7 +14,7 @@ export const ROLES = ['决斗','哨位','控场','先锋','自由人'];
 export const TRAIT_TUNING = {
  CN:{roles:3,energy:2,draw:1},
  AM:{nth:2,bonus:3,vuln:1,perHit:true},
- EMEA:{block:1,draw:1},
+ EMEA:{block:2,draw:1},
  PAC:{every:3,energy:1,draw:0}
 };
 const T = TRAIT_TUNING;
@@ -137,7 +137,7 @@ export const GEAR_SELL = {common:15,uncommon:25,rare:40,boss:50,shop:30};
 // stronger, so the opponents — not the new content — absorb that power.
 // Keyed by act, then opponent kind.
 export const ENEMY_TUNING = {
- 1:{normal:{hp:1.35,dmg:1.4},elite:{hp:1.4,dmg:1.4},boss:{hp:1.4,dmg:1.35}},
- 2:{normal:{hp:1.4,dmg:1.3},elite:{hp:1.4,dmg:1.3},boss:{hp:1.4,dmg:1.25}},
- 3:{normal:{hp:1.6,dmg:1.45},elite:{hp:1.6,dmg:1.45},boss:{hp:1.6,dmg:1.4}}
+ 1:{normal:{hp:1.42,dmg:1.45},elite:{hp:1.45,dmg:1.45},boss:{hp:1.45,dmg:1.4}},
+ 2:{normal:{hp:1.5,dmg:1.38},elite:{hp:1.5,dmg:1.38},boss:{hp:1.5,dmg:1.32}},
+ 3:{normal:{hp:1.7,dmg:1.52},elite:{hp:1.7,dmg:1.52},boss:{hp:1.7,dmg:1.47}}
 };

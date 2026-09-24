@@ -46,7 +46,8 @@ button.supply-slot:hover{background:#21403f;border-color:#ffd58a}
 .gear-cell .status-svg{width:12px;height:12px;color:var(--rarity,#ffd58a)}.gear-cell.empty{border-style:dashed;opacity:.5}
 .gear-offer .choice h3 .status-svg{color:var(--rarity,#ffd58a)}
 @media(max-width:720px){
- .gear-slots{padding:2px;gap:1px}.gear-cell{width:11px;height:14px}.gear-cell .status-svg{width:9px;height:9px}
+ .gear-slots{display:inline-grid;grid-template-columns:repeat(3,9px);padding:2px;gap:1px}.gear-cell{width:9px;height:9px;border-radius:2px}.gear-cell .status-svg{width:7px;height:7px}
+ .hud-resources{gap:4px}
  .hud-resources .hud-link[data-ui='gear'],.hud-resources .hud-link[data-ui='supplies']{display:none}
  .asc-levels{gap:3px}.asc-level{padding:5px 0;font-size:11px}
  .supply-bar{gap:3px}.supply-slot{width:34px;height:34px}.supply-slot small{display:none}
@@ -54,3 +55,4 @@ button.supply-slot:hover{background:#21403f;border-color:#ffd58a}
  .trait-tag.region-trait{font-size:10px;padding:2px 6px}.trait-count{font-size:10px;min-width:22px}
  .market-row{grid-template-columns:1fr 1fr;gap:8px}.market-item{padding:10px 8px}.market-item h4{font-size:12px;padding-right:40px}.market-item p{font-size:11px}
 }
+@media(max-width:420px){.game-hud .hud-tools .hud-link{padding:4px 2px}}

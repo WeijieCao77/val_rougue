@@ -6,6 +6,8 @@ import { dirname } from 'node:path';
 import { createWaSeason, waAct, waLegalActions } from '../wa-season.js';
 import { CARDS, REGIONS, effects } from '../content.js';
 import { ENEMY_TUNING, TRAIT_TUNING, GEAR } from '../wa-rules.js';
+import { describeSeasonEvent } from '../engine.js';
+import { WA_EVENTS } from '../wa-events.js';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, v, i, all) => (v.startsWith('--') ? [...acc, [v.slice(2), all[i + 1]]] : acc), []));
 const SEEDS = Number(args.seeds || 6);
@@ -17,6 +19,7 @@ if (args.tune) { const t = JSON.parse(args.tune); for (const [act, kinds] of Obj
 // --trait '{"PAC":{"every":4}}' overrides region trait numbers for balance sweeps.
 if (args.trait) { const t = JSON.parse(args.trait); for (const [r, v] of Object.entries(t)) Object.assign(TRAIT_TUNING[r], v); }
 const ASC = Number(args.asc || 0);
+const SKIP_EVENTS = args.events === 'skip'; // --events skip: always decline events (A/B against older runs)
 
 const step = (s, a) => { const r = waAct(s, a); if (r.error) throw Error(`${JSON.stringify(a)}: ${r.error}`); r.state.logs = []; return r.state; };
 const legal = s => waLegalActions(s).map(({ rev, ...a }) => a);
@@ -44,6 +47,35 @@ function searchTurn(s, budget = 2000) {
 const effValue = e => e.type === 'combo' ? effValue(e.effect) * 0.7 : e.type === 'hit' ? e.n * e.times + (e.ifVuln || e.ifBurn || 0) * 0.5 : e.type === 'block' ? e.n * 0.8 : e.type === 'draw' ? e.n * 3 : e.type === 'weak' || e.type === 'vulnerable' ? e.n * 3 : e.type === 'burn' ? e.n * 2.2 : e.type === 'deploy' ? e.n * e.turns * 0.8 : e.type === 'overload' ? -4 * e.n : e.type === 'strength' ? 5 * e.n : ['burnMultiply', 'detonate', 'bodyslam', 'fireTurrets'].includes(e.type) ? 7 : 2;
 const hitValue = id => (CARDS[id]?.effects || []).reduce((v, e) => v + effValue(e), 0) / ((CARDS[id]?.cost ?? 1) + 0.8);
 
+// Static expected value of an event option, read from its ops (no peeking at
+// seeded gamble outcomes).
+function opsValue(s, ops) {
+  const hpPct = s.hp / s.maxHp;
+  let v = 0;
+  for (const op of ops || []) {
+    if (op.money) v += op.money * 0.25;
+    if (op.hp > 0) v += Math.min(op.hp, s.maxHp - s.hp) * 0.8;
+    if (op.hp < 0) v += op.hp * (hpPct < 0.5 ? 1.6 : 1);
+    if (op.healPct) v += Math.min(Math.ceil(s.maxHp * op.healPct), s.maxHp - s.hp) * 0.8;
+    if (op.maxHp) v += op.maxHp * (op.maxHp > 0 ? 1.5 : 2);
+    if (op.equip) v += s.skins.length < 3 ? 20 : op.equip.fallback * 0.25;
+    if (op.curse) v -= 15;
+    if (op.card) v += { rare: 9, uncommon: 6, common: 3 }[op.card] || 5;
+    if (op.upgradeRandom) v += op.upgradeRandom * 5;
+    if (op.transformRandom) v += op.transformRandom;
+    if (op.pick) v += { upgrade: 7, remove: 8, transform: 3, duplicate: 6, cleanse: 14 }[op.pick] || 0;
+    if (op.gamble) v += op.gamble.p * opsValue(s, op.gamble.win) + (1 - op.gamble.p) * opsValue(s, op.gamble.lose);
+    if (op.fight) v += hpPct > 0.7 ? 10 + opsValue(s, op.bonus) : -30;
+    if (op.special) v -= 1;
+  }
+  return v;
+}
+function pickCard(s, kind, uids) {
+  const val = uid => { const c = s.deck.find(x => x.uid === uid); return c.id.startsWith('CU') ? -20 : hitValue(c.id) + (c.up ? 1 : 0); };
+  const sorted = [...uids].sort((a, b) => val(a) - val(b));
+  return ['remove', 'transform', 'cleanse'].includes(kind) ? sorted[0] : sorted[sorted.length - 1];
+}
+
 function playRun(seed, region) {
   let s = RULES ? createWaSeason(seed, false, region, seed, { rules: RULES, ascension: ASC }) : createWaSeason(seed, false, region, seed);
   const log = { seed, region, fights: [], result: null, opening: null, gear: [], suppliesUsed: 0 };
@@ -59,12 +91,12 @@ function playRun(seed, region) {
     }
     if (fight && s.phase === 'combat' && fight.turns >= 60) { log.result = 'stalled'; log.diedAt = fight.enemy; break; }
     if (s.phase === 'intermission') { if (s.act >= ACTS) { log.result = 'act-clear'; break; } s = step(s, { type: 'nextAct' }); continue; }
-    const acts = legal(s);
+    const acts = legal(s).filter(a => a.type !== 'sellGear' && a.type !== 'discardSupply'); // the bot never sells gear or throws supplies away
     if (s.phase === 'map') {
       const moves = acts.filter(a => a.type === 'chooseNode');
       const nodes = moves.map(a => s.map.nodes.find(n => n.key === a.key));
       const pct = s.hp / s.maxHp;
-      const rank = n => ({ elite: pct > 0.7 ? 5 : -3, rest: pct < 0.5 ? 6 : 1, shop: s.money >= 90 ? 4 : 0, event: 3, battle: 2.5, boss: 9 }[n.kind] ?? 0);
+      const rank = n => ({ elite: pct > 0.7 ? 5 : -3, rest: pct < 0.5 ? 6 : 1, shop: s.money >= 90 ? 4 : 0, event: 3, crate: 4, battle: 2.5, boss: 9 }[n.kind] ?? 0);
       const i = nodes.map(rank).reduce((bi, v, j, arr) => (v > arr[bi] ? j : bi), 0);
       s = step(s, moves[i]);
       if (s.phase === 'combat') fight = { act: s.act, enemy: s.battle.enemy, hp0: s.hp, turns: 0 };
@@ -111,10 +143,31 @@ function playRun(seed, region) {
       s = step(s, a);
       continue;
     }
-    if (['upgrade', 'eventUpgrade'].includes(s.phase)) { s = step(s, acts.find(a => a.uid) || acts[acts.length - 1]); continue; }
-    if (['cleanse', 'eventCleanse'].includes(s.phase)) { s = step(s, acts.find(a => a.uid) || acts[acts.length - 1]); continue; }
-    if (s.phase === 'trial') { s = step(s, acts.find(a => a.id === null)); continue; }
-    if (s.phase === 'event') { s = step(s, acts.find(a => a.choice === 'skip') || acts[0]); continue; }
+    if (['upgrade', 'cleanse'].includes(s.phase)) { s = step(s, acts.find(a => a.uid) || acts[acts.length - 1]); continue; }
+    if (['eventUpgrade', 'eventCleanse', 'eventPick'].includes(s.phase)) {
+      const view = describeSeasonEvent(s);
+      s = step(s, { type: s.phase, uid: pickCard(s, view.pending.kind, view.pending.candidates) });
+      continue;
+    }
+    if (s.phase === 'crate') {
+      const ups = acts.filter(a => a.type === 'crateUpgrade');
+      s = step(s, ups.length ? { type: 'crateUpgrade', uid: pickCard(s, 'upgrade', ups.map(a => a.uid)) } : acts[0]);
+      continue;
+    }
+    if (s.phase === 'trial') {
+      const best = [...s.eventOffers].sort((x, y) => hitValue(y) - hitValue(x))[0];
+      s = step(s, { type: 'trial', id: best && hitValue(best) > 6 ? best : null });
+      if (s.phase === 'event') s = step(s, { type: 'seasonEvent', choice: 'skip' });
+      continue;
+    }
+    if (s.phase === 'event') {
+      const opts = WA_EVENTS[s.eventId].options.filter(o => acts.some(a => a.choice === o.id));
+      const best = opts.map(o => ({ o, v: opsValue(s, o.ops) })).sort((x, y) => y.v - x.v)[0];
+      (log.events ||= []).push(`${s.eventId}:${!SKIP_EVENTS && best && best.v > 0 ? best.o.id : 'skip'}`);
+      s = step(s, { type: 'seasonEvent', choice: !SKIP_EVENTS && best && best.v > 0 ? best.o.id : 'skip' });
+      if (s.phase === 'combat') fight = { act: s.act, enemy: s.battle.enemy, hp0: s.hp, turns: 0, fromEvent: true };
+      continue;
+    }
     throw Error('unhandled phase ' + s.phase);
   }
   log.deck = s.deck.map(c => c.id);

@@ -1,0 +1,38 @@
+/* Event scenes, card picks and supply crates (new demo). */
+.event-room, .crate-room { justify-content: flex-start; padding-top: 2.5rem; max-width: 1100px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+.event-scene { max-width: 640px; text-align: center; line-height: 1.7; color: var(--text, #e8edf2); font-size: 1.02rem; margin: 0; }
+.event-options { display: flex; flex-direction: column; gap: .75rem; width: 100%; max-width: 620px; }
+.event-option { display: flex; flex-direction: column; align-items: flex-start; gap: .3rem; text-align: left; width: 100%; padding: .9rem 1.1rem; background: var(--panel); color: inherit; border: 1px solid var(--border-bright); border-left: 4px solid var(--ops-amber, var(--amber)); border-radius: var(--radius); cursor: pointer; font: inherit; transition: var(--transition); }
+.event-option strong { font-size: 1.05rem; color: var(--mint); }
+.event-option-effects { color: var(--text-dim); font-size: .92rem; line-height: 1.5; }
+.event-option:not([disabled]):hover, .event-option:not([disabled]):focus-visible { transform: translateX(4px); border-color: var(--mint-dark); box-shadow: 0 4px 14px var(--mint-glow); }
+.event-option.is-disabled { opacity: .5; cursor: not-allowed; border-left-color: var(--border-bright); }
+.event-option.is-disabled strong { color: var(--text-dim); }
+.event-option-reason { color: #f1a3a3; font-size: .82rem; }
+.event-status { color: var(--text-dim); font-size: .85rem; }
+.event-effects { color: var(--text-dim); text-align: center; margin: 0; }
+.event-pick-grid { display: flex; flex-wrap: wrap; gap: .8rem; justify-content: center; max-height: 60vh; overflow-y: auto; padding: .4rem; }
+.event-pick-card { display: flex; flex-direction: column; align-items: center; gap: .3rem; background: none; border: 0; padding: 0; color: inherit; cursor: pointer; font: inherit; }
+.event-pick-verb { font-size: .8rem; color: var(--amber); }
+
+.crate-box { position: relative; width: 150px; height: 110px; margin: 1.8rem 0 .6rem; }
+.crate-box .crate-body { position: absolute; inset: 30px 0 0 0; border-radius: 6px; background: repeating-linear-gradient(90deg, #6b5330 0 18px, #5d4829 18px 20px); border: 3px solid #c49c50; box-shadow: inset 0 0 0 6px rgba(0,0,0,.18); }
+.crate-box .crate-body::after { content: ''; position: absolute; left: 50%; top: 18%; width: 26px; height: 20px; margin-left: -13px; border-radius: 3px; background: #2dd4bf; box-shadow: 0 0 10px rgba(45,212,191,.6); }
+.crate-box .crate-lid { position: absolute; left: -6px; right: -6px; top: 10px; height: 26px; border-radius: 6px 6px 3px 3px; background: #7d6139; border: 3px solid #c49c50; transform-origin: 10% 100%; transition: transform .5s cubic-bezier(.3,1.4,.5,1); }
+.crate-box.is-open .crate-lid { transform: rotate(-16deg) translate(-4px,-8px); }
+.crate-box.crate-small { transform: scale(.8); }
+.crate-box.crate-large { transform: scale(1.2); }
+.crate-box.crate-large .crate-body, .crate-box.crate-large .crate-lid { border-color: #f6d989; }
+.crate-loot { display: flex; flex-direction: column; gap: .6rem; width: 100%; max-width: 520px; }
+.crate-loot-item { display: flex; align-items: center; gap: .8rem; padding: .7rem 1rem; background: var(--panel); border: 1px solid var(--border-bright); border-radius: var(--radius); }
+.crate-loot-item b { color: var(--amber); font-size: 1.15rem; }
+.crate-loot-item span { color: var(--text-dim); font-size: .9rem; }
+.crate-relic > div:last-child { display: flex; flex-direction: column; gap: .2rem; }
+.crate-relic-art { width: 96px; flex: 0 0 96px; }
+.crate-relic-art svg { width: 100%; height: auto; display: block; }
+.map-node.kind-crate circle { stroke: #c49c50; }
+.map-node.kind-crate.available circle { fill: #6b5330; stroke: #f6d989; }
+@media (max-width: 600px) {
+  .event-room, .crate-room { padding: 1.2rem 16px; }
+  .event-scene { font-size: .95rem; }
+}

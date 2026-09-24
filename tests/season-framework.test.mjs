@@ -91,6 +91,7 @@ test('all four regions complete the 36-room state machine (combat victories are 
    else if(s.phase==='skin')s=step(s,{type:'skin',id:s.reward.skins[0]});
    else if(s.phase==='event')s=step(s,{type:'seasonEvent',choice:'skip'});
    else if(s.phase==='shop')s=step(s,{type:'leaveShop'});
+   else if(s.phase==='crate')s=step(s,{type:'crate',choice:s.crate.opened?'leave':'open'});
    else if(s.phase==='activity')s=step(s,{type:'activity',choice:'upgrade'});
    else if(s.phase==='upgrade')s=step(s,{type:'upgrade',uid:s.deck.find(c=>CARDS[c.id].trainable&&!c.up).uid});
    else if(s.phase==='intermission')s=step(s,{type:'nextAct'});
