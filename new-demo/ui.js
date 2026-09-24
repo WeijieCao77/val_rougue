@@ -1,7 +1,8 @@
 import { createRun, act, legalActions, observe, preview, describeIntent, describeIntents, battleEnemies, livingEnemies, cardNeedsTarget, cardHitsAll, categoryUpgradeQuote, shopPrice, ASCENSION_RULES, MAX_ASCENSION, restHealAmount, removePrice, baseEnergy, supplySlots, hasRelic, RELIC_SLOTS, relicSellValue, describeEvent } from './engine.js';
 import { squadChipHtml, traitTagHtml, teamTrait, TRAIT_ICONS, loadAscensionUnlocks, recordAscensionWin, equipIconHtml, supplyGlyphHtml, equipTileHtml, supplyTileHtml, TIER_COLORS } from './run-extras.js';
 import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS, TRAITS, FIELDS, ARCHETYPES, SUPPLIES, SUPPLY_IDS, EQUIP_TIERS } from './content.js';
-import { statusBadges, statusBadge, statusIcon, highlightKeywords } from '/shared/status-icons.js';
+import { statusBadges, statusBadge, statusIcon, highlightKeywords, keywordRules } from '/shared/status-icons.js';
+import { attachCardDetail, showDragHint, hideDragHint } from '/shared/touch-feel.js';
 import { ACTS } from './season-map.js';
 import { cardArt, combatArt, relicArt } from './art.js';
 import { tacticalCard } from './tactical-card.js';
@@ -105,8 +106,33 @@ function cardHtml(id, { up = false, cost, badge, extraClass } = {}) {
   if (!def) return '';
   const text = up && def.upgradeText ? def.upgradeText : def.text;
   const shownCost = cost ?? (up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost);
-  return tacticalCard(def, { up, cost: shownCost, text: highlightKeywords(text), tagLabel: tagLabel(def), badge, extraClass });
+  // data-card-id/-up let a long press on any card open its detail sheet.
+  return tacticalCard(def, { up, cost: shownCost, text: highlightKeywords(text), tagLabel: tagLabel(def), badge, extraClass })
+    .replace('<article ', `<article data-card-id="${escapeHtml(id)}" data-card-up="${up ? 'true' : 'false'}" `);
 }
+
+// Long-press sheet: the full-size card, complete text, keyword rules and the upgraded version.
+function cardDetailHtml(el) {
+  const id = el.dataset.cardId;
+  const up = el.dataset.cardUp === 'true';
+  const def = getCardDefinition(id);
+  if (!def) return '';
+  const d = getCardDisplay({ id }, up);
+  const upText = !up && def.upgradeText && def.upgradeText !== def.text ? def.upgradeText : '';
+  const upCost = !up && def.upgradeCost !== undefined && def.upgradeCost !== def.cost ? def.upgradeCost : null;
+  const extra = [def.exhaust ? '消耗' : '', def.retain ? '保留' : ''].join(' ');
+  const rules = keywordRules(`${d.text} ${upText} ${extra}`);
+  const art = cardHtml(id, { up }).replace(/ data-card-id="[^"]*"/, '');
+  return `<div class="card-sheet-body"><div class="card-sheet-art new-sheet-art">${art}</div><div class="card-sheet-info">
+    <h3>${escapeHtml(d.name)}${up ? ' +' : ''}</h3>
+    <p class="card-sheet-meta">${d.cost === null || d.cost === undefined ? '不能打出' : `${escapeHtml(d.cost)} 费`} · ${escapeHtml(typeMap[d.type] || d.type || '')}${tagMap[d.tag] ? ` · ${escapeHtml(tagMap[d.tag])}` : ''}${rarityMap[d.rarity] ? ` · ${escapeHtml(rarityMap[d.rarity])}` : ''}</p>
+    <p class="card-sheet-text">${highlightKeywords(d.text)}</p>
+    ${d.detail ? `<p class="card-sheet-scene">${escapeHtml(d.detail)}</p>` : ''}
+    ${rules.length ? `<dl class="card-sheet-keywords">${rules.map(([k, v]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`).join('')}</dl>` : ''}
+    ${up ? '<p class="card-sheet-upgrade"><b>已升级</b>这是升级后的版本。</p>' : upText || upCost !== null ? `<p class="card-sheet-upgrade"><b>升级后</b>${upCost !== null ? `${escapeHtml(upCost)} 费 · ` : ''}${highlightKeywords(upText || d.text)}</p>` : ''}
+  </div></div>`;
+}
+attachCardDetail({ selector: '[data-card-id]', render: cardDetailHtml });
 
 function describeCardFull(card) {
   const d = getCardDisplay(card, card.up);
@@ -831,7 +857,14 @@ function renderCombat(root) {
       selectedCardUid = card.uid; el.classList.add('selected');
       if (needsPick(card)) { battleEl.classList.add('aiming'); root.querySelectorAll('.enemy-unit:not(.is-dead)').forEach(u => u.classList.add('targetable')); }
     },
-    onMove: (card, point) => { clearDrop(); zoneAt(point, card)?.classList.add('drop-ready'); },
+    onMove: (card, point) => {
+      clearDrop();
+      const zone = zoneAt(point, card);
+      zone?.classList.add('drop-ready');
+      const name = zone?.dataset.enemyUid ? zone.querySelector('.enemy-name')?.textContent?.trim() : '';
+      const text = zone ? `松手打出${name ? ` → ${name}` : ''}` : needsPick(card) ? '拖到敌人身上' : '向上拖出手牌区';
+      showDragHint(text, { ready: !!zone, x: point.x, y: point.y, lift: point.lift });
+    },
     onDrop: (card, point) => {
       const zone = zoneAt(point, card); clearDrop();
       if (!zone || presentationBusy || !playableUids.has(card.uid)) return false;
@@ -840,7 +873,7 @@ function renderCombat(root) {
       return dispatch(target && cardNeedsTarget(card) ? { type: 'play', uid: card.uid, target } : { type: 'play', uid: card.uid });
     },
     onEnd: (card, point, landed) => {
-      clearDrop();
+      clearDrop(); hideDragHint();
       if (!landed && !aimCard) { battleEl.classList.remove('aiming'); root.querySelectorAll('.enemy-unit.targetable').forEach(u => u.classList.remove('targetable')); }
     },
   });

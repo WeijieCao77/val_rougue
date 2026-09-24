@@ -14447,6 +14447,13 @@ function record(name, status) {
   if (debugOn()) try { console.debug(`[sfx] ${name} (${status})`); } catch {}
 }
 
+// Short vibration on phones for the physical moments (play, hit, hurt). Tied to
+// playSfx so muting the sound (or volume 0) also turns vibration off.
+const HAPTICS = { cardAttack: 12, cardSkill: 8, cardPower: [8, 40, 8], hit: 16, hitHeavy: [26, 30, 26], multiHit: [10, 24, 10, 24, 10], hurt: 32, enemyDeath: [20, 40, 30] };
+function buzz(name) {
+  try { if (HAPTICS[name] && hasWindow && navigator.vibrate && navigator.userActivation?.hasBeenActive !== false) navigator.vibrate(HAPTICS[name]); } catch {}
+}
+
 function playSfx(name, { delay = 0 } = {}) {
   try {
     if (!RECIPES[name]) return false;
@@ -14456,6 +14463,7 @@ function playSfx(name, { delay = 0 } = {}) {
     if (now - (lastPlayed.get(name) || -1e9) < 40) return false;
     lastPlayed.set(name, now);
     if (prefs.muted || prefs.volume <= 0) { record(name, 'muted'); return false; }
+    buzz(name);
     if (!unlocked || !ctx || !master) { record(name, 'locked'); return false; }
     if (ctx.state === 'suspended') ctx.resume().catch(() => {});
     RECIPES[name](ctx.currentTime + 0.005);
@@ -15783,9 +15791,163 @@ function highlightKeywords(text, escaped = false) {
   });
 }
 
-return {STATUS_INFO,statusIcon,statusBadge,statusBadges,highlightKeywords};
+// Rules for every keyword that appears in `text`, once each: [[label, rule], ...].
+// Used by the long-press card detail sheet.
+function keywordRules(text) {
+  const seen = new Set();
+  const out = [];
+  for (const word of String(text ?? '').match(KEYWORD_RE) || []) {
+    const key = KEYWORD_MAP.get(word);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push([STATUS_INFO[key].label, STATUS_INFO[key].rule.replace(/^[^：]*：/, '')]);
+  }
+  return out;
+}
+
+return {STATUS_INFO,statusIcon,statusBadge,statusBadges,highlightKeywords,keywordRules};
 })();
 const module25=(()=>{
+// Phone feel shared by both demos: long-press card details and the drag hint.
+// Plain ES module with named exports and no imports (bundled into the Wa app.js
+// by tools/build-browser.mjs, imported directly by the new demo).
+
+let sheet = null;
+let sheetOnClose = null;
+
+function cardSheetOpen() {
+  return !!(sheet && sheet.open);
+}
+
+function closeCardSheet() {
+  if (sheet?.open) sheet.close();
+}
+
+// A <dialog> opened with showModal() sits above every other layer, including an
+// already open deck/library dialog, so one sheet works everywhere.
+function openCardSheet(html, { onClose } = {}) {
+  if (typeof document === 'undefined') return;
+  if (!sheet) {
+    sheet = document.createElement('dialog');
+    sheet.className = 'card-sheet';
+    sheet.setAttribute('aria-label', '卡牌详情');
+    // Tap outside the panel (on the backdrop) closes it.
+    sheet.addEventListener('click', event => {
+      if (event.target === sheet || event.target.closest('[data-sheet-close]')) sheet.close();
+    });
+    sheet.addEventListener('close', () => {
+      const done = sheetOnClose;
+      sheetOnClose = null;
+      sheet.innerHTML = '';
+      done?.();
+    });
+  }
+  if (sheet.open) sheet.close();
+  document.body.append(sheet);
+  sheetOnClose = onClose || null;
+  sheet.innerHTML = `<div class="card-sheet-panel" role="document">
+    <button type="button" class="card-sheet-close" data-sheet-close aria-label="关闭卡牌详情">关闭</button>
+    ${html}
+    <p class="card-sheet-foot">点击空白处关闭</p>
+  </div>`;
+  try { sheet.showModal(); } catch { sheet.setAttribute('open', ''); }
+  sheet.querySelector('.card-sheet-panel').scrollTop = 0;
+}
+
+// Long press (touch ≈350 ms, mouse 500 ms, or right click) on any element
+// matching `selector` opens `render(el)` in the sheet. The press never counts
+// as a click, so it cannot pick, buy or play the card underneath.
+function attachCardDetail({ selector, render, delay = 350 }) {
+  if (typeof document === 'undefined') return;
+  let press = null;
+  let swallowClick = false;
+
+  const clear = () => {
+    if (press) clearTimeout(press.timer);
+    press = null;
+  };
+  const open = el => {
+    const html = render(el);
+    if (!html) return false;
+    swallowClick = true;
+    openCardSheet(html);
+    return true;
+  };
+
+  document.addEventListener('pointerdown', event => {
+    swallowClick = false;
+    clear();
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (!event.isPrimary) return;
+    const el = event.target instanceof Element ? event.target.closest(selector) : null;
+    if (!el || el.closest('.card-sheet')) return;
+    const wait = event.pointerType === 'mouse' ? Math.max(delay, 500) : delay;
+    press = { el, id: event.pointerId, x: event.clientX, y: event.clientY };
+    press.timer = setTimeout(() => {
+      const current = press;
+      press = null;
+      if (current?.el.isConnected && open(current.el)) {
+        try { navigator.vibrate?.(8); } catch {}
+      }
+    }, wait);
+  }, true);
+  document.addEventListener('pointermove', event => {
+    if (press && press.id === event.pointerId && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 7) clear();
+  }, true);
+  for (const type of ['pointerup', 'pointercancel']) document.addEventListener(type, event => { if (press && press.id === event.pointerId) clear(); }, true);
+  window.addEventListener('scroll', clear, true);
+
+  document.addEventListener('click', event => {
+    if (!swallowClick) return;
+    swallowClick = false;
+    if (event.target instanceof Element && event.target.closest('.card-sheet')) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }, true);
+  // Android fires contextmenu on a long press; desktop uses right click.
+  document.addEventListener('contextmenu', event => {
+    const el = event.target instanceof Element ? event.target.closest(selector) : null;
+    if (!el || el.closest('.card-sheet')) return;
+    event.preventDefault();
+    if (!cardSheetOpen()) { clear(); open(el); }
+  }, true);
+}
+
+// Floating instruction shown above a dragged card.
+let hint = null;
+function showDragHint(text, { ready = false, x, y, lift = 0 } = {}) {
+  if (typeof document === 'undefined') return;
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.className = 'drag-hint';
+    hint.setAttribute('aria-live', 'polite');
+  }
+  if (!hint.isConnected) document.body.append(hint);
+  if (hint.textContent !== text) hint.textContent = text;
+  hint.classList.toggle('is-ready', ready);
+  const w = hint.offsetWidth || 120;
+  const left = Math.max(8 + w / 2, Math.min(innerWidth - 8 - w / 2, x));
+  // Above the lifted card; when it touches the top edge, just below the finger.
+  const above = y - lift - 44;
+  const top = above >= 8 ? above : Math.min(innerHeight - 44, y + 34);
+  hint.style.left = `${left}px`;
+  hint.style.top = `${top}px`;
+}
+
+function hideDragHint() {
+  hint?.remove();
+}
+
+// How far the enlarged (1.3×) card's top edge sits above the finger: fully
+// clear of the thumb, but never pushed off the top of the screen.
+function touchLift(element, y) {
+  const h = element.offsetHeight * 1.3;
+  return Math.round(Math.max(Math.min(h + 22, y - 6), h * 0.45));
+}
+
+return {cardSheetOpen,closeCardSheet,openCardSheet,attachCardDetail,showDragHint,hideDragHint,touchLift};
+})();
+const module26=(()=>{
 const { cardArtwork, opponentArtwork, artCredit } = module15;
 const { combatEvents } = module16;
 const { clearCombatFx, captureCombatStage, playCombatFx } = module20;
@@ -15798,6 +15960,7 @@ const { createWaSeason, waAct:act, waLegalActions:legalActions } = module21;
 const { syncWaCheckpoint } = module22;
 const { flyCardsFromPile, flyCardsToPile } = module23;
 const { soundToggleHtml } = module17;
+const { attachCardDetail, cardSheetOpen, showDragHint, hideDragHint, touchLift } = module25;
 const { waJuiceAction, waSlam } = module19;
 const createSeason=(seed,tutorial,region,opts)=>createWaSeason(seed,tutorial,region,crypto.randomUUID(),opts);
 // Difficulty unlocks per region: the highest level the player may pick (0–10).
@@ -16288,7 +16451,7 @@ function handleUI(name){
   showModal('赛季规则',`<div class="rules"><p><strong>目标：</strong>对手防线降到 0 就赢得比赛；自己的声望降到 0，赛季失败。</p><p><strong>每回合：</strong>3 行动点、抽 5 张。按费用出牌，结束回合后对手按公开意图行动。资金与行动点是两种资源。</p><p><strong>布防：</strong>绊线、减速、墙体与掩护的共同收益；每点抵消 1 点攻击伤害。先抵消攻击，下个自己的回合开始清空。对手布防在对手下次行动开始时清空。</p><p><strong>牌堆：</strong>打出的普通牌进入弃牌堆；结束回合时，所有未打出的手牌也进入弃牌堆，不留到下回合。注明回合末消耗的牌改入消耗区。下回合重新抽 5 张，并结算额外抽牌能力；需要抽牌而抽牌堆为空时，将弃牌堆洗成新的抽牌堆。手牌最多 10 张。</p><p><strong>消耗：</strong>写着“打出后消耗”的牌，效果结算后进入消耗区，不进入弃牌堆，本场不再抽到；未打出时仍正常弃置，除非另写“回合末消耗”。消耗不等于永久删除，赛季牌组中的原牌下场恢复。临时牌和比赛干扰在赛后消失。</p><p><strong>能力：</strong>自由人牌打出后持续本场，不再洗回；多张可叠加，只影响之后的触发。</p><p><strong>压制：</strong>攻击伤害 ×0.75。<strong>易伤：</strong>受到攻击 ×1.5。每段伤害分别向下取整；回合数在受影响一方行动结束后减少。</p><p><strong>战术场景：</strong>卡上的特工技能转译成上述卡牌规则。腐坏逼退以压制结算，闪光接枪窗口以易伤结算；不另加持续伤害、硬控或隐藏触发。选牌后点“详解”可看说明。</p><p><strong>五个位置：</strong>决斗进攻，哨位布防，控场压制，先锋配合与抽牌，自由人建立持续能力。</p><p><strong>俱乐部活动：</strong>粉丝见面会恢复最大声望的 30%（向上取整、至多满声望）；训练升级一张选手或战术牌；团建移除一张隐患。每节点只能选一项。</p><p><strong>招募：</strong>可跳过。相同选手最多三张，升级前后合并计算。</p><p><strong>登峰赛季：</strong>四个赛区、三个赛段。每赛段 15 站，第 16 层为决赛，包含分支路线：第 1–2 站固定为比赛，第 7 站转会市场，第 9 站补给箱，第 15 站俱乐部活动；前 5 站不会出现强敌。前两幕 Boss 胜利各奖励 50 资金与 Boss 装备三选一（旧存档仍为皮肤选择，集齐后改得 20 资金）。之后晋级宣传恢复最大声望的 30%。冠军赛获胜即为赛季胜利。</p><h3>赛区特质</h3>${Object.entries(REGION_TRAITS).map(([id,t])=>`<p><strong>${esc(REGIONS[id].name)} · ${esc(t.name)}：</strong>${esc(t.text)}</p>`).join('')}<p>特质只在新规则赛季与好友 PvP 中生效，战斗界面左侧显示当前计数。</p><h3>赞助商签约日</h3><p>选择赛区后、进入路线图前，从 4 份合同中签下 1 份：两份免费的小奖励、一份有代价的交换、一份常规合同。选项由赛季种子决定。</p><h3>装备</h3><p>装备在本赛季持续生效，不进入抽牌堆，分普通、罕见、稀有、Boss 专属与市场专属。战胜强敌必得 1 件（普通／罕见／稀有约 50%／33%／17%，不重复）；Boss 胜利后可从 3 件 Boss 专属装备中选 1 件或放弃；转会市场出售 2 件装备与 1 件市场专属装备。原有三件皮肤归入普通装备。最多装备 6 件（Boss 专属装备与皮肤同样占槽）：槽满时获得新装备，需替换一件（被替换的按品级折算资金：普通 15、罕见 25、稀有 40、Boss 专属 50、市场专属 30）或放弃；任何时候都可在装备栏出售一件换同样资金。转会市场在槽满时不能购入装备。</p><h3>补给品</h3><p>一次性道具，默认 3 个栏位，比赛中点击使用，任何时候都可以丢弃。普通与强敌比赛胜利后按掉落率获得：初始 40%，掉落一次 -10%，未掉落 +10%。转会市场出售 3 个补给品；栏位满时需先丢弃或替换。</p><h3>难度等级</h3><ol>${ASCENSION_LEVELS.filter(l=>l.level).map(l=>`<li>${esc(l.text)}</li>`).join('')}</ol><p>难度逐级叠加。每个赛区单独解锁：在当前最高难度赢下完整三幕赛季，解锁下一级。好友 PvP 只显示难度，不改变对局规则；装备与补给品不带入 PvP。</p><p>选手头像暂用占位图。游玩无需联网，也不消耗模型额度。</p></div>`);return;
  }
  if(name==='menu'){
-  showModal('赛季菜单',`<p>当前种子：${esc(state.seed)} · ${state.mode==='season'?'D0.2.0':VERSION}${state.mode==='season'?' · '+esc(state.region):''}${R(state)?' · 难度 '+(state.ascension||0):''}</p><div class="stack">${R(state)?ui(`查看装备（${state.skins.length}）`,'gear')+ui(`补给品（${state.supplies.length}/${supplySlots(state)}）`,'supplies'):''}${ui('导出本局记录','export')}${ui('返回开始页（保留进度）','home')}${state.phase!=='result'?ui('放弃本次赛季…','abandon','danger-button'):''}</div>`);return;
+  showModal('赛季菜单',`<p>当前种子：${esc(state.seed)} · ${state.mode==='season'?'D0.2.0':VERSION}${state.mode==='season'?' · '+esc(state.region):''}${R(state)?' · 难度 '+(state.ascension||0):''}</p><div class="stack">${R(state)?ui(`查看装备（${state.skins.length}）`,'gear')+ui(`补给品（${state.supplies.length}/${supplySlots(state)}）`,'supplies'):''}${ui('比赛记录','logs')}${ui('赛季规则','rules')}${ui('导出本局记录','export')}${ui('返回开始页（保留进度）','home')}<a class="secondary menu-link" href="/pvp/">好友PvP</a>${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="secondary menu-link" href="/new/">新demo</a>` : ''}${state.phase!=='result'?ui('放弃本次赛季…','abandon','danger-button'):''}</div>`);return;
  }
  if(name==='abandon'){showModal('放弃本次赛季',`<p>本次将记录为主动放弃，不算声望耗尽。之后可以重新开始。</p>${button('确认放弃',{type:'abandon'},'danger-button')}`);return;}
  if(name==='export'){
@@ -16337,6 +16500,9 @@ function dragTargetAt(c,e,originY){
 }
 function updateAim(d,e){
  const c=state.battle.hand.find(c=>c.uid===d.uid);if(!c)return;
+ const lift=d.touch?touchLift(d.el,e.clientY):d.el.offsetHeight/2;if(d.touch)d.el.style.setProperty('--drag-lift',`${lift}px`);
+ const ready=dragTargetAt(c,e,d.y);
+ showDragHint(ready?(ready==='enemy'?'松手打出 · 作用于对手':'松手打出 · 作用于我方'):'向上拖出手牌区',{ready:!!ready,x:e.clientX,y:e.clientY,lift});
  aim.removeAttribute('hidden');aim.setAttribute('viewBox',`0 0 ${innerWidth} ${innerHeight}`);
  aim.querySelector('path').setAttribute('d',`M${d.x},${d.y} Q${d.x},${e.clientY} ${e.clientX},${e.clientY}`);
  aim.querySelector('circle').setAttribute('cx',e.clientX);aim.querySelector('circle').setAttribute('cy',e.clientY);
@@ -16383,25 +16549,30 @@ document.addEventListener('click',e=>{
 app.addEventListener('dragstart',e=>e.preventDefault());
 app.addEventListener('pointerdown',e=>{
  const el=e.target.closest('[data-select]');if(!el||e.button!==0||canPlay(state,el.dataset.select))return;
- pointerDrag={uid:el.dataset.select,x:e.clientX,y:e.clientY,el,active:false,pointerId:e.pointerId};
+ pointerDrag={uid:el.dataset.select,x:e.clientX,y:e.clientY,el,active:false,pointerId:e.pointerId,touch:e.pointerType!=='mouse'};
  el.setPointerCapture(e.pointerId);
 });
 app.addEventListener('pointermove',e=>{
  if(!pointerDrag||pointerDrag.pointerId!==e.pointerId)return;
- const d=pointerDrag;if(!d.active&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<8)return;
- if(!d.active){hideCardTip();d.active=true;dragging=d.uid;selected=d.uid;refreshSelection();d.el.classList.add('dragging-card');}
+ const d=pointerDrag;
+ // A long press opened the card details, so this touch is not a drag any more.
+ if(cardSheetOpen()){endDrag(e,true);return;}
+ // On phones a sideways swipe scrolls the hand; only a mostly vertical drag lifts a card.
+ if(!d.active&&e.pointerType==='touch'&&Math.abs(e.clientX-d.x)>8&&Math.abs(e.clientX-d.x)>Math.abs(e.clientY-d.y)*1.2){if(d.el.hasPointerCapture(e.pointerId))d.el.releasePointerCapture(e.pointerId);pointerDrag=null;return;}
+ if(!d.active&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<8)return;
+ if(!d.active){hideCardTip();d.active=true;dragging=d.uid;selected=d.uid;refreshSelection();d.el.classList.add('dragging-card');if(d.touch)d.el.classList.add('drag-touch');}
  updateAim(d,e);e.preventDefault();d.el.style.setProperty('--drag-x',`${e.clientX}px`);d.el.style.setProperty('--drag-y',`${e.clientY}px`);
 });
 function endDrag(e,cancel=false){
  if(!pointerDrag||pointerDrag.pointerId!==e.pointerId)return;
- const d=pointerDrag;pointerDrag=null;dragging=null;clearAim();
+ const d=pointerDrag;pointerDrag=null;dragging=null;clearAim();hideDragHint();
  if(d.el.hasPointerCapture(e.pointerId))d.el.releasePointerCapture(e.pointerId);
  if(!d.active)return;
- d.el.classList.remove('dragging-card');d.el.style.removeProperty('--drag-x');d.el.style.removeProperty('--drag-y');
+ d.el.classList.remove('dragging-card','drag-touch');d.el.style.removeProperty('--drag-x');d.el.style.removeProperty('--drag-y');d.el.style.removeProperty('--drag-lift');
  suppressClick=true;setTimeout(()=>{suppressClick=false;},0);
  const c=state.battle?.hand.find(c=>c.uid===d.uid);
  if(!cancel&&c&&dragTargetAt(c,e,d.y))commit({type:'play',uid:d.uid,rev:state.rev});
- else{refreshSelection();if(!reduceMotion())d.el.animate([{filter:'brightness(1.4)'},{filter:'brightness(1)'}],{duration:220});notice('卡牌已放回手中。请拖向发亮的目标。');}
+ else{refreshSelection();if(!reduceMotion())d.el.animate([{filter:'brightness(1.4)'},{filter:'brightness(1)'}],{duration:220});if(!cardSheetOpen())notice('卡牌已放回手中。向上拖过手牌区再松手即可打出。');}
 }
 app.addEventListener('pointerup',e=>endDrag(e));
 app.addEventListener('pointercancel',e=>endDrag(e,true));
@@ -16413,6 +16584,14 @@ document.addEventListener('keydown',e=>{
  if(e.key.toLowerCase()==='e'){e.preventDefault();commit({type:'end',rev:state.rev});}
 });
 document.querySelector('#close-dialog').addEventListener('click',()=>{hideCardTip();dialog.close();});
+// Long press (or right click) on any card: full text, keywords and the trained version.
+function cardDetailHtml(el){
+ const c={id:el.dataset.cardId,up:el.dataset.cardUp==='true'},t=CARDS[c.id],f=TACTICS[c.id];if(!t)return '';
+ hideCardTip();
+ const text=describe(c),upText=c.up?'':describe({id:c.id,up:true}),kw=cardKeywords(c);
+ return `<div class="card-sheet-body"><div class="card-sheet-art wa-sheet-art">${card(c)}</div><div class="card-sheet-info"><h3>${esc(cardName(c))}</h3><p class="card-sheet-meta">${t.cost===null?'不能打出':`${t.cost} 行动点`} · ${esc(t.player?t.role:'战术')}${f?` · ${esc(f.title)}`:''}</p><p class="card-sheet-text">${esc(text)}</p>${kw.length?`<dl class="card-sheet-keywords">${kw.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`:''}${c.up?'<p class="card-sheet-upgrade"><b>已训练</b>这是升级后的版本。</p>':upText&&upText!==text?`<p class="card-sheet-upgrade"><b>训练后</b>${esc(upText)}</p>`:''}${f?`<p class="card-sheet-scene">${esc(f.scene)}</p>`:''}${CARD_RARITY[c.id]?`<p class="card-sheet-scene">${rarityTip(c.id)}（只表示出现频率）</p>`:''}</div></div>`;
+}
+attachCardDetail({selector:'[data-card-id]',render:cardDetailHtml});
 dialog.addEventListener('close',hideCardTip);
 window.baoDemo={observe:()=>state?observe(state):null,legalActions:()=>state?legalActions(state):[],dispatch:a=>{if(!state)return {error:'No active season'};const r=commit(a);return {error:r.error,observation:observe(state)};}};
 render();

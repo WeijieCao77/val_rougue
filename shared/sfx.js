@@ -173,6 +173,13 @@ function record(name, status) {
   if (debugOn()) try { console.debug(`[sfx] ${name} (${status})`); } catch {}
 }
 
+// Short vibration on phones for the physical moments (play, hit, hurt). Tied to
+// playSfx so muting the sound (or volume 0) also turns vibration off.
+const HAPTICS = { cardAttack: 12, cardSkill: 8, cardPower: [8, 40, 8], hit: 16, hitHeavy: [26, 30, 26], multiHit: [10, 24, 10, 24, 10], hurt: 32, enemyDeath: [20, 40, 30] };
+function buzz(name) {
+  try { if (HAPTICS[name] && hasWindow && navigator.vibrate && navigator.userActivation?.hasBeenActive !== false) navigator.vibrate(HAPTICS[name]); } catch {}
+}
+
 export function playSfx(name, { delay = 0 } = {}) {
   try {
     if (!RECIPES[name]) return false;
@@ -182,6 +189,7 @@ export function playSfx(name, { delay = 0 } = {}) {
     if (now - (lastPlayed.get(name) || -1e9) < 40) return false;
     lastPlayed.set(name, now);
     if (prefs.muted || prefs.volume <= 0) { record(name, 'muted'); return false; }
+    buzz(name);
     if (!unlocked || !ctx || !master) { record(name, 'locked'); return false; }
     if (ctx.state === 'suspended') ctx.resume().catch(() => {});
     RECIPES[name](ctx.currentTime + 0.005);
