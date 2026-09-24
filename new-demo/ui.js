@@ -7,6 +7,8 @@ import { tacticalCard } from './tactical-card.js';
 import { captureCombatPresentation, animateCombatTransition, clearCombatPresentation } from './fx.js';
 import { attachCardGesture } from '/shared/card-gesture.js';
 import { flyCardsFromPile, flyCardsToPile } from '/shared/card-pile-motion.js';
+import { soundToggleHtml } from '/shared/sfx.js';
+import { juiceAction, juiceImpact, juiceSlam } from './juice-hooks.js';
 
 const STORAGE_KEY = 'new-demo-run-route-v3';
 const GUIDE_KEY = 'new-demo-guide-v2-';
@@ -263,6 +265,7 @@ function renderGame() {
         <button class="btn" id="btn-library">卡牌总览</button>
         <button class="btn" id="btn-guide">怎么玩</button>
         <button class="btn" id="btn-home">返回首页</button>
+        ${soundToggleHtml()}
       </div>
     </header>
     <div id="game-root" style="flex:1;display:flex;flex-direction:column;"></div>
@@ -1151,6 +1154,7 @@ function dispatch(action) {
     }
     const prev = state;
     state = result.state;
+    juiceAction(prev, state, action);
     saveState();
     selectedCardUid = null;
 
@@ -1255,6 +1259,7 @@ async function handlePlayCardTimeline(prev, next, action, capture, reducedMotion
     if (reducedMotion) {
       await delay(100);
       globalThis.characterStages?.cueFromTransition('new', prev, next, action);
+      juiceImpact(prev, next);
       cleanup();
       return;
     }
@@ -1301,10 +1306,12 @@ async function handlePlayCardTimeline(prev, next, action, capture, reducedMotion
       playedClone.style.left = (centerX - cardWidth / 2) + 'px';
       playedClone.style.top = (centerY - cardHeight / 2) + 'px';
       playedClone.style.transform = 'scale(.85)';
+      juiceSlam(playedClone, 'scale(.85)');
     }
 
     // Cue character action
     globalThis.characterStages?.cueFromTransition('new', prev, next, action);
+    juiceImpact(prev, next, cardType === 'attack' ? 450 : 120);
 
     if (cardType === 'attack') {
       // Ally attack: muzzle flash, bullet line, enemy hit, damage number
@@ -1511,6 +1518,7 @@ async function handleEndTurnTimeline(prev, next, action, capture, reducedMotion)
 
   try {
     if (reducedMotion) {
+      juiceImpact(prev, next);
       await delay(100);
       cleanup();
       return;
@@ -1541,6 +1549,7 @@ async function handleEndTurnTimeline(prev, next, action, capture, reducedMotion)
 
     // Enemy action always happens
     globalThis.characterStages?.cueFromTransition('new', prev, next, action);
+    juiceImpact(prev, next, 150);
     const pb = capture.playerBox;
     const eb = capture.enemyBox;
     const playerDamage = Math.max(0, prev.hp - next.hp);
