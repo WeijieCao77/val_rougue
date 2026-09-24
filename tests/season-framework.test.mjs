@@ -6,23 +6,26 @@ import {createSeason,act,instance,startBattle,preview,replay,offers,intent,inten
 import {CARDS,REGIONS,ENEMIES,compactLines,TACTICS,effects} from '../content.js';
 import {routeNodes,mapEntry,nextScreen,restoreScreen} from '../navigation.js';
 const step=(s,a)=>{const r=act(s,a);assert.equal(r.error,null);return r.state;};
-function bossFixture(actNo,skins=[]){const s=createSeason('fixture');s.act=actNo;s.map=buildMap(s.seed,actNo);s.currentNode=s.map.bossId;s.node=actNo*12;s.hp=31;s.skins=skins;startBattle(s,s.map.nodes.find(n=>n.key===s.currentNode).enemy);s.battle.enemyHp=1;s.battle.hand=[instance(s,'CN03')];return s;}
-test('300 maps have unique connected nodes, upward noncrossing branches and room variety',()=>{
+function bossFixture(actNo,skins=[]){const s=createSeason('fixture');s.act=actNo;s.map=buildMap(s.seed,actNo);s.currentNode=s.map.bossId;s.node=actNo*16;s.hp=31;s.skins=skins;startBattle(s,s.map.nodes.find(n=>n.key===s.currentNode).enemy);s.battle.enemyHp=1;s.battle.hand=[instance(s,'CN03')];return s;}
+test('300 maps: 15 floors + boss, unique connected nodes, upward noncrossing branches and StS-style fixed rows',()=>{
  const signatures=new Set();
  for(let actNo=1;actNo<=3;actNo++)for(let i=0;i<100;i++){
   const m=buildMap('route-'+i,actNo),by=new Map(m.nodes.map(n=>[n.key,n]));assert.equal(by.size,m.nodes.length);assert.equal(m.starts.length,4);
-  const widths=Array.from({length:11},(_,row)=>m.nodes.filter(n=>n.step===row+1).length);
+  const widths=Array.from({length:15},(_,row)=>m.nodes.filter(n=>n.step===row+1).length);
   assert.ok(widths.every(width=>width>=3&&width<=6));assert.ok(Math.max(...widths)>=5);assert.ok(new Set(widths).size>=2);
-  assert.ok(new Set(m.nodes.filter(n=>n.step<12).map(n=>n.lane)).size>=5);
+  assert.ok(new Set(m.nodes.filter(n=>n.step<16).map(n=>n.lane)).size>=5);
   assert.deepEqual(m,buildMap('route-'+i,actNo));
   const kinds=new Set(m.nodes.map(n=>n.kind));for(const k of ['battle','elite','event','shop','rest','boss'])assert.ok(kinds.has(k),`${actNo}/${i}/${k}`);
   const reachable=new Set(m.starts);for(const n of m.nodes)if(reachable.has(n.key))for(const e of m.edges)if(e.from===n.key)reachable.add(e.to);assert.equal(reachable.size,m.nodes.length);
-  for(const n of m.nodes){assert.ok(n.x>=8&&n.x<=92&&n.y>=5&&n.y<=95);if(n.kind!=='boss')assert.ok(m.edges.some(e=>e.from===n.key));if(n.step===6)assert.equal(n.kind,'shop');if(n.step===11)assert.equal(n.kind,'rest');if(n.step===12)assert.equal(n.kind,'boss');}
+  for(const n of m.nodes){assert.ok(n.x>=8&&n.x<=92&&n.y>=5&&n.y<=95);if(n.kind!=='boss')assert.ok(m.edges.some(e=>e.from===n.key));if(n.step<=2)assert.equal(n.kind,'battle');if(n.step===7)assert.equal(n.kind,'shop');if(n.step===9)assert.equal(n.kind,'crate');if(n.step===15)assert.equal(n.kind,'rest');if(n.step===16)assert.equal(n.kind,'boss');
+   if(n.step<6)assert.ok(!['elite','rest'].includes(n.kind),`no elite/rest before floor 6: ${n.key}`);if(n.step===14)assert.notEqual(n.kind,'rest');}
+  assert.ok(m.nodes.filter(n=>n.kind==='elite').length>=2,'at least two elites per act');
+  const most=new Map();for(const n of [...m.nodes].sort((x,y)=>y.step-x.step))most.set(n.key,(n.kind==='elite'?1:0)+Math.max(0,...m.edges.filter(e=>e.from===n.key).map(e=>most.get(e.to))));assert.ok(Math.max(...m.starts.map(k=>most.get(k)))>=2,'one route visits two elites');assert.equal(m.nodes.find(n=>n.kind==='boss').step,16);
   for(const e of m.edges){const a=by.get(e.from),b=by.get(e.to);assert.equal(b.step,a.step+1);assert.ok(b.y<a.y);assert.ok(!(['elite','shop','rest'].includes(a.kind)&&a.kind===b.kind));
    for(const f of m.edges){const c=by.get(f.from),d=by.get(f.to);if(a.step===c.step)assert.ok((a.x-c.x)*(b.x-d.x)>=0,'crossing edges');}
   }
-  assert.ok(m.nodes.filter(n=>n.step<11&&m.edges.filter(e=>e.from===n.key).length>1).length>=3);
-  assert.ok(m.nodes.some(n=>n.step<12&&m.edges.filter(e=>e.to===n.key).length>1));
+  assert.ok(m.nodes.filter(n=>n.step<15&&m.edges.filter(e=>e.from===n.key).length>1).length>=3);
+  assert.ok(m.nodes.some(n=>n.step<16&&m.edges.filter(e=>e.to===n.key).length>1));
   signatures.add(JSON.stringify(m.edges));
  }
  assert.equal(signatures.size,300);
@@ -81,10 +84,10 @@ test('rest is a choice and event target selection is atomic',()=>{
  s.phase='event';s.eventId='training';const uid=s.deck[0].uid,before=JSON.stringify(s.deck),money=s.money;s=step(s,{type:'seasonEvent',choice:'paid'});s=step(s,{type:'eventBack'});assert.equal(s.money,money);assert.equal(JSON.stringify(s.deck),before);
  s=step(s,{type:'seasonEvent',choice:'risky'});const invalid=act(s,{type:'eventUpgrade',uid:'not-here'});assert.ok(invalid.error);assert.equal(invalid.state,s);s=step(s,{type:'eventUpgrade',uid});assert.equal(s.deck.find(c=>c.uid===uid).up,true);assert.ok(s.deck.some(c=>c.id==='CU01'));
 });
-test('all four regions complete the 36-room state machine (combat victories are fixtures, not balance evidence)',()=>{
+test('all four regions complete the 48-room state machine (combat victories are fixtures, not balance evidence)',()=>{
  for(const region of Object.keys(REGIONS)){
   let s=createSeason('structure',false,region);
-  for(let steps=0;steps<180&&s.phase!=='result';steps++){
+  for(let steps=0;steps<260&&s.phase!=='result';steps++){
    if(s.phase==='map')s=step(s,{type:'chooseNode',key:availableNodes(s)[0].key});
    else if(s.phase==='combat'){s.battle.enemyHp=1;s.battle.energy=3;s.battle.hand=[instance(s,REGIONS[region].pool[2])];s=step(s,{type:'play',uid:s.battle.hand[0].uid});}
    else if(s.phase==='reward')s=step(s,{type:'recruit',id:s.reward.offers[0]??null});
@@ -98,8 +101,19 @@ test('all four regions complete the 36-room state machine (combat victories are 
    else assert.fail(s.phase);
    s=JSON.parse(JSON.stringify(s));
   }
-  assert.equal(s.outcome,'win');assert.equal(s.act,3);assert.equal(s.node,36);assert.equal(s.completed.length,36);assert.equal(new Set(s.completed).size,36);assert.ok(s.deck.some(c=>c.up));
+  assert.equal(s.outcome,'win');assert.equal(s.act,3);assert.equal(s.node,48);assert.equal(s.completed.length,48);assert.equal(new Set(s.completed).size,48);assert.ok(s.deck.some(c=>c.up));
  }
+});
+test('map versions: new seasons use 15-floor acts; records without mapVersion replay on the 12-step map',()=>{
+ const s=createSeason('mapver');assert.equal(s.mapVersion,2);assert.equal(s.map.nodes.find(n=>n.kind==='boss').step,16);
+ const old=createSeason('mapver',false,'CN',{mapVersion:1});assert.equal(old.mapVersion,undefined);
+ assert.equal(old.map.nodes.find(n=>n.kind==='boss').step,12);
+ assert.ok(old.map.nodes.every(n=>n.kind!=='rest'||n.step<=11));assert.ok(old.map.nodes.filter(n=>n.step===6).every(n=>n.kind==='shop'));
+ assert.deepEqual(buildMap('mapver',2,0,1),buildMap('mapver',2,0,1));assert.notDeepEqual(buildMap('mapver',2,0,1),buildMap('mapver',2));
+ assert.throws(()=>createSeason('x',false,'CN',{mapVersion:3}),/地图版本/);
+ // A version-1 record (no field) replays on version 1, a version-2 record on version 2.
+ let v1=step(old,{type:'chooseNode',key:old.map.starts[0]});v1=step(v1,{type:'end'});assert.deepEqual(replay(v1),v1);
+ let v2=step(s,{type:'chooseNode',key:s.map.starts[0]});v2=step(v2,{type:'end'});assert.deepEqual(replay(v2),v2);
 });
 test('new route actions replay deterministically without fixture mutations',()=>{
  let s=createSeason('new-route-replay');s=step(s,{type:'chooseNode',key:s.map.starts[2]});s=step(s,{type:'end'});assert.deepEqual(replay(s),s);

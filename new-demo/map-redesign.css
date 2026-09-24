@@ -48,7 +48,7 @@
   margin: 0 auto;
   min-width: 0;
   height: auto;
-  aspect-ratio: 400 / 880;
+  aspect-ratio: 400 / 1360;
   width: 100%;
 }
 
@@ -209,7 +209,7 @@
 }
 .map-container .map-svg {
   max-width: 400px;
-  aspect-ratio: 400 / 1000;
+  aspect-ratio: 400 / 1360;
 }
 .map-container .map-node:not(.available):not(.completed):not(.current) { opacity: .86; }
 .map-container .map-edge { stroke: #81859a; stroke-width: 1.3; stroke-dasharray: 3 7; opacity: .7; }

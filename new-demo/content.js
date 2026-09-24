@@ -495,7 +495,9 @@ const DIFFICULTY = {
   normal: { hp: 1.35, dmg: 1.55 },
   member: { hp: 1.25, dmg: 1.35 },
   elite: { hp: 1.2, dmg: 1.45 },
-  boss: { hp: 1.4, dmg: 1.45 }
+  // Act-1 boss raised (was 1.4/1.45) for the 15-floor act: the longer climb gives
+  // more card rewards, and the smart bot cleared act 1 in 63% of runs.
+  boss: { hp: 1.5, dmg: 1.5 }
 };
 function roleOf(e) { return e.boss ? 'boss' : e.elite ? 'elite' : e.member ? 'member' : 'normal'; }
 function tuneEnemy(e, t) {
@@ -534,7 +536,9 @@ export const ENEMIES = {
   // than before (was 1.35/1.25 and 1.75/1.5) to keep full runs winnable.
   ...scaledAct('A2_', '二幕·', 1.45, 1.25),
   A2_B01: tuneEnemy({ name:'晋级赛冠军卫队', look:'boss2', hp:165, boss:true, ordered:true, script:[[BL(18),H(6)],[BUFF(2),H(7,3)],[H(10),JAM('ST02',2)],[H(20)]] }, { hp: 1.4, dmg: 1.4 }),
-  ...scaledAct('A3_', '决赛·', 1.85, 1.45),
+  // 15-floor acts (2026-09-24): act-3 HP 1.85 -> 1.95; more floors meant more
+  // rewards and the bot's full-run clear rose to ~23%.
+  ...scaledAct('A3_', '决赛·', 1.95, 1.45),
   // The two-phase final keeps its authored numbers bar a HP and damage cut: with the
   // full boss multiplier the bot lost 4 of 6 final fights.
   A3_B01: tuneEnemy({ name:'总决赛冠军卫队', look:'boss3', hp:165, boss:true, trait:{ id:'phase2' },

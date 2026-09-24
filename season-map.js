@@ -1,5 +1,5 @@
 // season-map.js
-import { generateRoute } from './shared-route-generator.js';
+import { generateRoute, routeSteps, CURRENT_MAP_VERSION } from './shared-route-generator.js';
 // Pure ES module for act metadata, enemy configs, and deterministic map generation.
 // This is a project-specific adaptation inspired by Slay the Spire's map structure,
 // not a clone of its exact generator. It uses a seeded PRNG (FNV-1a + sfc32) to
@@ -58,9 +58,11 @@ function choice(seed, values) {
   for (const char of String(seed)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return values[(hash >>> 0) % values.length];
 }
-export function buildMap(seed, act, ascension = 0) {
+// mapVersion 1 = the older 12-step act, kept only so old run records replay.
+export function buildMap(seed, act, ascension = 0, mapVersion = CURRENT_MAP_VERSION) {
   if (![1, 2, 3].includes(act)) throw Error('未知赛段');
-  const map = generateRoute(seed, act);
+  const map = generateRoute(seed, act, mapVersion);
+  const steps = routeSteps(mapVersion);
   const actKey = key => `a${act}-${key}`;
   for (const node of map.nodes) node.key = actKey(node.key);
   for (const edge of map.edges) { edge.from = actKey(edge.from); edge.to = actKey(edge.to); }
@@ -72,7 +74,7 @@ export function buildMap(seed, act, ascension = 0) {
   if (ascension >= 1) {
     const near = node => map.edges.filter(e => e.to === node.key || e.from === node.key).map(e => byKey.get(e.to === node.key ? e.from : e.to));
     for (const node of map.nodes) {
-      if (node.kind !== 'battle' || node.step < 4 || node.step >= 11) continue;
+      if (node.kind !== 'battle' || node.step < steps.ascEliteMin || node.step >= steps.rest) continue;
       if (near(node).some(other => other.kind === 'elite')) continue;
       if (choice(seed + '|' + act + '|' + node.key + '|asc-elite', [0, 1, 2]) === 0) node.kind = 'elite';
     }

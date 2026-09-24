@@ -11,10 +11,10 @@ import { flyCardsFromPile, flyCardsToPile } from '/shared/card-pile-motion.js';
 import { soundToggleHtml } from '/shared/sfx.js';
 import { juiceAction, juiceImpact, juiceSlam } from './juice-hooks.js';
 
-const STORAGE_KEY = 'new-demo-run-route-v4';
+const STORAGE_KEY = 'new-demo-run-route-v5';
 const GUIDE_KEY = 'new-demo-guide-v2-';
 // Internal beta: discard runs created with the previous route layout.
-try { for (const key of ['new-demo-run-v1', 'new-demo-run-route-v2', 'new-demo-run-route-v3']) localStorage.removeItem(key); } catch {}
+try { for (const key of ['new-demo-run-v1', 'new-demo-run-route-v2', 'new-demo-run-route-v3', 'new-demo-run-route-v4']) localStorage.removeItem(key); } catch {}
 let state = null;
 let previousState = null;
 let selectedCardUid = null;
@@ -519,7 +519,8 @@ function renderMap(root) {
   const legal = legalActions(state).filter(a => a.type === 'enter');
   const availableKeys = new Set(legal.map(a => a.key));
 
-  const w = 400, h = 1000;
+  // 15 floors + boss: the board keeps the old ~84px floor spacing.
+  const w = 400, h = 1360;
   const scaleX = w / 100;
   const scaleY = h / 100;
   const sx = (x) => x * scaleX;
@@ -550,7 +551,7 @@ function renderMap(root) {
     <div class="map-container">
       ${guideStrip('map', '先点亮起的节点开赛。向上滑动可预览后续路线和决赛；每场胜利后挑一张新牌。')}
       <div class="map-stage-info">
-        <span>幕 ${state.act}：${act.name} · ${act.subtitle} · ${state.completed.filter(key => state.map.nodes.some(node => node.key === key)).length}/12 站${state.ascension ? ` · 难度 ${state.ascension}` : ''}${state.warmup ? ` · 热身赛剩余 ${state.warmup} 场` : ''}</span>
+        <span>幕 ${state.act}：${act.name} · ${act.subtitle} · ${state.completed.filter(key => state.map.nodes.some(node => node.key === key && node.kind !== 'boss')).length}/15 站 · 之后是决赛${state.ascension ? ` · 难度 ${state.ascension}` : ''}${state.warmup ? ` · 热身赛剩余 ${state.warmup} 场` : ''}</span>
         <span>HP ${state.hp}/${state.maxHp} · 💰 ${state.money}</span>
       </div>
       <div class="map-quick-legend" aria-label="路线图标说明">⚔ 比赛　☠ 强敌　? 未知　⇄ 补给　▣ 补给箱　✚ 休整　👑 决赛</div>

@@ -4,9 +4,9 @@ import {CURSES,CURSE_RULES,EXTRA_STATUS_RULES} from './afflictions.js';
 import {WA_EVENTS,WA_EVENT_POOLS,WA_CRATE_LOOT} from './wa-events.js';
 import {opsReason,describeOps,applyOps,pickKind,pickCandidates} from './shared-event-core.js';
 import {freshUnknownOdds,resolveUnknown,blockedUnknownKinds,rollCrateSize} from './shared-unknown-room.js';
-import {ROUTE_STEPS} from './shared-route-generator.js';
+import {routeSteps,CURRENT_MAP_VERSION,MAP_VERSIONS} from './shared-route-generator.js';
 import {CARD_RARITY,RARITY_ORDER} from './card-rarity.js';
-import {RULES_VERSION,ROLES,TRAIT_TUNING,OPENING_FREE,OPENING_TRADE,GEAR,SUPPLIES,ENERGY_GEAR,SUPPLY_RARITY_WEIGHTS,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,MAX_ASCENSION,ENEMY_TUNING,gearName} from './wa-rules.js';
+import {RULES_VERSION,ROLES,TRAIT_TUNING,OPENING_FREE,OPENING_TRADE,GEAR,SUPPLIES,ENERGY_GEAR,SUPPLY_RARITY_WEIGHTS,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,MAX_ASCENSION,ENEMY_TUNING,ENEMY_TUNING_V2,gearName} from './wa-rules.js';
 export const clone = x => structuredClone(x);
 const log = (s,text) => s.logs.push({node:s.node,turn:s.battle?.turn||0,text});
 export function random(s) { let x=s.rng; x^=x<<13; x^=x>>>17; x^=x<<5; s.rng=x>>>0; return s.rng/4294967296; }
@@ -21,6 +21,9 @@ export const SEASON_EVENTS = Object.fromEntries(Object.entries(WA_EVENTS).map(([
 // Every rules-1 effect is gated by R(s); legacy tutorial runs and older season
 // records (no `rules` field) keep their exact behaviour for replays.
 export const R = s => s?.mode==='season'&&(s.rules||0)>=1;
+// Map version of a season: records without the field were played on the older
+// 12-step acts (map version 1) and keep replaying on them.
+export const mapVersionOf = s => s?.mapVersion||1;
 export const hasGear = (s,id) => R(s)&&s.skins.includes(id);
 const has = hasGear;
 export const supplySlots = s => BASE_SUPPLY_SLOTS+(has(s,'GR61')?2:0);
@@ -146,9 +149,12 @@ export function createRun(seed='first-season',tutorial=true) {
 export function createSeason(seed='first-season',tutorial=false,region='CN',opts={}) {
  if(!REGIONS[region]) throw Error('未知赛区');
  const rules=opts?.rules===undefined||opts?.rules===null?0:opts.rules,ascension=opts?.ascension===undefined||opts?.ascension===null?0:opts.ascension;
+ const mapVersion=opts?.mapVersion===undefined||opts?.mapVersion===null?CURRENT_MAP_VERSION:opts.mapVersion;
  if(![0,RULES_VERSION].includes(rules))throw Error('未知规则版本');
+ if(!MAP_VERSIONS.includes(mapVersion))throw Error('未知地图版本');
  if(!Number.isInteger(ascension)||ascension<0||ascension>MAX_ASCENSION||(!rules&&ascension))throw Error('无效难度等级');
- const s={version:SEASON_VERSION,mode:'season',region,seed:String(seed),tutorial,rng:seedHash(seed),rev:0,nextId:1,act:1,map:rules?buildMap(seed,1,ascension):buildMap(seed,1),currentNode:null,completed:[],node:0,phase:'map',hp:80,maxHp:80,money:60,deck:[],skins:[],logs:[],actions:[],wins:0,battle:null,seenEvents:[]};
+ const s={version:SEASON_VERSION,mode:'season',region,seed:String(seed),tutorial,rng:seedHash(seed),rev:0,nextId:1,act:1,map:buildMap(seed,1,rules?ascension:0,mapVersion),currentNode:null,completed:[],node:0,phase:'map',hp:80,maxHp:80,money:60,deck:[],skins:[],logs:[],actions:[],wins:0,battle:null,seenEvents:[]};
+ if(mapVersion>=2)s.mapVersion=mapVersion;
  s.deck=REGIONS[region].start.map(id=>instance(s,id));
  log(s,`新赛季开始：${REGIONS[region].name}赛区 · 第1幕。`);
  if(rules){
@@ -176,7 +182,7 @@ export function startBattle(s,id) {
  log(s,`比赛开始：${enemy.name}，对手防线 ${b.enemyHp}。`); beginTurn(s);
 }
 function setupRulesBattle(s,id){
- const b=s.battle,kind=enemyKind(s,id),asc=s.ascension||0,tune=ENEMY_TUNING[s.act]?.[kind]||{};
+ const b=s.battle,kind=enemyKind(s,id),asc=s.ascension||0,tune=(mapVersionOf(s)>=2?ENEMY_TUNING_V2:ENEMY_TUNING)[s.act]?.[kind]||{};
  b.rt={temps:0,extraBlock:0,pacNext:'TK01'};b.tt={};
  const hpK=(tune.hp??1)*((kind==='normal'?asc>=7:asc>=8)?1.1:1);
  const dmgK=(tune.dmg??1)*(kind==='normal'?(asc>=2?1.1:1):kind==='elite'?(asc>=3?1.15:1):(asc>=4?1.1:1));
@@ -569,7 +575,7 @@ function perform(s,a) {
   break;}
  case 'nextAct':{
   requirePhase('intermission'); if(s.mode!=='season') throw Error('非赛季模式');
-  s.act++; s.map=R(s)?buildMap(s.seed,s.act,s.ascension):buildMap(s.seed,s.act); s.currentNode=null; delete s.intermissionHeal; s.seenEvents=[]; s.phase='map';
+  s.act++; s.map=buildMap(s.seed,s.act,R(s)?s.ascension:0,mapVersionOf(s)); s.currentNode=null; delete s.intermissionHeal; s.seenEvents=[]; s.phase='map';
   log(s,`进入第 ${s.act} 幕。`);
   break;}
  case 'seasonEvent':requirePhase('event'); if(s.mode!=='season') throw Error('非赛季模式'); applySeasonEvent(s,a); break;
@@ -678,7 +684,7 @@ export function replay(record) {
   for(const a of record.actions){const r=act(s,a);if(r.error)throw Error(r.error);s=r.state;}
   return s;
  } else if(record.version===SEASON_VERSION){
-  let s=createSeason(record.seed,record.tutorial,record.region,{rules:record.rules,ascension:record.ascension});
+  let s=createSeason(record.seed,record.tutorial,record.region,{rules:record.rules,ascension:record.ascension,mapVersion:mapVersionOf(record)});
   for(const a of record.actions){const r=act(s,a);if(r.error)throw Error(r.error);s=r.state;}
   return s;
  } else throw Error('回放版本不匹配');
@@ -721,7 +727,8 @@ function openSeasonShop(s){
 }
 function enterUnknownSeason(s,node){
  if(!s.unknownOdds||s.unknownOdds.act!==s.act)s.unknownOdds=freshUnknownOdds(s.act);
- const {kind,odds}=resolveUnknown(s.unknownOdds,random(s),blockedUnknownKinds(node.step,ROUTE_STEPS.shop,ROUTE_STEPS.crate));
+ const steps=routeSteps(mapVersionOf(s));
+ const {kind,odds}=resolveUnknown(s.unknownOdds,random(s),blockedUnknownKinds(node.step,steps.shop,steps.crate));
  s.unknownOdds=odds;node.revealed=kind;
  log(s,`未知节点揭晓：${{battle:'遭遇战',shop:'转会市场',crate:'补给箱',event:'事件'}[kind]}。`);
  if(kind==='battle')startBattle(s,node.ambush||(s.act===1?'S_E02':`A${s.act}_S_E02`));

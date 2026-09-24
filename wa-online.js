@@ -156,6 +156,8 @@ export function buildRunFromSeason(season, checkpoint) {
     seed: season.seed,
     region: season.region,
     ...(season.rules ? { rules: season.rules, ascension: season.ascension || 0 } : {}),
+    // 15-floor acts; records without it replay on the older 12-step map.
+    ...(season.mapVersion ? { mapVersion: season.mapVersion } : {}),
     actions
   };
 }

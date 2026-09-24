@@ -1,5 +1,5 @@
 // season-map.js
-import { generateRoute } from '../shared-route-generator.js';
+import { generateRoute, ROUTE_STEPS } from '../shared-route-generator.js';
 // Pure ES module for act metadata, enemy configs, and deterministic map generation.
 // This is a project-specific adaptation inspired by Slay the Spire's map structure,
 // not a clone of its exact generator. It uses a seeded PRNG (FNV-1a + sfc32) to
@@ -65,7 +65,7 @@ export function buildMap(seed, act, ascension = 0) {
   const prefix = act === 1 ? '' : 'A' + act + '_';
   if (ascension >= 1) {
     for (const node of map.nodes) {
-      if (node.kind !== 'battle' || node.step < 4 || node.step > 10) continue;
+      if (node.kind !== 'battle' || node.step < ROUTE_STEPS.ascEliteMin || node.step >= ROUTE_STEPS.rest) continue;
       const near = map.edges.filter(e => e.to === node.key || e.from === node.key).map(e => byKey.get(e.to === node.key ? e.from : e.to));
       if (near.some(n => n?.kind === 'elite')) continue;
       if (roll(seed + '|' + act + '|' + node.key + '|ascElite') < ASC_ELITE_SHARE) node.kind = 'elite';

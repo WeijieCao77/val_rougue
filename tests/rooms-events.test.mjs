@@ -313,7 +313,9 @@ test('events do not repeat within an act until its pool is exhausted (both demos
 // ----------------------------- determinism over real action sequences -----------------------------
 function newWalk(seed) {
   let s = createRun(seed);
-  for (let i = 0; i < 600 && s.phase !== 'result'; i++) {
+  // The naive walker must survive to the mid-act crate row (floor 9 of 15).
+  s.maxHp = s.hp = 400;
+  for (let i = 0; i < 900 && s.phase !== 'result'; i++) {
     const legal = newLegal(s);
     const a = legal.find(x => x.type === 'play') || legal.find(x => x.type === 'eventPick') || legal.find(x => x.type === 'event') || legal[0];
     s = ok(newStep(s, a));

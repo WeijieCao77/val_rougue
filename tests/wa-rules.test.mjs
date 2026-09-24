@@ -5,7 +5,7 @@ import {buildMap} from '../season-map.js';
 import {CARDS,ENEMIES,REGIONS} from '../content.js';
 import {createWaSeason,waAct,extractCheckpoints} from '../wa-season.js';
 import {createMatch,applyCommand,viewFor} from '../online/duel.mjs';
-import {OPENING_FREE,OPENING_TRADE,ENEMY_TUNING,TRAIT_TUNING,GEAR,SUPPLIES,REGION_TRAITS,ASCENSION_LEVELS} from '../wa-rules.js';
+import {OPENING_FREE,OPENING_TRADE,ENEMY_TUNING_V2 as ENEMY_TUNING,TRAIT_TUNING,GEAR,SUPPLIES,REGION_TRAITS,ASCENSION_LEVELS} from '../wa-rules.js';
 
 const step=(s,a)=>{const r=act(s,a);assert.equal(r.error,null,JSON.stringify(a)+' '+r.error);return r.state;};
 const rules=(seed='r1',region='CN',ascension=0)=>createSeason(seed,false,region,{rules:1,ascension});

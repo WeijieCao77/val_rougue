@@ -350,6 +350,14 @@ test('规则1 爬塔记录：服务端按 rules/ascension 重放核验，快照�
     assert.equal(bad.status, 400);
     const badAsc = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run: { ...run, ascension: 11 }, act: 1 } });
     assert.equal(badAsc.status, 400);
+    // The fixture predates 15-floor acts (no mapVersion): it replays on the 12-step
+    // map. An unknown map version is refused with a clear message, and claiming the
+    // old actions as a version-2 run diverges.
+    const badMap = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run: { ...run, mapVersion: 3 }, act: 1 } });
+    assert.equal(badMap.status, 400);
+    assert.match(JSON.stringify(badMap.body), /地图版本/);
+    const wrongMap = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run: { ...run, mapVersion: 2 }, act: 1 } });
+    assert.equal(wrongMap.status, 400);
     const res = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run, act: 1 } });
     assert.equal(res.status, 200, JSON.stringify(res.body));
     const account = await request(handler, { method: 'GET', path: '/api/account', token });
@@ -358,6 +366,24 @@ test('规则1 爬塔记录：服务端按 rules/ascension 重放核验，快照�
     assert.equal(snap.ascension, run.ascension);
     assert.ok(snap.skins.every(id => /^SK0[123]$/.test(id)));
     assert.equal(snap.hp, snap.maxHp);
+  } finally {
+    await teardown({ dir, store });
+  }
+});
+
+test('15 层地图（mapVersion 2）的爬塔记录按新地图重放核验；去掉 mapVersion 则按旧 12 站地图重放并失败', async () => {
+  const { store, handler, dir } = await setup();
+  try {
+    const run = JSON.parse(await readFile(new URL('./fixtures/rules1-claim-map2.json', import.meta.url), 'utf8'));
+    assert.equal(run.mapVersion, 2);
+    const token = await createAccount(handler);
+    const legacy = { ...run }; delete legacy.mapVersion;
+    const bad = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run: legacy, act: 1 } });
+    assert.equal(bad.status, 400);
+    const res = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run, act: 1 } });
+    assert.equal(res.status, 200, JSON.stringify(res.body));
+    const account = await request(handler, { method: 'GET', path: '/api/account', token });
+    assert.equal(account.body.archives[0].snapshot.region, run.region);
   } finally {
     await teardown({ dir, store });
   }

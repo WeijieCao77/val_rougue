@@ -5,7 +5,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createWaSeason, waAct, waLegalActions } from '../wa-season.js';
 import { CARDS, REGIONS, effects } from '../content.js';
-import { ENEMY_TUNING, TRAIT_TUNING, GEAR } from '../wa-rules.js';
+import { ENEMY_TUNING_V2 as ENEMY_TUNING, TRAIT_TUNING, GEAR } from '../wa-rules.js';
 import { describeSeasonEvent } from '../engine.js';
 import { WA_EVENTS } from '../wa-events.js';
 
@@ -172,7 +172,7 @@ function playRun(seed, region) {
   }
   log.deck = s.deck.map(c => c.id);
   log.gear = [...s.skins];
-  if (args.dump) { log.actions = s.actions; log.rules = s.rules; log.ascension = s.ascension; }
+  if (args.dump) { log.actions = s.actions; log.rules = s.rules; log.ascension = s.ascension; log.mapVersion = s.mapVersion; }
   if (!log.result) log.result = s.outcome || 'stopped';
   if (log.result === 'loss') log.diedAt = fight?.enemy;
   return log;

@@ -9534,21 +9534,40 @@ const shuffle = (items, random) => {
 const key = (step, lane) => `r${step}c${lane}`;
 const crosses = (left, right) => left.fromLane < right.fromLane && left.toLane > right.toLane || left.fromLane > right.fromLane && left.toLane < right.toLane;
 
-const BOSS_STEP = 12;
-const NORMAL_MAX_STEP = 11;
-const REST_STEP = 11;
-const SHOP_STEP = 6;
-// Mid-act supply crate row (an adaptation of Slay the Spire's mid-act treasure).
-const CRATE_STEP = 8;
-const BATTLE_FIXED_STEPS = [1, 2];
-const WEIGHTED_STEPS = [3, 4, 5, 7, 9, 10];
-const ROUTE_STEPS = { shop: SHOP_STEP, crate: CRATE_STEP, rest: REST_STEP, boss: BOSS_STEP };
+// Map versions. Version 1 is the earlier 12-step act (11 floors + boss); it is
+// kept byte-for-byte so older Wa run records still replay on the online server.
+// Version 2 (current) is a 15-floor act with the boss on step 16, following the
+// pacing of Slay the Spire's acts (fights first, a mid-act treasure row, a rest
+// row right before the boss, no elites or rest sites in the opening floors).
+// The fixed shop row and all room weights are this game's own choices.
+const ROUTE_CONFIGS = {
+  1: {
+    boss: 12, rest: 11, shop: 6, crate: 8, battleFixed: [1, 2], weighted: [3, 4, 5, 7, 9, 10],
+    eliteMin: 1, restMin: 1, ascEliteMin: 4, minElites: 1,
+    weights: [['battle', 0.49], ['event', 0.20], ['shop', 0.08], ['rest', 0.08], ['elite', 0.15]]
+  },
+  2: {
+    boss: 16, rest: 15, shop: 7, crate: 9, battleFixed: [1, 2], weighted: [3, 4, 5, 6, 8, 10, 11, 12, 13, 14],
+    eliteMin: 6, restMin: 6, ascEliteMin: 6, minElites: 2, minElitesOnPath: 2,
+    weights: [['battle', 0.40], ['event', 0.28], ['shop', 0.05], ['rest', 0.09], ['elite', 0.18]]
+  }
+};
+const CURRENT_MAP_VERSION = 2;
+const MAP_VERSIONS = Object.keys(ROUTE_CONFIGS).map(Number);
+function routeSteps(version = CURRENT_MAP_VERSION) {
+  const c = ROUTE_CONFIGS[version];
+  if (!c) throw Error('未知地图版本');
+  return { shop: c.shop, crate: c.crate, rest: c.rest, boss: c.boss, floors: c.boss - 1, ascEliteMin: c.ascEliteMin };
+}
+// Current layout (both demos start new runs on it).
+const ROUTE_STEPS = routeSteps(CURRENT_MAP_VERSION);
 const START_LANE_COUNT = 4;
 const LANE_COUNT = 7;
 const MIN_WIDTH = 3;
 const MAX_WIDTH = 6;
 
-function topology(random) {
+function topology(random, cfg) {
+  const BOSS_STEP = cfg.boss, NORMAL_MAX_STEP = cfg.boss - 1;
   const starts = shuffle([0, 1, 2, 3, 4, 5, 6], random).slice(0, START_LANE_COUNT).sort((a, b) => a - b);
   const walkers = shuffle([...starts, starts[Math.floor(random() * START_LANE_COUNT)], starts[Math.floor(random() * START_LANE_COUNT)]], random);
   const rows = Array.from({ length: BOSS_STEP }, () => new Set());
@@ -9594,7 +9613,8 @@ function topology(random) {
   return { rows, starts: starts.map(lane => key(1, lane)), edges: graphEdges };
 }
 
-function assignRooms(nodes, edges, random) {
+function assignRooms(nodes, edges, random, cfg) {
+  const { battleFixed: BATTLE_FIXED_STEPS, weighted: WEIGHTED_STEPS, shop: SHOP_STEP, crate: CRATE_STEP, rest: REST_STEP, boss: BOSS_STEP } = cfg;
   const byKey = new Map(nodes.map(node => [node.key, node]));
   const inbound = new Map(nodes.map(node => [node.key, []]));
   const outbound = new Map(nodes.map(node => [node.key, []]));
@@ -9603,9 +9623,8 @@ function assignRooms(nodes, edges, random) {
     inbound.get(edge.to).push(byKey.get(edge.from));
     outbound.get(edge.from).push(byKey.get(edge.to));
   }
-  // Fewer total stops would otherwise sharply reduce access to elite rewards.
   // These are this demo's room weights, not Slay the Spire's probabilities.
-  const weights = [['battle', 0.49], ['event', 0.20], ['shop', 0.08], ['rest', 0.08], ['elite', 0.15]];
+  const weights = cfg.weights;
   for (const node of nodes) {
     if (BATTLE_FIXED_STEPS.includes(node.step)) { node.kind = 'battle'; continue; }
     if (node.step === SHOP_STEP) { node.kind = 'shop'; continue; }
@@ -9616,6 +9635,8 @@ function assignRooms(nodes, edges, random) {
       const allowed = weights.filter(([kind]) => {
         if (node.step === SHOP_STEP - 1 && kind === 'shop') return false;
         if (node.step === REST_STEP - 1 && kind === 'rest') return false;
+        if (kind === 'elite' && node.step < cfg.eliteMin) return false;
+        if (kind === 'rest' && node.step < cfg.restMin) return false;
         return !['elite', 'shop', 'rest'].includes(kind) || !inbound.get(node.key).some(parent => parent.kind === kind);
       });
       const total = allowed.reduce((sum, [, weight]) => sum + weight, 0);
@@ -9625,9 +9646,10 @@ function assignRooms(nodes, edges, random) {
       node.kind = 'battle';
     }
   }
-  for (const kind of ['event', 'elite']) {
-    while (nodes.filter(node => node.kind === kind).length < 1) {
+  for (const [kind, least] of [['event', 1], ['elite', cfg.minElites]]) {
+    while (nodes.filter(node => node.kind === kind).length < least) {
       const candidates = nodes.filter(node => WEIGHTED_STEPS.includes(node.step) && node.kind === 'battle'
+        && (kind !== 'elite' || node.step >= cfg.eliteMin)
         && !inbound.get(node.key).some(parent => parent.kind === kind)
         && !outbound.get(node.key).some(child => child.kind === kind));
       if (!candidates.length) return false;
@@ -9637,23 +9659,39 @@ function assignRooms(nodes, edges, random) {
   return true;
 }
 
-function generateRoute(seed, act) {
+// Largest number of elites a single start-to-boss walk can visit, so every act
+// offers at least one route for players who hunt elites for equipment.
+function mostElitesOnOnePath(nodes, edges, starts) {
+  const best = new Map([['boss', 0]]);
+  for (const node of [...nodes].sort((a, b) => b.step - a.step)) {
+    if (node.key === 'boss') continue;
+    const next = edges.filter(e => e.from === node.key).map(e => best.get(e.to) || 0);
+    best.set(node.key, (node.kind === 'elite' ? 1 : 0) + Math.max(0, ...next));
+  }
+  return Math.max(...starts.map(key => best.get(key)));
+}
+
+function generateRoute(seed, act, version = CURRENT_MAP_VERSION) {
+  const cfg = ROUTE_CONFIGS[version];
+  if (!cfg) throw Error('未知地图版本');
+  const BOSS_STEP = cfg.boss, NORMAL_MAX_STEP = cfg.boss - 1;
   for (let attempt = 0; attempt < 150; attempt++) {
     const random = randomFrom(`${seed}|${act}|route|${attempt}`);
-    const shape = topology(random);
+    const shape = topology(random, cfg);
     if (!shape) continue;
     const nodes = [];
     for (let step = 1; step <= NORMAL_MAX_STEP; step++) for (const lane of [...shape.rows[step]].sort((a, b) => a - b)) {
       nodes.push({ key: key(step, lane), step, lane, x: 8 + lane * 14, y: 94 - (step - 1) * 88 / (BOSS_STEP - 1), kind: 'battle', name: '' });
     }
     nodes.push({ key: 'boss', step: BOSS_STEP, lane: 3, x: 50, y: 6, kind: 'boss', name: '' });
-    if (!assignRooms(nodes, shape.edges, random)) continue;
+    if (!assignRooms(nodes, shape.edges, random, cfg)) continue;
+    if (cfg.minElitesOnPath && mostElitesOnOnePath(nodes, shape.edges, shape.starts) < cfg.minElitesOnPath) continue;
     return { nodes, edges: shape.edges, starts: shape.starts, bossId: 'boss' };
   }
   throw Error('无法生成符合路线约束的地图');
 }
 
-return {ROUTE_STEPS,generateRoute};
+return {CURRENT_MAP_VERSION,MAP_VERSIONS,routeSteps,ROUTE_STEPS,generateRoute};
 })();
 const module4=(()=>{
 // Unknown-room ("未知") resolution shared by both demos. Adapted from the idea of
@@ -9872,7 +9910,7 @@ return {pickKind,pickCandidates,opsReason,describeOps,applyOps};
 })();
 const module6=(()=>{
 // season-map.js
-const { generateRoute } = module3;
+const { generateRoute, routeSteps, CURRENT_MAP_VERSION } = module3;
 // Pure ES module for act metadata, enemy configs, and deterministic map generation.
 // This is a project-specific adaptation inspired by Slay the Spire's map structure,
 // not a clone of its exact generator. It uses a seeded PRNG (FNV-1a + sfc32) to
@@ -9931,9 +9969,11 @@ function choice(seed, values) {
   for (const char of String(seed)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return values[(hash >>> 0) % values.length];
 }
-function buildMap(seed, act, ascension = 0) {
+// mapVersion 1 = the older 12-step act, kept only so old run records replay.
+function buildMap(seed, act, ascension = 0, mapVersion = CURRENT_MAP_VERSION) {
   if (![1, 2, 3].includes(act)) throw Error('未知赛段');
-  const map = generateRoute(seed, act);
+  const map = generateRoute(seed, act, mapVersion);
+  const steps = routeSteps(mapVersion);
   const actKey = key => `a${act}-${key}`;
   for (const node of map.nodes) node.key = actKey(node.key);
   for (const edge of map.edges) { edge.from = actKey(edge.from); edge.to = actKey(edge.to); }
@@ -9945,7 +9985,7 @@ function buildMap(seed, act, ascension = 0) {
   if (ascension >= 1) {
     const near = node => map.edges.filter(e => e.to === node.key || e.from === node.key).map(e => byKey.get(e.to === node.key ? e.from : e.to));
     for (const node of map.nodes) {
-      if (node.kind !== 'battle' || node.step < 4 || node.step >= 11) continue;
+      if (node.kind !== 'battle' || node.step < steps.ascEliteMin || node.step >= steps.rest) continue;
       if (near(node).some(other => other.kind === 'elite')) continue;
       if (choice(seed + '|' + act + '|' + node.key + '|asc-elite', [0, 1, 2]) === 0) node.kind = 'elite';
     }
@@ -10372,13 +10412,24 @@ const GEAR_SELL = {common:15,uncommon:25,rare:40,boss:50,shop:30};
 // top of difficulty levels. Traits, the opening, equipment and supplies make runs
 // stronger, so the opponents — not the new content — absorb that power.
 // Keyed by act, then opponent kind.
+// ENEMY_TUNING is for map version 1 (12-step acts; kept so old records replay).
 const ENEMY_TUNING = {
  1:{normal:{hp:1.42,dmg:1.45},elite:{hp:1.45,dmg:1.45},boss:{hp:1.45,dmg:1.4}},
  2:{normal:{hp:1.5,dmg:1.38},elite:{hp:1.5,dmg:1.38},boss:{hp:1.5,dmg:1.32}},
  3:{normal:{hp:1.7,dmg:1.52},elite:{hp:1.7,dmg:1.52},boss:{hp:1.7,dmg:1.47}}
 };
+// Map version 2 (15 floors + boss): more fights and rewards per act, so the
+// opponents are re-tuned for the longer route.
+// Act 1 is eased against version 1: ordinary fights are shorter (HP 1.42 -> 1.32)
+// so opponents that grow in a fight (the recon's enrage) do not snowball over ~7
+// fights, and elites (now ~1.2 per route instead of ~0.9) and the boss hit softer.
+const ENEMY_TUNING_V2 = {
+ 1:{normal:{hp:1.32,dmg:1.4},elite:{hp:1.35,dmg:1.35},boss:{hp:1.4,dmg:1.35}},
+ 2:{normal:{hp:1.5,dmg:1.38},elite:{hp:1.5,dmg:1.38},boss:{hp:1.5,dmg:1.32}},
+ 3:{normal:{hp:1.7,dmg:1.52},elite:{hp:1.7,dmg:1.52},boss:{hp:1.7,dmg:1.47}}
+};
 
-return {RULES_VERSION,ROLES,TRAIT_TUNING,REGION_TRAITS,ASCENSION_LEVELS,MAX_ASCENSION,OPENING_OPTIONS,OPENING_FREE,OPENING_TRADE,RARITY,GEAR,ENERGY_GEAR,gearName,SUPPLY_RARITY_WEIGHTS,SUPPLIES,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,ENEMY_TUNING};
+return {RULES_VERSION,ROLES,TRAIT_TUNING,REGION_TRAITS,ASCENSION_LEVELS,MAX_ASCENSION,OPENING_OPTIONS,OPENING_FREE,OPENING_TRADE,RARITY,GEAR,ENERGY_GEAR,gearName,SUPPLY_RARITY_WEIGHTS,SUPPLIES,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,ENEMY_TUNING,ENEMY_TUNING_V2};
 })();
 const module9=(()=>{
 // Generated by tools/assign-card-rarity.mjs from card rules only (cost, effect value,
@@ -10826,9 +10877,9 @@ const { CURSES, CURSE_RULES, EXTRA_STATUS_RULES } = module2;
 const { WA_EVENTS, WA_EVENT_POOLS, WA_CRATE_LOOT } = module10;
 const { opsReason, describeOps, applyOps, pickKind, pickCandidates } = module5;
 const { freshUnknownOdds, resolveUnknown, blockedUnknownKinds, rollCrateSize } = module4;
-const { ROUTE_STEPS } = module3;
+const { routeSteps, CURRENT_MAP_VERSION, MAP_VERSIONS } = module3;
 const { CARD_RARITY, RARITY_ORDER } = module9;
-const { RULES_VERSION, ROLES, TRAIT_TUNING, OPENING_FREE, OPENING_TRADE, GEAR, SUPPLIES, ENERGY_GEAR, SUPPLY_RARITY_WEIGHTS, SUPPLY_PRICES, GEAR_PRICES, BASE_SUPPLY_SLOTS, GEAR_SLOTS, GEAR_SELL, MAX_ASCENSION, ENEMY_TUNING, gearName } = module8;
+const { RULES_VERSION, ROLES, TRAIT_TUNING, OPENING_FREE, OPENING_TRADE, GEAR, SUPPLIES, ENERGY_GEAR, SUPPLY_RARITY_WEIGHTS, SUPPLY_PRICES, GEAR_PRICES, BASE_SUPPLY_SLOTS, GEAR_SLOTS, GEAR_SELL, MAX_ASCENSION, ENEMY_TUNING, ENEMY_TUNING_V2, gearName } = module8;
 const clone = x => structuredClone(x);
 const log = (s,text) => s.logs.push({node:s.node,turn:s.battle?.turn||0,text});
 function random(s) { let x=s.rng; x^=x<<13; x^=x>>>17; x^=x<<5; s.rng=x>>>0; return s.rng/4294967296; }
@@ -10843,6 +10894,9 @@ const SEASON_EVENTS = Object.fromEntries(Object.entries(WA_EVENTS).map(([id,e])=
 // Every rules-1 effect is gated by R(s); legacy tutorial runs and older season
 // records (no `rules` field) keep their exact behaviour for replays.
 const R = s => s?.mode==='season'&&(s.rules||0)>=1;
+// Map version of a season: records without the field were played on the older
+// 12-step acts (map version 1) and keep replaying on them.
+const mapVersionOf = s => s?.mapVersion||1;
 const hasGear = (s,id) => R(s)&&s.skins.includes(id);
 const has = hasGear;
 const supplySlots = s => BASE_SUPPLY_SLOTS+(has(s,'GR61')?2:0);
@@ -10968,9 +11022,12 @@ function createRun(seed='first-season',tutorial=true) {
 function createSeason(seed='first-season',tutorial=false,region='CN',opts={}) {
  if(!REGIONS[region]) throw Error('未知赛区');
  const rules=opts?.rules===undefined||opts?.rules===null?0:opts.rules,ascension=opts?.ascension===undefined||opts?.ascension===null?0:opts.ascension;
+ const mapVersion=opts?.mapVersion===undefined||opts?.mapVersion===null?CURRENT_MAP_VERSION:opts.mapVersion;
  if(![0,RULES_VERSION].includes(rules))throw Error('未知规则版本');
+ if(!MAP_VERSIONS.includes(mapVersion))throw Error('未知地图版本');
  if(!Number.isInteger(ascension)||ascension<0||ascension>MAX_ASCENSION||(!rules&&ascension))throw Error('无效难度等级');
- const s={version:SEASON_VERSION,mode:'season',region,seed:String(seed),tutorial,rng:seedHash(seed),rev:0,nextId:1,act:1,map:rules?buildMap(seed,1,ascension):buildMap(seed,1),currentNode:null,completed:[],node:0,phase:'map',hp:80,maxHp:80,money:60,deck:[],skins:[],logs:[],actions:[],wins:0,battle:null,seenEvents:[]};
+ const s={version:SEASON_VERSION,mode:'season',region,seed:String(seed),tutorial,rng:seedHash(seed),rev:0,nextId:1,act:1,map:buildMap(seed,1,rules?ascension:0,mapVersion),currentNode:null,completed:[],node:0,phase:'map',hp:80,maxHp:80,money:60,deck:[],skins:[],logs:[],actions:[],wins:0,battle:null,seenEvents:[]};
+ if(mapVersion>=2)s.mapVersion=mapVersion;
  s.deck=REGIONS[region].start.map(id=>instance(s,id));
  log(s,`新赛季开始：${REGIONS[region].name}赛区 · 第1幕。`);
  if(rules){
@@ -10998,7 +11055,7 @@ function startBattle(s,id) {
  log(s,`比赛开始：${enemy.name}，对手防线 ${b.enemyHp}。`); beginTurn(s);
 }
 function setupRulesBattle(s,id){
- const b=s.battle,kind=enemyKind(s,id),asc=s.ascension||0,tune=ENEMY_TUNING[s.act]?.[kind]||{};
+ const b=s.battle,kind=enemyKind(s,id),asc=s.ascension||0,tune=(mapVersionOf(s)>=2?ENEMY_TUNING_V2:ENEMY_TUNING)[s.act]?.[kind]||{};
  b.rt={temps:0,extraBlock:0,pacNext:'TK01'};b.tt={};
  const hpK=(tune.hp??1)*((kind==='normal'?asc>=7:asc>=8)?1.1:1);
  const dmgK=(tune.dmg??1)*(kind==='normal'?(asc>=2?1.1:1):kind==='elite'?(asc>=3?1.15:1):(asc>=4?1.1:1));
@@ -11391,7 +11448,7 @@ function perform(s,a) {
   break;}
  case 'nextAct':{
   requirePhase('intermission'); if(s.mode!=='season') throw Error('非赛季模式');
-  s.act++; s.map=R(s)?buildMap(s.seed,s.act,s.ascension):buildMap(s.seed,s.act); s.currentNode=null; delete s.intermissionHeal; s.seenEvents=[]; s.phase='map';
+  s.act++; s.map=buildMap(s.seed,s.act,R(s)?s.ascension:0,mapVersionOf(s)); s.currentNode=null; delete s.intermissionHeal; s.seenEvents=[]; s.phase='map';
   log(s,`进入第 ${s.act} 幕。`);
   break;}
  case 'seasonEvent':requirePhase('event'); if(s.mode!=='season') throw Error('非赛季模式'); applySeasonEvent(s,a); break;
@@ -11500,7 +11557,7 @@ function replay(record) {
   for(const a of record.actions){const r=act(s,a);if(r.error)throw Error(r.error);s=r.state;}
   return s;
  } else if(record.version===SEASON_VERSION){
-  let s=createSeason(record.seed,record.tutorial,record.region,{rules:record.rules,ascension:record.ascension});
+  let s=createSeason(record.seed,record.tutorial,record.region,{rules:record.rules,ascension:record.ascension,mapVersion:mapVersionOf(record)});
   for(const a of record.actions){const r=act(s,a);if(r.error)throw Error(r.error);s=r.state;}
   return s;
  } else throw Error('回放版本不匹配');
@@ -11543,7 +11600,8 @@ function openSeasonShop(s){
 }
 function enterUnknownSeason(s,node){
  if(!s.unknownOdds||s.unknownOdds.act!==s.act)s.unknownOdds=freshUnknownOdds(s.act);
- const {kind,odds}=resolveUnknown(s.unknownOdds,random(s),blockedUnknownKinds(node.step,ROUTE_STEPS.shop,ROUTE_STEPS.crate));
+ const steps=routeSteps(mapVersionOf(s));
+ const {kind,odds}=resolveUnknown(s.unknownOdds,random(s),blockedUnknownKinds(node.step,steps.shop,steps.crate));
  s.unknownOdds=odds;node.revealed=kind;
  log(s,`未知节点揭晓：${{battle:'遭遇战',shop:'转会市场',crate:'补给箱',event:'事件'}[kind]}。`);
  if(kind==='battle')startBattle(s,node.ambush||(s.act===1?'S_E02':`A${s.act}_S_E02`));
@@ -11694,7 +11752,7 @@ function observe(s) {
  delete visible.seed;return {...visible,legalActions:legalActions(s)};
 }
 
-return {clone,random,shuffle,instance,SEASON_EVENTS,R,hasGear,supplySlots,marketPrice,rollGear,gearSellValue,restHeal,offers,RARITY_ODDS,SHOP_PRICE_RANGE,rarityChances,rarityOffers,shopPrice,createRun,createSeason,startBattle,drawCards,enemyMaxHp,damage,intent,intentText,canPlay,removalReason,healAmount,act,replay,preview,describeSeasonEvent,legalActions,observe};
+return {clone,random,shuffle,instance,SEASON_EVENTS,R,mapVersionOf,hasGear,supplySlots,marketPrice,rollGear,gearSellValue,restHeal,offers,RARITY_ODDS,SHOP_PRICE_RANGE,rarityChances,rarityOffers,shopPrice,createRun,createSeason,startBattle,drawCards,enemyMaxHp,damage,intent,intentText,canPlay,removalReason,healAmount,act,replay,preview,describeSeasonEvent,legalActions,observe};
 })();
 const module12=(()=>{
 // Presentation-only routing. The underlying seeded game and its replays are unchanged.
@@ -15406,6 +15464,8 @@ function buildRunFromSeason(season, checkpoint) {
     seed: season.seed,
     region: season.region,
     ...(season.rules ? { rules: season.rules, ascension: season.ascension || 0 } : {}),
+    // 15-floor acts; records without it replay on the older 12-step map.
+    ...(season.mapVersion ? { mapVersion: season.mapVersion } : {}),
     actions
   };
 }
@@ -15755,13 +15815,13 @@ function recordAscensionWin(s){
 const { routeNodes, mapEntry, nextScreen, restoreScreen } = module12;
 const { ACTS, availableNodes } = module6;
 const app=document.querySelector('#app'),dialog=document.querySelector('#dialog'),modal=document.querySelector('#dialog-content');
-const SAVE='bao-yi-ba-D0.1-save-route-v2',SEASON_SAVE='peak-season-D0.2-save-route-v5',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view-route-v4',LEGACY_VIEW='bao-yi-ba-view-legacy-route-v2';
+const SAVE='bao-yi-ba-D0.1-save-route-v2',SEASON_SAVE='peak-season-D0.2-save-route-v6',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view-route-v5',LEGACY_VIEW='bao-yi-ba-view-legacy-route-v2';
 // Internal beta: old maps cannot be resumed under the new route rules.
-try{for(const key of ['bao-yi-ba-D0.1-save','peak-season-D0.2-save','bao-yi-ba-view','bao-yi-ba-view-legacy','peak-season-D0.2-save-route-v2','bao-yi-ba-view-route-v2','peak-season-D0.2-save-route-v3','bao-yi-ba-view-route-v3','peak-season-D0.2-save-route-v4'])localStorage.removeItem(key);}catch{}
+try{for(const key of ['bao-yi-ba-D0.1-save','peak-season-D0.2-save','bao-yi-ba-view','bao-yi-ba-view-legacy','peak-season-D0.2-save-route-v2','bao-yi-ba-view-route-v2','peak-season-D0.2-save-route-v3','bao-yi-ba-view-route-v3','peak-season-D0.2-save-route-v4','peak-season-D0.2-save-route-v5','bao-yi-ba-view-route-v4'])localStorage.removeItem(key);}catch{}
 let state=null,atHome=true,hints=true,saveError='',saved=null,screen='map',selected=null,echo=null,dragging=null,pointerDrag=null,suppressClick=false,region='CN',turnAnimating=false;
 let libraryFilter='all',libraryRegionFilter='all',libraryRarityFilter='all';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function loadSave(key,legacy=false){try{const raw=localStorage.getItem(key);if(!raw)return null;const s=JSON.parse(raw);if(!s||!Array.isArray(s.deck)||!Array.isArray(s.actions)||!Number.isInteger(s.rev)||!s.phase)return null;if(legacy){if(s.version!==VERSION)return null;return s;}if(s.version!=='D0.2.0'||s.mode!=='season'||!REGIONS[s.region]||!s.map||!Array.isArray(s.map.nodes)||!Array.isArray(s.map.edges)||!Array.isArray(s.completed)||![1,2,3].includes(s.act))return null;return s;}catch{return null;}}
+function loadSave(key,legacy=false){try{const raw=localStorage.getItem(key);if(!raw)return null;const s=JSON.parse(raw);if(!s||!Array.isArray(s.deck)||!Array.isArray(s.actions)||!Number.isInteger(s.rev)||!s.phase)return null;if(legacy){if(s.version!==VERSION)return null;return s;}if(s.version!=='D0.2.0'||s.mode!=='season'||(s.mapVersion||1)<2||!REGIONS[s.region]||!s.map||!Array.isArray(s.map.nodes)||!Array.isArray(s.map.edges)||!Array.isArray(s.completed)||![1,2,3].includes(s.act))return null;return s;}catch{return null;}}
 try{saved=loadSave(SEASON_SAVE)||loadSave(SAVE,true);if(!saved&&(localStorage.getItem(SEASON_SAVE)||localStorage.getItem(SAVE)))saveError='存档无法读取，可重新开始。';hints=localStorage.getItem(HINTS)!=='off';}catch{saveError='本地存档无法读取；仍可开始新赛季。';region='CN';}
 function notice(text){document.querySelector('#notice').textContent=text;}
 function saveView(){if(state)try{const key=state.mode==='season'?VIEW:LEGACY_VIEW;localStorage.setItem(key,JSON.stringify({seed:state.seed,rev:state.rev,screen,mode:state.mode,region:state.region,version:state.version}));}catch{notice('页面位置未能保存。');}}
@@ -15836,7 +15896,7 @@ function home(){
      <a class="text-button" href="/">选择版本</a>
      ${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="text-button" href="/new/">新demo</a>` : ''}
    </div>
-   <p class="title-note">四大赛区 · 300 张赛区牌 · 三幕 × 12 站</p>
+   <p class="title-note">四大赛区 · 300 张赛区牌 · 三幕 × 15 站 + 决赛</p>
    ${saveError?`<p class="warning">${esc(saveError)}</p>`:''}
    <footer class="cover-footer">猪之家出品</footer>
  </section>
@@ -15878,10 +15938,10 @@ const REVEALED={battle:'遭遇战',shop:'转会市场',crate:'补给箱',event:'
 function seasonRoute(){
  const s=state,nodes=routeNodes(s),lookup=new Map(nodes.map(n=>[n.key,n])),choices=nodes.filter(n=>n.status==='current'),info=ACTS[s.act-1];
  const resume=!['map','result','intermission'].includes(s.phase);
- const done=nodes.filter(n=>n.status==='visited').length;
- const lines=s.map.edges.map(e=>{const a=lookup.get(e.from),b=lookup.get(e.to),taken=a.status==='visited'&&(b.status==='visited'||resume&&b.key===s.currentNode);return `<path class="${taken?'taken':a.key===s.currentNode&&b.status==='current'?'available':''}" d="M ${a.x*7} ${a.y*10.5} C ${a.x*7} ${(a.y-4)*10.5}, ${b.x*7} ${(b.y+4)*10.5}, ${b.x*7} ${b.y*10.5}"/>`;});
+ const done=nodes.filter(n=>n.status==='visited'&&n.kind!=='boss').length,floors=s.map.nodes.reduce((m,n)=>n.kind==='boss'?m:Math.max(m,n.step),0);
+ const lines=s.map.edges.map(e=>{const a=lookup.get(e.from),b=lookup.get(e.to),taken=a.status==='visited'&&(b.status==='visited'||resume&&b.key===s.currentNode);return `<path class="${taken?'taken':a.key===s.currentNode&&b.status==='current'?'available':''}" d="M ${a.x*7} ${a.y*14} C ${a.x*7} ${(a.y-3)*14}, ${b.x*7} ${(b.y+3)*14}, ${b.x*7} ${b.y*14}"/>`;});
  const itinerary=`<ol class="season-itinerary">${ACTS.map(a=>`<li class="${a.id===s.act?'active':a.id<s.act?'complete':''}"><b>${a.id<s.act?'✓':a.id}</b><span>${a.name}<small>${a.bossName}</small></span></li>`).join('')}</ol>`;
- return `<main class="map-screen season-map"><aside class="map-intro"><div class="eyebrow">ACT ${['I','II','III'][s.act-1]} / ${esc(REGIONS[s.region].name)}</div><h1>${info.name}</h1>${itinerary}<div class="map-progress"><b>${done}</b><span> / 12 站完成</span></div><div class="map-legend">${[['battle','比赛'],['elite','强敌'],['event','未知'],['shop','转会市场'],['crate','补给箱'],['rest','俱乐部活动'],['boss','世界赛']].map(([k,t])=>`<span>${icon(k)}${t}</span>`).join('')}</div><p class="map-instruction">${resume?'比赛与奖励尚未完成，可查看后续路线，再返回当前节点。':s.currentNode===null?'四个起点任选其一。向上滑动地图，可先看决赛和后续路线。':'沿连线选择下一站。分叉会改变接下来的比赛和补强机会。'}</p>${s.phase!=='map'?ui(s.phase==='intermission'?'查看晋级与下一幕':s.phase==='result'?'查看赛季结算':'返回当前节点','return-room','primary'):''}</aside><div class="map-scroll"><div class="map-board season-board"><div class="map-watermark">ASCEND</div><svg class="map-paths" viewBox="0 0 700 1050" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes.map(n=>`<div class="map-stop ${n.status} kind-${n.kind}" style="left:${n.x}%;top:${n.y}%"><button data-map="${n.key}" ${n.status==='current'?'':'disabled'} aria-label="${n.status==='current'?(resume?'返回':'进入'):n.status==='visited'?'已完成':n.status==='bypassed'?'未选择':'未解锁'}：第 ${n.step} 站 ${esc(n.name)}${n.revealed?`（已揭晓：${REVEALED[n.revealed]}）`:''}">${icon(n.revealed||n.kind)}${n.status==='visited'?'<span class="visited-check">✓</span>':''}</button><span class="node-label">${esc(n.name)}</span>${n.status==='current'?`<small class="here-label">${resume?'正在进行':'可选下一站'}</small>`:''}</div>`).join('')}</div></div><aside class="map-current"><span class="eyebrow">赛季已走过 ${s.node} / 36 站</span><h3>${s.phase==='intermission'?'世界赛晋级':s.phase==='result'?'赛季结束':resume?'完成当前节点':`可选 ${choices.length} 条路线`}</h3><p>本幕终点：${info.bossName}。<br>强敌提供装备；俱乐部活动可恢复声望或训练；市场可招募与移除牌${R(s)?'，并出售装备与补给品':''}；补给箱必得资金，常有装备。未知节点进入后揭晓，多半是事件，也可能是比赛、市场或补给箱。</p><p>节点内容与连线随赛季种子生成。已进入的节点不会因刷新而改变。</p>${s.phase!=='map'?ui('返回当前进度','return-room','secondary'):''}</aside></main>`;
+ return `<main class="map-screen season-map"><aside class="map-intro"><div class="eyebrow">ACT ${['I','II','III'][s.act-1]} / ${esc(REGIONS[s.region].name)}</div><h1>${info.name}</h1>${itinerary}<div class="map-progress"><b>${done}</b><span> / ${floors} 站完成 · 之后是决赛</span></div><div class="map-legend">${[['battle','比赛'],['elite','强敌'],['event','未知'],['shop','转会市场'],['crate','补给箱'],['rest','俱乐部活动'],['boss','世界赛']].map(([k,t])=>`<span>${icon(k)}${t}</span>`).join('')}</div><p class="map-instruction">${resume?'比赛与奖励尚未完成，可查看后续路线，再返回当前节点。':s.currentNode===null?'四个起点任选其一。向上滑动地图，可先看决赛和后续路线。':'沿连线选择下一站。分叉会改变接下来的比赛和补强机会。'}</p>${s.phase!=='map'?ui(s.phase==='intermission'?'查看晋级与下一幕':s.phase==='result'?'查看赛季结算':'返回当前节点','return-room','primary'):''}</aside><div class="map-scroll"><div class="map-board season-board"><div class="map-watermark">ASCEND</div><svg class="map-paths" viewBox="0 0 700 1400" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes.map(n=>`<div class="map-stop ${n.status} kind-${n.kind}" style="left:${n.x}%;top:${n.y}%"><button data-map="${n.key}" ${n.status==='current'?'':'disabled'} aria-label="${n.status==='current'?(resume?'返回':'进入'):n.status==='visited'?'已完成':n.status==='bypassed'?'未选择':'未解锁'}：第 ${n.step} 站 ${esc(n.name)}${n.revealed?`（已揭晓：${REVEALED[n.revealed]}）`:''}">${icon(n.revealed||n.kind)}${n.status==='visited'?'<span class="visited-check">✓</span>':''}</button><span class="node-label">${esc(n.name)}</span>${n.status==='current'?`<small class="here-label">${resume?'正在进行':'可选下一站'}</small>`:''}</div>`).join('')}</div></div><aside class="map-current"><span class="eyebrow">赛季进度 ${s.node} / ${3*(floors+1)} 节点</span><h3>${s.phase==='intermission'?'世界赛晋级':s.phase==='result'?'赛季结束':resume?'完成当前节点':`可选 ${choices.length} 条路线`}</h3><p>本幕终点：${info.bossName}。<br>强敌提供装备；俱乐部活动可恢复声望或训练；市场可招募与移除牌${R(s)?'，并出售装备与补给品':''}；补给箱必得资金，常有装备。未知节点进入后揭晓，多半是事件，也可能是比赛、市场或补给箱。</p><p>节点内容与连线随赛季种子生成。已进入的节点不会因刷新而改变。</p>${s.phase!=='map'?ui('返回当前进度','return-room','secondary'):''}</aside></main>`;
 }
 function targetOf(c){return effects(c).some(e=>['hit','weak','vulnerable'].includes(e.type))?'enemy':'self';}
 function handCard(c,i,n){const t=CARDS[c.id],reason=canPlay(state,c.uid),offset=i-(n-1)/2;return `<button class="hand-card role-${t.player?t.role:t.id.slice(0,2)} ${reason?'unplayable':''} ${c.up?'upgraded':''}${rarityClass(c.id)}" data-card-id="${c.id}" data-card-up="${!!c.up}" data-select="${c.uid}" draggable="false" style="--offset:${offset};--tilt:${offset*(n>6?1.6:3)}deg;--bend:${Math.abs(offset)*Math.abs(offset)*1.8}px;--order:${i}" aria-label="选择 ${esc(cardName(c))} · ${esc(TACTICS[c.id].title)}，${t.role}，${t.cost===null?'不能打出':t.cost+' 行动点'}，${esc(describe(c))}"><span class="card-face">${face(c)}</span><span class="card-key">${(i+1)%10}</span>${reason?`<span class="card-unavailable">${esc(reason)}</span>`:''}</button>`;}
@@ -16225,7 +16285,7 @@ function handleUI(name){
  }
  if(name==='hide-hints'){hints=false;try{localStorage.setItem(HINTS,'off');}catch{}render();return;}
  if(name==='rules'){
-  showModal('赛季规则',`<div class="rules"><p><strong>目标：</strong>对手防线降到 0 就赢得比赛；自己的声望降到 0，赛季失败。</p><p><strong>每回合：</strong>3 行动点、抽 5 张。按费用出牌，结束回合后对手按公开意图行动。资金与行动点是两种资源。</p><p><strong>布防：</strong>绊线、减速、墙体与掩护的共同收益；每点抵消 1 点攻击伤害。先抵消攻击，下个自己的回合开始清空。对手布防在对手下次行动开始时清空。</p><p><strong>牌堆：</strong>打出的普通牌进入弃牌堆；结束回合时，所有未打出的手牌也进入弃牌堆，不留到下回合。注明回合末消耗的牌改入消耗区。下回合重新抽 5 张，并结算额外抽牌能力；需要抽牌而抽牌堆为空时，将弃牌堆洗成新的抽牌堆。手牌最多 10 张。</p><p><strong>消耗：</strong>写着“打出后消耗”的牌，效果结算后进入消耗区，不进入弃牌堆，本场不再抽到；未打出时仍正常弃置，除非另写“回合末消耗”。消耗不等于永久删除，赛季牌组中的原牌下场恢复。临时牌和比赛干扰在赛后消失。</p><p><strong>能力：</strong>自由人牌打出后持续本场，不再洗回；多张可叠加，只影响之后的触发。</p><p><strong>压制：</strong>攻击伤害 ×0.75。<strong>易伤：</strong>受到攻击 ×1.5。每段伤害分别向下取整；回合数在受影响一方行动结束后减少。</p><p><strong>战术场景：</strong>卡上的特工技能转译成上述卡牌规则。腐坏逼退以压制结算，闪光接枪窗口以易伤结算；不另加持续伤害、硬控或隐藏触发。选牌后点“详解”可看说明。</p><p><strong>五个位置：</strong>决斗进攻，哨位布防，控场压制，先锋配合与抽牌，自由人建立持续能力。</p><p><strong>俱乐部活动：</strong>粉丝见面会恢复最大声望的 30%（向上取整、至多满声望）；训练升级一张选手或战术牌；团建移除一张隐患。每节点只能选一项。</p><p><strong>招募：</strong>可跳过。相同选手最多三张，升级前后合并计算。</p><p><strong>登峰赛季：</strong>四个赛区、三个赛段。每赛段 12 站，包含分支路线。前两幕 Boss 胜利各奖励 50 资金与 Boss 装备三选一（旧存档仍为皮肤选择，集齐后改得 20 资金）。之后晋级宣传恢复最大声望的 30%。冠军赛获胜即为赛季胜利。</p><h3>赛区特质</h3>${Object.entries(REGION_TRAITS).map(([id,t])=>`<p><strong>${esc(REGIONS[id].name)} · ${esc(t.name)}：</strong>${esc(t.text)}</p>`).join('')}<p>特质只在新规则赛季与好友 PvP 中生效，战斗界面左侧显示当前计数。</p><h3>赞助商签约日</h3><p>选择赛区后、进入路线图前，从 4 份合同中签下 1 份：两份免费的小奖励、一份有代价的交换、一份常规合同。选项由赛季种子决定。</p><h3>装备</h3><p>装备在本赛季持续生效，不进入抽牌堆，分普通、罕见、稀有、Boss 专属与市场专属。战胜强敌必得 1 件（普通／罕见／稀有约 50%／33%／17%，不重复）；Boss 胜利后可从 3 件 Boss 专属装备中选 1 件或放弃；转会市场出售 2 件装备与 1 件市场专属装备。原有三件皮肤归入普通装备。最多装备 6 件（Boss 专属装备与皮肤同样占槽）：槽满时获得新装备，需替换一件（被替换的按品级折算资金：普通 15、罕见 25、稀有 40、Boss 专属 50、市场专属 30）或放弃；任何时候都可在装备栏出售一件换同样资金。转会市场在槽满时不能购入装备。</p><h3>补给品</h3><p>一次性道具，默认 3 个栏位，比赛中点击使用，任何时候都可以丢弃。普通与强敌比赛胜利后按掉落率获得：初始 40%，掉落一次 -10%，未掉落 +10%。转会市场出售 3 个补给品；栏位满时需先丢弃或替换。</p><h3>难度等级</h3><ol>${ASCENSION_LEVELS.filter(l=>l.level).map(l=>`<li>${esc(l.text)}</li>`).join('')}</ol><p>难度逐级叠加。每个赛区单独解锁：在当前最高难度赢下完整三幕赛季，解锁下一级。好友 PvP 只显示难度，不改变对局规则；装备与补给品不带入 PvP。</p><p>选手头像暂用占位图。游玩无需联网，也不消耗模型额度。</p></div>`);return;
+  showModal('赛季规则',`<div class="rules"><p><strong>目标：</strong>对手防线降到 0 就赢得比赛；自己的声望降到 0，赛季失败。</p><p><strong>每回合：</strong>3 行动点、抽 5 张。按费用出牌，结束回合后对手按公开意图行动。资金与行动点是两种资源。</p><p><strong>布防：</strong>绊线、减速、墙体与掩护的共同收益；每点抵消 1 点攻击伤害。先抵消攻击，下个自己的回合开始清空。对手布防在对手下次行动开始时清空。</p><p><strong>牌堆：</strong>打出的普通牌进入弃牌堆；结束回合时，所有未打出的手牌也进入弃牌堆，不留到下回合。注明回合末消耗的牌改入消耗区。下回合重新抽 5 张，并结算额外抽牌能力；需要抽牌而抽牌堆为空时，将弃牌堆洗成新的抽牌堆。手牌最多 10 张。</p><p><strong>消耗：</strong>写着“打出后消耗”的牌，效果结算后进入消耗区，不进入弃牌堆，本场不再抽到；未打出时仍正常弃置，除非另写“回合末消耗”。消耗不等于永久删除，赛季牌组中的原牌下场恢复。临时牌和比赛干扰在赛后消失。</p><p><strong>能力：</strong>自由人牌打出后持续本场，不再洗回；多张可叠加，只影响之后的触发。</p><p><strong>压制：</strong>攻击伤害 ×0.75。<strong>易伤：</strong>受到攻击 ×1.5。每段伤害分别向下取整；回合数在受影响一方行动结束后减少。</p><p><strong>战术场景：</strong>卡上的特工技能转译成上述卡牌规则。腐坏逼退以压制结算，闪光接枪窗口以易伤结算；不另加持续伤害、硬控或隐藏触发。选牌后点“详解”可看说明。</p><p><strong>五个位置：</strong>决斗进攻，哨位布防，控场压制，先锋配合与抽牌，自由人建立持续能力。</p><p><strong>俱乐部活动：</strong>粉丝见面会恢复最大声望的 30%（向上取整、至多满声望）；训练升级一张选手或战术牌；团建移除一张隐患。每节点只能选一项。</p><p><strong>招募：</strong>可跳过。相同选手最多三张，升级前后合并计算。</p><p><strong>登峰赛季：</strong>四个赛区、三个赛段。每赛段 15 站，第 16 层为决赛，包含分支路线：第 1–2 站固定为比赛，第 7 站转会市场，第 9 站补给箱，第 15 站俱乐部活动；前 5 站不会出现强敌。前两幕 Boss 胜利各奖励 50 资金与 Boss 装备三选一（旧存档仍为皮肤选择，集齐后改得 20 资金）。之后晋级宣传恢复最大声望的 30%。冠军赛获胜即为赛季胜利。</p><h3>赛区特质</h3>${Object.entries(REGION_TRAITS).map(([id,t])=>`<p><strong>${esc(REGIONS[id].name)} · ${esc(t.name)}：</strong>${esc(t.text)}</p>`).join('')}<p>特质只在新规则赛季与好友 PvP 中生效，战斗界面左侧显示当前计数。</p><h3>赞助商签约日</h3><p>选择赛区后、进入路线图前，从 4 份合同中签下 1 份：两份免费的小奖励、一份有代价的交换、一份常规合同。选项由赛季种子决定。</p><h3>装备</h3><p>装备在本赛季持续生效，不进入抽牌堆，分普通、罕见、稀有、Boss 专属与市场专属。战胜强敌必得 1 件（普通／罕见／稀有约 50%／33%／17%，不重复）；Boss 胜利后可从 3 件 Boss 专属装备中选 1 件或放弃；转会市场出售 2 件装备与 1 件市场专属装备。原有三件皮肤归入普通装备。最多装备 6 件（Boss 专属装备与皮肤同样占槽）：槽满时获得新装备，需替换一件（被替换的按品级折算资金：普通 15、罕见 25、稀有 40、Boss 专属 50、市场专属 30）或放弃；任何时候都可在装备栏出售一件换同样资金。转会市场在槽满时不能购入装备。</p><h3>补给品</h3><p>一次性道具，默认 3 个栏位，比赛中点击使用，任何时候都可以丢弃。普通与强敌比赛胜利后按掉落率获得：初始 40%，掉落一次 -10%，未掉落 +10%。转会市场出售 3 个补给品；栏位满时需先丢弃或替换。</p><h3>难度等级</h3><ol>${ASCENSION_LEVELS.filter(l=>l.level).map(l=>`<li>${esc(l.text)}</li>`).join('')}</ol><p>难度逐级叠加。每个赛区单独解锁：在当前最高难度赢下完整三幕赛季，解锁下一级。好友 PvP 只显示难度，不改变对局规则；装备与补给品不带入 PvP。</p><p>选手头像暂用占位图。游玩无需联网，也不消耗模型额度。</p></div>`);return;
  }
  if(name==='menu'){
   showModal('赛季菜单',`<p>当前种子：${esc(state.seed)} · ${state.mode==='season'?'D0.2.0':VERSION}${state.mode==='season'?' · '+esc(state.region):''}${R(state)?' · 难度 '+(state.ascension||0):''}</p><div class="stack">${R(state)?ui(`查看装备（${state.skins.length}）`,'gear')+ui(`补给品（${state.supplies.length}/${supplySlots(state)}）`,'supplies'):''}${ui('导出本局记录','export')}${ui('返回开始页（保留进度）','home')}${state.phase!=='result'?ui('放弃本次赛季…','abandon','danger-button'):''}</div>`);return;

@@ -253,7 +253,7 @@ test('map specials move across seeds while every act keeps reachable event, shop
     const map = buildMap(`variety-${i}`, 1);
     const byKey = new Map(map.nodes.map(n => [n.key, n]));
     const reachable = new Set(map.starts);
-    for (let step = 1; step < 11; step++) {
+    for (let step = 1; step < 16; step++) {
       for (const edge of map.edges) if (reachable.has(edge.from)) reachable.add(edge.to);
     }
     for (const kind of ['event', 'shop', 'elite']) {

@@ -41,12 +41,12 @@ npm start
 ## 资料阅读顺序与过时信息
 
 1. `AGENTS.md`：当前工作纪律、产品约定和凭据边界。
-2. `docs/ROUTE-PACING-12-STOPS.md`：当前地图结构、随机性和地图视觉调整。
+2. `docs/ROUTE-PACING-15-STOPS.md`：当前地图结构、随机性和地图视觉调整。
 3. `docs/VARIETY-PASS-2026-09-24.md`、`docs/NEW-DEMO-FUN-AUDIT.md`、`docs/NEW-DEMO-PLAYTEST-2026-09-23.md`：新 Demo 可玩性诊断与自动试玩数据；结论仍待真实玩家验证。试玩脚本在 `tools/playtest-new-demo.mjs`、`tools/playtest-wa.mjs`。
 4. `docs/STAGE-SNAPSHOT-PVP.md`、`docs/WA-PVP-RULES.md`：历史构筑和 PvP 规则。
 5. `docs/CARD-ROLE-AND-MOTION-AUDIT-2026-09-23.md`、`docs/STS1-CARD-DESIGN-REPORT.md`：卡牌与表现参考。
 
-部分历史文档（尤其 `MEMORY.md`、`docs/DUAL-DEMO-DELIVERY.md`、`docs/ONLINE-SETUP.md`）仍写有“新 Demo 仅本地”“生产 `/new/` 404”或每幕 11 站等旧状态。这些已被用户后来的上线要求和当前实现覆盖：**现在 `/new/` 在线可玩，每幕 12 站**。阅读旧报告时区分当时状态与当前事实，必要时再核对代码和线上网页。
+部分历史文档（尤其 `MEMORY.md`、`docs/DUAL-DEMO-DELIVERY.md`、`docs/ONLINE-SETUP.md`）仍写有“新 Demo 仅本地”“生产 `/new/` 404”或每幕 11／12 站等旧状态。这些已被用户后来的上线要求和当前实现覆盖：**现在 `/new/` 在线可玩；自 2026-09-24 起每幕 15 站＋第 16 层 Boss（地图版本 2）**。阅读旧报告时区分当时状态与当前事实，必要时再核对代码和线上网页。
 
 ## 下一步
 

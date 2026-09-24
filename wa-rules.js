@@ -136,8 +136,19 @@ export const GEAR_SELL = {common:15,uncommon:25,rare:40,boss:50,shop:30};
 // top of difficulty levels. Traits, the opening, equipment and supplies make runs
 // stronger, so the opponents — not the new content — absorb that power.
 // Keyed by act, then opponent kind.
+// ENEMY_TUNING is for map version 1 (12-step acts; kept so old records replay).
 export const ENEMY_TUNING = {
  1:{normal:{hp:1.42,dmg:1.45},elite:{hp:1.45,dmg:1.45},boss:{hp:1.45,dmg:1.4}},
+ 2:{normal:{hp:1.5,dmg:1.38},elite:{hp:1.5,dmg:1.38},boss:{hp:1.5,dmg:1.32}},
+ 3:{normal:{hp:1.7,dmg:1.52},elite:{hp:1.7,dmg:1.52},boss:{hp:1.7,dmg:1.47}}
+};
+// Map version 2 (15 floors + boss): more fights and rewards per act, so the
+// opponents are re-tuned for the longer route.
+// Act 1 is eased against version 1: ordinary fights are shorter (HP 1.42 -> 1.32)
+// so opponents that grow in a fight (the recon's enrage) do not snowball over ~7
+// fights, and elites (now ~1.2 per route instead of ~0.9) and the boss hit softer.
+export const ENEMY_TUNING_V2 = {
+ 1:{normal:{hp:1.32,dmg:1.4},elite:{hp:1.35,dmg:1.35},boss:{hp:1.4,dmg:1.35}},
  2:{normal:{hp:1.5,dmg:1.38},elite:{hp:1.5,dmg:1.38},boss:{hp:1.5,dmg:1.32}},
  3:{normal:{hp:1.7,dmg:1.52},elite:{hp:1.7,dmg:1.52},boss:{hp:1.7,dmg:1.47}}
 };

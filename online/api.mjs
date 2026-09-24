@@ -270,9 +270,12 @@ async function rebuildSnapshot(run, act) {
   if (run.ascension !== undefined && (!Number.isInteger(run.ascension) || run.ascension < 0 || run.ascension > 10 || !run.rules)) {
     throw new HttpError(400, '无效的难度等级');
   }
+  // Runs recorded before the 15-floor acts carry no mapVersion and replay on the
+  // 12-step map (version 1) with that version's opponent tuning.
+  if (run.mapVersion !== undefined && run.mapVersion !== 2) throw new HttpError(400, '无效的地图版本：请用当前版本重新完成这一幕');
   let state;
   try {
-    state = createWaSeason(run.seed, false, run.region, run.runId, { rules: run.rules, ascension: run.ascension });
+    state = createWaSeason(run.seed, false, run.region, run.runId, { rules: run.rules, ascension: run.ascension, mapVersion: run.mapVersion ?? 1 });
   } catch {
     throw new HttpError(400, '无效的运行数据');
   }
