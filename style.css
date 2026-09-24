@@ -1950,7 +1950,7 @@ button.supply-slot:hover{background:#21403f;border-color:#ffd58a}
 @media(max-width:720px){
  .gear-slots{display:inline-grid;grid-template-columns:repeat(3,9px);padding:2px;gap:1px}.gear-cell{width:9px;height:9px;border-radius:2px}.gear-cell .status-svg{width:7px;height:7px}
  .hud-resources{gap:4px}
- .hud-resources .hud-link[data-ui='gear'],.hud-resources .hud-link[data-ui='supplies']{display:none}
+ .hud-resources .hud-link[data-ui='gear'],.hud-resources .hud-link[data-ui='supplies'],.hud-resources .hud-link[data-ui='invest']{display:none}
  .asc-levels{gap:3px}.asc-level{padding:5px 0;font-size:11px}
  .supply-bar{gap:3px}.supply-slot{width:34px;height:34px}.supply-slot small{display:none}
  .gear-rack{max-width:70%}.gear-chip em{display:none}.gear-chip{padding:1px 4px}
@@ -1958,3 +1958,18 @@ button.supply-slot:hover{background:#21403f;border-color:#ffd58a}
  .market-row{grid-template-columns:1fr 1fr;gap:8px}.market-item{padding:10px 8px}.market-item h4{font-size:12px;padding-right:40px}.market-item p{font-size:11px}
 }
 @media(max-width:420px){.game-hud .hud-tools .hud-link{padding:4px 2px}}
+/* Economy rules: unlock progress, skip compensation, investments, market rerolls */
+.unlock-bar{margin-top:10px;padding:10px 12px;border:1px solid #465056;border-radius:6px;background:#101c22;text-align:left}
+.unlock-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 10px}.unlock-head b{color:#ede5d1;font-size:13px}.unlock-head small{color:#e3c27f;font-size:12px;font-variant-numeric:tabular-nums}
+.unlock-track{height:8px;margin:8px 0 6px;border-radius:4px;background:#26343a;overflow:hidden;border:1px solid #3c4b50}.unlock-track i{display:block;height:100%;background:linear-gradient(90deg,#8a6f3e,#d6b56d)}
+.unlock-note{display:block;color:#819189;font-size:10px;line-height:1.5}
+.unlock-test{margin-top:8px;font-size:11px;color:#6f8283;text-align:left}.unlock-test summary{cursor:pointer;list-style-position:inside}.unlock-test small{display:block;color:#6f8283;font-size:10px}
+.unlock-result{max-width:640px;margin:14px auto;text-align:left}.unlock-gain{margin:0;color:#c8d3cc;font-size:13px}.unlock-gain b{color:#e3c27f;font-size:16px}
+.unlock-new{margin-top:10px;padding:10px 12px;border:1px solid #8a6f3e;border-radius:6px;background:#2a2517}.unlock-new h4{margin:0 0 6px;color:#f0d79a;font-size:13px}
+.unlock-new ul{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}.unlock-new li{padding:3px 8px;border:1px solid #6e5a32;border-radius:4px;background:#1c1a12;color:#ede5d1;font-size:12px}.unlock-new li small{margin-left:5px;color:#b3a68b;font-size:10px}
+.skip-options{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:8px auto 0;max-width:760px}.skip-options>small{flex-basis:100%;text-align:center;color:#819189;font-size:11px}.skip-label{color:#c8d3cc;font-size:13px}
+.reroll-control{display:inline-block;margin-left:10px;vertical-align:middle}.reroll-control .reroll-button{padding:5px 12px;font-size:12px}.reroll-control .disabled-reason{display:inline;margin-left:6px}
+.invest-row{grid-template-columns:minmax(0,340px)!important;justify-content:center}
+.invest-item{--rarity:#9fc7b3;border-color:#5f8a76}.invest-item h4 .status-svg{color:#9fc7b3}
+.invest-list{margin:6px 0;padding-left:18px;font-size:13px;line-height:1.7}.invest-list b{color:#e3c27f}
+@media(max-width:720px){.skip-options{flex-direction:column;align-items:stretch}.skip-options>button{width:100%}.skip-label{text-align:center}.reroll-control{display:block;margin:6px 0 0}.reroll-control .reroll-button{width:100%}}

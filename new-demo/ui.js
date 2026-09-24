@@ -10,6 +10,8 @@ import { attachCardGesture } from '/shared/card-gesture.js';
 import { flyCardsFromPile, flyCardsToPile } from '/shared/card-pile-motion.js';
 import { soundToggleHtml } from '/shared/sfx.js';
 import { juiceAction, juiceImpact, juiceSlam } from './juice-hooks.js';
+import { restHealRate, econOn } from './engine.js';
+import { unlockRunOptions, recordUnlockProgress, unlockBarHtml, unlockTestHtml, toggleAllUnlocks, unlockNoticeHtml, skipOptionsHtml, rerollButtonHtml, investOfferHtml, investChipHtml, investListHtml } from './economy.js';
 
 const STORAGE_KEY = 'new-demo-run-route-v5';
 const GUIDE_KEY = 'new-demo-guide-v2-';
@@ -36,6 +38,7 @@ function escapeHtml(str) {
 
 function saveState() {
   try {
+    recordUnlockProgress(state);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (e) {
     console.error('Save failed', e);
@@ -147,6 +150,8 @@ function renderGuideModal() {
     <p><strong>补给品：</strong>一次性战斗道具，最多携带${3}件（部分装备可扩容）。战斗中点击顶部栏位查看说明并使用，需要目标的补给品在多名敌人时要选择目标。战斗胜利后有机会掉落（未掉落时下次机会提高），补给站也有售；栏位满时可以丢弃或替换。</p>
     <p><strong>赛前准备：</strong>选好队伍后，从4个开局选项中选1个：两个免费小加成、一个有代价的较大奖励、以及总是提供的“热身赛”。选项由本局种子决定。</p>
     <p><strong>难度等级：</strong>用某支队伍打通三幕后，为该队伍解锁下一难度（最高${MAX_ASCENSION}级）。每一级在之前所有规则之上再加一条，开赛前在首页选择。</p>
+    <p><strong>解锁：</strong>每支队伍初次游玩时队伍专属卡较少，装备也少 15 件。战斗胜利 +1 解锁经验，每击败一幕决战对手 +10，打通三幕再 +10；每升一级为该队伍加入 8 张战术卡并开放 3 件装备，共 5 级，下一局起生效。首页显示进度。</p>
+    <p><strong>跳过与补给站：</strong>跳过战后选卡可得 15 金币，或 1 次免费刷新补给货架（可留到之后的补给站）。补给货架可付费刷新：每个补给站第一次 20 金币，之后每次 +10。每个补给站提供 1 项战术投资（150–220 金币），买下后整局生效，同一项只能买一次；顶部栏显示已拥有的投资。</p>
     <p><strong>路线：</strong>点亮起的节点前进。⚔ 比赛、☠ 强敌、? 未知、⇄ 补给、✚ 休整、👑 幕末决赛。</p>
     <p><strong>战斗：</strong>先看敌人下一步意图，再按费用出牌。攻击造成伤害，技能负责布防、道具或抽牌，能力打出后整场生效。点牌再按执行，或拖到战场。遇到多名对手时，攻击和减益牌要点选目标（或直接拖到那名对手身上），“所有敌人”的范围牌无需目标；敌方回合每名在场对手依次行动。</p>
     <p><strong>回合：</strong>每回合通常有3能量；结束回合时没打出的手牌进入弃牌堆，消耗牌打出后本场不再抽到。布防抵消伤害，回合后清掉。前压/掩护姿态可以切换，但要花1能量。</p>
@@ -194,6 +199,7 @@ function renderHome() {
         ${teamsHtml}
       </div>
       <div id="ascension-picker">${ascensionPickerHtml(unlocks)}</div>
+      <div id="unlock-progress">${unlockBarHtml(selectedTeam)}${unlockTestHtml()}</div>
       <div class="home-actions">
         <button class="btn primary" id="btn-new-secondary">确认开赛</button>
         <button class="btn" id="btn-continue" ${continueDisabled ? 'disabled' : ''}>继续上局</button>
@@ -232,7 +238,20 @@ function renderHome() {
     selectedAscension = Math.min(selectedAscension, fresh[selectedTeam] || 0);
     document.getElementById('ascension-picker').innerHTML = ascensionPickerHtml(fresh);
     bindAscensionPicker();
+    renderUnlockProgress();
   }
+  function renderUnlockProgress() {
+    const host = document.getElementById('unlock-progress');
+    if (!host) return;
+    host.innerHTML = unlockBarHtml(selectedTeam) + unlockTestHtml();
+    host.querySelector('#btn-unlock-all')?.addEventListener('click', () => {
+      const on = toggleAllUnlocks();
+      showNotice(on ? '测试：之后新开的对局全部解锁。' : '已恢复正常解锁进度。');
+      renderUnlockProgress();
+      host.querySelector('.unlock-test')?.setAttribute('open', '');
+    });
+  }
+  renderUnlockProgress();
   function bindAscensionPicker() {
     document.querySelectorAll('[data-asc]').forEach(el => el.addEventListener('click', () => {
       if (el.disabled) return;
@@ -250,7 +269,7 @@ function renderHome() {
     }
     try {
       const seed = crypto.randomUUID();
-      state = createRun(seed, selectedTeam, { ascension: selectedAscension, opening: true });
+      state = createRun(seed, selectedTeam, { ascension: selectedAscension, opening: true, ...unlockRunOptions(selectedTeam) });
       saveState();
       selectedCardUid = null;
       renderGame();
@@ -317,6 +336,7 @@ function runStripHtml() {
   return `<div class="run-strip" role="region" aria-label="装备与补给品">
     <div class="strip-group gear-row" aria-label="装备"><span class="strip-label">装备 ${state.relics.length}/${RELIC_SLOTS}</span>${gear}</div>
     <div class="strip-group supply-row" aria-label="补给品"><span class="strip-label">补给品</span>${slots.join('')}</div>
+    ${investChipHtml(state)}
   </div>`;
 }
 
@@ -326,6 +346,22 @@ function renderRunStrip() {
   host.innerHTML = state && !['opening', 'openingPick'].includes(state.phase) ? runStripHtml() : '';
   host.querySelectorAll('[data-gear-index]').forEach(el => el.addEventListener('click', () => openGearPanel(Number(el.dataset.gearIndex))));
   host.querySelectorAll('[data-supply-index]').forEach(el => el.addEventListener('click', () => openSupplyPanel(Number(el.dataset.supplyIndex))));
+  host.querySelector('#btn-invest-list')?.addEventListener('click', openInvestPanel);
+}
+
+// Owned 战术投资 (whole-run upgrades bought at shops).
+function openInvestPanel() {
+  if (!state || presentationBusy) return;
+  const modalRoot = document.getElementById('modal-root');
+  modalRoot.innerHTML = `<div class="modal-overlay" id="invest-overlay"><div class="modal supply-modal" role="dialog" aria-modal="true" aria-label="战术投资">
+    <h3>战术投资</h3>${investListHtml(state)}
+    <div class="supply-actions"><button class="btn" id="invest-close">关闭</button></div>
+  </div></div>`;
+  const close = () => { modalRoot.innerHTML = ''; };
+  const overlay = modalRoot.querySelector('#invest-overlay');
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  modalRoot.querySelector('#invest-close').addEventListener('click', close);
+  modalRoot.querySelector('#invest-close').focus();
 }
 
 // Equipment detail with 出售 (not during combat).
@@ -939,22 +975,25 @@ function renderReward(root) {
   } else if (b.rewardSupplyTaken) {
     supplyHtml = `<div class="loot-line">${supplyTileHtml(b.rewardSupplyTaken, '<em class="loot-tag">已放入补给品栏位</em>')}</div>`;
   }
+  // 后勤车队 can add a second supply: list the ones already stowed alongside the pending one.
+  if (b.rewardSuppliesTaken?.length) supplyHtml = b.rewardSuppliesTaken.map(id => `<div class="loot-line">${supplyTileHtml(id, '<em class="loot-tag">已放入补给品栏位</em>')}</div>`).join('') + (b.rewardSupply ? supplyHtml : '');
   root.innerHTML = `
     <div class="phase-container">
       <div class="ops-eyebrow">DEBRIEF // 战后简报</div>
       ${gained || supplyHtml ? `<div class="loot-list">${gained}${supplyHtml}</div>` : ''}
-      <h2 class="ops-title">补充战术 · 三选一</h2>
+      <h2 class="ops-title">补充战术 · ${cards.length === 4 ? '四' : '三'}选一</h2>
 
       <div class="reward-cards">
         ${rewardHtml}
       </div>
-      <button class="btn ops-skip" id="btn-skip">跳过，不加入新牌</button>
+      ${econOn(state) ? skipOptionsHtml(state) : '<button class="btn ops-skip" id="btn-skip">跳过，不加入新牌</button>'}
     </div>
   `;
   document.querySelectorAll('.reward-card').forEach(el => {
     el.addEventListener('click', () => dispatch({ type: 'reward', id: el.dataset.id }));
   });
-  document.getElementById('btn-skip').addEventListener('click', () => dispatch({ type: 'reward', id: null }));
+  document.getElementById('btn-skip')?.addEventListener('click', () => dispatch({ type: 'reward', id: null }));
+  root.querySelectorAll('[data-skip-comp]').forEach(el => el.addEventListener('click', () => dispatch({ type: 'reward', id: null, comp: el.dataset.skipComp })));
   root.querySelector('#btn-take-supply')?.addEventListener('click', () => dispatch({ type: 'takeSupply' }));
   root.querySelectorAll('[data-take-replace]').forEach(el => el.addEventListener('click', () => dispatch({ type: 'takeSupply', replace: Number(el.dataset.takeReplace) })));
 }
@@ -1015,8 +1054,9 @@ function renderShop(root) {
         </div>
         <div class="shop-wallet"><span>你的金币</span><b>${state.money}</b></div>
       </div>
-      <h3 class="shelf-title">补给货架</h3>
+      <h3 class="shelf-title">补给货架${econOn(state) ? ` <span class="reroll-control">${rerollButtonHtml(state)}</span>` : ''}</h3>
       <div class="shop-shelf">${shopCards}</div>
+      ${econOn(state) ? investOfferHtml(state) : ''}
       <h3 class="shelf-title">装备柜台</h3>
       <div class="gear-shelf">${(shop.relics || []).map((item, idx) => { const cost = shopPrice(item, state); return `<div class="gear-offer">${equipTileHtml(item.id)}<button class="btn" data-buy-relic="${idx}" ${state.money >= cost && state.relics.length < RELIC_SLOTS ? '' : 'disabled'}>${cost} 金币${state.relics.length >= RELIC_SLOTS ? ' · 装备槽已满' : state.money >= cost ? ' · 买下' : ' · 不足'}</button></div>`; }).join('') || '<p class="shelf-empty">装备已售罄。</p>'}</div>
       <h3 class="shelf-title">补给品 <small>栏位 ${(state.supplies || []).length}/${supplySlots(state)}</small></h3>
@@ -1052,6 +1092,8 @@ function renderShop(root) {
     });
   });
   document.getElementById('btn-leave').addEventListener('click', () => dispatch({ type: 'leave' }));
+  document.getElementById('btn-reroll')?.addEventListener('click', () => dispatch({ type: 'rerollShop' }));
+  document.getElementById('btn-invest')?.addEventListener('click', () => dispatch({ type: 'buyInvest' }));
 }
 
 function renderRest(root) {
@@ -1075,7 +1117,7 @@ function renderRest(root) {
       <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
         <div class="rest-option${hasRelic(state, 'R42') ? ' is-disabled' : ''}" id="rest-heal" ${hasRelic(state, 'R42') ? 'aria-disabled="true" title="无休整合同：休整点不能回复生命"' : ''}>
           <div class="card-title">回复生命</div>
-          <div class="card-desc">恢复最大生命的${(state.ascension || 0) >= 5 ? 20 : 30}%（${restHealAmount(state)}点）</div>
+          <div class="card-desc">恢复最大生命的${Math.round(restHealRate(state) * 100)}%（${restHealAmount(state)}点）</div>
         </div>
         <div class="rest-option" id="rest-upgrade">
           <div class="card-title">升级卡牌</div>
@@ -1173,6 +1215,7 @@ function renderIntermission(root) {
     <div class="phase-container">
       <h2>幕间休息</h2>
       <p>全员状态恢复至满，准备进入下一幕</p>
+      ${unlockNoticeHtml(state)}
       <button class="btn primary" id="btn-next-act">进入下一幕</button>
     </div>
   `;
@@ -1188,6 +1231,7 @@ function renderResult(root) {
       <h1>${win ? '🏆 胜利！' : '💀 失败'}</h1>
       <p>${win ? '恭喜你完成三幕赛程！' : '队伍出局，请重新开始'}${level ? `（难度 ${level}）` : ''}</p>
       ${unlocked !== null ? `<p class="asc-unlock">已为${escapeHtml(TEAMS[state.team].name.split(' · ')[0])}解锁难度 ${unlocked}：${escapeHtml(ASCENSION_RULES[unlocked])}</p>` : ''}
+      ${unlockNoticeHtml(state)}
       <div style="display:flex;gap:1rem;">
         <button class="btn primary" id="btn-again">再来一局</button>
         <button class="btn" id="btn-home2">返回首页</button>

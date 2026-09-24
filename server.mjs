@@ -50,6 +50,7 @@ const assets = new Map([
   ['/shared-route-generator.js', ['shared-route-generator.js', 'text/javascript; charset=utf-8']],
   ['/shared-unknown-room.js', ['shared-unknown-room.js', 'text/javascript; charset=utf-8']],
   ['/shared-event-core.js', ['shared-event-core.js', 'text/javascript; charset=utf-8']],
+  ['/shared-unlock.js', ['shared-unlock.js', 'text/javascript; charset=utf-8']],
   ['/new/events.js', ['new-demo/events.js', 'text/javascript; charset=utf-8']],
   ['/new/rooms.css', ['new-demo/rooms.css', 'text/css; charset=utf-8']],
   ['/new/ui.js', ['new-demo/ui.js', 'text/javascript; charset=utf-8']],
@@ -70,6 +71,8 @@ const assets = new Map([
   ['/new/season-map.js', ['new-demo/season-map.js', 'text/javascript; charset=utf-8']],
   ['/new/run-extras.js', ['new-demo/run-extras.js', 'text/javascript; charset=utf-8']],
   ['/new/run-extras.css', ['new-demo/run-extras.css', 'text/css; charset=utf-8']],
+  ['/new/economy.js', ['new-demo/economy.js', 'text/javascript; charset=utf-8']],
+  ['/new/economy.css', ['new-demo/economy.css', 'text/css; charset=utf-8']],
 ]);
 
 const imageTypes = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', svg: 'image/svg+xml' };

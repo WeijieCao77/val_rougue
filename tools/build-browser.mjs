@@ -19,6 +19,7 @@ const modules = [
   'wa-rules.js',
   'card-rarity.js',
   'wa-events.js',
+  'shared-unlock.js',
   'engine.js',
   'navigation.js',
   'art-data.js',
