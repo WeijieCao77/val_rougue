@@ -257,7 +257,22 @@ export function intent(s) {
   return {...a};
  });
 }
-export function intentText(s) {return intent(s).map(a=>a.type==='hit'?`攻击 ${a.n}${a.times>1?` × ${a.times} = ${a.n*a.times}`:''}`:a.type==='block'?`获得 ${a.n} 格挡`:a.type==='weak'?`使你虚弱 ${a.n} 回合`:a.type==='buff'?`火力 +${a.n}`:a.type==='aim'?'瞄准（下回合重狙）':a.type==='snipe'?(a.aimed?`重狙 ${a.n}（压制可打断）`:`仓促射击 ${a.n}（瞄准已被打断）`):a.type==='cleanse'?'清除自身负面状态':a.type==='vuln'?`使你易伤 ${a.n} 回合`:`将 ${a.n} 张${CARDS[a.id].name}放入弃牌堆`).join('；');}
+// actual=true shows each hit as incomingDamage() computes it (our vulnerable applied).
+export function intentText(s,actual=false) {const inc=actual?incomingDamage(s).acts:null;return intent(s).map((a,i)=>inc&&inc[i]!=null?{...a,n:inc[i]}:a).map(a=>a.type==='hit'?`攻击 ${a.n}${a.times>1?` × ${a.times} = ${a.n*a.times}`:''}`:a.type==='block'?`获得 ${a.n} 格挡`:a.type==='weak'?`使你虚弱 ${a.n} 回合`:a.type==='buff'?`火力 +${a.n}`:a.type==='aim'?'瞄准（下回合重狙）':a.type==='snipe'?(a.aimed?`重狙 ${a.n}（压制可打断）`:`仓促射击 ${a.n}（瞄准已被打断）`):a.type==='cleanse'?'清除自身负面状态':a.type==='vuln'?`使你易伤 ${a.n} 回合`:`将 ${a.n} 张${CARDS[a.id].name}放入弃牌堆`).join('；');}
+// Damage the enemy's next turn actually deals, hit by hit, with every modifier the
+// enemy turn applies (weak, strength, battlefield, boss growth, our vulnerable,
+// including vulnerable applied earlier in the same intent). Our block is NOT
+// subtracted. `acts[i]` is the per-hit damage of intent action i (null if none).
+export function incomingDamage(s){
+ const b=s?.battle;if(!b)return {hits:[],acts:[],total:0};
+ let vuln=(b.vulnerable||0)>0;const hits=[],acts=[];
+ for(const a of intent(s)){
+  if(a.type==='vuln'&&a.n>0)vuln=true;
+  if(a.type==='hit'||a.type==='snipe'){const per=vuln?Math.floor(a.n*1.5):a.n,times=a.type==='snipe'?1:a.times;acts.push(per);for(let i=0;i<times;i++)hits.push(per);}
+  else acts.push(null);
+ }
+ return {hits,acts,total:hits.reduce((n,x)=>n+x,0)};
+}
 function lose(s,reason){s.hp=0;s.phase='result';s.outcome='loss';log(s,`${reason}。声望归零，俱乐部解散。`);}
 function win(s) {
  if(s.mode==='season') return winSeason(s);

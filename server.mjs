@@ -22,6 +22,8 @@ const assets = new Map([
   ['/shared/sfx.js', ['shared/sfx.js', 'text/javascript; charset=utf-8']],
   ['/shared/juice.js', ['shared/juice.js', 'text/javascript; charset=utf-8']],
   ['/shared/juice.css', ['shared/juice.css', 'text/css; charset=utf-8']],
+  ['/shared/run-meta.js', ['shared/run-meta.js', 'text/javascript; charset=utf-8']],
+  ['/shared/run-meta.css', ['shared/run-meta.css', 'text/css; charset=utf-8']],
   ['/shared/models/soldier.glb', ['shared/models/soldier.glb', 'model/gltf-binary']],
   ['/shared/models/hazmat.glb', ['shared/models/hazmat.glb', 'model/gltf-binary']],
   ['/shared/models/enemy.glb', ['shared/models/enemy.glb', 'model/gltf-binary']],
@@ -70,6 +72,7 @@ const assets = new Map([
   ['/new/season-map.js', ['new-demo/season-map.js', 'text/javascript; charset=utf-8']],
   ['/new/run-extras.js', ['new-demo/run-extras.js', 'text/javascript; charset=utf-8']],
   ['/new/run-extras.css', ['new-demo/run-extras.css', 'text/css; charset=utf-8']],
+  ['/new/run-screens.js', ['new-demo/run-screens.js', 'text/javascript; charset=utf-8']],
 ]);
 
 const imageTypes = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', svg: 'image/svg+xml' };

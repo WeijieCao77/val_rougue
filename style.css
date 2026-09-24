@@ -1958,3 +1958,120 @@ button.supply-slot:hover{background:#21403f;border-color:#ffd58a}
  .market-row{grid-template-columns:1fr 1fr;gap:8px}.market-item{padding:10px 8px}.market-item h4{font-size:12px;padding-right:40px}.market-item p{font-size:11px}
 }
 @media(max-width:420px){.game-hud .hud-tools .hud-link{padding:4px 2px}}
+
+/* Deck viewer, run results, history (战绩), collection (图鉴), upgrade peek — both demos. */
+.rm-note{margin:4px 0 10px;font-size:12px;line-height:1.6;opacity:.82}
+.rm-count{margin:10px 0 12px;font-size:12px;opacity:.7}
+.rm-viewer-controls{display:flex;flex-direction:column;gap:7px;padding:10px 12px;border:1px solid #ffffff1f;border-radius:8px;background:#00000033}
+.rm-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.rm-row>span{font-size:11px;letter-spacing:1px;opacity:.65;min-width:30px}
+.rm-piles{margin-bottom:8px}
+button.rm-chip{font:inherit;font-size:12px;line-height:1.2;padding:5px 10px;min-width:0;min-height:30px;width:auto;border-radius:999px;border:1px solid #ffffff33;background:#ffffff0d;color:inherit;cursor:pointer;box-shadow:none;letter-spacing:0;text-transform:none;transform:none}
+button.rm-chip:hover{background:#ffffff1f}
+button.rm-chip.active{border-color:#e2c27a;background:#e2c27a2e;color:#f6e3b0}
+button.rm-chip:focus-visible{outline:2px solid #e2c27a;outline-offset:2px}
+.rm-grid{margin-top:4px}
+.pile-grid.rm-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+
+/* Results & history */
+.rm-result{max-width:980px;margin:0 auto}
+.rm-page{min-height:100dvh;padding:28px 16px;box-sizing:border-box}
+.rm-score-big{display:flex;flex-direction:column;align-items:center;margin:10px auto 18px}
+.rm-score-big span{font-size:12px;letter-spacing:3px;opacity:.7}
+.rm-score-big strong{font-size:52px;line-height:1.1;color:#f0cf7c;font-variant-numeric:tabular-nums;text-shadow:0 2px 12px #0008}
+.rm-loss .rm-score-big strong{color:#e7a38a}.rm-abandon .rm-score-big strong{color:#b9c3c9}
+.rm-detail{display:flex;flex-direction:column;gap:12px;text-align:left}
+.rm-facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px 14px;margin:0}
+.rm-facts>div{display:flex;gap:8px;align-items:baseline;padding:6px 10px;border-radius:6px;background:#ffffff0a;min-width:0}
+.rm-facts dt{font-size:11px;opacity:.6;white-space:nowrap}
+.rm-facts dd{margin:0;font-size:13px;overflow-wrap:anywhere}
+.rm-score{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.rm-score th,.rm-score td{padding:5px 10px;border-bottom:1px solid #ffffff14;text-align:right}
+.rm-score th:first-child{text-align:left;font-weight:500}
+.rm-score thead th{font-size:11px;opacity:.6;font-weight:400}
+.rm-score tr.rm-zero{opacity:.45}
+.rm-score tr.rm-sub th,.rm-score tr.rm-sub td{border-bottom-style:dashed}
+.rm-score tr.rm-total th,.rm-score tr.rm-total td{font-size:16px;font-weight:700;color:#f0cf7c;border-bottom:0}
+.rm-formula{margin:0;font-size:11px;line-height:1.7;opacity:.72}
+.rm-formula b{margin-right:8px;opacity:1}
+.rm-h{margin:6px 0 0;font-size:14px;letter-spacing:1px}
+.rm-deck-list,.rm-gear-list{display:flex;flex-wrap:wrap;gap:6px}
+.rm-deck-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 9px 4px 4px;border-radius:6px;border:1px solid #ffffff26;background:#ffffff0d;font-size:12px;-webkit-touch-callout:none;user-select:none}
+.rm-deck-chip b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#e2c27a33;font-size:11px}
+.rm-deck-chip.up{border-color:#8fd18b88;color:#c9f0c0}
+.rm-deck-chip small{opacity:.7}
+.rm-gear-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:6px;border:1px solid #ffffff26;background:#ffffff0d;font-size:12px}
+.rm-gear-chip svg,.rm-gear-chip .icon{width:15px;height:15px}
+.rm-actions,.rm-result .button-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:18px}
+.rm-muted{opacity:.6}
+.rm-history{display:flex;flex-direction:column;gap:8px}
+.rm-run{border:1px solid #ffffff22;border-radius:8px;background:#00000026}
+.rm-run>summary{display:grid;grid-template-columns:52px minmax(0,1.4fr) minmax(0,1fr) 80px 90px;gap:10px;align-items:center;padding:9px 12px;cursor:pointer;list-style:none;font-size:13px}
+.rm-run>summary::-webkit-details-marker{display:none}
+.rm-run[open]>summary{border-bottom:1px solid #ffffff1a}
+.rm-run>.rm-detail{padding:12px}
+.rm-outcome{display:inline-block;text-align:center;padding:2px 0;border-radius:4px;font-size:12px;background:#ffffff1a}
+.rm-win .rm-outcome{background:#caa24c44;color:#f6dc97}.rm-loss .rm-outcome{background:#a8453444;color:#f2b3a3}
+.rm-pts{text-align:right;color:#f0cf7c;font-variant-numeric:tabular-nums}
+.rm-run time{font-size:11px;opacity:.6;text-align:right}
+.rm-team,.rm-where{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Collection silhouettes */
+.rm-found{margin:0 0 10px;padding:8px 12px;border-radius:8px;background:#e2c27a17;border:1px solid #e2c27a40;font-size:13px}
+.rm-found b{margin-right:6px;color:#f0cf7c}
+.rm-found small{display:block;margin-top:2px;font-size:11px;opacity:.7}
+.rm-unseen{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;border-radius:10px;border:1px dashed #ffffff33;background:radial-gradient(ellipse at 50% 40%,#ffffff12,#0000 70%),repeating-linear-gradient(135deg,#ffffff06 0 8px,#0000 8px 16px),#0b0f14;color:#ffffff59;min-height:120px}
+.rm-unseen .rm-q{font-size:40px;font-weight:700;line-height:1}
+.rm-unseen small{font-size:11px;letter-spacing:2px}
+.modal-cards>.rm-unseen,.overview-cards>.rm-unseen{width:180px;height:260px}
+.library-grid>.rm-unseen-card{min-height:210px}
+.gear-grid>.rm-unseen{min-height:96px}
+.skin-overview>.rm-unseen{width:220px;min-height:120px}
+.rm-enemy-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.rm-enemy-grid>.rm-unseen{min-height:170px}
+.rm-enemy .rm-enemy-art{height:110px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:6px;background:#00000033}
+.rm-enemy .rm-enemy-art>*{max-height:110px;max-width:100%}
+.rm-enemy .rm-enemy-art img,.rm-enemy .rm-enemy-art svg{max-height:110px;max-width:100%;object-fit:contain}
+.rm-enemies>.rm-unseen{min-height:220px}
+.rm-enemies>.skin-entry{box-sizing:border-box;min-height:220px}
+
+/* Upgrade side by side: new demo peek and Wa tooltip */
+.rm-peek{position:fixed;z-index:1200;pointer-events:none;padding:6px;border-radius:10px;background:#0b1015ee;border:1px solid #8fd18b99;box-shadow:0 10px 30px #000a}
+.rm-peek[hidden]{display:none}
+.rm-peek>small{display:block;text-align:center;font-size:11px;letter-spacing:2px;color:#b9eab0;margin-bottom:4px}
+.rm-peek .tc{width:100%;max-width:none}
+[data-card-id]{-webkit-touch-callout:none}
+#card-tooltip.has-upgrade{width:470px;display:grid;grid-template-columns:minmax(0,1fr) 168px;gap:14px}
+#card-tooltip .tip-upgrade{border-left:1px solid #93836955;padding-left:12px}
+#card-tooltip .tip-upgrade>small{display:block;color:#b9d99a;letter-spacing:2px;margin-bottom:6px}
+#card-tooltip .tip-upgrade .card{width:156px;filter:none}
+#card-tooltip .tip-upgrade .card>.card-face{height:222px}
+#card-tooltip .tip-upgrade .card .card-title{font-size:13px;line-height:22px}
+#card-tooltip .tip-upgrade .card .card-art{height:56px;min-height:56px}
+#card-tooltip .tip-upgrade .card .card-effect{font-size:10px;line-height:1.5}
+#card-tooltip .tip-upgrade>p{font-size:11px;color:#cfe3c0;margin:8px 0 0}
+
+/* New demo: incoming damage under the block value */
+.rm-incoming{font-size:11px;color:#f3b9a4;margin-top:2px;white-space:nowrap}
+.rm-incoming b{color:#ffd2c2}
+
+@media(max-width:720px){
+  .app-header .app-buttons{flex-wrap:wrap;justify-content:center;gap:5px}
+  .app-header .app-buttons .btn{white-space:nowrap;padding:5px 9px;font-size:12px}
+  .rm-run>summary{grid-template-columns:44px minmax(0,1fr) 64px;grid-template-areas:'o t p' 'o w d';row-gap:2px;font-size:12px}
+  .rm-run>summary .rm-outcome{grid-area:o}.rm-run>summary .rm-team{grid-area:t}.rm-run>summary .rm-where{grid-area:w;opacity:.7}.rm-run>summary .rm-pts{grid-area:p}.rm-run>summary time{grid-area:d}
+  .rm-facts{grid-template-columns:1fr 1fr}
+  .rm-facts>div{flex-direction:column;gap:0}
+  .rm-score th,.rm-score td{padding:4px 6px;font-size:12px}
+  .rm-score-big strong{font-size:40px}
+  .modal-cards>.rm-unseen,.overview-cards>.rm-unseen{width:160px;height:248px}
+  .skin-overview>.rm-unseen{width:160px}
+  #card-tooltip.has-upgrade{width:calc(100vw - 20px);grid-template-columns:minmax(0,1fr) 128px;gap:8px}
+  #card-tooltip .tip-upgrade{padding-left:8px}
+  #card-tooltip .tip-upgrade .card{width:124px}
+  #card-tooltip .tip-upgrade .card>.card-face{height:180px;padding:5px}
+  #card-tooltip .tip-upgrade .card .card-art{height:40px;min-height:40px}
+  #card-tooltip .tip-upgrade .card .card-effect{font-size:9px}
+  #card-tooltip .tip-upgrade>p{display:none}
+  button.rm-chip{font-size:11px;padding:4px 8px;min-height:28px}
+}

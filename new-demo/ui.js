@@ -1,4 +1,4 @@
-import { createRun, act, legalActions, observe, preview, describeIntent, describeIntents, battleEnemies, livingEnemies, cardNeedsTarget, cardHitsAll, categoryUpgradeQuote, shopPrice, ASCENSION_RULES, MAX_ASCENSION, restHealAmount, removePrice, baseEnergy, supplySlots, hasRelic, RELIC_SLOTS, relicSellValue, describeEvent } from './engine.js';
+import { createRun, act, legalActions, observe, preview, describeIntent, describeIntents, describeIntentsActual, incomingDamage, battleEnemies, livingEnemies, cardNeedsTarget, cardHitsAll, categoryUpgradeQuote, shopPrice, ASCENSION_RULES, MAX_ASCENSION, restHealAmount, removePrice, baseEnergy, supplySlots, hasRelic, RELIC_SLOTS, relicSellValue, describeEvent } from './engine.js';
 import { squadChipHtml, traitTagHtml, teamTrait, TRAIT_ICONS, loadAscensionUnlocks, recordAscensionWin, equipIconHtml, supplyGlyphHtml, equipTileHtml, supplyTileHtml, TIER_COLORS } from './run-extras.js';
 import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS, TRAITS, FIELDS, ARCHETYPES, SUPPLIES, SUPPLY_IDS, EQUIP_TIERS } from './content.js';
 import { statusBadges, statusBadge, statusIcon, highlightKeywords } from '/shared/status-icons.js';
@@ -10,6 +10,7 @@ import { attachCardGesture } from '/shared/card-gesture.js';
 import { flyCardsFromPile, flyCardsToPile } from '/shared/card-pile-motion.js';
 import { soundToggleHtml } from '/shared/sfx.js';
 import { juiceAction, juiceImpact, juiceSlam } from './juice-hooks.js';
+import { trackNewRun, recordNewAbandon, entryFor, resultPageHtml, openHistory, openDeckViewer, collection, foundText, unseenTileHtml, enemyTileHtml, gearTile, tagCard, initUpgradePeek, ALL_ENEMIES } from './run-screens.js';
 
 const STORAGE_KEY = 'new-demo-run-route-v5';
 const GUIDE_KEY = 'new-demo-guide-v2-';
@@ -40,6 +41,7 @@ function saveState() {
   } catch (e) {
     console.error('Save failed', e);
   }
+  trackNewRun(state);
 }
 
 function loadState() {
@@ -105,7 +107,7 @@ function cardHtml(id, { up = false, cost, badge, extraClass } = {}) {
   if (!def) return '';
   const text = up && def.upgradeText ? def.upgradeText : def.text;
   const shownCost = cost ?? (up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost);
-  return tacticalCard(def, { up, cost: shownCost, text: highlightKeywords(text), tagLabel: tagLabel(def), badge, extraClass });
+  return tagCard(tacticalCard(def, { up, cost: shownCost, text: highlightKeywords(text), tagLabel: tagLabel(def), badge, extraClass }), id, up);
 }
 
 function describeCardFull(card) {
@@ -200,7 +202,8 @@ function renderHome() {
       </div>
       <nav class="nav-links" aria-label="其他入口">
         <button class="hero-link" id="btn-guide-home">怎么玩</button>
-        <button class="hero-link" id="btn-library">卡牌总览</button>
+        <button class="hero-link" id="btn-library">图鉴</button>
+        <button class="hero-link" id="btn-history">战绩</button>
         <a href="/">选择版本</a>
       </nav>
       <footer class="credit">猪之家出品</footer>
@@ -247,6 +250,7 @@ function renderHome() {
     if (loadState()) {
       const confirmOverwrite = window.confirm('开始新局将覆盖当前存档，确定？');
       if (!confirmOverwrite) return;
+      recordNewAbandon(loadState());
     }
     try {
       const seed = crypto.randomUUID();
@@ -277,6 +281,7 @@ function renderHome() {
     renderLibraryModal();
   });
   document.getElementById('btn-guide-home').addEventListener('click', renderGuideModal);
+  document.getElementById('btn-history').addEventListener('click', openHistory);
 }
 
 // Difficulty picker for the selected team: unlocked levels are selectable, the
@@ -463,8 +468,10 @@ function renderGame() {
     <header class="app-header">
       <div class="app-title">新demo · 战术试炼</div>
         <div class="app-buttons">
-        <button class="btn" id="btn-library">卡牌总览</button>
+        <button class="btn" id="btn-deck">牌组 ${state.deck.length}</button>
+        <button class="btn" id="btn-library">图鉴</button>
         <button class="btn" id="btn-guide">怎么玩</button>
+        <button class="btn" id="btn-abandon">放弃本局</button>
         <button class="btn" id="btn-home">返回首页</button>
         ${soundToggleHtml()}
       </div>
@@ -477,6 +484,16 @@ function renderGame() {
     renderLibraryModal();
   });
   document.getElementById('btn-guide').addEventListener('click', renderGuideModal);
+  document.getElementById('btn-deck').addEventListener('click', () => { if (state && !presentationBusy) openDeckViewer(state, 'deck'); });
+  document.getElementById('btn-abandon').addEventListener('click', () => {
+    if (!state || presentationBusy || state.phase === 'result') return;
+    if (!window.confirm('放弃本局？本局会记入战绩，存档将被清除。')) return;
+    clearCombatPresentation();
+    const entry = recordNewAbandon(state);
+    clearState();
+    state = null;
+    if (entry) renderEntryPage(entry); else renderHome();
+  });
   document.getElementById('btn-home').addEventListener('click', () => {
     if (presentationBusy) return;
     clearCombatPresentation();
@@ -490,6 +507,10 @@ function renderPhase() {
   const root = document.getElementById('game-root');
   if (!root) return;
   root.innerHTML = '';
+  const deckBtn = document.getElementById('btn-deck');
+  if (deckBtn) deckBtn.textContent = `牌组 ${state.deck.length}`;
+  const abandonBtn = document.getElementById('btn-abandon');
+  if (abandonBtn) abandonBtn.hidden = state.phase === 'result';
   renderRunStrip();
   renderPendingRelic();
   if (state.phase === 'opening') renderOpening(root);
@@ -541,6 +562,7 @@ function renderMap(root) {
     const glyph = MAP_GLYPHS[n.revealed || n.kind] || '·';
     const label = n.name || { battle: '战斗', elite: '强敌', event: '未知', shop: '补给', rest: '休整', crate: '补给箱', boss: 'Boss' }[n.kind] || n.kind;
     return `<g class="${cls}" data-key="${n.key}" tabindex="${isAvailable ? '0' : '-1'}" role="button" aria-label="${n.kind === 'boss' ? 'Boss：' : n.kind === 'elite' ? '强敌：' : ''}${escapeHtml(n.name)}" style="cursor:pointer">
+      <title>${escapeHtml(({ battle: '常规比赛', elite: '强敌', event: n.revealed ? '未知 · 已揭晓：' + (REVEALED_NAMES[n.revealed] || '') : '未知', shop: '战术补给', rest: '休整', crate: '补给箱', boss: '幕末决战' })[n.kind] || n.kind)}：${escapeHtml(n.name || '')}</title>
       <circle cx="${sx(n.x)}" cy="${sy(n.y)}" r="${n.kind === 'boss' ? 24 : 18}" />
       <text class="map-glyph" x="${sx(n.x)}" y="${sy(n.y) + 1}">${glyph}</text>
       ${isAvailable ? `<text class="map-choice-label" x="${sx(n.x)}" y="${sy(n.y) - 29}">${escapeHtml(label)}</text>` : ''}
@@ -675,7 +697,8 @@ function renderCombat(root) {
   const hideIntents = hasRelic(state, 'R41');
   const enemies = battleEnemies(b);
   const living = enemies.filter(e => e.hp > 0);
-  const intents = describeIntents(state);
+  const intents = describeIntentsActual(state);
+  const incoming = incomingDamage(state).total;
   const legal = legalActions(state);
   const playableUids = new Set(legal.filter(a => a.type === 'play').map(a => a.uid));
   const canStance = legal.some(a => a.type === 'stance');
@@ -727,6 +750,7 @@ function renderCombat(root) {
             <div class="ally-vitals">
               <div class="hp-line"><span class="value">HP ${state.hp}/${state.maxHp}</span><div class="hp-bar"><i style="width:${state.hp / state.maxHp * 100}%"></i></div></div>
               <div class="block-value" data-block="${b.playerBlock}"><span class="mini-armor" aria-hidden="true"></span><span>布防 ${b.playerBlock}</span></div>
+              ${hideIntents ? '' : `<div class="rm-incoming" title="敌方意图中的数字为实际伤害：已计入火力、压制、易伤、烟雾、闪光、战场与姿态，未扣除布防。">预计受到 <b>${incoming}</b> 伤害${incoming ? ` · 结束回合失去 <b>${Math.max(0, incoming - b.playerBlock)}</b>` : ''}</div>`}
             </div>
             ${squadChipHtml(b)}
             <div class="stance-chip">
@@ -792,7 +816,7 @@ function renderCombat(root) {
   root.querySelectorAll('.pile-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       if (presentationBusy) return;
-      showPileModal(btn.dataset.pile);
+      openDeckViewer(state, { draw: 'drawPile', discard: 'discardPile', exhaust: 'exhaustPile' }[btn.dataset.pile] || 'deck');
     });
   });
 
@@ -1179,31 +1203,26 @@ function renderIntermission(root) {
   document.getElementById('btn-next-act').addEventListener('click', () => dispatch({ type: 'nextAct' }));
 }
 
+function bindResultButtons(entry, onAgain) {
+  document.getElementById('rm-again')?.addEventListener('click', onAgain);
+  document.getElementById('rm-home')?.addEventListener('click', () => renderHome());
+  document.getElementById('rm-history')?.addEventListener('click', openHistory);
+  document.getElementById('rm-deck')?.addEventListener('click', () => openDeckViewer(null, 'deck', entry.deck));
+}
+// Results page shown without a run (after 放弃本局).
+function renderEntryPage(entry) {
+  rememberScreen('home');
+  document.getElementById('modal-root').innerHTML = '';
+  document.getElementById('app').innerHTML = `<main class="rm-page">${resultPageHtml(entry)}</main>`;
+  bindResultButtons(entry, () => renderHome());
+}
 function renderResult(root) {
   const win = state.result === 'win';
   const unlocked = win ? recordAscensionWin(state.team, state.ascension || 0) : null;
-  const level = state.ascension || 0;
-  root.innerHTML = `
-    <div class="phase-container">
-      <h1>${win ? '🏆 胜利！' : '💀 失败'}</h1>
-      <p>${win ? '恭喜你完成三幕赛程！' : '队伍出局，请重新开始'}${level ? `（难度 ${level}）` : ''}</p>
-      ${unlocked !== null ? `<p class="asc-unlock">已为${escapeHtml(TEAMS[state.team].name.split(' · ')[0])}解锁难度 ${unlocked}：${escapeHtml(ASCENSION_RULES[unlocked])}</p>` : ''}
-      <div style="display:flex;gap:1rem;">
-        <button class="btn primary" id="btn-again">再来一局</button>
-        <button class="btn" id="btn-home2">返回首页</button>
-      </div>
-    </div>
-  `;
-  document.getElementById('btn-again').addEventListener('click', () => {
-    clearState();
-    state = null;
-    renderHome();
-  });
-  document.getElementById('btn-home2').addEventListener('click', () => {
-    renderHome();
-  });
+  const entry = entryFor(state);
+  root.innerHTML = resultPageHtml(entry, unlocked !== null ? `<p class="asc-unlock">已为${escapeHtml(TEAMS[state.team].name.split(' · ')[0])}解锁难度 ${unlocked}：${escapeHtml(ASCENSION_RULES[unlocked])}</p>` : '');
+  bindResultButtons(entry, () => { clearState(); state = null; renderHome(); });
 }
-
 function renderLibraryModal() {
   const modalRoot = document.getElementById('modal-root');
   if (modalRoot.querySelector('#library-overlay')) return;
@@ -1213,6 +1232,11 @@ function renderLibraryModal() {
   let filterTag = '';
   let filterCost = '';
   let filterRegion = '';
+  // 图鉴: entries met in a run are shown; the rest stay silhouettes.
+  const seen = collection();
+  const enemyIds = Object.keys(ALL_ENEMIES());
+  const statusIds = Object.keys(STATUS_CARDS);
+  const relicIds = Object.keys(RELICS);
 
   function closeLibrary() {
     modalRoot.innerHTML = '';
@@ -1262,6 +1286,7 @@ function renderLibraryModal() {
         html = '<div class="library-empty">没有匹配的战术牌</div>';
       } else {
         html = filtered.map(id => {
+          if (!seen.cards.has(id)) return unseenTileHtml('card');
           const c = CARDS[id];
           const tooltip = describeCardFull({id, uid:'', up:false});
           const upgradeHtml = c.upgradeText ? `<details class="upgrade-details"><summary>升级文本</summary><div class="upgrade-text">${highlightKeywords(c.upgradeText)}</div></details>` : '';
@@ -1275,6 +1300,7 @@ function renderLibraryModal() {
       const statusCards = Object.values(STATUS_CARDS);
       count = statusCards.length;
       html = statusCards.map(c => {
+        if (!seen.cards.has(c.id)) return unseenTileHtml('card');
         const tooltip = `${escapeHtml(c.name)} [${c.curse?'诅咒':'状态'}]\n${escapeHtml(c.text)}`;
         return `<div class="library-card status-card" data-tooltip="${tooltip}" tabindex="0">
           <div class="card-art">${cardArt(c.id)}</div>
@@ -1288,16 +1314,20 @@ function renderLibraryModal() {
       count = relics.length;
       html = Object.entries(EQUIP_TIERS).map(([tier, info]) => {
         const list = relics.filter(r => r.tier === tier);
-        return `<section class="library-group"><h3 style="--tier:${TIER_COLORS[tier]}">${escapeHtml(info.name)}装备 · ${list.length}</h3><div class="gear-grid">${list.map(r => equipTileHtml(r.id)).join('')}</div></section>`;
+        return `<section class="library-group"><h3 style="--tier:${TIER_COLORS[tier]}">${escapeHtml(info.name)}装备 · ${list.length}</h3><div class="gear-grid">${list.map(r => gearTile(r.id, seen.gear.has(r.id))).join('')}</div></section>`;
       }).join('');
     } else if (activeTab === 'supply') {
       count = SUPPLY_IDS.length;
-      html = `<section class="library-group"><h3>补给品 · 一次性战斗道具</h3><div class="gear-grid">${SUPPLY_IDS.map(id => supplyTileHtml(id)).join('')}</div></section>`;
+      html = `<section class="library-group"><h3>补给品 · 一次性战斗道具</h3><div class="gear-grid">${SUPPLY_IDS.map(id => seen.supplies.has(id) ? supplyTileHtml(id) : unseenTileHtml('gear')).join('')}</div></section>`;
+    } else if (activeTab === 'enemy') {
+      count = enemyIds.length;
+      html = `<div class="library-grid rm-enemy-grid">${enemyIds.map(id => enemyTileHtml(id, seen.enemies.has(id))).join('')}</div>`;
     }
 
     grid.innerHTML = html;
-    matchSpan.textContent = `匹配 ${count} ${activeTab === 'relic' || activeTab === 'supply' ? '件' : '张'}`;
-    grid.classList.toggle('grouped', activeTab === 'relic' || activeTab === 'supply');
+    const found = { tactical: foundText(seen.cards, CARD_IDS), status: foundText(seen.cards, statusIds), relic: foundText(seen.gear, relicIds), supply: foundText(seen.supplies, SUPPLY_IDS), enemy: foundText(seen.enemies, enemyIds) }[activeTab];
+    matchSpan.textContent = `已发现 ${found} · 匹配 ${count} ${activeTab === 'relic' || activeTab === 'supply' ? '件' : activeTab === 'enemy' ? '名' : '张'}`;
+    grid.classList.toggle('grouped', activeTab === 'relic' || activeTab === 'supply' || activeTab === 'enemy');
   }
 
   function switchTab(tab) {
@@ -1327,17 +1357,19 @@ function renderLibraryModal() {
 
   modalRoot.innerHTML = `
     <div class="modal-overlay" id="library-overlay">
-      <div class="modal" role="dialog" aria-modal="true" aria-label="卡牌总览">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="图鉴">
         <div class="modal-header">
-          <h2>卡牌总览</h2>
+          <h2>图鉴</h2>
           <button class="btn" id="close-library">关闭</button>
         </div>
         <div class="library-tabs" role="tablist" aria-label="分类">
-          <button class="library-tab active" role="tab" aria-selected="true" data-tab="tactical">战术牌 (${CARD_IDS.length})</button>
-          <button class="library-tab" role="tab" aria-selected="false" data-tab="status">状态牌 (${Object.keys(STATUS_CARDS).length})</button>
-          <button class="library-tab" role="tab" aria-selected="false" data-tab="relic">装备 (${Object.keys(RELICS).length})</button>
-          <button class="library-tab" role="tab" aria-selected="false" data-tab="supply">补给品 (${SUPPLY_IDS.length})</button>
+          <button class="library-tab active" role="tab" aria-selected="true" data-tab="tactical">战术牌 (${foundText(seen.cards, CARD_IDS)})</button>
+          <button class="library-tab" role="tab" aria-selected="false" data-tab="status">状态牌 (${foundText(seen.cards, statusIds)})</button>
+          <button class="library-tab" role="tab" aria-selected="false" data-tab="relic">装备 (${foundText(seen.gear, relicIds)})</button>
+          <button class="library-tab" role="tab" aria-selected="false" data-tab="supply">补给品 (${foundText(seen.supplies, SUPPLY_IDS)})</button>
+          <button class="library-tab" role="tab" aria-selected="false" data-tab="enemy">对手 (${foundText(seen.enemies, enemyIds)})</button>
         </div>
+        <p class="rm-found"><b>已发现</b> 战术牌 ${foundText(seen.cards, CARD_IDS)} · 状态牌 ${foundText(seen.cards, statusIds)} · 装备 ${foundText(seen.gear, relicIds)} · 补给品 ${foundText(seen.supplies, SUPPLY_IDS)} · 对手 ${foundText(seen.enemies, enemyIds)}<small>在对局中被提供、抽到、拥有或交手过的条目才会点亮。</small></p>
         <div id="filter-row" class="filter-row">
           <select id="filter-region" class="filter-select" aria-label="筛选队伍专属牌">
             <option value="">全部队伍与共享</option><option value="shared">共享牌 (${CARD_IDS.filter(id=>!CARDS[id].region).length})</option><option value="AM">烈锋突击队 (75)</option><option value="CN">磐石守备队 (75)</option><option value="EMEA">雾隐战术组 (75)</option><option value="PAC">疾风调度组 (75)</option>
@@ -2003,6 +2035,7 @@ function initGlobalTooltip() {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   initGlobalTooltip();
+  initUpgradePeek();
   document.addEventListener('keydown', (e) => {
     if (state && state.phase === 'combat' && !presentationBusy && !showLibrary && !document.querySelector('.modal-overlay')) {
       combatKeyHandler(e);
