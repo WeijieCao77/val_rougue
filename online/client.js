@@ -63,6 +63,7 @@ function archiveCard(a, selected = false) {
       <dt>最大声望</dt><dd>${a.snapshot.maxHp}</dd>
       <dt>牌组</dt><dd>${a.snapshot.deck.length} 张</dd>
       <dt>皮肤</dt><dd>${a.snapshot.skins.length} 件</dd>
+      ${Number.isInteger(a.snapshot.ascension) ? `<dt>难度</dt><dd>${a.snapshot.ascension}</dd>` : ''}
     </dl>
   </article>`;
 }
@@ -181,6 +182,7 @@ function renderGame() {
       <section class="opponent-panel">
         <h3>${esc(room.members?.find(m => m.seat !== mySeat)?.name || '对手')}</h3>
         <p>手牌 ${opp.handCount} 张 · 抽牌堆 ${opp.drawCount}</p>
+        ${opp.trait ? `<p class="trait-line" title="${esc(opp.trait.text)}">赛区特质 · ${esc(opp.trait.name)} <b>${esc(opp.trait.counter)}</b></p>` : ''}
         <p>声望 ${opp.hp}/${opp.maxHp} · 布防 ${opp.block}${opp.weak ? ` · 压制 ${opp.weak}` : ''}${opp.vulnerable ? ` · 易伤 ${opp.vulnerable}` : ''}${opp.burn ? ` · 燃烧 ${opp.burn}` : ''}${opp.strength ? ` · 火力 ${opp.strength}` : ''}${opp.overload ? ` · 过载 ${opp.overload}` : ''}${(opp.deployables || []).map(d => ` · ${d.kind === 'turret' ? '哨戒炮' : '屏障'} ${d.n}×${d.turns}`).join('')}</p>
         <div class="opp-hand-stub">${Array.from({ length: Math.min(opp.handCount, 10) }).map(() => '<span class="card-back"></span>').join('')}</div>
       </section>
@@ -190,6 +192,7 @@ function renderGame() {
           <h3>你</h3>
           <p>声望 ${me.hp}/${me.maxHp} · 布防 ${me.block}${me.weak ? ` · 压制 ${me.weak}` : ''}${me.vulnerable ? ` · 易伤 ${me.vulnerable}` : ''}${me.burn ? ` · 燃烧 ${me.burn}` : ''}${me.strength ? ` · 火力 ${me.strength}` : ''}${me.overload ? ` · 过载 ${me.overload}` : ''}${(me.deployables || []).map(d => ` · ${d.kind === 'turret' ? '哨戒炮' : '屏障'} ${d.n}×${d.turns}`).join('')}</p>
           <p>行动点 ${me.energy} · 抽牌堆 ${me.drawCount}</p>
+          ${me.trait ? `<p class="trait-line" title="${esc(me.trait.text)}">赛区特质 · ${esc(me.trait.name)} <b>${esc(me.trait.counter)}</b><br><small>${esc(me.trait.text)}</small></p>` : ''}
           <div class="powers">${(me.powers || []).map(p => `<span class="power-chip">${esc(cardName(p))}</span>`).join('')}</div>
         </div>
         <div class="log-box"><h4>战报</h4><ul>${(view.log || []).map(l => `<li><small>${esc(l)}</small></li>`).join('')}</ul></div>

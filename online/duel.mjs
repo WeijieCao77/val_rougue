@@ -1,4 +1,30 @@
 import { CARDS, SKINS, effects, cardName } from '../content.js';
+import { TRAIT_TUNING, ROLES, REGION_TRAITS } from '../wa-rules.js';
+
+// Region traits apply in PvP exactly as in the PvE season (see engine.js).
+const DAMAGE_TYPES = ['hit', 'bodyslam', 'detonate'];
+function gainBlock(state, seat, n) {
+  const player = state.players[seat];
+  const extra = player.region === 'EMEA' && state.players[1 - seat].weak > 0 ? TRAIT_TUNING.EMEA.block : 0;
+  player.block += n + extra;
+  return n + extra;
+}
+function addToken(state, seat, id, label) {
+  const player = state.players[seat];
+  if (player.hand.length >= 10) { state.log.push('手牌已满，未生成临时牌。'); return false; }
+  player.hand.push({ uid: `t${state.nextTokenId++}`, id, up: false });
+  state.log.push(`${label}：生成 ${CARDS[id].name}。`);
+  return true;
+}
+function traitCounter(p) {
+  const T = TRAIT_TUNING[p.region], tt = p.tt || {};
+  if (p.region === 'CN') return tt.cnDone ? '✓' : `${(tt.roles || []).length}/${T.roles}`;
+  if (p.region === 'AM') return (tt.dmg || 0) >= T.nth ? '✓' : `${tt.dmg || 0}/${T.nth}`;
+  if (p.region === 'EMEA') return tt.emeaDrew ? '抽牌已用' : '抽牌可用';
+  if (p.region === 'PAC') return `${(p.temps || 0) % T.every}/${T.every}`;
+  return '';
+}
+const traitView = p => p.region && REGION_TRAITS[p.region] ? { region: p.region, name: REGION_TRAITS[p.region].name, text: REGION_TRAITS[p.region].text, counter: traitCounter(p), roles: (p.tt?.roles || []).length, cnDone: !!p.tt?.cnDone, dmg: p.tt?.dmg || 0, emeaDrew: !!p.tt?.emeaDrew, temps: p.temps || 0, pacNext: p.pacNext || 'TK01' } : null;
 
 function deepCopy(obj) {
   return JSON.parse(JSON.stringify(obj));
@@ -107,6 +133,8 @@ export function validateSnapshot(snapshot) {
   if (hp !== maxHp) throw new Error('snapshot hp must equal maxHp');
   const money = snapshot.money !== undefined ? validateNumeric(snapshot.money, 'money', 0, 99999) : 0;
   const actionsCount = snapshot.actionsCount !== undefined ? validateNumeric(snapshot.actionsCount, 'actionsCount', 0, 99999) : 0;
+  // Difficulty level is display-only in PvP.
+  const ascension = snapshot.ascension !== undefined ? validateNumeric(snapshot.ascension, 'ascension', 0, 10) : undefined;
   return {
     id: `${snapshot.runId}:${act}`,
     runId: snapshot.runId,
@@ -119,7 +147,8 @@ export function validateSnapshot(snapshot) {
     maxHp,
     hp: maxHp,
     money,
-    actionsCount
+    actionsCount,
+    ...(ascension !== undefined ? { ascension } : {})
   };
 }
 
@@ -149,6 +178,10 @@ function createPlayerState(snapshot, seat, matchSeed) {
     roleCounts: {},
     skinZeroUsed: false,
     skins: snapshot.skins,
+    region: snapshot.region,
+    tt: { roles: [], dmg: 0, cnDone: false, emeaDrew: false },
+    temps: 0,
+    pacNext: 'TK01',
     turnsTaken: 0,
     rngState: rng.getState()
   };
@@ -237,21 +270,29 @@ function playCard(state, seat, uid) {
   state.log.push(`玩家${seat} 打出 ${cardName(card)}。`);
 
   const list = effects(card).flatMap(e => e.type === 'combo' ? (playsBefore > 0 ? [e.effect] : []) : [e]);
+  const tt = player.tt || (player.tt = { roles: [], dmg: 0, cnDone: false, emeaDrew: false });
+  const deals = list.some(e => DAMAGE_TYPES.includes(e.type));
+  if (deals) tt.dmg++;
+  const amBonus = player.region === 'AM' && deals && tt.dmg === TRAIT_TUNING.AM.nth ? TRAIT_TUNING.AM.bonus : 0;
+  if (amBonus) state.log.push(`连续进攻：首段伤害 +${amBonus}。`);
+  let amLeft = amBonus;
   for (const e of list) {
     if (e.type === 'hit') {
       for (let i = 0; i < e.times; i++) {
-        const dmg = damageCalc(e.n + bonus + extra + (e.ifWeak && wasWeak ? e.ifWeak : 0) + (e.ifVuln && wasVuln ? e.ifVuln : 0) + (e.ifBurn && wasBurning ? e.ifBurn : 0), player.weak > 0, opponent.vulnerable > 0);
+        const dmg = damageCalc(e.n + bonus + amLeft + extra + (e.ifWeak && wasWeak ? e.ifWeak : 0) + (e.ifVuln && wasVuln ? e.ifVuln : 0) + (e.ifBurn && wasBurning ? e.ifBurn : 0), player.weak > 0, opponent.vulnerable > 0);
         attackPlayer(state, seat, 1 - seat, dmg);
         bonus = 0;
+        amLeft = 0;
         if (state.status === 'finished') break;
       }
       if (state.status === 'finished') break;
     } else if (e.type === 'block') {
-      player.block += e.n;
-      state.log.push(`获得 ${e.n} 布防。`);
+      const g = gainBlock(state, seat, e.n);
+      state.log.push(`获得 ${g} 布防。`);
     } else if (e.type === 'weak') {
       opponent.weak += e.n;
       state.log.push(`对手压制 +${e.n}。`);
+      if (player.region === 'EMEA' && !tt.emeaDrew) { tt.emeaDrew = true; state.log.push('压制反打：抽牌。'); drawCards(state, seat, TRAIT_TUNING.EMEA.draw); }
     } else if (e.type === 'vulnerable') {
       opponent.vulnerable += e.n;
       state.log.push(`对手易伤 +${e.n}。`);
@@ -263,8 +304,9 @@ function playCard(state, seat, uid) {
     } else if (e.type === 'burnMultiply') {
       opponent.burn = (opponent.burn || 0) * e.n;
     } else if (e.type === 'detonate') {
-      const n = (opponent.burn || 0) * e.per;
+      const n = (opponent.burn || 0) * e.per + amLeft;
       opponent.burn = 0;
+      amLeft = 0;
       if (n) attackPlayer(state, seat, 1 - seat, damageCalc(n, player.weak > 0, opponent.vulnerable > 0));
     } else if (e.type === 'deploy') {
       player.deployables.push({ kind: e.kind, n: e.n, turns: e.turns });
@@ -276,7 +318,8 @@ function playCard(state, seat, uid) {
         if (state.status === 'finished') break;
       }
     } else if (e.type === 'bodyslam') {
-      attackPlayer(state, seat, 1 - seat, damageCalc(player.block + (player.strength || 0), player.weak > 0, opponent.vulnerable > 0));
+      attackPlayer(state, seat, 1 - seat, damageCalc(player.block + (player.strength || 0) + amLeft, player.weak > 0, opponent.vulnerable > 0));
+      amLeft = 0;
     } else if (e.type === 'strength') {
       player.strength = (player.strength || 0) + e.n;
     } else if (e.type === 'overload') {
@@ -291,6 +334,27 @@ function playCard(state, seat, uid) {
       }
     }
     if (state.status === 'finished') break;
+  }
+
+  if (state.status === 'active') {
+    if (amBonus) { opponent.vulnerable += TRAIT_TUNING.AM.vuln; state.log.push(`对手易伤 +${TRAIT_TUNING.AM.vuln}。`); }
+    if (player.region === 'CN' && t.player && ROLES.includes(t.role) && !tt.roles.includes(t.role)) {
+      tt.roles.push(t.role);
+      if (tt.roles.length === TRAIT_TUNING.CN.roles && !tt.cnDone) {
+        tt.cnDone = true;
+        player.energy += TRAIT_TUNING.CN.energy;
+        state.log.push(`团队协同：行动点 +${TRAIT_TUNING.CN.energy}。`);
+        drawCards(state, seat, TRAIT_TUNING.CN.draw);
+      }
+    }
+    if (player.region === 'PAC' && t.zone === 'temporary') {
+      player.temps = (player.temps || 0) + 1;
+      if (player.temps % TRAIT_TUNING.PAC.every === 0) {
+        player.energy += TRAIT_TUNING.PAC.energy;
+        state.log.push(`临时战术：行动点 +${TRAIT_TUNING.PAC.energy}。`);
+        if (TRAIT_TUNING.PAC.draw) drawCards(state, seat, TRAIT_TUNING.PAC.draw);
+      }
+    }
   }
 
   if (t.player && t.cost === 0 && player.skins.includes('SK02') && !player.skinZeroUsed) {
@@ -312,14 +376,14 @@ function playCard(state, seat, uid) {
   if (t.player && t.role === '先锋' && first) {
     const n = powerTotal(player, 'init');
     if (n) {
-      player.block += n;
-      state.log.push(`信息联防：获得 ${n} 布防。`);
+      const g = gainBlock(state, seat, n);
+      state.log.push(`信息联防：获得 ${g} 布防。`);
     }
   }
 
   if (t.player && t.role === '哨位' && first && player.skins.includes('SK03')) {
-    player.block += 2;
-    state.log.push('守望涂层：获得 2 布防。');
+    const g = gainBlock(state, seat, 2);
+    state.log.push(`守望涂层：获得 ${g} 布防。`);
   }
 }
 
@@ -331,6 +395,7 @@ function beginTurn(state, seat) {
   player.overloadNext = 0;
   player.plays = 0;
   player.roleCounts = {};
+  player.tt = { roles: [], dmg: 0, cnDone: false, emeaDrew: false };
   const opponent = state.players[1 - seat];
   const tick = powerTotal(player, 'burnTick');
   if (tick) opponent.burn = (opponent.burn || 0) + tick;
@@ -342,12 +407,16 @@ function beginTurn(state, seat) {
     if (player.hp === 0) { state.status = 'finished'; state.winner = 1 - seat; return; }
   }
   if (player.turnsTaken === 0 && player.skins.includes('SK01')) {
-    player.block += 3;
-    state.log.push('磨砂黑：获得 3 布防。');
+    const g = gainBlock(state, seat, 3);
+    state.log.push(`磨砂黑：获得 ${g} 布防。`);
   }
   player.turnsTaken++;
   const extraDraw = powerTotal(player, 'extraDraw');
   drawCards(state, seat, 5 + extraDraw);
+  if (player.region === 'PAC') {
+    const id = player.pacNext || 'TK01';
+    if (addToken(state, seat, id, '临时战术')) player.pacNext = id === 'TK01' ? 'TK02' : 'TK01';
+  }
 }
 
 function endTurn(state, seat) {
@@ -376,7 +445,7 @@ function endTurn(state, seat) {
     if (d.kind === 'turret') {
       attackPlayer(state, seat, 1 - seat, damageCalc(d.n, false, state.players[1 - seat].vulnerable > 0));
       if (state.status === 'finished') return;
-    } else player.block += d.n;
+    } else gainBlock(state, seat, d.n);
     d.turns--;
   }
   player.deployables = (player.deployables || []).filter(d => d.turns > 0);
@@ -481,7 +550,8 @@ export function viewFor(match, seat) {
       skins: me.skins,
       roleCounts: { ...me.roleCounts },
       skinZeroUsed: me.skinZeroUsed,
-      turnsTaken: me.turnsTaken
+      turnsTaken: me.turnsTaken,
+      trait: traitView(me)
     },
     opponent: {
       hp: opp.hp,
@@ -502,7 +572,8 @@ export function viewFor(match, seat) {
       skins: opp.skins,
       roleCounts: { ...opp.roleCounts },
       skinZeroUsed: opp.skinZeroUsed,
-      turnsTaken: opp.turnsTaken
+      turnsTaken: opp.turnsTaken,
+      trait: traitView(opp)
     },
     log: [...match.log]
   };

@@ -1,0 +1,56 @@
+/* ---- Rules 1: region trait, difficulty picker, opening, equipment, supplies ---- */
+.region-extra{width:min(100%,560px);margin:14px auto 0;display:flex;flex-direction:column;gap:12px;text-align:left}
+.region-trait{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #c6b17855;border-radius:6px;background:#15252a}
+.region-trait>.status-svg{width:26px;height:26px;flex-shrink:0;color:#ffd58a}
+.region-trait b{color:#ffe0a3;font-size:13px}.region-trait p{margin:4px 0 0;font-size:12px;line-height:1.55;color:#c8d3cc}
+.asc-picker{padding:10px 12px;border:1px solid #465056;border-radius:6px;background:#101c22}
+.asc-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}.asc-head b{color:#ede5d1;font-size:13px}.asc-head small{color:#819189;font-size:10px}
+.asc-levels{display:grid;grid-template-columns:repeat(11,1fr);gap:4px;margin:8px 0}
+.asc-level{min-width:0;padding:6px 0;font-size:13px;font-weight:700;background:transparent;border:1px solid #5c6b68;color:#c9d2c6;border-radius:4px}
+.asc-level.active{background:#6b3b2a;border-color:#e3a36f;color:#ffe3c4}
+.asc-level:disabled{opacity:.35;cursor:not-allowed}
+.asc-rules{margin:0;padding:0;list-style:none;display:grid;gap:3px;font-size:11px;color:#c8d3cc}.asc-rules li{display:flex;gap:8px}.asc-rules b{color:#e3a36f;min-width:16px}
+.asc-zero{margin:0;font-size:11px;color:#819189}
+.asc-result{color:#e3a36f;font-size:13px;margin:0 0 12px}
+.trait-tag.region-trait{white-space:nowrap;padding:3px 9px;gap:5px;color:#ffe0a3;background:rgba(40,70,64,.85);border:1px solid #c6b17888;display:inline-flex;align-items:center;flex-direction:row;font-size:12px}
+.trait-tag.region-trait .status-svg{width:16px;height:16px}
+.trait-count{white-space:nowrap;margin-left:3px;padding:0 6px;border-radius:9px;background:#0d1a1e;color:#fff;font-size:12px;min-width:28px;text-align:center}
+.gear-rack{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:62%}
+.gear-chip{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:10px;background:#15252acc;border:1px solid #465056;color:#d8cfb8;font-size:10px;line-height:18px}
+.gear-chip .status-svg{width:13px;height:13px;color:var(--rarity,#ffd58a)}.gear-chip em{font-style:normal}.gear-chip small{color:#ffd58a;font-size:9px}
+.rarity-common{--rarity:#a9b3ad}.rarity-uncommon{--rarity:#6fb7d8}.rarity-rare{--rarity:#e0b44f}.rarity-boss{--rarity:#e0795f}.rarity-shop{--rarity:#8fcf9a}
+.gear-chip[class*='rarity-'],.market-item[class*='rarity-'],.gear-entry[class*='rarity-'],.loot-line[class*='rarity-'],.skin-entry[class*='rarity-']{border-color:var(--rarity)}
+.supply-bar{display:flex;gap:5px;flex-shrink:0}
+.supply-slot{display:flex;flex-direction:column;align-items:center;justify-content:center;width:54px;height:46px;padding:2px;border-radius:6px;border:1px solid #6d8a80;background:#16292d;color:#ffe0a3;font-size:9px;line-height:1.1}
+.supply-slot .status-svg{width:18px;height:18px}.supply-slot small{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50px;color:#d8cfb8}
+.supply-slot.empty{border-style:dashed;color:#5c6b68;font-size:14px}
+button.supply-slot:hover{background:#21403f;border-color:#ffd58a}
+.market-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+.market-item{position:relative;padding:14px 12px 12px;border:1px solid #465056;border-radius:8px;background:#132126;text-align:left}
+.market-item h4{display:flex;align-items:center;gap:6px;margin:0 0 4px;color:#ede5d1;font-size:14px;padding-right:48px}.market-item h4 .status-svg{width:18px;height:18px;color:var(--rarity,#ffd58a)}
+.market-item p{font-size:12px;line-height:1.5;color:#c8d3cc;margin:6px 0 10px}.market-item .rarity-label{color:var(--rarity,#8e9d9e);font-size:10px}
+.market-item .price-tag{position:absolute;right:8px;top:8px}.market-item.sold{opacity:.45}
+.reward-loot{display:grid;gap:10px;max-width:640px;margin:0 auto 18px;text-align:left}
+.loot-line{display:flex;gap:10px;padding:10px 12px;border:1px solid #465056;border-radius:8px;background:#132126}
+.loot-line>.status-svg{width:26px;height:26px;flex-shrink:0;color:var(--rarity,#ffd58a)}.loot-line b{color:#ffe0a3}.loot-line small{margin-left:6px;color:var(--rarity,#8e9d9e)}.loot-line p{margin:4px 0;font-size:12px;color:#c8d3cc}
+.opening-choices .choice{position:relative}.choice-kind{position:absolute;top:8px;right:10px;font-size:10px;padding:1px 7px;border-radius:9px;background:#2a3b3a;color:#cfe3d6}
+.opening-trade .choice-kind{background:#5a2f25;color:#ffd0bd}.opening-basic .choice-kind{background:#303a44;color:#cdd7e0}
+.choice-detail{font-size:12px;color:#ffd58a}
+.choice h3 .status-svg{width:18px;height:18px;vertical-align:-3px;margin-right:4px}
+.gear-list{display:grid;gap:8px;text-align:left}
+.gear-entry{display:flex;gap:10px;padding:8px 10px;border:1px solid #465056;border-radius:6px;background:#132126}
+.gear-entry>.status-svg{width:22px;height:22px;flex-shrink:0;color:var(--rarity,#ffd58a)}.gear-entry h3{margin:0;font-size:14px}.gear-entry h3 small{color:var(--rarity,#8e9d9e);font-size:10px;font-weight:400}.gear-entry p{margin:4px 0 0;font-size:12px;color:#c8d3cc}
+.skin-entry h3 .status-svg{width:16px;height:16px;vertical-align:-2px;margin-right:4px}
+.gear-slots{display:inline-flex;gap:2px;padding:3px 4px;border:1px solid #465056;border-radius:5px;background:#101c22;cursor:pointer}
+.gear-cell{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:3px;border:1px solid var(--rarity,#465056);background:#15252a}
+.gear-cell .status-svg{width:12px;height:12px;color:var(--rarity,#ffd58a)}.gear-cell.empty{border-style:dashed;opacity:.5}
+.gear-offer .choice h3 .status-svg{color:var(--rarity,#ffd58a)}
+@media(max-width:720px){
+ .gear-slots{padding:2px;gap:1px}.gear-cell{width:11px;height:14px}.gear-cell .status-svg{width:9px;height:9px}
+ .hud-resources .hud-link[data-ui='gear'],.hud-resources .hud-link[data-ui='supplies']{display:none}
+ .asc-levels{gap:3px}.asc-level{padding:5px 0;font-size:11px}
+ .supply-bar{gap:3px}.supply-slot{width:34px;height:34px}.supply-slot small{display:none}
+ .gear-rack{max-width:70%}.gear-chip em{display:none}.gear-chip{padding:1px 4px}
+ .trait-tag.region-trait{font-size:10px;padding:2px 6px}.trait-count{font-size:10px;min-width:22px}
+ .market-row{grid-template-columns:1fr 1fr;gap:8px}.market-item{padding:10px 8px}.market-item h4{font-size:12px;padding-right:40px}.market-item p{font-size:11px}
+}

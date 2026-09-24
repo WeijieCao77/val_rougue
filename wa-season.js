@@ -4,6 +4,7 @@ import {
   clone,
   legalActions as originalLegalActions
 } from './engine.js';
+import { SKINS } from './content.js';
 
 const WA_VERSION = 'wa-1';
 
@@ -25,11 +26,13 @@ function makeCheckpoint(s) {
     seed: s.seed,
     region: s.region,
     deck: s.deck.map(c => ({ uid: c.uid, id: c.id, up: !!c.up })),
-    skins: [...s.skins],
+    // PvP builds carry only the original skins; rules-1 equipment and supplies are PvE-only.
+    skins: s.skins.filter(id => Object.hasOwn(SKINS, id)),
     maxHp: s.maxHp,
     hp: s.maxHp,
     money: s.money,
-    actionsCount: s.actions ? s.actions.length : 0
+    actionsCount: s.actions ? s.actions.length : 0,
+    ...(s.rules ? { ascension: s.ascension || 0 } : {})
   };
 }
 
@@ -41,8 +44,9 @@ function addCheckpoint(s) {
   s.checkpoints.push(cp);
 }
 
-export function createWaSeason(seed = 'first-season', tutorial = false, region = 'CN', runId = 'local') {
-  const s = createOriginalSeason(seed, tutorial, region);
+// opts: { rules, ascension } — must match what the server replays (see online/api.mjs).
+export function createWaSeason(seed = 'first-season', tutorial = false, region = 'CN', runId = 'local', opts = {}) {
+  const s = createOriginalSeason(seed, tutorial, region, opts);
   s.runId = String(runId);
   s.waVersion = WA_VERSION;
   s.checkpoints = [];
@@ -65,6 +69,7 @@ export function waAct(state, action) {
   let s = deepCopy(state);
   if (action.type === 'activity' && action.choice === 'toughness') {
     if (s.phase !== 'activity') return { state, error: '此操作已失效' };
+    if (s.gearOffer) return { state, error: '请先处理新装备：替换一件或放弃' };
     if (s.mode !== 'season') return { state, error: '未知操作' };
     s.maxHp += 6;
     s.hp += 6;

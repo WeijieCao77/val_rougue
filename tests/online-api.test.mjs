@@ -339,3 +339,26 @@ test('写失败原子性：交易回滚且文件不变', async () => {
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test('规则1 爬塔记录：服务端按 rules/ascension 重放核验，快照只带原皮肤；去掉 rules 则重放失败', async () => {
+  const { store, handler, dir } = await setup();
+  try {
+    const run = JSON.parse(await readFile(new URL('./fixtures/rules1-claim.json', import.meta.url), 'utf8'));
+    const token = await createAccount(handler);
+    const legacy = { ...run }; delete legacy.rules; delete legacy.ascension;
+    const bad = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run: legacy, act: 1 } });
+    assert.equal(bad.status, 400);
+    const badAsc = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run: { ...run, ascension: 11 }, act: 1 } });
+    assert.equal(badAsc.status, 400);
+    const res = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run, act: 1 } });
+    assert.equal(res.status, 200, JSON.stringify(res.body));
+    const account = await request(handler, { method: 'GET', path: '/api/account', token });
+    const snap = account.body.archives[0].snapshot;
+    assert.equal(snap.region, run.region);
+    assert.equal(snap.ascension, run.ascension);
+    assert.ok(snap.skins.every(id => /^SK0[123]$/.test(id)));
+    assert.equal(snap.hp, snap.maxHp);
+  } finally {
+    await teardown({ dir, store });
+  }
+});

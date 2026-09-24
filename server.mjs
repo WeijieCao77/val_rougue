@@ -35,6 +35,10 @@ const assets = new Map([
   ['/pvp/helper.js', ['wa-online.js', 'text/javascript; charset=utf-8']],
   ['/pvp/regions.js', ['regions.js', 'text/javascript; charset=utf-8']],
   ['/pvp/season-map.js', ['season-map.js', 'text/javascript; charset=utf-8']],
+  // content.js / season-map.js import these; without them the PvP page cannot load its modules.
+  ['/pvp/regional-expansion.js', ['regional-expansion.js', 'text/javascript; charset=utf-8']],
+  ['/pvp/afflictions.js', ['afflictions.js', 'text/javascript; charset=utf-8']],
+  ['/pvp/shared-route-generator.js', ['shared-route-generator.js', 'text/javascript; charset=utf-8']],
   ['/new/', ['new-demo/index.html', 'text/html; charset=utf-8']],
   ['/new/engine.js', ['new-demo/engine.js', 'text/javascript; charset=utf-8']],
   ['/new/content.js', ['new-demo/content.js', 'text/javascript; charset=utf-8']],

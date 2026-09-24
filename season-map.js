@@ -58,7 +58,7 @@ function choice(seed, values) {
   for (const char of String(seed)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return values[(hash >>> 0) % values.length];
 }
-export function buildMap(seed, act) {
+export function buildMap(seed, act, ascension = 0) {
   if (![1, 2, 3].includes(act)) throw Error('未知赛段');
   const map = generateRoute(seed, act);
   const actKey = key => `a${act}-${key}`;
@@ -68,6 +68,15 @@ export function buildMap(seed, act) {
   map.bossId = actKey(map.bossId);
   const byKey = new Map(map.nodes.map(node => [node.key, node]));
   const prefix = act === 1 ? '' : 'A' + act + '_';
+  // Difficulty 1+: some later ordinary fights become elites (never next to another elite).
+  if (ascension >= 1) {
+    const near = node => map.edges.filter(e => e.to === node.key || e.from === node.key).map(e => byKey.get(e.to === node.key ? e.from : e.to));
+    for (const node of map.nodes) {
+      if (node.kind !== 'battle' || node.step < 4 || node.step >= 11) continue;
+      if (near(node).some(other => other.kind === 'elite')) continue;
+      if (choice(seed + '|' + act + '|' + node.key + '|asc-elite', [0, 1, 2]) === 0) node.kind = 'elite';
+    }
+  }
   for (const node of map.nodes) {
     if (node.kind === 'battle') {
       const ids = node.step <= 2 ? (act === 1 ? ['S_E01'] : ['S_E01', 'S_E03', 'S_E06']) : node.step === 3 ? ['S_E02', 'S_E03', 'S_E06'] : ['S_E02', 'S_E03', 'S_E04', 'S_E05', 'S_E06'];

@@ -155,6 +155,7 @@ export function buildRunFromSeason(season, checkpoint) {
     runId: season.runId,
     seed: season.seed,
     region: season.region,
+    ...(season.rules ? { rules: season.rules, ascension: season.ascension || 0 } : {}),
     actions
   };
 }

@@ -266,9 +266,13 @@ async function rebuildSnapshot(run, act) {
     }
   }
 
+  if (run.rules !== undefined && run.rules !== 1) throw new HttpError(400, '无效的规则版本');
+  if (run.ascension !== undefined && (!Number.isInteger(run.ascension) || run.ascension < 0 || run.ascension > 10 || !run.rules)) {
+    throw new HttpError(400, '无效的难度等级');
+  }
   let state;
   try {
-    state = createWaSeason(run.seed, false, run.region, run.runId);
+    state = createWaSeason(run.seed, false, run.region, run.runId, { rules: run.rules, ascension: run.ascension });
   } catch {
     throw new HttpError(400, '无效的运行数据');
   }

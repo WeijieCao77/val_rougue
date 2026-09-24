@@ -5,3 +5,5 @@ season-*.json 和 legacy.json 从开发期 DeepSeek 使用真实引擎合法动�
 四赛区赛季样本均在第一幕失败，仅用于验证同种子和同动作精确重放，不代表游戏已经平衡。legacy.json 保留旧规则回放兼容性。
 
 roster-roles.json 是开发期已审核的 2026 赛区选手主池角色映射快照。它用于检测卡池误改，不代表实时阵容；跨位置候选在游戏中对应自由人。
+
+rules1-claim.json 是规则 1（赛区特质、签约日、难度、装备、补给品）下由 tools/playtest-wa.mjs 机器人打通第一幕的动作记录（EMEA，难度 1），用于验证服务端按 rules/ascension 重放并生成 PvP 快照。调整第一幕对手数值或规则后需要重新生成。

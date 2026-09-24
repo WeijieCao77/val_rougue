@@ -14,6 +14,7 @@ const modules = [
   'shared-route-generator.js',
   'season-map.js',
   'content.js',
+  'wa-rules.js',
   'engine.js',
   'navigation.js',
   'art-data.js',
@@ -62,7 +63,7 @@ for (const file of modules) {
 
 await writeFile(new URL('app.js', root), output.join('\n'));
 await writeFile(new URL('style.css', root),
-  (await read('base-style.css')) + '\n' + (await read('season-ui.css')) + '\n' + (await read('weapon-style.css')) + '\n' + (await read('art-style.css')) + '\n' + (await read('combat-fx.css')) + '\n' + (await read('cover-wa.css')) + '\n' + (await read('wa-map-redesign.css')) + '\n' + (await read('shared/character-stage.css')) + '\n' + (await read('shared/status-icons.css')) + '\n' + (await read('shared/shop-scene.css'))
+  (await read('base-style.css')) + '\n' + (await read('season-ui.css')) + '\n' + (await read('weapon-style.css')) + '\n' + (await read('art-style.css')) + '\n' + (await read('combat-fx.css')) + '\n' + (await read('cover-wa.css')) + '\n' + (await read('wa-map-redesign.css')) + '\n' + (await read('shared/character-stage.css')) + '\n' + (await read('shared/status-icons.css')) + '\n' + (await read('shared/shop-scene.css')) + '\n' + (await read('wa-rules.css'))
 );
 await build({ entryPoints: [fileURLToPath(new URL('shared/character-stage-source.js', root))], bundle: true, format: 'esm', platform: 'browser', outfile: fileURLToPath(new URL('character-stage.js', root)), minify: true, target: 'es2020' });
 console.log('Browser assets built.');

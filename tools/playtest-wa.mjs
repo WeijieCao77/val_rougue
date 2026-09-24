@@ -1,14 +1,22 @@
 // Headless season playtest for the Wa demo (careful per-turn search player).
-// Usage: node tools/playtest-wa.mjs [--seeds 6] [--acts 3] [--out reports/playtest/wa.json]
+// Usage: node tools/playtest-wa.mjs [--seeds 6] [--acts 3] [--rules 1] [--asc 0] [--regions CN,AM] [--out reports/playtest/wa.json]
+// --rules 0 plays the pre-trait ruleset (no traits, opening, equipment or supplies).
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createWaSeason, waAct, waLegalActions } from '../wa-season.js';
 import { CARDS, REGIONS, effects } from '../content.js';
+import { ENEMY_TUNING, TRAIT_TUNING, GEAR } from '../wa-rules.js';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, v, i, all) => (v.startsWith('--') ? [...acc, [v.slice(2), all[i + 1]]] : acc), []));
 const SEEDS = Number(args.seeds || 6);
 const ACTS = Number(args.acts || 3);
 const OUT = args.out || 'reports/playtest/wa.json';
+const RULES = Number(args.rules ?? 1);
+// --tune '{"1":{"normal":{"hp":1.2}}}' overrides opponent tuning for balance sweeps.
+if (args.tune) { const t = JSON.parse(args.tune); for (const [act, kinds] of Object.entries(t)) for (const [kind, v] of Object.entries(kinds)) Object.assign(ENEMY_TUNING[act][kind], v); }
+// --trait '{"PAC":{"every":4}}' overrides region trait numbers for balance sweeps.
+if (args.trait) { const t = JSON.parse(args.trait); for (const [r, v] of Object.entries(t)) Object.assign(TRAIT_TUNING[r], v); }
+const ASC = Number(args.asc || 0);
 
 const step = (s, a) => { const r = waAct(s, a); if (r.error) throw Error(`${JSON.stringify(a)}: ${r.error}`); r.state.logs = []; return r.state; };
 const legal = s => waLegalActions(s).map(({ rev, ...a }) => a);
@@ -37,23 +45,46 @@ const effValue = e => e.type === 'combo' ? effValue(e.effect) * 0.7 : e.type ===
 const hitValue = id => (CARDS[id]?.effects || []).reduce((v, e) => v + effValue(e), 0) / ((CARDS[id]?.cost ?? 1) + 0.8);
 
 function playRun(seed, region) {
-  let s = createWaSeason(seed, false, region, seed);
-  const log = { seed, region, fights: [], result: null };
+  let s = RULES ? createWaSeason(seed, false, region, seed, { rules: RULES, ascension: ASC }) : createWaSeason(seed, false, region, seed);
+  const log = { seed, region, fights: [], result: null, opening: null, gear: [], suppliesUsed: 0 };
   let fight = null, guard = 0;
   while (s.phase !== 'result' && guard++ < 6000) {
+    if (s.gearOffer) {
+      // Slots full: replace the lowest-rarity item if the new one ranks higher, else decline.
+      const rank = { common: 0, shop: 1, uncommon: 1, rare: 2, boss: 3 }, r = id => rank[GEAR[id].rarity];
+      const low = s.skins.reduce((m, id, i) => r(id) < r(s.skins[m]) ? i : m, 0);
+      s = step(s, r(s.gearOffer) > r(s.skins[low]) ? { type: 'gearReplace', slot: low } : { type: 'gearDecline' });
+      log.gearSwaps = (log.gearSwaps || 0) + 1;
+      continue;
+    }
     if (fight && s.phase === 'combat' && fight.turns >= 60) { log.result = 'stalled'; log.diedAt = fight.enemy; break; }
     if (s.phase === 'intermission') { if (s.act >= ACTS) { log.result = 'act-clear'; break; } s = step(s, { type: 'nextAct' }); continue; }
     const acts = legal(s);
     if (s.phase === 'map') {
-      const nodes = acts.map(a => s.map.nodes.find(n => n.key === a.key));
+      const moves = acts.filter(a => a.type === 'chooseNode');
+      const nodes = moves.map(a => s.map.nodes.find(n => n.key === a.key));
       const pct = s.hp / s.maxHp;
       const rank = n => ({ elite: pct > 0.7 ? 5 : -3, rest: pct < 0.5 ? 6 : 1, shop: s.money >= 90 ? 4 : 0, event: 3, battle: 2.5, boss: 9 }[n.kind] ?? 0);
       const i = nodes.map(rank).reduce((bi, v, j, arr) => (v > arr[bi] ? j : bi), 0);
-      s = step(s, acts[i]);
+      s = step(s, moves[i]);
       if (s.phase === 'combat') fight = { act: s.act, enemy: s.battle.enemy, hp0: s.hp, turns: 0 };
       continue;
     }
+    if (s.phase === 'opening') { const o = s.opening.options[0]; log.opening = o.id; s = step(s, { type: 'opening', choice: o.id }); continue; }
+    if (s.phase === 'openingPick') {
+      const p = s.opening.pending, byValue = list => list.sort((x, y) => hitValue(y) - hitValue(x));
+      if (p.kind === 'recruit') { s = step(s, { type: 'openingPick', id: byValue([...p.offers])[0] }); continue; }
+      const picks = acts.filter(a => a.type === 'openingPick').map(a => ({ a, id: s.deck.find(c => c.uid === a.uid).id }));
+      picks.sort((x, y) => hitValue(x.id) - hitValue(y.id));
+      s = step(s, (p.kind === 'remove' ? picks[0] : picks[picks.length - 1]).a);
+      continue;
+    }
+    if (s.phase === 'bossGear') { const a = acts.find(x => x.id) || acts[0]; s = step(s, a); continue; }
     if (s.phase === 'combat') {
+      // Supplies: spend them in elite/boss fights, or when reputation is low.
+      const boss = /EL|B0/.test(s.battle.enemy);
+      while ((s.supplies || []).length && s.phase === 'combat' && (boss && s.battle.turn <= 2 || s.hp / s.maxHp < 0.4)) { s = step(s, { type: 'useSupply', slot: 0 }); log.suppliesUsed++; }
+      if (s.phase !== 'combat') { fight.turns++; fight.lost = fight.hp0 - s.hp; fight.won = s.phase !== 'result' || s.outcome === 'win'; log.fights.push(fight); continue; }
       for (const a of searchTurn(s)) { s = step(s, a); if (s.phase !== 'combat') break; }
       if (s.phase === 'combat') s = step(s, { type: 'end' });
       fight.turns++;
@@ -61,6 +92,8 @@ function playRun(seed, region) {
       continue;
     }
     if (s.phase === 'reward') {
+      const take = acts.find(a => a.type === 'takeSupply' && a.replace === undefined);
+      if (take) { s = step(s, take); continue; }
       const offers = acts.filter(a => a.id).sort((x, y) => hitValue(y.id) - hitValue(x.id));
       s = step(s, offers[0] && hitValue(offers[0].id) > 6 ? offers[0] : { type: 'recruit', id: null });
       continue;
@@ -68,7 +101,8 @@ function playRun(seed, region) {
     if (s.phase === 'skin') { s = step(s, acts.find(a => a.id) || acts[0]); continue; }
     if (s.phase === 'shop') {
       const rm = acts.find(a => a.type === 'remove' && CARDS[s.deck.find(c => c.uid === a.uid).id].cost === 1 && hitValue(s.deck.find(c => c.uid === a.uid).id) < 5);
-      s = step(s, rm || acts.find(a => a.type === 'leaveShop'));
+      const gear = acts.find(a => a.type === 'buyGear'), sup = acts.find(a => a.type === 'buySupply');
+      s = step(s, rm || gear || sup || acts.find(a => a.type === 'leaveShop'));
       continue;
     }
     if (s.phase === 'activity') {
@@ -84,13 +118,16 @@ function playRun(seed, region) {
     throw Error('unhandled phase ' + s.phase);
   }
   log.deck = s.deck.map(c => c.id);
+  log.gear = [...s.skins];
+  if (args.dump) { log.actions = s.actions; log.rules = s.rules; log.ascension = s.ascension; }
   if (!log.result) log.result = s.outcome || 'stopped';
   if (log.result === 'loss') log.diedAt = fight?.enemy;
   return log;
 }
 
 const runs = [];
-for (const region of Object.keys(REGIONS)) for (let i = 1; i <= SEEDS; i++) { const t = Date.now(); const r = playRun(`wa-pt-${i}`, region); runs.push(r); console.error(region, i, r.result, r.diedAt || '', ((Date.now() - t) / 1000).toFixed(0) + 's', 'fights', r.fights.length, 'maxTurns', Math.max(0, ...r.fights.map(f => f.turns))); }
+const REGION_LIST = args.regions ? args.regions.split(',') : Object.keys(REGIONS);
+for (const region of REGION_LIST) for (let i = 1; i <= SEEDS; i++) { const t = Date.now(); const r = playRun(`wa-pt-${i}`, region); runs.push(r); console.error(region, i, r.result, r.diedAt || '', ((Date.now() - t) / 1000).toFixed(0) + 's', 'fights', r.fights.length, 'maxTurns', Math.max(0, ...r.fights.map(f => f.turns)), r.opening || '', r.gear.join(',')); }
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, JSON.stringify(runs, null, 1));
 const by = {};
@@ -98,3 +135,7 @@ for (const r of runs) for (const f of r.fights) { const g = (by[f.enemy] ||= { n
 for (const [k, g] of Object.entries(by).sort()) console.log(k.padEnd(10), 'n', String(g.n).padStart(3), 'avgLost', (g.lost / g.n).toFixed(1).padStart(5), 'turns', (g.turns / g.n).toFixed(1), 'win', `${g.wins}/${g.n}`);
 const res = {}; for (const r of runs) res[`${r.region}:${r.result}`] = (res[`${r.region}:${r.result}`] || 0) + 1;
 console.log(JSON.stringify(res));
+const first = runs.map(r => r.fights[0]).filter(Boolean);
+const cleared = region => runs.filter(r => r.region === region && (r.result === 'win' || r.result === 'act-clear' || r.fights.some(f => /S_B01$/.test(f.enemy) && !/A[23]_/.test(f.enemy) && f.won))).length;
+console.log('first-fight avg lost', (first.reduce((n, f) => n + f.lost, 0) / first.length).toFixed(1));
+console.log('act-1 clears', Object.fromEntries(REGION_LIST.map(r => [r, `${cleared(r)}/${SEEDS}`])), 'full wins', runs.filter(r => r.result === 'win').length + '/' + runs.length);
