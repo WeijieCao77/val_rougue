@@ -275,9 +275,15 @@ async function rebuildSnapshot(run, act) {
   // Runs recorded before the 15-floor acts carry no mapVersion and replay on the
   // 12-step map (version 1) with that version's opponent tuning.
   if (run.mapVersion !== undefined && run.mapVersion !== 2) throw new HttpError(400, '无效的地图版本：请用当前版本重新完成这一幕');
+  // Economy rules (unlock tiers, skip compensation, investments, rerolls). Records
+  // without `econ` replay on the full pools; with it, both tiers must be recorded.
+  const validTier = n => Number.isInteger(n) && n >= 0 && n <= 5;
+  if (run.econ !== undefined && (run.econ !== 1 || run.rules !== 1)) throw new HttpError(400, '无效的经济规则版本');
+  if (run.econ !== undefined && (!validTier(run.unlockTier) || !validTier(run.gearTier))) throw new HttpError(400, '无效的解锁等级');
+  if (run.econ === undefined && (run.unlockTier !== undefined || run.gearTier !== undefined)) throw new HttpError(400, '无效的解锁等级');
   let state;
   try {
-    state = createWaSeason(run.seed, false, run.region, run.runId, { rules: run.rules, ascension: run.ascension, mapVersion: run.mapVersion ?? 1 });
+    state = createWaSeason(run.seed, false, run.region, run.runId, { rules: run.rules, ascension: run.ascension, mapVersion: run.mapVersion ?? 1, ...(run.econ !== undefined ? { econ: run.econ, unlockTier: run.unlockTier, gearTier: run.gearTier } : {}) });
   } catch {
     throw new HttpError(400, '无效的运行数据');
   }

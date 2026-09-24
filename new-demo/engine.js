@@ -6,6 +6,7 @@ import { EVENTS, EVENT_POOLS, CRATE_LOOT } from './events.js';
 import { opsReason, describeOps, applyOps, pickKind, pickCandidates } from '../shared-event-core.js';
 import { freshUnknownOdds, resolveUnknown, blockedUnknownKinds, rollCrateSize } from '../shared-unknown-room.js';
 import { ROUTE_STEPS } from '../shared-route-generator.js';
+import { planCardUnlocks, unlockedFrom, tierOfId, validTier, UNLOCK_TIERS } from '../shared-unlock.js';
 
 const VERSION = 'new-1';
 const MAX_HAND = 10;
@@ -70,7 +71,60 @@ export const ASCENSION_RULES = [
 const clampAscension = n => Math.max(0, Math.min(MAX_ASCENSION, Math.floor(Number(n) || 0)));
 
 export function restHealAmount(state) {
-  return Math.floor(state.maxHp * ((state.ascension || 0) >= 5 ? 0.2 : 0.3)) + (hasRelic(state, 'R25') ? 10 : 0);
+  return Math.floor(state.maxHp * restHealRate(state)) + (hasRelic(state, 'R25') ? 10 : 0);
+}
+// Share of max HP that 休整 restores (野战医疗站 adds 10%).
+export function restHealRate(state) {
+  return ((state.ascension || 0) >= 5 ? 0.2 : 0.3) + (hasInvest(state, 'IN02') ? 0.1 : 0);
+}
+
+// ----------------------------- Economy (options.econ) -----------------------------
+// Runs created with `econ` use unlock tiers (reduced card/equipment pools until
+// unlocked), skip compensation, 战术投资 and shop rerolls. Runs without it keep
+// the full pools and the older reward/shop rules.
+export const SKIP_GOLD = 15;
+export const REROLL_BASE = 20;
+export const REROLL_STEP = 10;
+export const INVESTMENTS = {
+  IN01: { name: '情报网络', price: 200, icon: 'cards', desc: '战后奖励的可选卡牌多 1 张。' },
+  IN02: { name: '野战医疗站', price: 160, icon: 'heal', desc: '休整回复额外 +最大生命的10%。' },
+  IN03: { name: '扩编货架', price: 180, icon: 'coin', desc: '补给站的卡牌货架多 1 格。' },
+  IN04: { name: '战前简报室', price: 220, icon: 'draw', desc: '每场战斗第一回合多抽 1 张牌。' },
+  IN05: { name: '后勤车队', price: 150, icon: 'supply', desc: '精英战胜利后，多进行一次补给品掉落判定。' }
+};
+// Equipment batches opened by unlock tiers 1–5; everything else is in the base pool.
+export const RELIC_UNLOCKS = [
+  ['R16', 'R23', 'R33'],
+  ['R17', 'R24', 'R37'],
+  ['R19', 'R26', 'R30'],
+  ['R20', 'R27', 'R46'],
+  ['R29', 'R35', 'R49']
+];
+export const econOn = state => (state?.econ || 0) >= 1;
+export function hasInvest(state, id) {
+  return econOn(state) && !!state.invest?.includes(id);
+}
+const planCache = {}, poolCache = {};
+// Team cards split into a base pool and five unlock batches (shared cards are always open).
+export function teamUnlockPlan(team) {
+  const def = TEAMS[team] || TEAMS.breach;
+  const ids = REGION_CARD_IDS[def.region] || REGION_CARD_IDS.AM;
+  return planCache[team] ||= planCardUnlocks(ids, { start: def.startingDeck.map(([id]) => id), rarityOf: id => CARDS[id].rarity, groupOf: id => (ARCHETYPES[CARDS[id].tag] ? CARDS[id].tag : null), salt: team });
+}
+function teamCardIds(state) {
+  const ids = REGION_CARD_IDS[TEAMS[state.team]?.region] || REGION_CARD_IDS.AM;
+  if (!econOn(state)) return ids;
+  const key = `${state.team}:${state.unlockTier}`;
+  return poolCache[key] ||= unlockedFrom(teamUnlockPlan(state.team), ids, state.unlockTier);
+}
+export function relicLocked(state, id) {
+  return econOn(state) && tierOfId(RELIC_UNLOCKS, id) > (state.gearTier ?? UNLOCK_TIERS);
+}
+export function rerollPrice(state) {
+  return (state.freeRerolls || 0) > 0 ? 0 : discounted(state, REROLL_BASE + REROLL_STEP * (state.shop?.rerolls || 0));
+}
+export function investPrice(state, id) {
+  return discounted(state, INVESTMENTS[id].price);
 }
 
 // options: { ascension: 0-10, opening: true to start with the 赛前准备 choice }.
@@ -135,6 +189,10 @@ export function createRun(seed = String(Date.now()), team = 'breach', options = 
     supplyChance: 40,
     playedCount: 0
   };
+  if (options.econ) {
+    const tier = n => (validTier(n) ? n : UNLOCK_TIERS);
+    Object.assign(state, { econ: 1, unlockTier: tier(options.unlockTier), gearTier: tier(options.gearTier), invest: [], freeRerolls: 0, fightsWon: 0 });
+  }
   state.map = buildMap(seed, 1, ascension);
   if (ascension >= 6) state.hp = state.maxHp - Math.floor(state.maxHp * 0.1);
   if (ascension >= 9) {
@@ -311,7 +369,8 @@ export function legalActions(state) {
       if ((state.supplies || []).length < supplySlots(state)) actions.push({ type: 'takeSupply' });
       else state.supplies.forEach((_, index) => actions.push({ type: 'takeSupply', replace: index }));
     }
-    actions.push({ type: 'reward', id: null });
+    if (econOn(state)) actions.push({ type: 'reward', id: null, comp: 'gold' }, { type: 'reward', id: null, comp: 'reroll' });
+    else actions.push({ type: 'reward', id: null });
     if (state.battle?.rewardPool) {
       for (const id of state.battle.rewardPool) actions.push({ type: 'reward', id });
     }
@@ -335,6 +394,10 @@ export function legalActions(state) {
       }
       if (state.relics.length < RELIC_SLOTS) (shop.relics || []).forEach((item, index) => { if (state.money >= shopPrice(item, state)) actions.push({ type: 'buyRelic', index }); });
       if ((state.supplies || []).length < supplySlots(state)) (shop.supplies || []).forEach((item, index) => { if (state.money >= shopPrice(item, state)) actions.push({ type: 'buySupply', index }); });
+      if (econOn(state)) {
+        if (shop.invest && state.money >= investPrice(state, shop.invest)) actions.push({ type: 'buyInvest' });
+        if (state.money >= rerollPrice(state)) actions.push({ type: 'rerollShop' });
+      }
     }
   } else if (state.phase === 'rest') {
     if (!hasRelic(state, 'R42')) actions.push({ type: 'rest', choice: 'heal' });
@@ -405,13 +468,21 @@ export function observe(state) {
 
 // One enemy's intent. `pending` is firepower granted this turn by allies that
 // act earlier (e.g. a spotter's rally), so the preview matches the real hit.
-function intentText(b, e, pending = 0) {
+// `actual` (from incomingDamage) replaces hit numbers with the damage that lands.
+function intentText(b, e, pending = 0, actual = null) {
   if (!e.intent) return null;
   const parts = [];
   // Actions resolve in order, so a buff listed first already raises the hit after it.
   let strength = (e.statuses.strength || 0) + pending;
   if (b.field === 'overtime' && b.turn >= 5) strength += 2;
-  for (const act of e.intent) {
+  for (const [i, act] of e.intent.entries()) {
+    const hits = actual?.[i];
+    if (hits?.length && (act.type === 'hit' || act.type === 'snipe')) {
+      const same = hits.every(n => n === hits[0]);
+      if (act.type === 'hit') parts.push(same ? `攻击${hits[0]}×${hits.length}` : `攻击${hits.join('+')}`);
+      else parts.push(e.statuses.aim ? `重狙${hits[0]}（闪光可打断）` : `仓促射击${hits[0]}（瞄准已被打断）`);
+      continue;
+    }
     if (act.type === 'hit') parts.push(`攻击${enemyHitBase(b, act.n, act.times) + strength}×${act.times}`);
     else if (act.type === 'buff') { strength += act.n; parts.push(`强化火力+${act.n}`); }
     else if (act.type === 'rally') { strength += act.n; parts.push(`全队火力+${act.n}`); }
@@ -451,6 +522,69 @@ export function describeIntent(state) {
   const texts = describeIntents(state);
   if (living.length <= 1) return living[0] ? texts[living[0].uid] ?? null : null;
   return living.map(e => `${e.name}：${texts[e.uid] || '未知'}`).join('；');
+}
+
+// Damage the coming enemy turn actually deals, mirroring executeEnemyTurn and
+// dealDamageToPlayer: battlefield, strength (incl. buffs/rallies earlier in the
+// turn and overtime), our push stance, enemy weak, our vulnerable (incl. vuln
+// applied earlier in the turn), smoke and the one-shot flash. Our block is NOT
+// subtracted. byEnemy[uid] = {hits, total, acts} where acts[i] lists the hits
+// of intent action i.
+export function incomingDamage(state) {
+  const out = { total: 0, byEnemy: {} };
+  const b = state?.battle;
+  if (state?.phase !== 'combat' || !b) return out;
+  const living = livingEnemies(b);
+  const overtime = b.field === 'overtime' && b.turn >= 5 ? 2 : 0;
+  const sim = new Map(living.map(e => [e.uid, {
+    strength: (e.statuses.strength || 0) + overtime,
+    weak: (e.statuses.weak || 0) > 0,
+    smoke: e.statuses.smoke || 0,
+    flash: e.statuses.flash || 0,
+    aim: (e.statuses.aim || 0) > 0
+  }]));
+  let vuln = (b.statuses.player.vuln || 0) > 0;
+  const hit = (m, base) => {
+    let dmg = base + m.strength;
+    if (b.stance === 'push') dmg += 2;
+    if (m.weak) dmg = Math.floor(dmg * 0.75);
+    if (vuln) dmg = Math.floor(dmg * 1.5);
+    if (m.smoke > 0) dmg = Math.max(0, dmg - m.smoke);
+    if (m.flash > 0) { dmg = Math.max(0, dmg - 3 * m.flash); m.flash = 0; }
+    return dmg;
+  };
+  for (const e of living) {
+    if (!e.intent) continue;
+    const m = sim.get(e.uid);
+    const acts = [];
+    const hits = [];
+    for (const a of e.intent) {
+      const these = [];
+      if (a.type === 'hit') for (let i = 0; i < a.times; i++) these.push(hit(m, enemyHitBase(b, a.n, a.times)));
+      else if (a.type === 'snipe') { these.push(hit(m, m.aim ? enemyHitBase(b, a.n, 1) : Math.ceil(a.n / 3))); m.aim = false; }
+      else if (a.type === 'buff') m.strength += a.n;
+      else if (a.type === 'rally') for (const x of sim.values()) x.strength += a.n;
+      else if (a.type === 'vuln' && a.n > 0) vuln = true;
+      else if (a.type === 'aim') m.aim = true;
+      else if (a.type === 'cleanse') { m.weak = false; m.smoke = 0; m.flash = 0; }
+      acts.push(these.length ? these : null);
+      hits.push(...these);
+    }
+    const total = hits.reduce((n, x) => n + x, 0);
+    out.byEnemy[e.uid] = { hits, acts, total };
+    out.total += total;
+  }
+  return out;
+}
+
+// Intent text per living enemy with the damage numbers that will actually land.
+export function describeIntentsActual(state) {
+  const out = {};
+  if (state?.phase !== 'combat' || !state.battle) return out;
+  const b = state.battle;
+  const inc = incomingDamage(state);
+  for (const e of livingEnemies(b)) out[e.uid] = intentText(b, e, 0, inc.byEnemy[e.uid]?.acts || []);
+  return out;
 }
 
 export function preview(state, uid) {
@@ -514,6 +648,8 @@ function applyAction(state, action) {
     case 'replaceRelic': return replaceRelic(state, action);
     case 'declineRelic': return declineRelic(state);
     case 'openingPick': return chooseOpeningPick(state, action);
+    case 'rerollShop': return rerollShop(state);
+    case 'buyInvest': return buyInvest(state);
     default: return '未知操作';
   }
 }
@@ -645,6 +781,7 @@ function startBattle(state, node) {
   if (b.field === 'eco') { b.energy += 1; drawCards(state, 1); }
   applyRelicsAtBattleStart(state);
   if(state.phase!=='combat')return null;
+  if (hasInvest(state, 'IN04')) { drawCards(state, 1); if (state.phase !== 'combat') return null; } // 战前简报室
   for(const card of opening){if(!hand.some(c=>c.uid===card.uid))continue;applyDrawAffliction(state,card);if(state.phase!=='combat')return null;}
   afterTurnDraw(state);
   if (state.phase !== 'combat') return null;
@@ -1607,16 +1744,19 @@ function finishBattleWin(state) {
     for (let i = 0; i < (hasRelic(state, 'R47') ? 2 : 1); i++) { const id = grantRandomRelic(state); if (id) b.rewardRelics.push(id); }
   }
   rollSupplyDrop(state);
+  // 后勤车队: elite wins roll the supply drop a second time.
+  if (node?.kind === 'elite' && hasInvest(state, 'IN05')) rollSupplyDrop(state);
+  if (econOn(state)) state.fightsWon = (state.fightsWon || 0) + 1;
 
   // Generate reward pool (unique cards)
   const weights = { common: 10, uncommon: 4, rare: 1 };
-  const regional = REGION_CARD_IDS[TEAMS[state.team]?.region] || REGION_CARD_IDS.AM;
-  const available = [...SHARED_CARD_IDS, ...regional];
+  const available = [...SHARED_CARD_IDS, ...teamCardIds(state)];
+  const rewardSize = 3 + (hasInvest(state, 'IN01') ? 1 : 0);
   // Build-direction cards are weighted like regional ones so every reward
   // screen tends to offer a real choice between directions.
   const weightOf = id => weights[CARDS[id].rarity] * (CARDS[id].region || ARCHETYPES[CARDS[id].tag] ? 3 : 1);
   const pool = [];
-  while (pool.length < 3) {
+  while (pool.length < rewardSize) {
     // Prefer a card whose tag differs from the ones already offered.
     const fresh = available.filter(id => !pool.includes(id) && !pool.some(p => CARDS[p].tag === CARDS[id].tag));
     const candidates = fresh.length ? fresh : available.filter(id => !pool.includes(id));
@@ -1665,6 +1805,12 @@ function chooseReward(state, action) {
   if (action.id !== null && action.id !== undefined) {
     if (!b.rewardPool.includes(action.id)) return '无效奖励';
     state.deck.push({ uid: nextUid(state), id: action.id, up: false });
+  } else if (econOn(state)) {
+    // Skip compensation: gold by default, or one free reroll of a later shop's card shelf.
+    if (action.comp === 'reroll') state.freeRerolls = (state.freeRerolls || 0) + 1;
+    else if (action.comp === undefined || action.comp === 'gold') state.money += SKIP_GOLD;
+    else return '无效补偿';
+    pushLog(state, 'reward_skipped', { comp: action.comp || 'gold' });
   }
   b.rewardTaken = true;
   if (state.eventBonus) { applyOps(state, state.eventBonus, EVENT_CTX); state.eventBonus = null; }
@@ -1675,7 +1821,7 @@ function chooseReward(state, action) {
     state.hp = state.maxHp;
     if (state.act < 3) {
       // 幕末决战奖励：从决战专属装备中三选一（可跳过）。
-      const pool = RELIC_IDS_BY_TIER.boss.filter(id => !hasRelic(state, id));
+      const pool = RELIC_IDS_BY_TIER.boss.filter(id => !hasRelic(state, id) && !relicLocked(state, id));
       state.bossRelic = { options: pickDistinct(pool, 3, () => nextRand(state)) };
       state.phase = 'bossRelic';
     } else {
@@ -1705,7 +1851,7 @@ function completeNode(state) {
 // Returns the id, or null (and 100 gold) when every piece is owned.
 function rollRelicId(state, exclude = []) {
   const tiers = ['common', 'uncommon', 'rare'];
-  const open = t => RELIC_IDS_BY_TIER[t].filter(id => !hasRelic(state, id) && !exclude.includes(id));
+  const open = t => RELIC_IDS_BY_TIER[t].filter(id => !hasRelic(state, id) && !exclude.includes(id) && !relicLocked(state, id));
   const avail = tiers.filter(t => open(t).length);
   if (!avail.length) return null;
   const total = avail.reduce((n, t) => n + EQUIP_TIERS[t].weight, 0);
@@ -1788,11 +1934,12 @@ function grantRelicById(state, id) {
   pushLog(state, 'relic_gained', { id });
 }
 
-function generateShop(state) {
+// The card shelf: 5 cards (6 with 扩编货架), one of them at half price.
+function generateShopCards(state) {
   const cards = [];
-  const regional = REGION_CARD_IDS[TEAMS[state.team]?.region] || REGION_CARD_IDS.AM;
-  const available = [...SHARED_CARD_IDS, ...regional];
-  for (let i = 0; i < 5; i++) {
+  const available = [...SHARED_CARD_IDS, ...teamCardIds(state)];
+  const size = 5 + (hasInvest(state, 'IN03') ? 1 : 0);
+  for (let i = 0; i < size; i++) {
     const choices=available.filter(id=>!cards.some(card=>card.id===id));
     const id = choices[Math.floor(nextRand(state) * choices.length)];
     cards.push({ id, price: priceOf(id) });
@@ -1801,14 +1948,49 @@ function generateShop(state) {
   const saleIndex = Math.floor(nextRand(state) * cards.length);
   cards[saleIndex].sale = true;
   cards[saleIndex].price = Math.floor(cards[saleIndex].price / 2);
+  return cards;
+}
+function generateShop(state) {
+  const cards = generateShopCards(state);
   // Equipment shelf: two random pieces plus one 补给站专属; supplies: three.
   const relics = [];
   for (let i = 0; i < 2; i++) { const id = rollRelicId(state, relics.map(r => r.id)); if (id) relics.push({ id, price: RELIC_PRICES[RELICS[id].tier] }); }
-  const shopOnly = RELIC_IDS_BY_TIER.shop.filter(id => !hasRelic(state, id));
+  const shopOnly = RELIC_IDS_BY_TIER.shop.filter(id => !hasRelic(state, id) && !relicLocked(state, id));
   if (shopOnly.length) { const id = shopOnly[Math.floor(nextRand(state) * shopOnly.length)]; relics.push({ id, price: RELIC_PRICES.shop }); }
   const supplies = [];
   for (let i = 0; i < 3; i++) { const id = rollSupplyId(state); supplies.push({ id, price: SUPPLY_PRICES[SUPPLIES[id].rarity] }); }
-  return { cards, relics, supplies, categoryUpgradeUsed:false };
+  const shop = { cards, relics, supplies, categoryUpgradeUsed:false };
+  if (econOn(state)) {
+    // One 战术投资 offer per visit (never one already bought).
+    const open = Object.keys(INVESTMENTS).filter(id => !state.invest.includes(id));
+    shop.invest = open.length ? open[Math.floor(nextRand(state) * open.length)] : null;
+    shop.rerolls = 0;
+  }
+  return shop;
+}
+function rerollShop(state) {
+  if (state.phase !== 'shop' || !state.shop) return '不在补给站';
+  if (!econOn(state)) return '此补给站不能刷新';
+  const price = rerollPrice(state);
+  if (state.money < price) return '金币不足';
+  if (price === 0) state.freeRerolls--;
+  else { state.money -= price; state.shop.rerolls = (state.shop.rerolls || 0) + 1; }
+  state.shop.cards = generateShopCards(state);
+  pushLog(state, 'shop_reroll', { price });
+  return null;
+}
+function buyInvest(state) {
+  if (state.phase !== 'shop' || !state.shop) return '不在补给站';
+  const id = state.shop.invest;
+  if (!econOn(state) || !id) return '没有可购买的投资';
+  if (state.invest.includes(id)) return '已经投资过';
+  const cost = investPrice(state, id);
+  if (state.money < cost) return '金币不足';
+  state.money -= cost;
+  state.invest.push(id);
+  state.shop.invest = null;
+  pushLog(state, 'invest', { id, price: cost });
+  return null;
 }
 const RELIC_PRICES = { common: 140, uncommon: 190, rare: 250, shop: 160 };
 const SUPPLY_PRICES = { common: 45, uncommon: 70, rare: 95 };
@@ -1853,7 +2035,8 @@ function rollSupplyDrop(state) {
   if (nextRand(state) * 100 < chance) {
     state.supplyChance = Math.max(0, chance - 10);
     const id = rollSupplyId(state);
-    if ((state.supplies ||= []).length < supplySlots(state)) { state.supplies.push(id); b.rewardSupplyTaken = id; }
+    if ((state.supplies ||= []).length < supplySlots(state)) { state.supplies.push(id); b.rewardSupplyTaken = id; if (econOn(state)) (b.rewardSuppliesTaken ||= []).push(id); }
+    else if (b.rewardSupply) b.rewardSupplyNext = id; // a second find waits behind the first
     else b.rewardSupply = id;
   } else {
     state.supplyChance = Math.min(100, chance + 10);
@@ -1870,7 +2053,9 @@ function takeSupply(state, action) {
     state.supplies.push(b.rewardSupply);
   }
   b.rewardSupplyTaken = b.rewardSupply;
-  b.rewardSupply = null;
+  if (econOn(state)) (b.rewardSuppliesTaken ||= []).push(b.rewardSupply);
+  b.rewardSupply = b.rewardSupplyNext || null;
+  delete b.rewardSupplyNext;
   return null;
 }
 function discardSupply(state, action) {
@@ -2028,7 +2213,7 @@ function restAction(state, action) {
 // All randomness below uses the run RNG, so the same seed and actions always
 // resolve the same room, crate and event outcome.
 const cardDef = id => CARDS[id] || STATUS_CARDS[id] || null;
-const cardPoolFor = state => [...SHARED_CARD_IDS, ...(REGION_CARD_IDS[TEAMS[state.team]?.region] || REGION_CARD_IDS.AM)];
+const cardPoolFor = state => [...SHARED_CARD_IDS, ...teamCardIds(state)];
 
 const EVENT_CTX = {
   labels: { hp: '生命', money: '金币', equip: '战术装备', equipNone: '已全部拥有时', curse: '俱乐部隐患', upgrade: '升级', tier: { common: '普通牌', uncommon: '罕见牌', rare: '稀有牌' } },
@@ -2241,8 +2426,7 @@ function pickDistinct(list, n, rand) {
   return out;
 }
 function teamCardPool(state, rarity) {
-  const regional = REGION_CARD_IDS[TEAMS[state.team]?.region] || REGION_CARD_IDS.AM;
-  return [...SHARED_CARD_IDS, ...regional].filter(id => CARDS[id].rarity === rarity);
+  return [...SHARED_CARD_IDS, ...teamCardIds(state)].filter(id => CARDS[id].rarity === rarity);
 }
 
 function generateOpening(state) {

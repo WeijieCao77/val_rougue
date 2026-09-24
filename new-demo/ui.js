@@ -1,7 +1,8 @@
-import { createRun, act, legalActions, observe, preview, describeIntent, describeIntents, battleEnemies, livingEnemies, cardNeedsTarget, cardHitsAll, categoryUpgradeQuote, shopPrice, ASCENSION_RULES, MAX_ASCENSION, restHealAmount, removePrice, baseEnergy, supplySlots, hasRelic, RELIC_SLOTS, relicSellValue, describeEvent, combatCardText } from './engine.js';
+import { createRun, act, legalActions, observe, preview, describeIntent, describeIntents, describeIntentsActual, incomingDamage, battleEnemies, livingEnemies, cardNeedsTarget, cardHitsAll, categoryUpgradeQuote, shopPrice, ASCENSION_RULES, MAX_ASCENSION, restHealAmount, removePrice, baseEnergy, supplySlots, hasRelic, RELIC_SLOTS, relicSellValue, describeEvent, combatCardText } from './engine.js';
 import { squadChipHtml, traitTagHtml, teamTrait, TRAIT_ICONS, loadAscensionUnlocks, recordAscensionWin, equipIconHtml, supplyGlyphHtml, equipTileHtml, supplyTileHtml, TIER_COLORS } from './run-extras.js';
 import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS, TRAITS, FIELDS, ARCHETYPES, SUPPLIES, SUPPLY_IDS, EQUIP_TIERS, BOSSES } from './content.js';
-import { statusBadges, statusBadge, statusIcon, highlightKeywords, STATUS_INFO } from '/shared/status-icons.js';
+import { statusBadges, statusBadge, statusIcon, highlightKeywords, keywordRules, STATUS_INFO } from '/shared/status-icons.js';
+import { attachCardDetail, showDragHint, hideDragHint } from '/shared/touch-feel.js';
 import { ACTS } from './season-map.js';
 import { cardArt, combatArt, relicArt } from './art.js';
 import { tacticalCard } from './tactical-card.js';
@@ -10,6 +11,9 @@ import { attachCardGesture } from '/shared/card-gesture.js';
 import { flyCardsFromPile, flyCardsToPile } from '/shared/card-pile-motion.js';
 import { soundToggleHtml } from '/shared/sfx.js';
 import { juiceAction, juiceImpact, juiceSlam } from './juice-hooks.js';
+import { restHealRate, econOn } from './engine.js';
+import { unlockRunOptions, recordUnlockProgress, recordAbandonedRun, unlockBarHtml, unlockTestHtml, toggleAllUnlocks, unlockNoticeHtml, skipOptionsHtml, rerollButtonHtml, investOfferHtml, investChipHtml, investListHtml } from './economy.js';
+import { trackNewRun, recordNewAbandon, entryFor, resultPageHtml, openHistory, openDeckViewer, collection, foundText, unseenTileHtml, enemyTileHtml, gearTile, tagCard, initUpgradePeek, ALL_ENEMIES } from './run-screens.js';
 
 const STORAGE_KEY = 'new-demo-run-route-v5';
 const GUIDE_KEY = 'new-demo-guide-v2-';
@@ -36,10 +40,12 @@ function escapeHtml(str) {
 
 function saveState() {
   try {
+    recordUnlockProgress(state);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (e) {
     console.error('Save failed', e);
   }
+  trackNewRun(state);
 }
 
 function loadState() {
@@ -107,8 +113,31 @@ function cardHtml(id, { up = false, cost, badge, extraClass, text: textOverride 
   const text = textOverride ?? (up && def.upgradeText ? def.upgradeText : def.text);
   // X 费 cards show "X" instead of a number.
   const shownCost = def.x ? 'X' : cost ?? (up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost);
-  return tacticalCard(def, { up, cost: shownCost, text: highlightKeywords(text), tagLabel: tagLabel(def), badge, extraClass });
+  return tagCard(tacticalCard(def, { up, cost: shownCost, text: highlightKeywords(text), tagLabel: tagLabel(def), badge, extraClass }), id, up);
 }
+
+// Long-press sheet: the full-size card, complete text, keyword rules and the upgraded version.
+function cardDetailHtml(el) {
+  const id = el.dataset.cardId;
+  const up = el.dataset.cardUp === 'true';
+  const def = getCardDefinition(id);
+  if (!def) return '';
+  const d = getCardDisplay({ id }, up);
+  const upText = !up && def.upgradeText && def.upgradeText !== def.text ? def.upgradeText : '';
+  const upCost = !up && def.upgradeCost !== undefined && def.upgradeCost !== def.cost ? def.upgradeCost : null;
+  const extra = [def.exhaust ? '消耗' : '', def.retain ? '保留' : ''].join(' ');
+  const rules = keywordRules(`${d.text} ${upText} ${extra}`);
+  const art = cardHtml(id, { up }).replace(/ data-card-id="[^"]*"/, '');
+  return `<div class="card-sheet-body"><div class="card-sheet-art new-sheet-art">${art}</div><div class="card-sheet-info">
+    <h3>${escapeHtml(d.name)}${up ? ' +' : ''}</h3>
+    <p class="card-sheet-meta">${d.cost === null || d.cost === undefined ? '不能打出' : `${escapeHtml(d.cost)} 费`} · ${escapeHtml(typeMap[d.type] || d.type || '')}${tagMap[d.tag] ? ` · ${escapeHtml(tagMap[d.tag])}` : ''}${rarityMap[d.rarity] ? ` · ${escapeHtml(rarityMap[d.rarity])}` : ''}</p>
+    <p class="card-sheet-text">${highlightKeywords(d.text)}</p>
+    ${d.detail ? `<p class="card-sheet-scene">${escapeHtml(d.detail)}</p>` : ''}
+    ${rules.length ? `<dl class="card-sheet-keywords">${rules.map(([k, v]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`).join('')}</dl>` : ''}
+    ${up ? '<p class="card-sheet-upgrade"><b>已升级</b>这是升级后的版本。</p>' : upText || upCost !== null ? `<p class="card-sheet-upgrade"><b>升级后</b>${upCost !== null ? `${escapeHtml(upCost)} 费 · ` : ''}${highlightKeywords(upText || d.text)}</p>` : ''}
+  </div></div>`;
+}
+attachCardDetail({ selector: '[data-card-id]', render: cardDetailHtml });
 
 function describeCardFull(card) {
   const d = getCardDisplay(card, card.up);
@@ -154,6 +183,8 @@ function renderGuideModal() {
     <p><strong>补给品：</strong>一次性战斗道具，最多携带${3}件（部分装备可扩容）。战斗中点击顶部栏位查看说明并使用，需要目标的补给品在多名敌人时要选择目标。战斗胜利后有机会掉落（未掉落时下次机会提高），补给站也有售；栏位满时可以丢弃或替换。</p>
     <p><strong>赛前准备：</strong>选好队伍后，从4个开局选项中选1个：两个免费小加成、一个有代价的较大奖励、以及总是提供的“热身赛”。选项由本局种子决定。</p>
     <p><strong>难度等级：</strong>用某支队伍打通三幕后，为该队伍解锁下一难度（最高${MAX_ASCENSION}级）。每一级在之前所有规则之上再加一条，开赛前在首页选择。</p>
+    <p><strong>解锁：</strong>每支队伍初次游玩时队伍专属卡较少，装备也少 15 件。战斗胜利 +1 解锁经验，每击败一幕决战对手 +10，打通三幕再 +10；每升一级为该队伍加入 8 张战术卡并开放 3 件装备，共 5 级，下一局起生效。首页显示进度。</p>
+    <p><strong>跳过与补给站：</strong>跳过战后选卡可得 15 金币，或 1 次免费刷新补给货架（可留到之后的补给站）。补给货架可付费刷新：每个补给站第一次 20 金币，之后每次 +10。每个补给站提供 1 项战术投资（150–220 金币），买下后整局生效，同一项只能买一次；顶部栏显示已拥有的投资。</p>
     <p><strong>路线：</strong>点亮起的节点前进。⚔ 比赛、☠ 强敌、? 未知、⇄ 补给、✚ 休整、👑 幕末决赛。</p>
     <p><strong>战斗：</strong>先看敌人下一步意图，再按费用出牌。攻击造成伤害，技能负责布防、道具或抽牌，能力打出后整场生效。点牌再按执行，或拖到战场。遇到多名对手时，攻击和减益牌要点选目标（或直接拖到那名对手身上），“所有敌人”的范围牌无需目标；敌方回合每名在场对手依次行动。</p>
     <p><strong>回合：</strong>每回合通常有3能量；结束回合时没打出的手牌进入弃牌堆，消耗牌打出后本场不再抽到。布防抵消伤害，回合后清掉。前压/掩护姿态可以切换，但要花1能量。</p>
@@ -201,13 +232,15 @@ function renderHome() {
         ${teamsHtml}
       </div>
       <div id="ascension-picker">${ascensionPickerHtml(unlocks)}</div>
+      <div id="unlock-progress">${unlockBarHtml(selectedTeam)}${unlockTestHtml()}</div>
       <div class="home-actions">
         <button class="btn primary" id="btn-new-secondary">确认开赛</button>
         <button class="btn" id="btn-continue" ${continueDisabled ? 'disabled' : ''}>继续上局</button>
       </div>
       <nav class="nav-links" aria-label="其他入口">
         <button class="hero-link" id="btn-guide-home">怎么玩</button>
-        <button class="hero-link" id="btn-library">卡牌总览</button>
+        <button class="hero-link" id="btn-library">图鉴</button>
+        <button class="hero-link" id="btn-history">战绩</button>
         <a href="/">选择版本</a>
       </nav>
       <footer class="credit">猪之家出品</footer>
@@ -239,7 +272,20 @@ function renderHome() {
     selectedAscension = Math.min(selectedAscension, fresh[selectedTeam] || 0);
     document.getElementById('ascension-picker').innerHTML = ascensionPickerHtml(fresh);
     bindAscensionPicker();
+    renderUnlockProgress();
   }
+  function renderUnlockProgress() {
+    const host = document.getElementById('unlock-progress');
+    if (!host) return;
+    host.innerHTML = unlockBarHtml(selectedTeam) + unlockTestHtml();
+    host.querySelector('#btn-unlock-all')?.addEventListener('click', () => {
+      const on = toggleAllUnlocks();
+      showNotice(on ? '测试：之后新开的对局全部解锁。' : '已恢复正常解锁进度。');
+      renderUnlockProgress();
+      host.querySelector('.unlock-test')?.setAttribute('open', '');
+    });
+  }
+  renderUnlockProgress();
   function bindAscensionPicker() {
     document.querySelectorAll('[data-asc]').forEach(el => el.addEventListener('click', () => {
       if (el.disabled) return;
@@ -254,10 +300,12 @@ function renderHome() {
     if (loadState()) {
       const confirmOverwrite = window.confirm('开始新局将覆盖当前存档，确定？');
       if (!confirmOverwrite) return;
+      recordNewAbandon(loadState());
+      recordAbandonedRun(loadState());
     }
     try {
       const seed = crypto.randomUUID();
-      state = createRun(seed, selectedTeam, { ascension: selectedAscension, opening: true });
+      state = createRun(seed, selectedTeam, { ascension: selectedAscension, opening: true, ...unlockRunOptions(selectedTeam) });
       saveState();
       selectedCardUid = null;
       renderGame();
@@ -284,6 +332,7 @@ function renderHome() {
     renderLibraryModal();
   });
   document.getElementById('btn-guide-home').addEventListener('click', renderGuideModal);
+  document.getElementById('btn-history').addEventListener('click', openHistory);
 }
 
 // Difficulty picker for the selected team: unlocked levels are selectable, the
@@ -324,6 +373,7 @@ function runStripHtml() {
   return `<div class="run-strip" role="region" aria-label="装备与补给品">
     <div class="strip-group gear-row" aria-label="装备"><span class="strip-label">装备 ${state.relics.length}/${RELIC_SLOTS}</span>${gear}</div>
     <div class="strip-group supply-row" aria-label="补给品"><span class="strip-label">补给品</span>${slots.join('')}</div>
+    ${investChipHtml(state)}
   </div>`;
 }
 
@@ -333,6 +383,22 @@ function renderRunStrip() {
   host.innerHTML = state && !['opening', 'openingPick'].includes(state.phase) ? runStripHtml() : '';
   host.querySelectorAll('[data-gear-index]').forEach(el => el.addEventListener('click', () => openGearPanel(Number(el.dataset.gearIndex))));
   host.querySelectorAll('[data-supply-index]').forEach(el => el.addEventListener('click', () => openSupplyPanel(Number(el.dataset.supplyIndex))));
+  host.querySelector('#btn-invest-list')?.addEventListener('click', openInvestPanel);
+}
+
+// Owned 战术投资 (whole-run upgrades bought at shops).
+function openInvestPanel() {
+  if (!state || presentationBusy) return;
+  const modalRoot = document.getElementById('modal-root');
+  modalRoot.innerHTML = `<div class="modal-overlay" id="invest-overlay"><div class="modal supply-modal" role="dialog" aria-modal="true" aria-label="战术投资">
+    <h3>战术投资</h3>${investListHtml(state)}
+    <div class="supply-actions"><button class="btn" id="invest-close">关闭</button></div>
+  </div></div>`;
+  const close = () => { modalRoot.innerHTML = ''; };
+  const overlay = modalRoot.querySelector('#invest-overlay');
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  modalRoot.querySelector('#invest-close').addEventListener('click', close);
+  modalRoot.querySelector('#invest-close').focus();
 }
 
 // Equipment detail with 出售 (not during combat).
@@ -470,8 +536,10 @@ function renderGame() {
     <header class="app-header">
       <div class="app-title">新demo · 战术试炼</div>
         <div class="app-buttons">
-        <button class="btn" id="btn-library">卡牌总览</button>
+        <button class="btn" id="btn-deck">牌组 ${state.deck.length}</button>
+        <button class="btn" id="btn-library">图鉴</button>
         <button class="btn" id="btn-guide">怎么玩</button>
+        <button class="btn" id="btn-abandon">放弃本局</button>
         <button class="btn" id="btn-home">返回首页</button>
         ${soundToggleHtml()}
       </div>
@@ -484,6 +552,17 @@ function renderGame() {
     renderLibraryModal();
   });
   document.getElementById('btn-guide').addEventListener('click', renderGuideModal);
+  document.getElementById('btn-deck').addEventListener('click', () => { if (state && !presentationBusy) openDeckViewer(state, 'deck'); });
+  document.getElementById('btn-abandon').addEventListener('click', () => {
+    if (!state || presentationBusy || state.phase === 'result') return;
+    if (!window.confirm('放弃本局？本局会记入战绩，存档将被清除。')) return;
+    clearCombatPresentation();
+    const entry = recordNewAbandon(state);
+    recordAbandonedRun(state);
+    clearState();
+    state = null;
+    if (entry) renderEntryPage(entry); else renderHome();
+  });
   document.getElementById('btn-home').addEventListener('click', () => {
     if (presentationBusy) return;
     clearCombatPresentation();
@@ -497,6 +576,10 @@ function renderPhase() {
   const root = document.getElementById('game-root');
   if (!root) return;
   root.innerHTML = '';
+  const deckBtn = document.getElementById('btn-deck');
+  if (deckBtn) deckBtn.textContent = `牌组 ${state.deck.length}`;
+  const abandonBtn = document.getElementById('btn-abandon');
+  if (abandonBtn) abandonBtn.hidden = state.phase === 'result';
   renderRunStrip();
   renderPendingRelic();
   if (state.phase === 'opening') renderOpening(root);
@@ -548,6 +631,7 @@ function renderMap(root) {
     const glyph = MAP_GLYPHS[n.revealed || n.kind] || '·';
     const label = n.name || { battle: '战斗', elite: '强敌', event: '未知', shop: '补给', rest: '休整', crate: '补给箱', boss: 'Boss' }[n.kind] || n.kind;
     return `<g class="${cls}" data-key="${n.key}" tabindex="${isAvailable ? '0' : '-1'}" role="button" aria-label="${n.kind === 'boss' ? 'Boss：' : n.kind === 'elite' ? '强敌：' : ''}${escapeHtml(n.name)}" style="cursor:pointer">
+      <title>${escapeHtml(({ battle: '常规比赛', elite: '强敌', event: n.revealed ? '未知 · 已揭晓：' + (REVEALED_NAMES[n.revealed] || '') : '未知', shop: '战术补给', rest: '休整', crate: '补给箱', boss: '幕末决战' })[n.kind] || n.kind)}：${escapeHtml(n.name || '')}</title>
       <circle cx="${sx(n.x)}" cy="${sy(n.y)}" r="${n.kind === 'boss' ? 24 : 18}" />
       <text class="map-glyph" x="${sx(n.x)}" y="${sy(n.y) + 1}">${glyph}</text>
       ${isAvailable ? `<text class="map-choice-label" x="${sx(n.x)}" y="${sy(n.y) - 29}">${escapeHtml(label)}</text>` : ''}
@@ -695,7 +779,8 @@ function renderCombat(root) {
   const hideIntents = hasRelic(state, 'R41');
   const enemies = battleEnemies(b);
   const living = enemies.filter(e => e.hp > 0);
-  const intents = describeIntents(state);
+  const intents = describeIntentsActual(state);
+  const incoming = incomingDamage(state).total;
   const legal = legalActions(state);
   const playableUids = new Set(legal.filter(a => a.type === 'play').map(a => a.uid));
   const canStance = legal.some(a => a.type === 'stance');
@@ -747,6 +832,7 @@ function renderCombat(root) {
             <div class="ally-vitals">
               <div class="hp-line"><span class="value">HP ${state.hp}/${state.maxHp}</span><div class="hp-bar"><i style="width:${state.hp / state.maxHp * 100}%"></i></div></div>
               <div class="block-value" data-block="${b.playerBlock}"><span class="mini-armor" aria-hidden="true"></span><span>布防 ${b.playerBlock}</span></div>
+              ${hideIntents ? '' : `<div class="rm-incoming" title="敌方意图中的数字为实际伤害：已计入火力、压制、易伤、烟雾、闪光、战场与姿态，未扣除布防。">预计受到 <b>${incoming}</b> 伤害${incoming ? ` · 结束回合失去 <b>${Math.max(0, incoming - b.playerBlock)}</b>` : ''}</div>`}
             </div>
             ${squadChipHtml(b)}
             <div class="stance-chip">
@@ -812,7 +898,7 @@ function renderCombat(root) {
   root.querySelectorAll('.pile-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       if (presentationBusy) return;
-      showPileModal(btn.dataset.pile);
+      openDeckViewer(state, { draw: 'drawPile', discard: 'discardPile', exhaust: 'exhaustPile' }[btn.dataset.pile] || 'deck');
     });
   });
 
@@ -851,7 +937,14 @@ function renderCombat(root) {
       selectedCardUid = card.uid; el.classList.add('selected');
       if (needsPick(card)) { battleEl.classList.add('aiming'); root.querySelectorAll('.enemy-unit:not(.is-dead)').forEach(u => u.classList.add('targetable')); }
     },
-    onMove: (card, point) => { clearDrop(); zoneAt(point, card)?.classList.add('drop-ready'); },
+    onMove: (card, point) => {
+      clearDrop();
+      const zone = zoneAt(point, card);
+      zone?.classList.add('drop-ready');
+      const name = zone?.dataset.enemyUid ? zone.querySelector('.enemy-name')?.textContent?.trim() : '';
+      const text = zone ? `松手打出${name ? ` → ${name}` : ''}` : needsPick(card) ? '拖到敌人身上' : '向上拖出手牌区';
+      showDragHint(text, { ready: !!zone, x: point.x, y: point.y, lift: point.lift });
+    },
     onDrop: (card, point) => {
       const zone = zoneAt(point, card); clearDrop();
       if (!zone || presentationBusy || !playableUids.has(card.uid)) return false;
@@ -860,7 +953,7 @@ function renderCombat(root) {
       return dispatch(target && cardNeedsTarget(card) ? { type: 'play', uid: card.uid, target } : { type: 'play', uid: card.uid });
     },
     onEnd: (card, point, landed) => {
-      clearDrop();
+      clearDrop(); hideDragHint();
       if (!landed && !aimCard) { battleEl.classList.remove('aiming'); root.querySelectorAll('.enemy-unit.targetable').forEach(u => u.classList.remove('targetable')); }
     },
   });
@@ -959,22 +1052,25 @@ function renderReward(root) {
   } else if (b.rewardSupplyTaken) {
     supplyHtml = `<div class="loot-line">${supplyTileHtml(b.rewardSupplyTaken, '<em class="loot-tag">已放入补给品栏位</em>')}</div>`;
   }
+  // 后勤车队 can add a second supply: list the ones already stowed alongside the pending one.
+  if (b.rewardSuppliesTaken?.length) supplyHtml = b.rewardSuppliesTaken.map(id => `<div class="loot-line">${supplyTileHtml(id, '<em class="loot-tag">已放入补给品栏位</em>')}</div>`).join('') + (b.rewardSupply ? supplyHtml : '');
   root.innerHTML = `
     <div class="phase-container">
       <div class="ops-eyebrow">DEBRIEF // 战后简报</div>
       ${gained || supplyHtml ? `<div class="loot-list">${gained}${supplyHtml}</div>` : ''}
-      <h2 class="ops-title">补充战术 · 三选一</h2>
+      <h2 class="ops-title">补充战术 · ${cards.length === 4 ? '四' : '三'}选一</h2>
 
       <div class="reward-cards">
         ${rewardHtml}
       </div>
-      <button class="btn ops-skip" id="btn-skip">跳过，不加入新牌</button>
+      ${econOn(state) ? skipOptionsHtml(state) : '<button class="btn ops-skip" id="btn-skip">跳过，不加入新牌</button>'}
     </div>
   `;
   document.querySelectorAll('.reward-card').forEach(el => {
     el.addEventListener('click', () => dispatch({ type: 'reward', id: el.dataset.id }));
   });
-  document.getElementById('btn-skip').addEventListener('click', () => dispatch({ type: 'reward', id: null }));
+  document.getElementById('btn-skip')?.addEventListener('click', () => dispatch({ type: 'reward', id: null }));
+  root.querySelectorAll('[data-skip-comp]').forEach(el => el.addEventListener('click', () => dispatch({ type: 'reward', id: null, comp: el.dataset.skipComp })));
   root.querySelector('#btn-take-supply')?.addEventListener('click', () => dispatch({ type: 'takeSupply' }));
   root.querySelectorAll('[data-take-replace]').forEach(el => el.addEventListener('click', () => dispatch({ type: 'takeSupply', replace: Number(el.dataset.takeReplace) })));
 }
@@ -1035,8 +1131,9 @@ function renderShop(root) {
         </div>
         <div class="shop-wallet"><span>你的金币</span><b>${state.money}</b></div>
       </div>
-      <h3 class="shelf-title">补给货架</h3>
+      <h3 class="shelf-title">补给货架${econOn(state) ? ` <span class="reroll-control">${rerollButtonHtml(state)}</span>` : ''}</h3>
       <div class="shop-shelf">${shopCards}</div>
+      ${econOn(state) ? investOfferHtml(state) : ''}
       <h3 class="shelf-title">装备柜台</h3>
       <div class="gear-shelf">${(shop.relics || []).map((item, idx) => { const cost = shopPrice(item, state); return `<div class="gear-offer">${equipTileHtml(item.id)}<button class="btn" data-buy-relic="${idx}" ${state.money >= cost && state.relics.length < RELIC_SLOTS ? '' : 'disabled'}>${cost} 金币${state.relics.length >= RELIC_SLOTS ? ' · 装备槽已满' : state.money >= cost ? ' · 买下' : ' · 不足'}</button></div>`; }).join('') || '<p class="shelf-empty">装备已售罄。</p>'}</div>
       <h3 class="shelf-title">补给品 <small>栏位 ${(state.supplies || []).length}/${supplySlots(state)}</small></h3>
@@ -1072,6 +1169,8 @@ function renderShop(root) {
     });
   });
   document.getElementById('btn-leave').addEventListener('click', () => dispatch({ type: 'leave' }));
+  document.getElementById('btn-reroll')?.addEventListener('click', () => dispatch({ type: 'rerollShop' }));
+  document.getElementById('btn-invest')?.addEventListener('click', () => dispatch({ type: 'buyInvest' }));
 }
 
 function renderRest(root) {
@@ -1095,7 +1194,7 @@ function renderRest(root) {
       <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
         <div class="rest-option${hasRelic(state, 'R42') ? ' is-disabled' : ''}" id="rest-heal" ${hasRelic(state, 'R42') ? 'aria-disabled="true" title="无休整合同：休整点不能回复生命"' : ''}>
           <div class="card-title">回复生命</div>
-          <div class="card-desc">恢复最大生命的${(state.ascension || 0) >= 5 ? 20 : 30}%（${restHealAmount(state)}点）</div>
+          <div class="card-desc">恢复最大生命的${Math.round(restHealRate(state) * 100)}%（${restHealAmount(state)}点）</div>
         </div>
         <div class="rest-option" id="rest-upgrade">
           <div class="card-title">升级卡牌</div>
@@ -1193,37 +1292,33 @@ function renderIntermission(root) {
     <div class="phase-container">
       <h2>幕间休息</h2>
       <p>全员状态恢复至满，准备进入下一幕</p>
+      ${unlockNoticeHtml(state)}
       <button class="btn primary" id="btn-next-act">进入下一幕</button>
     </div>
   `;
   document.getElementById('btn-next-act').addEventListener('click', () => dispatch({ type: 'nextAct' }));
 }
 
+function bindResultButtons(entry, onAgain) {
+  document.getElementById('rm-again')?.addEventListener('click', onAgain);
+  document.getElementById('rm-home')?.addEventListener('click', () => renderHome());
+  document.getElementById('rm-history')?.addEventListener('click', openHistory);
+  document.getElementById('rm-deck')?.addEventListener('click', () => openDeckViewer(null, 'deck', entry.deck));
+}
+// Results page shown without a run (after 放弃本局).
+function renderEntryPage(entry) {
+  rememberScreen('home');
+  document.getElementById('modal-root').innerHTML = '';
+  document.getElementById('app').innerHTML = `<main class="rm-page">${resultPageHtml(entry)}</main>`;
+  bindResultButtons(entry, () => renderHome());
+}
 function renderResult(root) {
   const win = state.result === 'win';
   const unlocked = win ? recordAscensionWin(state.team, state.ascension || 0) : null;
-  const level = state.ascension || 0;
-  root.innerHTML = `
-    <div class="phase-container">
-      <h1>${win ? '🏆 胜利！' : '💀 失败'}</h1>
-      <p>${win ? '恭喜你完成三幕赛程！' : '队伍出局，请重新开始'}${level ? `（难度 ${level}）` : ''}</p>
-      ${unlocked !== null ? `<p class="asc-unlock">已为${escapeHtml(TEAMS[state.team].name.split(' · ')[0])}解锁难度 ${unlocked}：${escapeHtml(ASCENSION_RULES[unlocked])}</p>` : ''}
-      <div style="display:flex;gap:1rem;">
-        <button class="btn primary" id="btn-again">再来一局</button>
-        <button class="btn" id="btn-home2">返回首页</button>
-      </div>
-    </div>
-  `;
-  document.getElementById('btn-again').addEventListener('click', () => {
-    clearState();
-    state = null;
-    renderHome();
-  });
-  document.getElementById('btn-home2').addEventListener('click', () => {
-    renderHome();
-  });
+  const entry = entryFor(state);
+  root.innerHTML = resultPageHtml(entry, (unlocked !== null ? `<p class="asc-unlock">已为${escapeHtml(TEAMS[state.team].name.split(' · ')[0])}解锁难度 ${unlocked}：${escapeHtml(ASCENSION_RULES[unlocked])}</p>` : '') + unlockNoticeHtml(state));
+  bindResultButtons(entry, () => { clearState(); state = null; renderHome(); });
 }
-
 function renderLibraryModal() {
   const modalRoot = document.getElementById('modal-root');
   if (modalRoot.querySelector('#library-overlay')) return;
@@ -1233,6 +1328,11 @@ function renderLibraryModal() {
   let filterTag = '';
   let filterCost = '';
   let filterRegion = '';
+  // 图鉴: entries met in a run are shown; the rest stay silhouettes.
+  const seen = collection();
+  const enemyIds = Object.keys(ALL_ENEMIES());
+  const statusIds = Object.keys(STATUS_CARDS);
+  const relicIds = Object.keys(RELICS);
 
   function closeLibrary() {
     modalRoot.innerHTML = '';
@@ -1282,6 +1382,7 @@ function renderLibraryModal() {
         html = '<div class="library-empty">没有匹配的战术牌</div>';
       } else {
         html = filtered.map(id => {
+          if (!seen.cards.has(id)) return unseenTileHtml('card');
           const c = CARDS[id];
           const tooltip = describeCardFull({id, uid:'', up:false});
           const upgradeHtml = c.upgradeText ? `<details class="upgrade-details"><summary>升级文本</summary><div class="upgrade-text">${highlightKeywords(c.upgradeText)}</div></details>` : '';
@@ -1295,6 +1396,7 @@ function renderLibraryModal() {
       const statusCards = Object.values(STATUS_CARDS);
       count = statusCards.length;
       html = statusCards.map(c => {
+        if (!seen.cards.has(c.id)) return unseenTileHtml('card');
         const tooltip = `${escapeHtml(c.name)} [${c.curse?'诅咒':'状态'}]\n${escapeHtml(c.text)}`;
         return `<div class="library-card status-card" data-tooltip="${tooltip}" tabindex="0">
           <div class="card-art">${cardArt(c.id)}</div>
@@ -1308,16 +1410,20 @@ function renderLibraryModal() {
       count = relics.length;
       html = Object.entries(EQUIP_TIERS).map(([tier, info]) => {
         const list = relics.filter(r => r.tier === tier);
-        return `<section class="library-group"><h3 style="--tier:${TIER_COLORS[tier]}">${escapeHtml(info.name)}装备 · ${list.length}</h3><div class="gear-grid">${list.map(r => equipTileHtml(r.id)).join('')}</div></section>`;
+        return `<section class="library-group"><h3 style="--tier:${TIER_COLORS[tier]}">${escapeHtml(info.name)}装备 · ${list.length}</h3><div class="gear-grid">${list.map(r => gearTile(r.id, seen.gear.has(r.id))).join('')}</div></section>`;
       }).join('');
     } else if (activeTab === 'supply') {
       count = SUPPLY_IDS.length;
-      html = `<section class="library-group"><h3>补给品 · 一次性战斗道具</h3><div class="gear-grid">${SUPPLY_IDS.map(id => supplyTileHtml(id)).join('')}</div></section>`;
+      html = `<section class="library-group"><h3>补给品 · 一次性战斗道具</h3><div class="gear-grid">${SUPPLY_IDS.map(id => seen.supplies.has(id) ? supplyTileHtml(id) : unseenTileHtml('gear')).join('')}</div></section>`;
+    } else if (activeTab === 'enemy') {
+      count = enemyIds.length;
+      html = `<div class="library-grid rm-enemy-grid">${enemyIds.map(id => enemyTileHtml(id, seen.enemies.has(id))).join('')}</div>`;
     }
 
     grid.innerHTML = html;
-    matchSpan.textContent = `匹配 ${count} ${activeTab === 'relic' || activeTab === 'supply' ? '件' : '张'}`;
-    grid.classList.toggle('grouped', activeTab === 'relic' || activeTab === 'supply');
+    const found = { tactical: foundText(seen.cards, CARD_IDS), status: foundText(seen.cards, statusIds), relic: foundText(seen.gear, relicIds), supply: foundText(seen.supplies, SUPPLY_IDS), enemy: foundText(seen.enemies, enemyIds) }[activeTab];
+    matchSpan.textContent = `已发现 ${found} · 匹配 ${count} ${activeTab === 'relic' || activeTab === 'supply' ? '件' : activeTab === 'enemy' ? '名' : '张'}`;
+    grid.classList.toggle('grouped', activeTab === 'relic' || activeTab === 'supply' || activeTab === 'enemy');
   }
 
   function switchTab(tab) {
@@ -1347,17 +1453,19 @@ function renderLibraryModal() {
 
   modalRoot.innerHTML = `
     <div class="modal-overlay" id="library-overlay">
-      <div class="modal" role="dialog" aria-modal="true" aria-label="卡牌总览">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="图鉴">
         <div class="modal-header">
-          <h2>卡牌总览</h2>
+          <h2>图鉴</h2>
           <button class="btn" id="close-library">关闭</button>
         </div>
         <div class="library-tabs" role="tablist" aria-label="分类">
-          <button class="library-tab active" role="tab" aria-selected="true" data-tab="tactical">战术牌 (${CARD_IDS.length})</button>
-          <button class="library-tab" role="tab" aria-selected="false" data-tab="status">状态牌 (${Object.keys(STATUS_CARDS).length})</button>
-          <button class="library-tab" role="tab" aria-selected="false" data-tab="relic">装备 (${Object.keys(RELICS).length})</button>
-          <button class="library-tab" role="tab" aria-selected="false" data-tab="supply">补给品 (${SUPPLY_IDS.length})</button>
+          <button class="library-tab active" role="tab" aria-selected="true" data-tab="tactical">战术牌 (${foundText(seen.cards, CARD_IDS)})</button>
+          <button class="library-tab" role="tab" aria-selected="false" data-tab="status">状态牌 (${foundText(seen.cards, statusIds)})</button>
+          <button class="library-tab" role="tab" aria-selected="false" data-tab="relic">装备 (${foundText(seen.gear, relicIds)})</button>
+          <button class="library-tab" role="tab" aria-selected="false" data-tab="supply">补给品 (${foundText(seen.supplies, SUPPLY_IDS)})</button>
+          <button class="library-tab" role="tab" aria-selected="false" data-tab="enemy">对手 (${foundText(seen.enemies, enemyIds)})</button>
         </div>
+        <p class="rm-found"><b>已发现</b> 战术牌 ${foundText(seen.cards, CARD_IDS)} · 状态牌 ${foundText(seen.cards, statusIds)} · 装备 ${foundText(seen.gear, relicIds)} · 补给品 ${foundText(seen.supplies, SUPPLY_IDS)} · 对手 ${foundText(seen.enemies, enemyIds)}<small>在对局中被提供、抽到、拥有或交手过的条目才会点亮。</small></p>
         <div id="filter-row" class="filter-row">
           <select id="filter-region" class="filter-select" aria-label="筛选队伍专属牌">
             <option value="">全部队伍与共享</option><option value="shared">共享牌 (${CARD_IDS.filter(id=>!CARDS[id].region).length})</option><option value="AM">烈锋突击队 (75)</option><option value="CN">磐石守备队 (75)</option><option value="EMEA">雾隐战术组 (75)</option><option value="PAC">疾风调度组 (75)</option>
@@ -2023,6 +2131,7 @@ function initGlobalTooltip() {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   initGlobalTooltip();
+  initUpgradePeek();
   document.addEventListener('keydown', (e) => {
     if (state && state.phase === 'combat' && !presentationBusy && !showLibrary && !document.querySelector('.modal-overlay')) {
       combatKeyHandler(e);

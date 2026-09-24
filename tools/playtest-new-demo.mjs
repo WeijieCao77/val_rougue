@@ -15,6 +15,12 @@ const POLICIES = (args.policies || 'smart,naive,random').split(',');
 // --opening 0 skips the 赛前准备 choice; --ascension N plays at that difficulty.
 const OPENING = args.opening !== '0';
 const ASCENSION = Number(args.ascension || 0);
+// --unlock full|base|N: economy rules (skip compensation, 战术投资, rerolls) at that unlock
+// tier for cards and equipment; --unlock off plays without economy rules.
+const UNLOCK = args.unlock ?? 'full';
+const tierArg = UNLOCK === 'full' ? 5 : UNLOCK === 'base' ? 0 : Number(UNLOCK);
+const ECON = UNLOCK !== 'off' ? { econ: true, unlockTier: tierArg, gearTier: tierArg } : {};
+const INVEST_ORDER = ['IN04', 'IN01', 'IN02', 'IN05', 'IN03'];
 
 const costOf = c => (c.up && CARDS[c.id].upgradeCost !== undefined ? CARDS[c.id].upgradeCost : CARDS[c.id].cost);
 const step = (s, a) => { const r = act(s, a); if (r.error) throw Error(`${JSON.stringify(a)}: ${r.error}`); r.state.logs = []; return r.state; };
@@ -206,7 +212,7 @@ function supplyAction(s, kind) {
 function mulberry(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
 function playRun(seed, team, policy) {
-  let s = createRun(seed, team, { opening: OPENING, ascension: ASCENSION });
+  let s = createRun(seed, team, { opening: OPENING, ascension: ASCENSION, ...ECON });
   const rand = mulberry(seed.length * 7919 + team.length);
   const log = { seed, team, policy, actsCleared: 0, opening: null, fights: [], route: [], rewards: [], result: null, finalDeck: null };
   let fight = null;
@@ -330,7 +336,10 @@ function playRun(seed, team, policy) {
         id = best.v > deckAvg * 1.05 ? best.pid : null;
         log.rewards.push({ act: s.act, pool: pool.map(pid => `${CARDS[pid].name}(${CARDS[pid].cost}/${CARDS[pid].rarity[0]}/${cardValue(pid).toFixed(1)})`), deckAvg: +deckAvg.toFixed(1), took: id ? CARDS[id].name : null });
       } else id = pool[0];
-      s = step(s, { type: 'reward', id });
+      // Skipping: keep one free shelf reroll in reserve when gold is healthy, otherwise take the gold.
+      const comp = !s.econ || id ? {} : { comp: policy === 'smart' && !s.freeRerolls && s.money >= 100 ? 'reroll' : 'gold' };
+      if (!id && s.econ) (log.skips ||= []).push(comp.comp);
+      s = step(s, { type: 'reward', id, ...comp });
       continue;
     }
     if (s.phase === 'rest') {
@@ -351,9 +360,14 @@ function playRun(seed, team, policy) {
         const idOf = x => s.deck.find(c => c.uid === x.uid).id;
         const removes = all.filter(x => x.type === 'remove' && (!CARDS[idOf(x)] || (CARDS[idOf(x)].tag === 'basic' && cardValue(idOf(x)) < 6))).sort((x, y) => cardValue(idOf(x)) - cardValue(idOf(y)));
         const gear = all.filter(x => x.type === 'buyRelic');
+        // Economy: investments in a fixed taste order; reroll the shelf when nothing on it is worth buying.
+        const invest = all.find(x => x.type === 'buyInvest') && INVEST_ORDER.indexOf(s.shop.invest) <= 3 ? { type: 'buyInvest' } : null;
+        const reroll = all.find(x => x.type === 'rerollShop') && (s.freeRerolls > 0 || (s.money >= 170 && !(s.shop.rerolls > 0))) ? { type: 'rerollShop' } : null;
         if (removes.length && !log._removed?.includes(s.currentNode)) { a = removes[0]; log._removed = [...(log._removed || []), s.currentNode]; }
+        else if (invest) a = invest;
         else if (gear.length) a = gear[0];
         else if (buys.length && cardValue(buys[0].id) > 7) a = buys[0];
+        else if (reroll) a = reroll;
       } else if (policy === 'random') a = all[Math.floor(rand() * all.length)];
       if (a.type !== 'leave') (log.route[log.route.length - 1].shop ||= []).push(a.type === 'buy' ? 'buy ' + CARDS[a.id].name : a.type === 'buyRelic' ? 'gear ' + RELICS[s.shop.relics[a.index].id].name : a.type === 'buySupply' ? 'supply' : a.type === 'remove' ? 'remove ' + (CARDS[s.deck.find(c => c.uid === a.uid).id]?.name || s.deck.find(c => c.uid === a.uid).id) : a.type);
       s = step(s, a);
@@ -392,6 +406,7 @@ function playRun(seed, team, policy) {
   log.finalDeck = s.deck.map(c => (CARDS[c.id]?.name || c.id) + (c.up ? '+' : ''));
   log.hpEnd = s.hp; log.maxHp = s.maxHp;
   log.gear = s.relics.map(r => r.id);
+  if (s.econ) log.invest = [...s.invest];
   delete log._removed;
   return log;
 }
@@ -451,4 +466,9 @@ const smartRuns = runs.filter(r => r.policy === 'smart');
 console.log('per-team smart act clears (act1 / act2 / full):');
 console.table(Object.fromEntries((args.teams ? args.teams.split(',') : Object.keys(TEAMS)).map(t => { const rs = smartRuns.filter(r => r.team === t); const c = n => `${rs.filter(r => r.actsCleared >= n).length}/${rs.length}`; return [t, { act1: c(1), act2: c(2), full: c(3) }]; })));
 console.log(`smart clear rate: ${smartRuns.filter(r => r.result === 'act-clear' || r.result === 'win').length}/${smartRuns.length}`);
+if (ECON.econ) {
+  const count = list => list.reduce((m, k) => ((m[k] = (m[k] || 0) + 1), m), {});
+  const firsts = smartRuns.map(r => r.fights[0]).filter(Boolean).map(f => f.turns.reduce((n, t) => n + t.hpLost, 0));
+  console.log('unlock', UNLOCK, 'first fight avg hp lost', (firsts.reduce((a, b) => a + b, 0) / (firsts.length || 1)).toFixed(1), 'invest', JSON.stringify(count(smartRuns.flatMap(r => r.invest || []))), 'skips', JSON.stringify(count(smartRuns.flatMap(r => r.skips || []))), 'shop', JSON.stringify(count(smartRuns.flatMap(r => r.route.flatMap(x => x.shop || []).map(m => m.split(' ')[0])))));
+}
 console.table(Object.fromEntries(Object.entries(cat).sort().map(([k, c]) => [k, { fights: c.fights, avgHpLost: +(c.hpLost / c.fights).toFixed(1), avgTurns: +(c.turns / c.fights).toFixed(1), deaths: c.losses }])));

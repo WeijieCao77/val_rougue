@@ -21,6 +21,11 @@ if (args.tune) { const t = JSON.parse(args.tune); for (const [act, kinds] of Obj
 // --trait '{"PAC":{"every":4}}' overrides region trait numbers for balance sweeps.
 if (args.trait) { const t = JSON.parse(args.trait); for (const [r, v] of Object.entries(t)) Object.assign(TRAIT_TUNING[r], v); }
 const ASC = Number(args.asc || 0);
+// --unlock full|base|N: economy rules (skip compensation, investments, rerolls) with that
+// unlock tier for cards and equipment; --unlock off plays without economy rules.
+const UNLOCK = args.unlock ?? 'full';
+const ECON = RULES && UNLOCK !== 'off' ? { econ: 1, unlockTier: UNLOCK === 'full' ? 5 : UNLOCK === 'base' ? 0 : Number(UNLOCK), gearTier: UNLOCK === 'full' ? 5 : UNLOCK === 'base' ? 0 : Number(UNLOCK) } : {};
+const INVEST_ORDER = ['IV04', 'IV01', 'IV02', 'IV05', 'IV03'];
 const SKIP_EVENTS = args.events === 'skip'; // --events skip: always decline events (A/B against older runs)
 
 const step = (s, a) => { const r = waAct(s, a); if (r.error) throw Error(`${JSON.stringify(a)}: ${r.error}`); r.state.logs = []; return r.state; };
@@ -88,7 +93,7 @@ function pickCard(s, kind, uids) {
 }
 
 function playRun(seed, region) {
-  let s = RULES ? createWaSeason(seed, false, region, seed, { rules: RULES, ascension: ASC }) : createWaSeason(seed, false, region, seed);
+  let s = RULES ? createWaSeason(seed, false, region, seed, { rules: RULES, ascension: ASC, ...ECON }) : createWaSeason(seed, false, region, seed);
   const log = { seed, region, fights: [], result: null, opening: null, gear: [], suppliesUsed: 0 };
   let fight = null, guard = 0;
   while (s.phase !== 'result' && guard++ < 6000) {
@@ -138,14 +143,26 @@ function playRun(seed, region) {
       const take = acts.find(a => a.type === 'takeSupply' && a.replace === undefined);
       if (take) { s = step(s, take); continue; }
       const offers = acts.filter(a => a.id).sort((x, y) => hitValue(y.id) - hitValue(x.id));
-      s = step(s, offers[0] && hitValue(offers[0].id) > 6 ? offers[0] : { type: 'recruit', id: null });
+      // Skipping: keep one free market reroll in reserve when funds are healthy, otherwise take the funds.
+      const skip = s.econ ? { type: 'recruit', id: null, comp: !s.freeRerolls && s.money >= 80 ? 'reroll' : 'money' } : { type: 'recruit', id: null };
+      if (!(offers[0] && hitValue(offers[0].id) > 6)) (log.skips ||= []).push(skip.comp || 'none');
+      s = step(s, offers[0] && hitValue(offers[0].id) > 6 ? offers[0] : skip);
       continue;
     }
     if (s.phase === 'skin') { s = step(s, acts.find(a => a.id) || acts[0]); continue; }
     if (s.phase === 'shop') {
       const rm = acts.find(a => a.type === 'remove' && CARDS[s.deck.find(c => c.uid === a.uid).id].cost === 1 && hitValue(s.deck.find(c => c.uid === a.uid).id) < 5);
       const gear = acts.find(a => a.type === 'buyGear'), sup = acts.find(a => a.type === 'buySupply');
-      s = step(s, rm || gear || sup || acts.find(a => a.type === 'leaveShop'));
+      let extra = null;
+      if (s.econ) {
+        // Investments first (fixed taste order), then a strong card, then a reroll hunting for one.
+        const inv = acts.find(a => a.type === 'buyInvest') && INVEST_ORDER.indexOf(s.shop.invest) <= 3 ? { type: 'buyInvest' } : null;
+        const card = acts.filter(a => a.type === 'buy').map(a => ({ a, v: hitValue(s.shop.slots[a.slot]) })).sort((x, y) => y.v - x.v)[0];
+        const reroll = acts.find(a => a.type === 'rerollShop') && (s.freeRerolls > 0 || (s.money >= 160 && !(s.shop.rerolls > 0))) ? { type: 'rerollShop' } : null;
+        extra = inv || (card && card.v > 7 ? card.a : null) || (!rm && !gear ? reroll : null);
+        if (extra && !rm) (log.shopMoves ||= []).push(extra.type);
+      }
+      s = step(s, rm || extra || gear || sup || acts.find(a => a.type === 'leaveShop'));
       continue;
     }
     if (s.phase === 'activity') {
@@ -183,6 +200,7 @@ function playRun(seed, region) {
   }
   log.deck = s.deck.map(c => c.id);
   log.gear = [...s.skins];
+  if (s.econ) log.invest = [...s.invest];
   if (args.dump) { log.actions = s.actions; log.rules = s.rules; log.ascension = s.ascension; log.mapVersion = s.mapVersion; }
   if (!log.result) log.result = s.outcome || 'stopped';
   if (log.result === 'loss') log.diedAt = fight?.enemy;
@@ -203,3 +221,7 @@ const first = runs.map(r => r.fights[0]).filter(Boolean);
 const cleared = region => runs.filter(r => r.region === region && (r.result === 'win' || r.result === 'act-clear' || r.fights.some(f => f.act === 1 && (f.kind === 'boss' || /^S_B01$/.test(f.enemy)) && f.won))).length;
 console.log('first-fight avg lost', (first.reduce((n, f) => n + f.lost, 0) / first.length).toFixed(1));
 console.log('act-1 clears', Object.fromEntries(REGION_LIST.map(r => [r, `${cleared(r)}/${SEEDS}`])), 'full wins', runs.filter(r => r.result === 'win').length + '/' + runs.length);
+if (ECON.econ) {
+  const count = list => list.reduce((m, k) => ((m[k] = (m[k] || 0) + 1), m), {});
+  console.log('unlock', UNLOCK, 'invest', JSON.stringify(count(runs.flatMap(r => r.invest || []))), 'skips', JSON.stringify(count(runs.flatMap(r => r.skips || []))), 'shop moves', JSON.stringify(count(runs.flatMap(r => r.shopMoves || []))));
+}

@@ -106,6 +106,29 @@ export const GEAR = {
  BX10:{name:'战术预判系统',rarity:'boss',icon:'retain',text:'回合结束时不再弃置手牌（比赛干扰与俱乐部隐患除外）。'},
  BX11:{name:'深度数据库',rarity:'boss',icon:'draw',text:'每回合多抽 2 张牌。每回合结束时直接失去 1 声望。'}
 };
+// ---- Economy rules 1 (s.econ): unlock tiers, skip compensation, club investments,
+// market rerolls. Seasons without `econ` (older saves and server records) replay as before.
+export const ECON_VERSION = 1;
+// Equipment batches opened by unlock tiers 1–5 (everything else is in the base pool).
+export const GEAR_UNLOCKS = [
+ ['GR09','GR23','GR41'],
+ ['GR10','GR24','GR63'],
+ ['GR11','GR22','GR44'],
+ ['GR05','GR21','BX10'],
+ ['GR46','GR40','BX11']
+];
+// Skipping a recruit: 15 funds, or one free reroll of a later market's transfer list.
+export const SKIP_FUNDS = 15;
+export const REROLL_BASE = 20;
+export const REROLL_STEP = 10;
+// Club investments: one random offer per market visit, each bought once per season.
+export const INVESTMENTS = {
+ IV01:{name:'球探网络',price:200,icon:'cards',text:'比赛胜利后的招募候选多 1 名。'},
+ IV02:{name:'康复中心',price:160,icon:'heal',text:'粉丝见面会额外回复最大声望的 10%。'},
+ IV03:{name:'经纪人团队',price:180,icon:'coin',text:'转会市场的转会名单多 1 个货位。'},
+ IV04:{name:'赛前分析室',price:220,icon:'draw',text:'每场比赛第一回合多抽 1 张牌。'},
+ IV05:{name:'后勤车队',price:150,icon:'supply',text:'强敌比赛胜利后，多进行一次补给品掉落判定。'}
+};
 export const ENERGY_GEAR = ['BX01','BX02','BX03','BX04','BX05','BX06','BX07','BX08','BX09'];
 export const gearName = id => GEAR[id]?.name || SKINS[id]?.name || id;
 

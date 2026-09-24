@@ -6,7 +6,8 @@ import {opsReason,describeOps,applyOps,pickKind,pickCandidates} from './shared-e
 import {freshUnknownOdds,resolveUnknown,blockedUnknownKinds,rollCrateSize} from './shared-unknown-room.js';
 import {routeSteps,CURRENT_MAP_VERSION,MAP_VERSIONS} from './shared-route-generator.js';
 import {CARD_RARITY,RARITY_ORDER} from './card-rarity.js';
-import {RULES_VERSION,RULES_VERSIONS,ROLES,TRAIT_TUNING,OPENING_FREE,OPENING_TRADE,GEAR,SUPPLIES,ENERGY_GEAR,SUPPLY_RARITY_WEIGHTS,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,MAX_ASCENSION,ENEMY_TUNING,ENEMY_TUNING_V2,ENEMY_TUNING_V3,gearName} from './wa-rules.js';
+import {RULES_VERSION,RULES_VERSIONS,ROLES,TRAIT_TUNING,OPENING_FREE,OPENING_TRADE,GEAR,SUPPLIES,ENERGY_GEAR,SUPPLY_RARITY_WEIGHTS,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,MAX_ASCENSION,ENEMY_TUNING,ENEMY_TUNING_V2,ENEMY_TUNING_V3,gearName,ECON_VERSION,GEAR_UNLOCKS,SKIP_FUNDS,REROLL_BASE,REROLL_STEP,INVESTMENTS} from './wa-rules.js';
+import {planCardUnlocks,unlockedFrom,tierOfId,validTier,UNLOCK_TIERS} from './shared-unlock.js';
 export const clone = x => structuredClone(x);
 const log = (s,text) => s.logs.push({node:s.node,turn:s.battle?.turn||0,text});
 export function random(s) { let x=s.rng; x^=x<<13; x^=x>>>17; x^=x<<5; s.rng=x>>>0; return s.rng/4294967296; }
@@ -31,6 +32,26 @@ export const poolOf = s => R3(s)?REGIONS[s.region].pool3:REGIONS[s.region].pool;
 export const mapVersionOf = s => s?.mapVersion||1;
 export const hasGear = (s,id) => R(s)&&s.skins.includes(id);
 const has = hasGear;
+// ---- Economy rules 1 (unlock tiers, skip compensation, investments, market rerolls) ----
+// Gated by s.econ and recorded with the tiers the season was created with, so the
+// online server replays the same pools; seasons without `econ` keep the full pools.
+export const E = s => R(s)&&(s.econ||0)>=1;
+export const hasInvest = (s,id) => E(s)&&!!s.invest?.includes(id);
+const planCache={},poolCache={};
+export function regionUnlockPlan(region,r3=false){
+ const pool=r3?REGIONS[region].pool3:REGIONS[region].pool;
+ return planCache[region+(r3?':3':'')]||=planCardUnlocks(pool,{start:REGIONS[region].start,rarityOf:id=>CARD_RARITY[id],groupOf:id=>TACTICS[id]?.archetype||null,salt:region});
+}
+// Cards that rewards, markets, events and the opening may offer in this season
+// (the rules-3 pool when the season uses rules 3, then the unlock tier).
+export function offerPool(s){
+ const base=poolOf(s);
+ if(!E(s))return base;
+ const r3=R3(s),k=`${s.region}:${r3?3:1}:${s.unlockTier}`;
+ return poolCache[k]||=unlockedFrom(regionUnlockPlan(s.region,r3),base,s.unlockTier);
+}
+export const gearLocked = (s,id) => E(s)&&tierOfId(GEAR_UNLOCKS,id)>s.gearTier;
+export const rerollPrice = s => s.freeRerolls>0?0:marketPrice(s,REROLL_BASE+REROLL_STEP*(s.shop?.rerolls||0));
 export const supplySlots = s => BASE_SUPPLY_SLOTS+(has(s,'GR61')?2:0);
 // Market discount (会员积分卡). Card slot prices come from shopPrice(s,slot) below.
 export const marketPrice = (s,n) => has(s,'GR60')?Math.floor(n*.75):n;
@@ -50,7 +71,7 @@ function heal(s,n,label){const got=Math.max(0,Math.min(n,s.maxHp-s.hp));s.hp+=go
 function randomCurse(s){return CURSES[2+Math.floor(random(s)*(CURSES.length-2))];}
 function pick(s,list){return list.length?list[Math.floor(random(s)*list.length)]:null;}
 function weighted(s,weights){const keys=Object.keys(weights).filter(k=>weights[k]>0),total=keys.reduce((n,k)=>n+weights[k],0);let roll=random(s)*total;for(const k of keys){roll-=weights[k];if(roll<0)return k;}return keys[keys.length-1];}
-function gearPool(s,rarity,exclude=[]){return Object.keys(GEAR).filter(id=>GEAR[id].rarity===rarity&&!s.skins.includes(id)&&!exclude.includes(id));}
+function gearPool(s,rarity,exclude=[]){return Object.keys(GEAR).filter(id=>GEAR[id].rarity===rarity&&!s.skins.includes(id)&&!exclude.includes(id)&&!gearLocked(s,id));}
 export function rollGear(s,weights={common:50,uncommon:33,rare:17},exclude=[]){
  const avail=Object.fromEntries(Object.entries(weights).filter(([k])=>gearPool(s,k,exclude).length));
  if(!Object.keys(avail).length)return null;
@@ -64,13 +85,15 @@ function gainGear(s,id){
  applyGearPickup(s,id);
 }
 function rollSupply(s){const r=weighted(s,SUPPLY_RARITY_WEIGHTS);return pick(s,Object.keys(SUPPLIES).filter(id=>SUPPLIES[id].rarity===r));}
-function playerOffers(s,costs,n){return shuffle(s,poolOf(s).filter(id=>CARDS[id].player&&costs.includes(CARDS[id].cost)&&eligible(s,id))).slice(0,n);}
+function playerOffers(s,costs,n){return shuffle(s,offerPool(s).filter(id=>CARDS[id].player&&costs.includes(CARDS[id].cost)&&eligible(s,id))).slice(0,n);}
 function enemyKind(s,id){const e=ENEMIES[id],node=s.map?.nodes.find(n=>n.key===s.currentNode);if(R3(s)&&node?.kind==='boss')return 'boss';return e.boss?'boss':e.elite||node?.kind==='elite'?'elite':'normal';}
 export function restHeal(s){
  if(!R(s))return healAmount(s);
  if(has(s,'BX02'))return 0;
- return Math.min(s.maxHp-s.hp,Math.ceil(s.maxHp*(s.ascension>=5?.2:.3))+(has(s,'GR25')?10:0));
+ return Math.min(s.maxHp-s.hp,Math.ceil(s.maxHp*restRate(s))+(has(s,'GR25')?10:0));
 }
+// Share of maximum reputation the fan meeting restores (康复中心 adds 10%).
+export function restRate(s){return (R(s)&&s.ascension>=5?.2:.3)+(hasInvest(s,'IV02')?.1:0);}
 function createOpening(s){
  const free=shuffle(s,OPENING_FREE).slice(0,2),trade=pick(s,OPENING_TRADE);
  s.opening={options:[...free,trade,'trainRandom'].map(id=>{
@@ -88,7 +111,7 @@ function rollableCommon(s){return gearPool(s,'common').length>0;}
 function upgradable(s){return s.deck.filter(c=>CARDS[c.id].trainable&&!c.up);}
 export function offers(s,weights=[15,60,20,5],number=3,excluded=[]) {
  const result=[];
- const allowed = s.mode==='season' ? poolOf(s) : PLAYER_IDS;
+ const allowed = s.mode==='season' ? offerPool(s) : PLAYER_IDS;
  for(let k=0;k<number;k++) {
   const bins=[0,1,2,3].map(cost=>allowed.filter(id=>CARDS[id].cost===cost&&eligible(s,id)&&!result.includes(id)&&!excluded.includes(id)));
   const total=weights.reduce((sum,w,i)=>sum+(bins[i].length?w:0),0); if(!total) break;
@@ -114,7 +137,7 @@ function rollRarity(s,kind){
 function pickOfRarity(s,rarity,taken){
  const i=RARITY_ORDER.indexOf(rarity);
  for(const k of [i,i-1,i+1,i-2,i+2].filter(k=>k>=0&&k<3)){
-  const pool=poolOf(s).filter(id=>CARD_RARITY[id]===RARITY_ORDER[k]&&eligible(s,id)&&!taken.includes(id));
+  const pool=offerPool(s).filter(id=>CARD_RARITY[id]===RARITY_ORDER[k]&&eligible(s,id)&&!taken.includes(id));
   if(pool.length)return pool[Math.floor(random(s)*pool.length)];
  }
  return null;
@@ -126,11 +149,11 @@ export function rarityOffers(s,kind='normal',number=3,excluded=[]){
 }
 function updatePity(s,list){s.rarePity=list.some(id=>CARD_RARITY[id]==='rare')?0:(s.rarePity||0)+1;}
 function seasonShop(s){
- const slots=[];
- for(let k=0;k<3;k++){const id=pickOfRarity(s,rollRarity(s,'shop'),slots);if(id)slots.push(id);}
+ const slots=[],size=3+(hasInvest(s,'IV03')?1:0);
+ for(let k=0;k<size;k++){const id=pickOfRarity(s,rollRarity(s,'shop'),slots);if(id)slots.push(id);}
  slots.sort((a,b)=>RARITY_ORDER.indexOf(CARD_RARITY[a])-RARITY_ORDER.indexOf(CARD_RARITY[b]));
  const prices=slots.map(id=>{const [lo,hi]=SHOP_PRICE_RANGE[CARD_RARITY[id]];return lo+Math.floor(random(s)*(hi-lo+1));});
- while(slots.length<3){slots.push(null);prices.push(null);}
+ while(slots.length<size){slots.push(null);prices.push(null);}
  return {slots,prices,removed:false};
 }
 // Legacy tutorial shops keep the fixed 40/65/90 cost tiers.
@@ -140,7 +163,7 @@ export function shopPrice(s,slot){return s.shop?.prices?s.shop.prices[slot]:[40,
 // replaced slot's rarity when possible and never overwrites a rolled rare.
 function withArchetype(s,list){
  if(list.some(id=>TACTICS[id]?.archetype))return list;
- const pool=poolOf(s).filter(id=>TACTICS[id]?.archetype&&eligible(s,id)&&!list.includes(id));
+ const pool=offerPool(s).filter(id=>TACTICS[id]?.archetype&&eligible(s,id)&&!list.includes(id));
  if(!pool.length||!list.length)return list;
  const swap=(i,from)=>{const next=[...list];next[i]=from[Math.floor(random(s)*from.length)];return next;};
  for(let i=list.length-1;i>=0;i--){const same=pool.filter(id=>CARD_RARITY[id]===CARD_RARITY[list[i]]);if(same.length)return swap(i,same);}
@@ -158,12 +181,17 @@ export function createSeason(seed='first-season',tutorial=false,region='CN',opts
  if(![0,...RULES_VERSIONS].includes(rules))throw Error('未知规则版本');
  if(!MAP_VERSIONS.includes(mapVersion))throw Error('未知地图版本');
  if(!Number.isInteger(ascension)||ascension<0||ascension>MAX_ASCENSION||(!rules&&ascension))throw Error('无效难度等级');
+ const econ=opts?.econ===undefined||opts?.econ===null?0:opts.econ;
+ if(![0,ECON_VERSION].includes(econ)||(econ&&!rules))throw Error('未知经济规则版本');
+ const unlockTier=opts?.unlockTier??UNLOCK_TIERS,gearTier=opts?.gearTier??UNLOCK_TIERS;
+ if(econ&&(!validTier(unlockTier)||!validTier(gearTier)))throw Error('无效解锁等级');
  const s={version:SEASON_VERSION,mode:'season',region,seed:String(seed),tutorial,rng:seedHash(seed),rev:0,nextId:1,act:1,map:buildMap(seed,1,rules?ascension:0,mapVersion,{r3:rules>=3}),currentNode:null,completed:[],node:0,phase:'map',hp:80,maxHp:80,money:60,deck:[],skins:[],logs:[],actions:[],wins:0,battle:null,seenEvents:[]};
  if(mapVersion>=2)s.mapVersion=mapVersion;
  s.deck=REGIONS[region].start.map(id=>instance(s,id));
  log(s,`新赛季开始：${REGIONS[region].name}赛区 · 第1幕。`);
  if(rules){
   Object.assign(s,{rules,ascension,supplies:[],supplyChance:40,counters:{},flags:{}});
+  if(econ)Object.assign(s,{econ,unlockTier,gearTier,invest:[],freeRerolls:0});
   if(ascension>=6)s.hp=Math.round(s.maxHp*.9);
   if(ascension>=9){const curse=randomCurse(s);s.deck.push(instance(s,curse.id));log(s,`难度 9：牌组加入 ${curse.name}。`);}
   if(ascension)log(s,`难度等级 ${ascension}。`);
@@ -305,7 +333,7 @@ function beginTurn(s) {
  const eco=b.turn===1&&b.field==='eco'?1:0;b.energy+=eco;
  if(b.turn===1&&s.skins.includes('SK01')){if(rules)gainBlock(s,3);else b.block=3;log(s,'磨砂黑：开局获得 3 格挡。');}
  if(rules&&b.turn===1&&has(s,'GR08')){const n=gainBlock(s,8);log(s,`沙袋掩体：获得 ${n} 格挡。`);}
- const extra=rules?(b.turn===1&&has(s,'GR02')?2:0)+(has(s,'BX11')?2:0):0;
+ const extra=rules?(b.turn===1&&has(s,'GR02')?2:0)+(has(s,'BX11')?2:0)+(b.turn===1&&hasInvest(s,'IV04')?1:0):0;
  log(s,`第 ${b.turn} 回合：行动点 ${b.energy}，旧格挡清空。`);drawCards(s,5+eco+powerTotal(b,'extraDraw')+extra);
  if(rules&&s.phase==='combat'){
   if(s.region==='PAC'){const id=b.rt.pacNext;if(addToken(s,id,'临时战术'))b.rt.pacNext=id==='TK01'?'TK02':'TK01';}
@@ -341,7 +369,28 @@ export function intent(s) {
   return {...a};
  });
 }
-export function intentText(s) {return intent(s).map(a=>a.type==='hit'?`攻击 ${a.n}${a.times>1?` × ${a.times} = ${a.n*a.times}`:''}`:a.type==='block'?`获得 ${a.n} 格挡`:a.type==='weak'?`使你虚弱 ${a.n} 回合`:a.type==='rally'?`鼓舞：全队火力 +${a.n}`:a.type==='guard'?`掩护：为队友布防 ${a.n}`:a.type==='buff'?`火力 +${a.n}`:a.type==='aim'?'瞄准（下回合重狙）':a.type==='snipe'?(a.aimed?`重狙 ${a.n}（压制可打断）`:`仓促射击 ${a.n}（瞄准已被打断）`):a.type==='cleanse'?'清除自身负面状态':a.type==='vuln'?`使你易伤 ${a.n} 回合`:`将 ${a.n} 张${CARDS[a.id].name}放入弃牌堆`).join('；');}
+// actual=true shows each hit as incomingDamage() computes it (our vulnerable applied).
+export function intentText(s,actual=false) {const inc=actual?incomingDamage(s).acts:null;return intent(s).map((a,i)=>inc&&inc[i]!=null?{...a,n:inc[i]}:a).map(a=>a.type==='hit'?`攻击 ${a.n}${a.times>1?` × ${a.times} = ${a.n*a.times}`:''}`:a.type==='block'?`获得 ${a.n} 格挡`:a.type==='weak'?`使你虚弱 ${a.n} 回合`:a.type==='rally'?`鼓舞：全队火力 +${a.n}`:a.type==='guard'?`掩护：为队友布防 ${a.n}`:a.type==='buff'?`火力 +${a.n}`:a.type==='aim'?'瞄准（下回合重狙）':a.type==='snipe'?(a.aimed?`重狙 ${a.n}（压制可打断）`:`仓促射击 ${a.n}（瞄准已被打断）`):a.type==='cleanse'?'清除自身负面状态':a.type==='vuln'?`使你易伤 ${a.n} 回合`:`将 ${a.n} 张${CARDS[a.id].name}放入弃牌堆`).join('；');}
+// Damage the enemy's next turn actually deals, hit by hit, with every modifier the
+// enemy turn applies (weak, strength, battlefield, boss growth, our vulnerable,
+// including vulnerable applied earlier in the same intent). Our block is NOT
+// subtracted. `acts[i]` is the per-hit damage of intent action i (null if none).
+export function incomingDamage(s){
+ const b=s?.battle;if(!b)return {hits:[],acts:[],total:0};
+ // Group fights: every living opponent's next turn, added up.
+ if(b.foes){const hits=livingFoes(b).flatMap(i=>{const c=clone({...s,logs:[]});focusFoe(c,i);return incomingOne(c).hits;});return {hits,acts:[],total:hits.reduce((n,x)=>n+x,0)};}
+ return incomingOne(s);
+}
+function incomingOne(s){
+ const b=s.battle;
+ let vuln=(b.vulnerable||0)>0;const hits=[],acts=[];
+ for(const a of intent(s)){
+  if(a.type==='vuln'&&a.n>0)vuln=true;
+  if(a.type==='hit'||a.type==='snipe'){const per=vuln?Math.floor(a.n*1.5):a.n,times=a.type==='snipe'?1:a.times;acts.push(per);for(let i=0;i<times;i++)hits.push(per);}
+  else acts.push(null);
+ }
+ return {hits,acts,total:hits.reduce((n,x)=>n+x,0)};
+}
 function lose(s,reason){s.hp=0;s.phase='result';s.outcome='loss';log(s,`${reason}。声望归零，俱乐部解散。`);}
 function win(s) {
  if(s.mode==='season') return winSeason(s);
@@ -387,13 +436,16 @@ function winSeason(s) {
  const elite = node && node.kind==='elite' ? true : ENEMIES[s.battle.enemy].elite;
  const rules=R(s),money = rules&&has(s,'BX04') ? 0 : (elite ? 35 : 20)+(rules&&has(s,'GR07')?8:0);
  s.money += money;
- s.reward={offers:withArchetype(s,rarityOffers(s,elite?'elite':'normal',rules?3+(has(s,'GR26')?1:0)-(has(s,'BX07')?1:0):3)),elite:!!elite};updatePity(s,s.reward.offers);
+ s.reward={offers:withArchetype(s,rarityOffers(s,elite?'elite':'normal',rules?3+(has(s,'GR26')?1:0)+(hasInvest(s,'IV01')?1:0)-(has(s,'BX07')?1:0):3)),elite:!!elite};updatePity(s,s.reward.offers);
  if(rules){
   if(elite){const g=rollGear(s);if(g){gainGear(s,g);s.reward.gear=g;}}
   s.reward.supply=null;
   if(!has(s,'BX08')){
-   if(random(s)*100<s.supplyChance){s.reward.supply=rollSupply(s);s.supplyChance=Math.max(0,s.supplyChance-10);log(s,`缴获补给品：${SUPPLIES[s.reward.supply].name}。`);}
-   else s.supplyChance=Math.min(100,s.supplyChance+10);
+   // 后勤车队: elite wins roll the supply drop twice; a second find waits behind the first.
+   for(let k=0;k<(elite&&hasInvest(s,'IV05')?2:1);k++){
+    if(random(s)*100<s.supplyChance){const id=rollSupply(s);if(s.reward.supply)s.reward.nextSupply=id;else s.reward.supply=id;s.supplyChance=Math.max(0,s.supplyChance-10);log(s,`缴获补给品：${SUPPLIES[id].name}。`);}
+    else s.supplyChance=Math.min(100,s.supplyChance+10);
+   }
   }
  }
  s.phase='reward';
@@ -656,7 +708,13 @@ function perform(s,a) {
  switch(a.type){
  case 'play':requirePhase('combat');play(s,a.uid,a.target);break;
  case 'end':requirePhase('combat');endTurn(s);break;
- case 'recruit':requirePhase('reward');if(a.id!==null){if(!s.reward.offers.includes(a.id))throw Error('不是本次候选');addPlayer(s,a.id);}else log(s,'跳过招募，保留现有牌组。');finishReward(s);break;
+ case 'recruit':requirePhase('reward');if(a.id!==null){if(!s.reward.offers.includes(a.id))throw Error('不是本次候选');addPlayer(s,a.id);}
+  else if(E(s)){
+   // Skip compensation: funds by default, or one free reroll of a later market's transfer list.
+   if(a.comp==='reroll'){s.freeRerolls=(s.freeRerolls||0)+1;log(s,'跳过招募：获得 1 次免费刷新转会名单。');}
+   else if(a.comp===undefined||a.comp==='money'){s.money+=SKIP_FUNDS;log(s,`跳过招募：资金 +${SKIP_FUNDS}。`);}
+   else throw Error('未知补偿');
+  }else log(s,'跳过招募，保留现有牌组。');finishReward(s);break;
  case 'skin':requirePhase('skin');
   if(a.id!==null){if(!s.reward.skins.includes(a.id)||s.skins.includes(a.id)||s.skins.length>=3)throw Error('不是可领取皮肤');s.skins.push(a.id);log(s,`获得皮肤：${SKINS[a.id].name}。`);}else log(s,'跳过皮肤。');
   if(s.mode==='season' && s.reward.boss){
@@ -684,7 +742,7 @@ function perform(s,a) {
  case 'remove':requirePhase('shop');if(s.shop.removed)throw Error('本次移除已使用');if(s.money<marketPrice(s,50))throw Error(`需要 ${marketPrice(s,50)} 资金`);{const reason=removalReason(s,a.uid);if(reason)throw Error(reason);const c=s.deck.find(c=>c.uid===a.uid),fee=marketPrice(s,50);log(s,`支付 ${fee} 资金，永久移除 ${cardName(c)}。`);s.money-=fee;s.deck=s.deck.filter(c=>c.uid!==a.uid);s.shop.removed=true;}break;
  case 'leaveShop':requirePhase('shop');advance(s);break;
  case 'activity':requirePhase('activity');
-  if(a.choice==='fans'){if(has(s,'BX02'))throw Error('封闭训练协议：不能回复声望');const n=restHeal(s);if(n<=0)throw Error('声望已满');s.hp+=n;log(s,`粉丝见面会：恢复最大声望的 ${R(s)&&s.ascension>=5?20:30}%${has(s,'GR25')?' + 10':''}，实际 +${n} 声望。`);advance(s);}
+  if(a.choice==='fans'){if(has(s,'BX02'))throw Error('封闭训练协议：不能回复声望');const n=restHeal(s);if(n<=0)throw Error('声望已满');s.hp+=n;log(s,`粉丝见面会：恢复最大声望的 ${Math.round(restRate(s)*100)}%${has(s,'GR25')?' + 10':''}，实际 +${n} 声望。`);advance(s);}
   else if(a.choice==='upgrade'){if(has(s,'BX09'))throw Error('冻结训练计划：不能训练');if(!s.deck.some(c=>CARDS[c.id].trainable&&!c.up))throw Error('没有可训练的牌');s.phase='upgrade';}
   else if(a.choice==='cleanse'){if(!s.deck.some(c=>c.id.startsWith('CU')))throw Error('没有俱乐部隐患');s.phase='cleanse';}
   else if(a.choice==='skip'){log(s,'跳过俱乐部活动。');advance(s);}else throw Error('未知活动');break;
@@ -762,7 +820,18 @@ function performRules(s,a,requirePhase){
   requirePhase('reward');const id=s.reward.supply;if(!id)throw Error('没有可领取的补给品');
   if(a.replace===undefined||a.replace===null){if(s.supplies.length>=supplySlots(s))throw Error('补给品栏位已满');s.supplies.push(id);}
   else{if(!Number.isInteger(a.replace)||!s.supplies[a.replace])throw Error('无效栏位');log(s,`丢弃 ${SUPPLIES[s.supplies[a.replace]].name}。`);s.supplies[a.replace]=id;}
-  s.reward.supply=null;log(s,`获得补给品：${SUPPLIES[id].name}。`);return true;}
+  s.reward.supply=s.reward.nextSupply||null;delete s.reward.nextSupply;log(s,`获得补给品：${SUPPLIES[id].name}。`);return true;}
+ case 'rerollShop':{
+  requirePhase('shop');if(!E(s)||!s.shop.prices)throw Error('此市场不能刷新');const price=rerollPrice(s);
+  if(s.money<price)throw Error('资金不足');
+  if(price===0){s.freeRerolls--;log(s,'使用免费刷新：转会名单已更新。');}
+  else{s.money-=price;s.shop.rerolls=(s.shop.rerolls||0)+1;log(s,`支付 ${price} 资金，刷新转会名单。`);}
+  Object.assign(s.shop,(({slots,prices})=>({slots,prices}))(seasonShop(s)));
+  log(s,`转会名单：${s.shop.slots.map(id=>id?CARDS[id].name:'空位').join('、')}。`);return true;}
+ case 'buyInvest':{
+  requirePhase('shop');const id=s.shop.invest;if(!E(s)||!id)throw Error('本市场没有可投资项目');if(s.invest.includes(id))throw Error('已经投资过');
+  const price=marketPrice(s,INVESTMENTS[id].price);if(s.money<price)throw Error('资金不足');
+  s.money-=price;s.invest.push(id);s.shop.invest=null;log(s,`俱乐部投资：${INVESTMENTS[id].name}，支出 ${price} 资金。`);return true;}
  case 'discardSupply':{
   if(s.phase==='result')throw Error('赛季已经结束');if(!Number.isInteger(a.slot)||!s.supplies[a.slot])throw Error('无效栏位');
   log(s,`丢弃补给品：${SUPPLIES[s.supplies[a.slot]].name}。`);s.supplies.splice(a.slot,1);return true;}
@@ -820,7 +889,7 @@ export function replay(record) {
   for(const a of record.actions){const r=act(s,a);if(r.error)throw Error(r.error);s=r.state;}
   return s;
  } else if(record.version===SEASON_VERSION){
-  let s=createSeason(record.seed,record.tutorial,record.region,{rules:record.rules,ascension:record.ascension,mapVersion:mapVersionOf(record)});
+  let s=createSeason(record.seed,record.tutorial,record.region,{rules:record.rules,ascension:record.ascension,mapVersion:mapVersionOf(record),econ:record.econ,unlockTier:record.unlockTier,gearTier:record.gearTier});
   for(const a of record.actions){const r=act(s,a);if(r.error)throw Error(r.error);s=r.state;}
   return s;
  } else throw Error('回放版本不匹配');
@@ -848,7 +917,7 @@ const WA_CTX={
  duplicable:(s,c)=>!!CARDS[c.id]?.trainable&&eligible(s,c.id),
  isCurse:(s,c)=>c.id.startsWith('CU'),
  curseIds:CURSES.slice(2).map(c=>c.id),
- randomCardAvailable:(s,tier)=>poolOf(s).some(id=>eligible(s,id)),
+ randomCardAvailable:(s,tier)=>offerPool(s).some(id=>eligible(s,id)),
  randomCard:(s,tier)=>pickOfRarity(s,tier,[]),
  transformInto:(s,c)=>rarityOffers(s,'normal',1,[c.id])[0]||null,
  // Rules-1 runs roll club equipment (slot-limited; a full rack asks to replace or decline).
@@ -863,6 +932,7 @@ function openSeasonShop(s){
   s.shop.gear=gear;const shopOnly=pick(s,gearPool(s,'shop'));if(shopOnly)s.shop.gear.push(shopOnly);
   s.shop.supplies=[rollSupply(s),rollSupply(s),rollSupply(s)];
  }
+ if(E(s)){s.shop.rerolls=0;s.shop.invest=pick(s,Object.keys(INVESTMENTS).filter(id=>!s.invest.includes(id)));}
  log(s,`进入转会市场：${s.shop.slots.map(id=>id?CARDS[id].name:'空位').join('、')}。`);
 }
 function enterUnknownSeason(s,node){
@@ -947,7 +1017,7 @@ export function legalActions(s) {
  if(R(s)&&s.gearOffer)return [...s.skins.map((_,slot)=>({type:'gearReplace',slot})),{type:'gearDecline'}].map(a=>({...a,rev:s.rev}));
  const actions=[];
  if(s.phase==='combat'){const foes=livingFoes(s.battle);for(const c of s.battle.hand)if(!canPlay(s,c.uid)){if(s.battle.foes&&cardTargeted(c))for(const target of foes)actions.push({type:'play',uid:c.uid,target});else actions.push({type:'play',uid:c.uid});}actions.push({type:'end'});}
- if(s.phase==='reward')actions.push(...s.reward.offers.map(id=>({type:'recruit',id})),{type:'recruit',id:null});
+ if(s.phase==='reward')actions.push(...s.reward.offers.map(id=>({type:'recruit',id})),...(E(s)?[{type:'recruit',id:null,comp:'money'},{type:'recruit',id:null,comp:'reroll'}]:[{type:'recruit',id:null}]));
  if(s.phase==='skin')actions.push(...s.reward.skins.map(id=>({type:'skin',id})),{type:'skin',id:null});
  if(s.phase==='event'){
   if(s.mode==='season'){
@@ -964,6 +1034,10 @@ export function legalActions(s) {
   if(R(s)){
    (s.shop.gear||[]).forEach((id,slot)=>{if(id&&s.skins.length<GEAR_SLOTS&&s.money>=marketPrice(s,GEAR_PRICES[GEAR[id].rarity]))actions.push({type:'buyGear',slot});});
    if(!has(s,'BX08')&&s.supplies.length<supplySlots(s))(s.shop.supplies||[]).forEach((id,slot)=>{if(id&&s.money>=marketPrice(s,SUPPLY_PRICES[SUPPLIES[id].rarity]))actions.push({type:'buySupply',slot});});
+   if(E(s)){
+    if(s.shop.invest&&s.money>=marketPrice(s,INVESTMENTS[s.shop.invest].price))actions.push({type:'buyInvest'});
+    if(s.shop.prices&&s.money>=rerollPrice(s))actions.push({type:'rerollShop'});
+   }
   }
   if(!s.shop.removed&&s.money>=marketPrice(s,50))for(const c of s.deck)if(!removalReason(s,c.uid))actions.push({type:'remove',uid:c.uid});actions.push({type:'leaveShop'});
  }

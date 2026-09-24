@@ -135,6 +135,8 @@ test('production isolation for new demo', async () => {
           '/new/cover.webp',
           '/new/style.css',
           '/new/season-map.js',
+          '/new/economy.js',
+          '/new/economy.css',
         ];
         for (const p of paths) {
           const getRes = await fetch(`http://127.0.0.1:${port}${p}`);

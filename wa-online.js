@@ -158,6 +158,8 @@ export function buildRunFromSeason(season, checkpoint) {
     ...(season.rules ? { rules: season.rules, ascension: season.ascension || 0 } : {}),
     // 15-floor acts; records without it replay on the older 12-step map.
     ...(season.mapVersion ? { mapVersion: season.mapVersion } : {}),
+    // Economy rules: the unlock tiers fix which cards and equipment the season could offer.
+    ...(season.econ ? { econ: season.econ, unlockTier: season.unlockTier, gearTier: season.gearTier } : {}),
     actions
   };
 }

@@ -1,0 +1,47 @@
+/* Unlock progress, skip compensation, 战术投资 and shelf rerolls. */
+/* The shop's shelves use auto-fill grids: let them take the scene's full width
+   (a centred flex column otherwise shrinks them to a single card column). */
+.phase-container.shop-scene { align-items: stretch; width: 100%; }
+.phase-container.shop-scene > .shelf-title, .phase-container.shop-scene > .shop-leave { align-self: center; }
+.unlock-bar { max-width: 640px; margin: 14px auto 0; padding: 10px 14px; border: 1px solid var(--ops-line, rgba(160,190,210,.16)); border-radius: 6px; background: var(--ops-panel, #10171e); text-align: left; }
+.unlock-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.unlock-head b { color: var(--ops-text, #dbe4ea); font-size: 14px; }
+.unlock-head small { color: var(--ops-amber, #f2b233); font-size: 13px; font-family: var(--ops-num, sans-serif); letter-spacing: .5px; }
+.unlock-track { height: 8px; margin: 8px 0 6px; border-radius: 4px; background: #1b2530; overflow: hidden; }
+.unlock-track i { display: block; height: 100%; background: linear-gradient(90deg, #b07d1c, var(--ops-amber, #f2b233)); }
+.unlock-note { display: block; color: var(--ops-muted, #8a9aa8); font-size: 11px; line-height: 1.5; }
+.unlock-test { max-width: 640px; margin: 8px auto 0; color: var(--ops-muted, #8a9aa8); font-size: 12px; text-align: left; }
+.unlock-test summary { cursor: pointer; }
+.unlock-test button { display: inline-block; margin: 4px 0; padding: 3px 10px; border: 1px solid rgba(160,190,210,.3); border-radius: 4px; background: transparent; color: var(--ops-text, #dbe4ea); font-size: 12px; cursor: pointer; }
+.unlock-test small { display: block; font-size: 11px; }
+.unlock-result { width: 100%; max-width: 640px; margin: 10px auto; text-align: left; }
+.unlock-gain { margin: 0; color: var(--ops-text, #dbe4ea); }
+.unlock-gain b { color: var(--ops-amber, #f2b233); font-size: 18px; }
+.unlock-new { margin-top: 10px; padding: 10px 12px; border: 1px solid rgba(242,178,51,.45); border-radius: 6px; background: rgba(242,178,51,.08); }
+.unlock-new h4 { margin: 0 0 6px; color: var(--ops-amber, #f2b233); font-size: 13px; }
+.unlock-new ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.unlock-new li { padding: 3px 8px; border: 1px solid rgba(160,190,210,.25); border-radius: 4px; background: #0d141a; color: var(--ops-text, #dbe4ea); font-size: 12px; }
+.unlock-new li small { margin-left: 5px; color: var(--ops-muted, #8a9aa8); font-size: 10px; }
+.skip-options { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 10px; margin: 10px auto 0; max-width: 720px; }
+.skip-options .ops-skip { display: inline-block; margin: 0; }
+.skip-options > small { flex-basis: 100%; text-align: center; color: var(--ops-muted, #8a9aa8); font-size: 12px; }
+.skip-label { color: var(--ops-text, #dbe4ea); font-size: 13px; }
+.reroll-control { display: inline-block; margin-left: 12px; vertical-align: middle; letter-spacing: 0; }
+.reroll-btn { padding: 5px 12px; font-size: 13px; }
+.invest-offer { max-width: 360px; }
+.invest-tile { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border: 1px solid rgba(125,220,106,.45); border-radius: 6px; background: rgba(125,220,106,.06); }
+.invest-tile b { color: var(--ops-green, #7ddc6a); }
+.invest-tile p { margin: 4px 0 0; font-size: 12px; color: var(--ops-text, #dbe4ea); }
+.invest-icon .status-svg, .invest-icon svg { width: 26px; height: 26px; color: var(--ops-green, #7ddc6a); }
+.invest-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border: 1px solid rgba(125,220,106,.45); border-radius: 4px; background: transparent; color: var(--ops-text, #dbe4ea); cursor: pointer; }
+.invest-chip small { color: var(--ops-green, #7ddc6a); font-size: 10px; }
+.invest-list { margin: 6px 0; padding-left: 18px; line-height: 1.7; }
+.invest-list b { color: var(--ops-green, #7ddc6a); }
+@media (max-width: 720px) {
+  .skip-options { flex-direction: column; align-items: stretch; }
+  .skip-options .ops-skip { width: 100%; }
+  .skip-label { text-align: center; }
+  .reroll-control { display: block; margin: 6px 0 0; }
+  .reroll-btn { width: 100%; }
+  .invest-offer { max-width: none; }
+}

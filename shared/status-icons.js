@@ -107,3 +107,17 @@ export function highlightKeywords(text, escaped = false) {
     return `<b class="kw kw-${key}" style="--status-color:${STATUS_INFO[key].color}">${statusIcon(key)}${word}</b>`;
   });
 }
+
+// Rules for every keyword that appears in `text`, once each: [[label, rule], ...].
+// Used by the long-press card detail sheet.
+export function keywordRules(text) {
+  const seen = new Set();
+  const out = [];
+  for (const word of String(text ?? '').match(KEYWORD_RE) || []) {
+    const key = KEYWORD_MAP.get(word);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push([STATUS_INFO[key].label, STATUS_INFO[key].rule.replace(/^[^：]*：/, '')]);
+  }
+  return out;
+}
