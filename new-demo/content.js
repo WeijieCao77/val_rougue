@@ -534,7 +534,7 @@ export const ENEMIES = {
   // than before (was 1.35/1.25 and 1.75/1.5) to keep full runs winnable.
   ...scaledAct('A2_', '二幕·', 1.45, 1.25),
   A2_B01: tuneEnemy({ name:'晋级赛冠军卫队', look:'boss2', hp:165, boss:true, ordered:true, script:[[BL(18),H(6)],[BUFF(2),H(7,3)],[H(10),JAM('ST02',2)],[H(20)]] }, { hp: 1.4, dmg: 1.4 }),
-  ...scaledAct('A3_', '决赛·', 2.1, 1.55),
+  ...scaledAct('A3_', '决赛·', 1.85, 1.45),
   // The two-phase final keeps its authored numbers bar a HP and damage cut: with the
   // full boss multiplier the bot lost 4 of 6 final fights.
   A3_B01: tuneEnemy({ name:'总决赛冠军卫队', look:'boss3', hp:165, boss:true, trait:{ id:'phase2' },
