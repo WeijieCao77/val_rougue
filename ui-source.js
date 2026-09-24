@@ -418,14 +418,12 @@ document.addEventListener('focusout',e=>{if(e.target.closest('[data-card-id]'))h
 document.addEventListener('scroll',()=>{const el=tipAnchor;hideCardTip();if(el&&el.contains(document.activeElement))scheduleTip(el);},true);window.addEventListener('resize',hideCardTip);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')hideCardTip();});
 function clearAim(){aim.setAttribute('hidden','');document.querySelectorAll('.drop-ready').forEach(el=>el.classList.remove('drop-ready'));}
+// One opponent per fight: like Slay the Spire, releasing a dragged card anywhere
+// above the hand plays it; the target is implied by the card itself.
 function dragTargetAt(c,e,originY){
- const wanted=targetOf(c);
- const exact=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-target],[data-drop-target]');
- if(exact)return (exact.dataset.target||exact.dataset.dropTarget)===wanted?wanted:null;
- const arena=document.querySelector('.arena')?.getBoundingClientRect();
- if(!arena||e.clientY>originY-45||e.clientY<arena.top-20||e.clientY>arena.bottom+35||e.clientX<arena.left||e.clientX>arena.right)return null;
- const midpoint=arena.left+arena.width/2;
- return (wanted==='enemy'&&e.clientX>midpoint+25)||(wanted==='self'&&e.clientX<midpoint-25)?wanted:null;
+ const dock=document.querySelector('.hand-dock')?.getBoundingClientRect();
+ if(e.clientY>originY-60||(dock&&e.clientY>dock.top+10))return null;
+ return targetOf(c);
 }
 function updateAim(d,e){
  const c=state.battle.hand.find(c=>c.uid===d.uid);if(!c)return;

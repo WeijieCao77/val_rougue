@@ -13892,6 +13892,7 @@ const ICONS = {
   exhaust: svg('<path d="M12 21c-4 0-7-2.8-7-6.6 0-3.1 2.2-4.9 3.5-6.8.4 1.6 1.3 2.6 2.4 3 .1-3.4 1.5-6.1 3.6-8.6.3 3.3 2.2 5.2 3.5 7.3a7 7 0 0 1 1 3.9c0 4-3 7.8-7 7.8z" fill="none" stroke="currentColor" stroke-width="2"/>'),
   draw: svg('<rect x="4" y="5" width="10" height="14" rx="1.6" fill="none" stroke="currentColor" stroke-width="2"/><rect x="9" y="3" width="10" height="14" rx="1.6" fill="currentColor"/>'),
   status: svg('<path d="M12 2.5 22 20H2z" fill="currentColor"/><path d="M12 9v5" stroke="rgba(0,0,0,.55)" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="17" r="1.3" fill="rgba(0,0,0,.55)"/>'),
+  damage: svg('<circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 1.5v6M12 16.5v6M1.5 12h6M16.5 12h6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/>'),
   burn: svg('<path d="M9 3h6v3l-1.5 1.5V9c2.6.9 4.5 3.3 4.5 6.2A6 6 0 0 1 12 21a6 6 0 0 1-6-5.8C6 12.3 7.9 9.9 10.5 9V7.5L9 6z" fill="currentColor"/><path d="M12 12.5c1 1.2 2.4 2 2.4 3.6a2.4 2.4 0 0 1-4.8 0c0-1.1.9-1.9 1.3-2.4.2.6.6 1 1.1 1.1z" fill="rgba(0,0,0,.45)"/>'),
   retain: svg('<path d="M7 3h10v18l-5-4-5 4z" fill="currentColor"/>'),
   discover: svg('<circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15 15l6 6" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M10.5 7.5v6M7.5 10.5h6" stroke="currentColor" stroke-width="2"/>'),
@@ -13913,6 +13914,7 @@ const STATUS_INFO = {
   enrage: { label: '狂热', color: '#ff7043', rule: '狂热：你每打出一张技能牌，它获得等量火力。' },
   sentry: { label: '哨戒', color: '#5fd3c6', rule: '哨戒炮：回合结束时自动开火。' },
   overload: { label: '过载', color: '#8fd3ff', rule: '过载：本回合行动点已被上回合的爆发扣减等量。' },
+  damage: { label: '伤害', color: '#ff5d4a', rule: '伤害：先扣布防，再扣生命／防线。' },
   burn: { label: '燃烧', color: '#ff7a1a', rule: '燃烧：敌方回合开始时失去等同层数的生命（无视布防），然后 -1 层。' },
   retain: { label: '保留', color: '#9fd8ff', rule: '保留：回合结束时不会被弃掉，留在手中。' },
   discover: { label: '发现', color: '#f5d76e', rule: '发现：从三张随机牌中选一张加入手牌，本回合 0 费，打出后消耗。' },
@@ -13948,7 +13950,7 @@ const KEYWORDS = [
   ['烟雾', 'smoke'], ['闪光', 'flash'], ['压制', 'weak'], ['虚弱', 'weak'], ['易伤', 'vuln'],
   ['布防', 'block'], ['格挡', 'block'], ['火力', 'strength'], ['反击', 'thorns'], ['瞄准', 'aim'],
   ['哨戒炮', 'sentry'], ['哨戒', 'sentry'], ['过载', 'overload'], ['消耗', 'exhaust'], ['异常', 'status'],
-  ['燃烧', 'burn'], ['保留', 'retain'], ['发现', 'discover'], ['连击', 'combo']
+  ['燃烧', 'burn'], ['保留', 'retain'], ['发现', 'discover'], ['连击', 'combo'], ['伤害', 'damage'], ['抽牌', 'draw']
 ];
 const KEYWORD_RE = new RegExp(KEYWORDS.map(([w]) => w).join('|'), 'g');
 const KEYWORD_MAP = new Map(KEYWORDS);
@@ -14384,14 +14386,12 @@ document.addEventListener('focusout',e=>{if(e.target.closest('[data-card-id]'))h
 document.addEventListener('scroll',()=>{const el=tipAnchor;hideCardTip();if(el&&el.contains(document.activeElement))scheduleTip(el);},true);window.addEventListener('resize',hideCardTip);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')hideCardTip();});
 function clearAim(){aim.setAttribute('hidden','');document.querySelectorAll('.drop-ready').forEach(el=>el.classList.remove('drop-ready'));}
+// One opponent per fight: like Slay the Spire, releasing a dragged card anywhere
+// above the hand plays it; the target is implied by the card itself.
 function dragTargetAt(c,e,originY){
- const wanted=targetOf(c);
- const exact=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-target],[data-drop-target]');
- if(exact)return (exact.dataset.target||exact.dataset.dropTarget)===wanted?wanted:null;
- const arena=document.querySelector('.arena')?.getBoundingClientRect();
- if(!arena||e.clientY>originY-45||e.clientY<arena.top-20||e.clientY>arena.bottom+35||e.clientX<arena.left||e.clientX>arena.right)return null;
- const midpoint=arena.left+arena.width/2;
- return (wanted==='enemy'&&e.clientX>midpoint+25)||(wanted==='self'&&e.clientX<midpoint-25)?wanted:null;
+ const dock=document.querySelector('.hand-dock')?.getBoundingClientRect();
+ if(e.clientY>originY-60||(dock&&e.clientY>dock.top+10))return null;
+ return targetOf(c);
 }
 function updateAim(d,e){
  const c=state.battle.hand.find(c=>c.uid===d.uid);if(!c)return;

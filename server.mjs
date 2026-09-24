@@ -50,6 +50,8 @@ const assets = new Map([
   ['/new/battle-fx.css', ['new-demo/battle-fx.css', 'text/css; charset=utf-8']],
   ['/new/map-redesign.css', ['new-demo/map-redesign.css', 'text/css; charset=utf-8']],
   ['/new/battle-polish.css', ['new-demo/battle-polish.css', 'text/css; charset=utf-8']],
+  ['/new/tactical-theme.css', ['new-demo/tactical-theme.css', 'text/css; charset=utf-8']],
+  ['/new/tactical-card.js', ['new-demo/tactical-card.js', 'text/javascript; charset=utf-8']],
   ['/new/cover.webp', ['new-demo/cover.webp', 'image/webp']],
   ['/new/style.css', ['new-demo/style.css', 'text/css; charset=utf-8']],
   ['/new/season-map.js', ['new-demo/season-map.js', 'text/javascript; charset=utf-8']],

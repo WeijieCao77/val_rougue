@@ -1,0 +1,124 @@
+/* New demo · "tactical ops" visual layer. Loaded last so it overrides older
+   presentation layers. Palette: gunmetal, olive, HUD amber, signal colours. */
+:root {
+  --ops-bg: #080c10;
+  --ops-panel: #10171e;
+  --ops-panel-2: #141d26;
+  --ops-line: rgba(160, 190, 210, .16);
+  --ops-amber: #f2b233;
+  --ops-green: #7ddc6a;
+  --ops-red: #ff5d4a;
+  --ops-text: #dbe4ea;
+  --ops-muted: #8a9aa8;
+  --ops-num: 'Bahnschrift', 'DIN Alternate', 'Arial Narrow', 'Roboto Condensed', sans-serif;
+  --ops-cjk: 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC', sans-serif;
+}
+body {
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(242, 178, 51, .07), transparent 55%),
+    linear-gradient(rgba(125, 220, 106, .035) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, rgba(125, 220, 106, .035) 1px, transparent 1px) 0 0 / 32px 32px,
+    var(--ops-bg) !important;
+  color: var(--ops-text);
+  font-family: var(--ops-cjk);
+}
+
+/* ---------- Tactical card ---------- */
+.tc {
+  --tc: #4fb3ff;
+  position: relative; display: flex; flex-direction: column; gap: 6px;
+  width: 100%; min-width: 0; padding: 8px 9px 7px; box-sizing: border-box; text-align: left;
+  background: linear-gradient(170deg, #17212b 0%, #0e141a 60%, #0a0f14 100%);
+  border: 1px solid color-mix(in srgb, var(--tc) 55%, #1f2a33);
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .03), inset 0 22px 30px -20px color-mix(in srgb, var(--tc) 40%, transparent);
+  color: var(--ops-text); font-family: var(--ops-cjk);
+}
+.tc::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--tc); opacity: .85; }
+.tc-r2 { border-color: #4fb3ff; }
+.tc-r3 { border-color: var(--ops-amber); box-shadow: inset 0 0 0 1px rgba(242, 178, 51, .25), inset 0 22px 30px -20px color-mix(in srgb, var(--tc) 40%, transparent), 0 0 18px rgba(242, 178, 51, .18); }
+.tc-up { border-color: var(--ops-green); }
+
+.tc-cost {
+  position: absolute; top: 5px; left: 7px; z-index: 2; width: 34px; height: 38px; display: grid; place-items: center;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--tc) 80%, #fff), var(--tc) 55%, color-mix(in srgb, var(--tc) 55%, #000));
+}
+.tc-cost b { font-family: var(--ops-num); font-size: 22px; font-weight: 700; color: #0a0e12; line-height: 1; text-shadow: 0 1px 0 rgba(255, 255, 255, .35); }
+.tc-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding-left: 40px; min-height: 26px; }
+.tc-type { font-size: 12px; font-weight: 900; letter-spacing: 3px; color: var(--tc); }
+.tc-code { font-family: var(--ops-num); font-size: 10px; letter-spacing: 1px; color: var(--ops-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid var(--ops-line); padding: 1px 5px; }
+.tc-art { position: relative; border: 1px solid rgba(255, 255, 255, .07); background: #05080b; overflow: hidden; }
+.tc-art::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(255, 255, 255, .03) 0 1px, transparent 1px 3px); }
+.tc-svg { display: block; width: 100%; height: auto; aspect-ratio: 200 / 112; }
+.tc-badge { position: absolute; top: 5px; right: 5px; padding: 1px 6px; font-size: 10px; font-weight: 800; color: #0a0e12; background: var(--ops-green); }
+.tc-name { margin: 0; font-size: 16px; font-weight: 900; letter-spacing: 1px; color: #f1f5f8; line-height: 1.2; }
+.tc-name i { font-style: normal; color: var(--ops-green); margin-left: 3px; }
+.tc-text { flex: 1; font-size: 13px; line-height: 1.5; color: #c3cfd8; padding: 6px 7px; background: rgba(0, 0, 0, .28); border-left: 2px solid color-mix(in srgb, var(--tc) 45%, transparent); }
+.tc .tc-text .kw { color: var(--status-color); text-shadow: 0 0 6px color-mix(in srgb, var(--status-color) 35%, transparent); }
+.tc-foot { display: flex; justify-content: space-between; align-items: center; font-family: var(--ops-num); font-size: 10px; color: var(--ops-muted); letter-spacing: 1px; }
+.tc-rarity { display: flex; gap: 3px; }
+.tc-rarity i { width: 12px; height: 5px; transform: skewX(-30deg); background: #7b8b98; }
+.tc-r2 .tc-rarity i { background: #4fb3ff; }
+.tc-r3 .tc-rarity i { background: var(--ops-amber); }
+
+/* Clickable card wrappers (rewards, discover) */
+.tc-pick { all: unset; display: block; cursor: pointer; transition: transform .15s ease, filter .15s; }
+.tc-pick:hover, .tc-pick:focus-visible { transform: translateY(-6px); filter: brightness(1.12) drop-shadow(0 10px 18px rgba(0, 0, 0, .55)); }
+.tc-pick:focus-visible .tc { outline: 2px solid var(--ops-amber); }
+.reward-cards { display: grid !important; grid-template-columns: repeat(3, minmax(0, 240px)); gap: 18px; justify-content: center; margin: 18px auto; }
+@media (max-width: 720px) { .reward-cards { grid-template-columns: minmax(0, 300px); } }
+.reward-card { width: auto !important; background: none !important; border: 0 !important; padding: 0 !important; box-shadow: none !important; }
+
+/* Hand cards: the tactical card fills the existing hand slot. */
+.battle .hand-card.shared-card { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; overflow: visible; }
+.battle .hand-card.shared-card::before, .battle .hand-card.shared-card::after { display: none !important; }
+.battle .hand-card .tc { height: 100%; padding: 6px 7px; gap: 4px; }
+.battle .hand-card .tc-name { font-size: 13.5px; }
+.battle .hand-card .tc-text { font-size: 11.5px; line-height: 1.4; padding: 4px 5px; overflow: hidden; }
+.battle .hand-card .tc-code { display: none; }
+.battle .hand-card .tc-head { min-height: 22px; padding-left: 36px; }
+.battle .hand-card .tc-cost { width: 30px; height: 34px; top: 4px; left: 5px; }
+.battle .hand-card .tc-cost b { font-size: 19px; }
+.battle .hand-card.selected .tc { border-color: var(--ops-amber); box-shadow: 0 0 0 2px var(--ops-amber), 0 0 22px rgba(242, 178, 51, .45); }
+.battle .hand-card.not-playable .tc { filter: grayscale(.7) brightness(.7); }
+.battle .hand-card.not-playable .tc-cost { background: #5a6570; }
+
+/* Library / pile / shop wrappers */
+.library-card.tc-slot, .pile-card.tc-slot { background: none !important; border: 0 !important; padding: 0 !important; box-shadow: none !important; }
+.shop-scene .shelf-item { background: none; border: 0; box-shadow: none; padding: 16px 0 0; }
+.shop-scene .shelf-item .btn { margin-top: 8px; }
+.discover-card.tc-pick { padding: 0; border: 0; background: none; }
+
+/* ---------- Briefing headings & panels ---------- */
+.ops-eyebrow { font-family: var(--ops-num); font-size: 12px; letter-spacing: 4px; color: var(--ops-amber); text-align: center; margin-top: 8px; }
+.ops-eyebrow::before, .ops-eyebrow::after { content: ''; display: inline-block; width: 40px; height: 1px; background: var(--ops-amber); vertical-align: middle; margin: 0 10px; opacity: .6; }
+.ops-title { text-align: center; margin: 6px 0 4px; font-size: 26px; letter-spacing: 3px; color: #f1f5f8; }
+.reward-hint { text-align: center; }
+.ops-skip { display: block; margin: 6px auto 0; }
+
+.phase-container h2:not(.ops-title) { letter-spacing: 3px; border-left: 4px solid var(--ops-amber); padding-left: 12px; }
+
+/* Buttons: angular military */
+.btn { border-radius: 0 !important; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); background: linear-gradient(#1d2833, #121a22) !important; border: 1px solid rgba(160, 190, 210, .35) !important; color: #e6edf2 !important; letter-spacing: 1px; font-weight: 700; }
+.btn:hover:not(:disabled) { border-color: var(--ops-amber) !important; color: #fff !important; }
+.btn.primary, .btn#btn-play { background: linear-gradient(#f5c24d, #d8961d) !important; color: #140e03 !important; border-color: #ffd97a !important; }
+.btn:disabled { opacity: .45; }
+
+/* Combat HUD panels with corner brackets */
+.battle .enemy-box, .battle .player-box, .battle .stance-box, .battle .ally-art-container, .battle .enemy-art-container {
+  border-radius: 0 !important; border: 1px solid var(--ops-line) !important;
+  background:
+    linear-gradient(var(--ops-amber), var(--ops-amber)) left top / 14px 2px no-repeat,
+    linear-gradient(var(--ops-amber), var(--ops-amber)) left top / 2px 14px no-repeat,
+    linear-gradient(var(--ops-amber), var(--ops-amber)) right bottom / 14px 2px no-repeat,
+    linear-gradient(var(--ops-amber), var(--ops-amber)) right bottom / 2px 14px no-repeat,
+    linear-gradient(170deg, var(--ops-panel-2), var(--ops-panel)) !important;
+}
+.battle .enemy-box { border-color: rgba(255, 93, 74, .35) !important; }
+.battle .enemy-name { letter-spacing: 3px; color: #ffb49a !important; }
+.battle .intent { border: 1px solid rgba(255, 93, 74, .55) !important; background: rgba(60, 14, 10, .55) !important; color: #ffd2c4 !important; border-radius: 0 !important; }
+.battle .intent::before { content: '敌方意图 // '; font-family: var(--ops-num); font-size: 11px; letter-spacing: 2px; color: var(--ops-red); }
+.battle .player-box .label { font-family: var(--ops-num); letter-spacing: 3px; color: var(--ops-green) !important; }
+.battlefield-tag { border-radius: 0; }
+.trait-tag { border-radius: 0; }

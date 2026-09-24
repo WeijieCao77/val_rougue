@@ -3,6 +3,7 @@ import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS, TRAITS, FIELDS, ARCHETYPE
 import { statusBadges, statusBadge, statusIcon, highlightKeywords } from '/shared/status-icons.js';
 import { ACTS } from './season-map.js';
 import { cardArt, combatArt, relicArt } from './art.js';
+import { tacticalCard } from './tactical-card.js';
 import { captureCombatPresentation, animateCombatTransition, clearCombatPresentation } from './fx.js';
 import { attachCardGesture } from '/shared/card-gesture.js';
 import { flyCardsFromPile, flyCardsToPile } from '/shared/card-pile-motion.js';
@@ -85,6 +86,18 @@ function getCardDisplay(card, up = false) {
     exhaust: def.exhaust || false,
     up
   };
+}
+
+// Build-direction label shown on the card's type strip.
+function tagLabel(def) {
+  return ARCHETYPES[def.tag] ? `OP·${ARCHETYPES[def.tag]}` : (tagMap[def.tag] || '');
+}
+function cardHtml(id, { up = false, cost, badge, extraClass } = {}) {
+  const def = getCardDefinition(id);
+  if (!def) return '';
+  const text = up && def.upgradeText ? def.upgradeText : def.text;
+  const shownCost = cost ?? (up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost);
+  return tacticalCard(def, { up, cost: shownCost, text: highlightKeywords(text), tagLabel: tagLabel(def), badge, extraClass });
 }
 
 function describeCardFull(card) {
@@ -415,7 +428,7 @@ function renderCombat(root) {
   const enemyBadges = statusBadges([['block', b.statuses.enemy.block], ['strength', b.statuses.enemy.strength], ['aim', b.statuses.enemy.aim], ['burn', b.statuses.enemy.burn], ['smoke', b.statuses.enemy.smoke], ['flash', b.statuses.enemy.flash], ['weak', b.statuses.enemy.weak], ['vuln', b.statuses.enemy.vuln]]);
   const playerBadges = statusBadges([['block', b.playerBlock], ['strength', b.powerStacks.inflame], ['overload', b.overload], ['weak', b.statuses.player.weak], ['vuln', b.statuses.player.vuln]]);
   const deployHtml = (b.deployables || []).map(d => `<span class="deploy-chip" tabindex="0" title="${d.kind === 'turret' ? `哨戒炮：回合结束时造成${d.n + 3 * (b.powerStacks.turret_core || 0)}点伤害` : `屏障无人机：回合结束时获得${d.n}点布防`}，剩余${d.turns}回合">${statusIcon(d.kind === 'turret' ? 'sentry' : 'block')}<b>${d.kind === 'turret' ? d.n + 3 * (b.powerStacks.turret_core || 0) : d.n}</b><small>×${d.turns}</small></span>`).join('');
-  const discoverHtml = b.pendingDiscover ? `<div class="discover-overlay" role="dialog" aria-label="发现一张牌"><div class="discover-panel"><h3>${statusIcon('discover')} 发现：选一张加入手牌</h3><p>本回合 0 费，打出后消耗。</p><div class="discover-options">${b.pendingDiscover.options.map(id => `<button class="discover-card" data-discover="${id}"><span class="discover-art">${cardArt(id)}</span><b>${escapeHtml(CARDS[id].name)}</b><small>${CARDS[id].cost}费 · ${escapeHtml(tagMap[CARDS[id].tag] || '')}</small><span>${highlightKeywords(CARDS[id].text)}</span></button>`).join('')}</div></div></div>` : '';
+  const discoverHtml = b.pendingDiscover ? `<div class="discover-overlay" role="dialog" aria-label="发现一张牌"><div class="discover-panel"><h3>${statusIcon('discover')} 发现：选一张加入手牌</h3><p>本回合 0 费，打出后消耗。</p><div class="discover-options">${b.pendingDiscover.options.map(id => `<button class="discover-card tc-pick" data-discover="${id}">${cardHtml(id, { cost: 0, badge: '本回合 0 费' })}</button>`).join('')}</div></div></div>` : '';
   const traitInfo = b.trait && TRAITS[b.trait.id];
   const traitHtml = traitInfo ? `<div class="trait-row"><span class="trait-tag" tabindex="0" title="${escapeHtml(traitInfo.text(b.trait.n))}">${statusIcon(traitInfo.icon)}${escapeHtml(traitInfo.name)}${b.trait.id === 'tempo' ? ` ${b.tempoCount}/${b.trait.n}` : ''}</span></div>` : '';
   const field = b.field && FIELDS[b.field];
@@ -433,14 +446,7 @@ function renderCombat(root) {
     const tooltip = describeCardFull(card);
     const offset = idx - (b.hand.length - 1) / 2;
     return `<div class="hand-card shared-card role-${escapeHtml(display.type)} ${isSelected ? 'selected' : ''} ${isPlayable ? '' : 'not-playable'}" data-uid="${card.uid}" data-index="${idx}" tabindex="0" role="button" aria-label="${escapeHtml(display.name)}" data-tooltip="${escapeHtml(tooltip)}" style="--offset:${offset};--tilt:${offset * (b.hand.length > 6 ? 1.6 : 3)}deg;--bend:${Math.abs(offset) * Math.abs(offset) * 1.8}px;--order:${idx}">
-      <div class="card-face">
-        <span class="card-cost">${display.cost}</span>
-        <span class="card-title">${escapeHtml(display.name)}</span>
-        <span class="card-portrait">${cardArt(card.id)}<span class="portrait-role">${escapeHtml(typeMap[display.type] || display.type)}</span></span>
-        <b class="card-tactic">${escapeHtml(tagMap[display.tag] || display.tag || typeMap[display.type] || '')}</b>
-        <span class="card-effect"><span>${highlightKeywords(display.text)}</span></span>
-        <span class="card-foot">${escapeHtml(rarityMap[display.rarity] || '')}${display.exhaust ? ' · 消耗' : ''}</span>
-      </div>
+      ${cardHtml(card.id, { up: card.up, cost: card.free ? 0 : display.cost, badge: card.temp ? '临时' : '' })}
     </div>`;
   }).join('');
 
@@ -555,19 +561,21 @@ function renderCombat(root) {
   });
   const hand = root.querySelector('#hand-area');
   const clearDrop = () => root.querySelectorAll('.drop-ready').forEach(el => el.classList.remove('drop-ready'));
-  const zoneAt = point => {
-    const battle = root.querySelector('.battle')?.getBoundingClientRect();
+  // One enemy per fight: like Slay the Spire, releasing a dragged card anywhere
+  // above the hand plays it; the highlighted side follows what the card does.
+  const targetsEnemy = card => { const d = CARDS[card.id]; return d?.type === 'attack' || (d?.effects || []).some(e => ['attack', 'weak', 'vuln', 'smoke', 'flash', 'burn', 'detonate'].includes(e.type)); };
+  const zoneAt = (point, card) => {
     const handTop = hand.getBoundingClientRect().top;
-    if (!battle || point.y < battle.top || point.y > handTop - 20 || point.x < battle.left || point.x > battle.right) return null;
-    return point.x < battle.left + battle.width / 2 ? root.querySelector('.player-area') : root.querySelector('.enemy-area');
+    if (point.y > handTop - 10 || point.startY - point.y < 60) return null;
+    return card && targetsEnemy(card) ? root.querySelector('.enemy-area') : root.querySelector('.player-area');
   };
   attachCardGesture(hand, {
     getCard: el => b.hand.find(card => card.uid === el.dataset.uid),
     canDrag: card => !presentationBusy && playableUids.has(card.uid),
     onStart: (card, el) => { selectedCardUid = card.uid; el.classList.add('selected'); },
-    onMove: (_card, point) => { clearDrop(); zoneAt(point)?.classList.add('drop-ready'); },
+    onMove: (card, point) => { clearDrop(); zoneAt(point, card)?.classList.add('drop-ready'); },
     onDrop: (card, point) => {
-      const zone = zoneAt(point); clearDrop();
+      const zone = zoneAt(point, card); clearDrop();
       if (!zone || presentationBusy || !playableUids.has(card.uid)) return false;
       selectedCardUid = card.uid;
       return dispatch({ type: 'play', uid: card.uid });
@@ -588,10 +596,7 @@ function showPileModal(kind) {
   const cardsHtml = sortedPile.map(card => {
     const display = getCardDisplay(card, card.up);
     if (!display) return '';
-    return `<div class="pile-card">
-      <div class="card-art">${cardArt(card.id)}</div>
-      <div class="card-info">${escapeHtml(display.name)} (${display.cost}费)</div>
-    </div>`;
+    return `<div class="pile-card tc-slot">${cardHtml(card.id, { up: card.up })}</div>`;
   }).join('');
   const previousFocus = document.activeElement;
   const handleKeydown = (e) => {
@@ -659,22 +664,17 @@ function renderReward(root) {
   const rewardHtml = cards.map(id => {
     const def = CARDS[id];
     if (!def) return '';
-    return `<div class="reward-card" data-id="${id}">
-      <div class="card-art">${cardArt(id)}</div>
-      <div class="card-title">${escapeHtml(def.name)}</div>
-      <div class="card-cost">${def.cost}费 · ${escapeHtml({ attack: '攻击', skill: '技能', power: '能力' }[def.type] || '')}</div>
-      <div class="card-archetype${ARCHETYPES[def.tag] ? ' is-archetype' : ''}">${escapeHtml(tagMap[def.tag] || '')}</div>
-      <div class="card-desc">${highlightKeywords(def.text)}</div>
-    </div>`;
+    return `<button class="reward-card tc-pick" data-id="${id}" aria-label="选择 ${escapeHtml(def.name)}">${cardHtml(id)}</button>`;
   }).join('');
   root.innerHTML = `
     <div class="phase-container">
-      <h2>战斗胜利！选择奖励</h2>
-      <p class="reward-hint">三张牌来自不同方向：挑一张能和你现有牌组叠加的。</p>
+      <div class="ops-eyebrow">DEBRIEF // 战后简报</div>
+      <h2 class="ops-title">补充战术 · 三选一</h2>
+      <p class="reward-hint">三张牌来自不同方向：挑一张能和你现有牌组叠加的，或者跳过保持牌组精简。</p>
       <div class="reward-cards">
         ${rewardHtml}
       </div>
-      <button class="btn" id="btn-skip">跳过</button>
+      <button class="btn ops-skip" id="btn-skip">跳过，不加入新牌</button>
     </div>
   `;
   document.querySelectorAll('.reward-card').forEach(el => {
@@ -706,11 +706,7 @@ function renderShop(root) {
     return `<div class="shop-card shelf-item rarity-${def.rarity}${item.sale ? ' on-sale' : ''}">
       <div class="price-tag">${item.sale ? `<s>${priceOf(item.id)}</s>` : ''}<b>${cost}</b><span>金币</span></div>
       ${item.sale ? '<div class="sale-ribbon">今日半价</div>' : ''}
-      <div class="card-art">${cardArt(item.id)}</div>
-      <div class="card-title">${escapeHtml(def.name)}</div>
-      <div class="card-cost">${def.cost}费 · ${escapeHtml({ attack: '攻击', skill: '技能', power: '能力' }[def.type] || '')} · ${rarityName[def.rarity] || ''}</div>
-      <div class="card-archetype${ARCHETYPES[def.tag] ? ' is-archetype' : ''}">${escapeHtml(tagMap[def.tag] || '')}</div>
-      <div class="card-desc">${highlightKeywords(def.text)}</div>
+      ${cardHtml(item.id)}
       <button class="btn" data-buy-index="${idx}" ${canBuy ? '' : 'disabled'}>${canBuy ? '买下' : '金币不足'}</button>
     </div>`;
   }).join('') || '<p class="shelf-empty">货架已经被你买空了。</p>';
@@ -940,11 +936,8 @@ function renderLibraryModal() {
           const c = CARDS[id];
           const tooltip = describeCardFull({id, uid:'', up:false});
           const upgradeHtml = c.upgradeText ? `<details class="upgrade-details"><summary>升级文本</summary><div class="upgrade-text">${highlightKeywords(c.upgradeText)}</div></details>` : '';
-          return `<div class="library-card" data-tooltip="${escapeHtml(tooltip)}" tabindex="0">
-            <div class="card-art">${cardArt(id)}</div>
-            <div class="name">${escapeHtml(c.name)}</div>
-            <div class="meta">${c.cost}费${c.upgradeCost !== undefined ? ` → ${c.upgradeCost}费` : ''} ${typeMap[c.type]} ${tagMap[c.tag]} ${rarityMap[c.rarity]}</div>
-            <div class="card-text">${highlightKeywords(c.text)}</div>
+          return `<div class="library-card tc-slot" data-tooltip="${escapeHtml(tooltip)}" tabindex="0">
+            ${cardHtml(id)}
             ${upgradeHtml}
           </div>`;
         }).join('');
