@@ -166,7 +166,7 @@ function renderHome() {
   const teamsHtml = Object.values(TEAMS).map(t => `
     <div class="team-card ${selectedTeam === t.id ? 'selected' : ''}" data-team="${t.id}" tabindex="0" role="button" aria-pressed="${selectedTeam === t.id}">
       <div class="team-art">${combatArt(t.id, 'ally')}</div>
-      <div class="team-name">${escapeHtml(t.name)}${t.id === 'breach' ? '<small class="rookie-tag">推荐入门</small>' : ''}</div>
+      <div class="team-name">${escapeHtml(t.name)}</div>
       <div class="team-desc">${escapeHtml(t.desc)}</div>
       ${traitTagHtml(t.id)}
     </div>
