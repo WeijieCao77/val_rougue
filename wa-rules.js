@@ -138,6 +138,6 @@ export const GEAR_SELL = {common:15,uncommon:25,rare:40,boss:50,shop:30};
 // Keyed by act, then opponent kind.
 export const ENEMY_TUNING = {
  1:{normal:{hp:1.35,dmg:1.4},elite:{hp:1.4,dmg:1.4},boss:{hp:1.4,dmg:1.35}},
- 2:{normal:{hp:1.5,dmg:1.4},elite:{hp:1.5,dmg:1.4},boss:{hp:1.5,dmg:1.35}},
- 3:{normal:{hp:1.7,dmg:1.55},elite:{hp:1.7,dmg:1.55},boss:{hp:1.7,dmg:1.5}}
+ 2:{normal:{hp:1.4,dmg:1.3},elite:{hp:1.4,dmg:1.3},boss:{hp:1.4,dmg:1.25}},
+ 3:{normal:{hp:1.6,dmg:1.45},elite:{hp:1.6,dmg:1.45},boss:{hp:1.6,dmg:1.4}}
 };
