@@ -167,8 +167,6 @@ function renderHome() {
       <nav class="nav-links" aria-label="其他入口">
         <button class="hero-link" id="btn-guide-home">怎么玩</button>
         <button class="hero-link" id="btn-library">卡牌总览</button>
-        <a href="/pvp/">好友PvP</a>
-        <a href="/wa/">瓦demo</a>
         <a href="/">选择版本</a>
       </nav>
       <footer class="credit">猪之家出品</footer>
@@ -959,7 +957,7 @@ function renderLibraryModal() {
         return `<div class="library-card status-card" data-tooltip="${tooltip}" tabindex="0">
           <div class="card-art">${cardArt(c.id)}</div>
           <div class="name">${escapeHtml(c.name)}</div>
-          <div class="meta">${c.curse?'全赛区共享诅咒 · 跨比赛保留':'比赛状态 · 战后消失'} · 不计入${CARD_IDS.length}张可选牌</div>
+          <div class="meta">${c.curse?'全队伍共享隐患 · 跨比赛保留':'比赛状态 · 战后消失'} · 不计入${CARD_IDS.length}张可选牌</div>
           <div class="card-text">${highlightKeywords(c.text)}</div>
         </div>`;
       }).join('');
@@ -1019,8 +1017,8 @@ function renderLibraryModal() {
           <button class="library-tab" role="tab" aria-selected="false" data-tab="relic">遗物 (${Object.keys(RELICS).length})</button>
         </div>
         <div id="filter-row" class="filter-row">
-          <select id="filter-region" class="filter-select" aria-label="筛选赛区">
-            <option value="">全部赛区与共享</option><option value="shared">共享牌 (${CARD_IDS.filter(id=>!CARDS[id].region).length})</option><option value="CN">中国 (75)</option><option value="AM">美洲 (75)</option><option value="EMEA">EMEA (75)</option><option value="PAC">太平洋 (75)</option>
+          <select id="filter-region" class="filter-select" aria-label="筛选队伍专属牌">
+            <option value="">全部队伍与共享</option><option value="shared">共享牌 (${CARD_IDS.filter(id=>!CARDS[id].region).length})</option><option value="AM">烈锋突击队 (75)</option><option value="CN">磐石守备队 (75)</option><option value="EMEA">雾隐战术组 (75)</option><option value="PAC">疾风调度组 (75)</option>
           </select>
           <select id="filter-type" class="filter-select">
             <option value="">全部类型</option>

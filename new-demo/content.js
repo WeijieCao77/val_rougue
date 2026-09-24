@@ -395,10 +395,10 @@ for(const curse of CURSES)def({id:curse.id,name:curse.name,cost:0,type:'status',
 
 // ----------------------------- Teams -----------------------------
 export const TEAMS = {
-  breach:   { id:'breach', region:'AM', name:'美洲 · 突破', desc:'多段交火与易伤联动。', startingDeck:[['TA01',1],['TA22',1],['TA05',1],['TA10',1],['TA19',1],['TA28',1],['TA46',1],['TA02',2],['TA06',1]] },
-  anchor:   { id:'anchor', region:'CN', name:'中国 · 架点', desc:'布防转攻与战术升级。', startingDeck:[['TA02',2],['TA06',1],['TA11',1],['TA45',1],['TA08',1],['TA29',1],['TA65',1],['TA01',1],['TA07',1]] },
-  utility:  { id:'utility', region:'EMEA', name:'EMEA · 道具', desc:'烟闪控场与压制。', startingDeck:[['TA13',1],['TA39',1],['TA60',1],['TA61',1],['TA41',1],['TA02',1],['TA12',1],['TA40',1],['TA66',1],['TA07',1]] },
-  rotation: { id:'rotation', region:'PAC', name:'太平洋 · 调度', desc:'抽牌循环与姿态节奏。', startingDeck:[['TA01',1],['TA05',1],['TA28',1],['TA02',1],['TA08',1],['TA27',1],['TA02',1],['TA42',1],['TA74',1],['TA64',1]] }
+  breach:   { id:'breach', region:'AM', name:'烈锋突击队 · 突破', desc:'多段交火与易伤联动。', startingDeck:[['TA01',1],['TA22',1],['TA05',1],['TA10',1],['TA19',1],['TA28',1],['TA46',1],['TA02',2],['TA06',1]] },
+  anchor:   { id:'anchor', region:'CN', name:'磐石守备队 · 架点', desc:'布防转攻与战术升级。', startingDeck:[['TA02',2],['TA06',1],['TA11',1],['TA45',1],['TA08',1],['TA29',1],['TA65',1],['TA01',1],['TA07',1]] },
+  utility:  { id:'utility', region:'EMEA', name:'雾隐战术组 · 道具', desc:'烟闪控场与压制。', startingDeck:[['TA13',1],['TA39',1],['TA60',1],['TA61',1],['TA41',1],['TA02',1],['TA12',1],['TA40',1],['TA66',1],['TA07',1]] },
+  rotation: { id:'rotation', region:'PAC', name:'疾风调度组 · 调度', desc:'抽牌循环与姿态节奏。', startingDeck:[['TA01',1],['TA05',1],['TA28',1],['TA02',1],['TA08',1],['TA27',1],['TA02',1],['TA42',1],['TA74',1],['TA64',1]] }
 };
 
 // ----------------------------- Enemies -----------------------------
