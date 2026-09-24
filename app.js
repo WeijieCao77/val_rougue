@@ -9533,7 +9533,9 @@ const EXTRA_ENEMIES = {
 
 // Seeded PRNG: FNV-1a hash to initialize sfc32 generator.
 const roomNames = { battle: '常规比赛', elite: '高压强敌', event: '未知事件', shop: "转会市场", rest: "俱乐部活动" };
-const battleNames = { E01: '基础进攻', E02: '信息压制', E03: '多段突击', E04: '防守反击', E05: '纪律控制' };
+const battleNames = { E01: '基础进攻', S_E02: '远点狙击', S_E03: '突破双枪', S_E04: '哨位架枪', S_E05: '烟雾控场', S_E06: '前哨侦察' };
+// Keys of FIELDS in content.js (kept here to avoid a map→content import cycle).
+const FIELD_IDS = ['corridor', 'longrange', 'suppress', 'highground', 'overtime', 'eco'];
 function choice(seed, values) {
   let hash = 2166136261;
   for (const char of String(seed)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
@@ -9551,17 +9553,19 @@ function buildMap(seed, act) {
   const prefix = act === 1 ? '' : 'A' + act + '_';
   for (const node of map.nodes) {
     if (node.kind === 'battle') {
-      const ids = node.step <= 2 ? ['E01'] : node.step === 3 ? ['E01', 'E02'] : ['E01', 'E02', 'E03', 'E04', 'E05'];
+      const ids = node.step <= 2 ? (act === 1 ? ['E01'] : ['E01', 'S_E03', 'S_E06']) : node.step === 3 ? ['S_E02', 'S_E03', 'S_E06'] : ['S_E02', 'S_E03', 'S_E04', 'S_E05', 'S_E06'];
       const parents = map.edges.filter(edge => edge.to === node.key).map(edge => byKey.get(edge.from));
       const fresh = ids.filter(id => !parents.some(parent => parent.enemy === prefix + id));
       const id = choice(seed + '|' + act + '|' + node.key + '|enemy', fresh.length ? fresh : ids);
       node.enemy = prefix + id;
       node.name = battleNames[id];
+      if (node.step > 2) node.field = choice(seed + '|' + act + '|' + node.key + '|field', FIELD_IDS);
     } else if (node.kind === 'elite') {
-      node.enemy = prefix + 'EL01';
+      node.enemy = prefix + choice(seed + '|' + act + '|' + node.key + '|elite', ['S_EL01', 'S_EL02']);
+      node.field = choice(seed + '|' + act + '|' + node.key + '|field', FIELD_IDS);
       node.name = roomNames.elite;
     } else if (node.kind === 'boss') {
-      node.enemy = prefix + 'B01';
+      node.enemy = prefix + 'S_B01';
       node.name = ACTS[act - 1].bossName;
     } else {
       node.name = roomNames[node.kind];
@@ -9670,6 +9674,61 @@ const SKINS = {
   SK03:{name:'守望涂层',text:'补上防守空隙：每回合第一次打出哨位牌后，额外获得 2 布防。'},
 };
 const jam = (id,n=1) => ({type:'jam',id,n});
+// Season-mode opponents (legacy tutorial ids E01–B01 above stay frozen for replays).
+// Each archetype has a look, a behaviour pattern and often a passive trait.
+const buff = n => ({type:'buff',n});
+const aim = () => ({type:'aim'});
+const snipe = n => ({type:'snipe',n});
+const cleanse = () => ({type:'cleanse'});
+const vulnP = n => ({type:'vuln',n});
+const TRAITS = {
+ berserk:{name:'背水一战',icon:'enrage',text:n=>`防线首次降到一半以下时，获得${n}层火力。`},
+ thorns:{name:'交叉火力',icon:'thorns',text:n=>`每次被你的攻击命中，反击你${n}点伤害（布防可挡）。`},
+ enrageOnSkill:{name:'信息读取',icon:'enrage',text:n=>`你每打出一张不造成伤害的牌，它获得${n}层火力。`},
+ ritual:{name:'手感渐热',icon:'strength',text:n=>`每个对手回合结束时，获得${n}层火力。`},
+ tempo:{name:'控制节奏',icon:'tempo',text:n=>`你每打出${n}张牌，它获得2层火力与6点布防。`},
+ phase2:{name:'决胜局',icon:'enrage',text:()=>'防线降到一半时清除自身负面状态，获得10点布防、2层火力，并换成全新打法。'},
+ sniper:{name:'狙击位',icon:'aim',text:()=>'瞄准一回合后打出重狙；开枪前让它陷入压制可打断瞄准，这一枪只剩三分之一伤害。'}
+};
+const FIELDS = {
+ corridor:{name:'狭窄走廊',text:'所有多段攻击（双方）每段伤害 +1。'},
+ longrange:{name:'开阔长廊',text:'单段基础伤害≥8的攻击（双方）伤害 +2。'},
+ suppress:{name:'火力压制',text:'开局对手压制 2 回合。'},
+ highground:{name:'高点优势',text:'你每回合第一张造成伤害的牌，首段伤害 +3。'},
+ overtime:{name:'加时赛',text:'从第 5 回合起，对手每回合行动前获得 2 层火力。'},
+ eco:{name:'经济局',text:'第一回合你多 1 行动点、多抽 1 张牌。'}
+};
+const SEASON_ACT1 = {
+ S_E02:{name:'远点狙击手',look:'sniper',hp:36,trait:{id:'sniper'},script:[[aim(),block(4)],[snipe(18)],[hit(6)]]},
+ S_E03:{name:'突破手双枪',look:'rusher',hp:40,trait:{id:'berserk',n:3},script:[[hit(3,3)],[hit(8)],[block(5),hit(6)]]},
+ S_E04:{name:'哨位架枪组',look:'sentinel',hp:38,startBlock:8,trait:{id:'thorns',n:2},script:[[block(6),hit(4)],[hit(11)],[block(5),hit(6)]]},
+ S_E05:{name:'烟雾控场手',look:'controller',hp:40,script:[[weak(1),jam('ST01',2),hit(4)],[hit(9)],[vulnP(1),hit(6)]]},
+ S_E06:{name:'前哨侦察兵',look:'recon',hp:42,trait:{id:'enrageOnSkill',n:1},script:[[hit(8)],[block(6),hit(5)],[hit(3,2)]]},
+ S_EL01:{name:'王牌突击手',look:'ace',hp:60,elite:true,trait:{id:'ritual',n:1},script:[[hit(8),jam('ST03')],[hit(4,3)],[block(10),hit(4)]]},
+ S_EL02:{name:'战术指挥官',look:'igl',hp:56,elite:true,script:[[buff(2),block(8)],[hit(7,2)],[cleanse(),block(12),jam('ST02')],[hit(14)]]},
+ S_B01:{name:'大师赛冠军卫队',look:'boss1',hp:90,boss:true,growth:0,trait:{id:'tempo',n:16},script:[[weak(1),hit(7)],[jam('ST02',2),block(10)],[hit(4,3)],[hit(12)]]}
+};
+function scaleSeason(prefix,label,hpK,dmgK){
+ const out={};
+ const r=n=>Math.max(1,Math.round(n*dmgK));
+ for(const [id,e] of Object.entries(SEASON_ACT1)){
+  if(e.boss)continue;
+  out[prefix+id]={...e,name:label+e.name,hp:Math.round(e.hp*hpK*(e.elite?0.93:1)),startBlock:e.startBlock?r(e.startBlock):undefined,
+   // Ritual and skill-enrage already compound during a fight, so only flat traits grow per act.
+   trait:e.trait?{...e.trait,n:e.trait.n&&!['ritual','enrageOnSkill'].includes(e.trait.id)?e.trait.n+(dmgK>1.4?2:1):e.trait.n}:undefined,
+   script:e.script.map(turn=>turn.map(a=>['hit','block','snipe'].includes(a.type)?{...a,n:r(a.n)}:a.type==='buff'?{...a,n:a.n+1}:{...a}))};
+ }
+ return out;
+}
+const SEASON_ENEMIES = {
+ ...SEASON_ACT1,
+ ...scaleSeason('A2_','二幕·',1.25,1.15),
+ A2_S_B01:{name:'晋级赛冠军卫队',look:'boss2',hp:110,boss:true,growth:0,script:[[block(12),hit(5)],[buff(1),hit(5,3)],[hit(8),jam('ST02',2)],[hit(16)]]},
+ ...scaleSeason('A3_','决赛·',1.45,1.25),
+ A3_S_B01:{name:'总决赛冠军卫队',look:'boss3',hp:115,boss:true,growth:0,trait:{id:'phase2'},
+  script:[[hit(10),jam('ST03')],[weak(1),hit(4,3)],[block(12),jam('ST01',2)],[hit(15)]],
+  phase2:[[buff(1),hit(7,2)],[hit(5,3),vulnP(1)],[block(12),hit(9)]]}
+};
 const ENEMIES = {
  ...EXTRA_ENEMIES,
  E01:{name:'基础试训队',hp:28,script:[[hit(6)],[hit(8)],[block(4),hit(4)]]},
@@ -9679,6 +9738,7 @@ const ENEMIES = {
  E05:{name:'纪律控制队',hp:44,script:[[weak(1)],[hit(10)],[block(6),hit(6)]]},
  EL01:{name:'高压强敌队',hp:54,elite:true,script:[[hit(8),jam('ST03')],[hit(4,3)],[block(10),jam('ST02')]]},
  B01:{name:'大师赛种子队',hp:80,boss:true,script:[[hit(8),jam('ST01')],[hit(4,3)],[weak(1),hit(6)],[block(10),jam('ST02')]]},
+ ...SEASON_ENEMIES,
 };
 const ROUTE = ['基础试训','信息压制','赛程外的机会','双核突击','市场 / 俱乐部活动','普通 / 强敌','俱乐部活动','纪律控制','大师赛 · BOSS'];
 const START = ['CN03','CN07','CN11','CN14','CN16','CN03','CN07','CN03','CN07','CN14'];
@@ -9736,7 +9796,7 @@ function describe(card) {
  return text + (t.zone==='exhaust'?'。打出后消耗。':t.zone==='temporary'?'。打出或回合末消耗。':t.zone==='power'?'。能力：本场持续生效，不再洗回。':'。');
 }
 
-return {VERSION,CARDS,PLAYER_IDS,TACTICS,displayText,SKINS,ENEMIES,ROUTE,START,effects,cardName,compactLines,cardKeywords,describe,REGIONS,CURSE_RULES};
+return {VERSION,CARDS,PLAYER_IDS,TACTICS,displayText,SKINS,TRAITS,FIELDS,ENEMIES,ROUTE,START,effects,cardName,compactLines,cardKeywords,describe,REGIONS,CURSE_RULES};
 })();
 const module6=(()=>{
 const { VERSION, CARDS, PLAYER_IDS, SKINS, ENEMIES, START, effects, cardName, REGIONS } = module5;
@@ -9786,6 +9846,13 @@ function startBattle(s,id) {
  const enemy=ENEMIES[id];
  s.phase='combat';
  s.battle={enemy:id,enemyHp:enemy.hp,enemyBlock:0,enemyWeak:0,enemyVulnerable:0,weak:0,block:0,energy:3,turn:0,intent:0,cycles:0,draw:s.tutorial&&s.node===1?clone(s.deck):shuffle(s,clone(s.deck)),hand:[],discard:[],exhaust:[],powers:[],resolving:null,roleCounts:{},skinZero:false};
+ // Season-only additions; legacy tutorial enemies have none of these fields.
+ const node=s.mode==='season'?s.map?.nodes.find(n=>n.key===s.currentNode):null;
+ const b=s.battle;
+ if(node?.field){b.field=node.field;}
+ if(enemy.trait){b.trait=clone(enemy.trait);b.traitState={};b.tempoCount=0;}
+ if(enemy.startBlock)b.enemyBlock=enemy.startBlock;
+ if(b.field==='suppress')b.enemyWeak=2;
  log(s,`比赛开始：${enemy.name}，对手防线 ${enemy.hp}。`); beginTurn(s);
 }
 function powerTotal(b,key){return b.powers.flatMap(effects).filter(e=>e.key===key).reduce((sum,e)=>sum+e.n,0);}
@@ -9809,15 +9876,33 @@ function drawCards(s,n) {
 }
 function beginTurn(s) {
  const b=s.battle;b.turn++;b.block=0;b.energy=3+powerTotal(b,'energy');b.roleCounts={};
+ if(b.field)b.attackedThisTurn=false;
+ const eco=b.turn===1&&b.field==='eco'?1:0;b.energy+=eco;
  if(b.turn===1&&s.skins.includes('SK01')){b.block=3;log(s,'磨砂黑：开局获得 3 格挡。');}
- log(s,`第 ${b.turn} 回合：行动点 ${b.energy}，旧格挡清空。`);drawCards(s,5+powerTotal(b,'extraDraw'));
+ log(s,`第 ${b.turn} 回合：行动点 ${b.energy}，旧格挡清空。`);drawCards(s,5+eco+powerTotal(b,'extraDraw'));
+}
+// Battlefield change to one hit's base damage (both sides).
+function fieldHitBonus(b,n,times){return (b.field==='corridor'&&times>1?1:0)+(b.field==='longrange'&&n>=8?2:0);}
+function enemyScript(b){const e=ENEMIES[b.enemy];return b.traitState?.phase2?e.phase2:e.script;}
+function hurtPlayerDirect(s,n){const b=s.battle,absorbed=Math.min(b.block,n);b.block-=absorbed;s.hp=Math.max(0,s.hp-(n-absorbed));return n-absorbed;}
+function checkEnemyHpTraits(s){
+ const b=s.battle,t=b.trait;if(!t||b.enemyHp<=0)return;const max=ENEMIES[b.enemy].hp;
+ if(t.id==='berserk'&&!b.traitState.berserk&&b.enemyHp<=max/2){b.traitState.berserk=true;b.enemyStrength=(b.enemyStrength||0)+t.n;log(s,`背水一战：对手火力 +${t.n}。`);}
+ if(t.id==='phase2'&&!b.traitState.phase2&&b.enemyHp<=max/2){b.traitState.phase2=true;b.enemyWeak=0;b.enemyVulnerable=0;b.enemyBlock+=10;b.enemyStrength=(b.enemyStrength||0)+2;b.intent=0;log(s,'决胜局：对手清除负面状态，布防 +10、火力 +2，换成全新打法。');}
 }
 function damage(base,weak=false,vulnerable=false){return Math.floor(Math.max(0,base)*(weak ? 0.75 : 1)*(vulnerable ? 1.5 : 1));}
 function intent(s) {
  const b=s.battle, e=ENEMIES[b.enemy];
- return e.script[b.intent].map(a=>a.type==='hit'?{...a,n:damage(a.n+(e.boss?b.cycles*(e.growth??2):0),b.enemyWeak>0)}:{...a});
+ // Actions resolve in order, so a buff listed before a hit already applies to it.
+ let strength=(b.enemyStrength||0)+(b.field==='overtime'&&b.turn>=5?2:0);
+ return enemyScript(b)[b.intent].map(a=>{
+  if(a.type==='buff'){strength+=a.n;return {...a};}
+  if(a.type==='hit')return {...a,n:damage(a.n+(e.boss?b.cycles*(e.growth??2):0)+strength+fieldHitBonus(b,a.n,a.times),b.enemyWeak>0)};
+  if(a.type==='snipe'){const aimed=(b.aim||0)>0;return {...a,aimed,n:damage((aimed?a.n+fieldHitBonus(b,a.n,1):Math.ceil(a.n/3))+strength,b.enemyWeak>0)};}
+  return {...a};
+ });
 }
-function intentText(s) {return intent(s).map(a=>a.type==='hit'?`攻击 ${a.n}${a.times>1?` × ${a.times} = ${a.n*a.times}`:''}`:a.type==='block'?`获得 ${a.n} 格挡`:a.type==='weak'?`使你虚弱 ${a.n} 回合`:`将 ${a.n} 张${CARDS[a.id].name}放入弃牌堆`).join('；');}
+function intentText(s) {return intent(s).map(a=>a.type==='hit'?`攻击 ${a.n}${a.times>1?` × ${a.times} = ${a.n*a.times}`:''}`:a.type==='block'?`获得 ${a.n} 格挡`:a.type==='weak'?`使你虚弱 ${a.n} 回合`:a.type==='buff'?`火力 +${a.n}`:a.type==='aim'?'瞄准（下回合重狙）':a.type==='snipe'?(a.aimed?`重狙 ${a.n}（压制可打断）`:`仓促射击 ${a.n}（瞄准已被打断）`):a.type==='cleanse'?'清除自身负面状态':a.type==='vuln'?`使你易伤 ${a.n} 回合`:`将 ${a.n} 张${CARDS[a.id].name}放入弃牌堆`).join('；');}
 function lose(s,reason){s.hp=0;s.phase='result';s.outcome='loss';log(s,`${reason}。声望归零，俱乐部解散。`);}
 function win(s) {
  if(s.mode==='season') return winSeason(s);
@@ -9866,7 +9951,10 @@ function finishBossSkin(s) {
 function strike(s,n) {
  const b=s.battle, absorbed=Math.min(b.enemyBlock,n);b.enemyBlock-=absorbed;b.enemyHp=Math.max(0,b.enemyHp-(n-absorbed));
  log(s,`攻击 ${n}：对手格挡抵消 ${absorbed}，防线减少 ${n-absorbed}，剩余 ${b.enemyHp}。`);
- if(!b.enemyHp)win(s);
+ if(!b.enemyHp){win(s);return;}
+ if(!b.trait)return;
+ checkEnemyHpTraits(s);
+ if(b.trait.id==='thorns'){const lost=hurtPlayerDirect(s,b.trait.n);log(s,`交叉火力：反击 ${b.trait.n}，失去 ${lost} 声望。`);if(!s.hp)lose(s,'被交叉火力击倒');}
 }
 function canPlay(s,uid) {
  if(s.phase!=='combat')return '当前不在比赛中';
@@ -9882,12 +9970,16 @@ function play(s,uid) {
  const wasWeak=b.enemyWeak>0;log(s,`打出 ${cardName(c)}，支付 ${t.cost} 行动点。`);
  for(const held of b.hand){const rule=CURSE_RULES[held.id];if(rule?.trigger==='onPlayLoseHp'){s.hp=Math.max(0,s.hp-rule.n);log(s,`${rule.name}：声望 -${rule.n}。`);if(!s.hp){lose(s,rule.name);b.resolving=null;return;}}}
  for(const e of effects(c)) {
-  if(e.type==='hit')for(let i=0;i<e.times;i++){
-   strike(s,damage(e.n+bonus+(e.ifWeak&&wasWeak?e.ifWeak:0),b.weak>0,b.enemyVulnerable>0));bonus=0;
-   if(s.phase!=='combat'){b.resolving=null;return;}
+  if(e.type==='hit'){
+   let first=0;if(b.field==='highground'&&!b.attackedThisTurn){first=3;}
+   if(b.field)b.attackedThisTurn=true;
+   for(let i=0;i<e.times;i++){
+    strike(s,damage(e.n+bonus+first+fieldHitBonus(b,e.n,e.times)+(e.ifWeak&&wasWeak?e.ifWeak:0),b.weak>0,b.enemyVulnerable>0));bonus=0;first=0;
+    if(s.phase!=='combat'){b.resolving=null;return;}
+   }
   }
   if(e.type==='block'){b.block+=e.n;log(s,`获得 ${e.n} 格挡（现有 ${b.block}）。`);}
-  if(e.type==='weak'){b.enemyWeak+=e.n;log(s,`对手虚弱 +${e.n} 回合。`);}
+  if(e.type==='weak'){b.enemyWeak+=e.n;log(s,`对手虚弱 +${e.n} 回合。`);if(b.aim){b.aim=0;log(s,'压制打断了对手的瞄准。');}}
   if(e.type==='vulnerable'){b.enemyVulnerable+=e.n;log(s,`对手易伤 +${e.n} 回合。`);}
   if(e.type==='draw')drawCards(s,e.n);
   if(e.type==='token'){
@@ -9897,6 +9989,10 @@ function play(s,uid) {
  if(t.player&&t.role==='先锋'&&first){const n=powerTotal(b,'init');if(n){b.block+=n;log(s,`${s.mode==='season'?'团队协同':'Haodong'} 能力：获得 ${n} 格挡。`);}}
  if(t.player&&t.cost===0&&s.skins.includes('SK02')&&!b.skinZero){b.skinZero=true;log(s,'信号线：本场首次 0 费选手，抽 1 张。');drawCards(s,1);}
  if(t.player&&t.role==='哨位'&&first&&s.skins.includes('SK03')){b.block+=2;log(s,'守望涂层：获得 2 格挡。');}
+ if(b.trait&&s.phase==='combat'){
+  if(b.trait.id==='enrageOnSkill'&&!effects(c).some(e=>e.type==='hit')){b.enemyStrength=(b.enemyStrength||0)+b.trait.n;log(s,`信息读取：对手火力 +${b.trait.n}。`);}
+  if(b.trait.id==='tempo'&&++b.tempoCount>=b.trait.n){b.tempoCount=0;b.enemyStrength=(b.enemyStrength||0)+2;b.enemyBlock+=6;log(s,'控制节奏：对手火力 +2、布防 +6。');}
+ }
  if(t.zone==='power'){b.powers.push(c);log(s,`${cardName(c)} 能力生效，离开普通循环。`);}
  else if(['exhaust','temporary'].includes(t.zone)){b.exhaust.push(c);log(s,`${cardName(c)} 消耗，本场不再抽到。`);}
  else b.discard.push(c);
@@ -9908,7 +10004,14 @@ function endTurn(s) {
  for(const c of b.hand){if(['temporary','exhaustEnd'].includes(CARDS[c.id].zone)){b.exhaust.push(c);log(s,`${cardName(c)} 在回合末消耗。`);}else b.discard.push(c);}
  b.hand=[];b.weak=Math.max(0,b.weak-1);b.enemyBlock=0;
  log(s,`对手行动：${intentText(s)}。`);
- for(const e of intent(s)) {
+ const acting=intent(s);
+ if(b.field==='overtime'&&b.turn>=5)b.enemyStrength=(b.enemyStrength||0)+2;
+ for(const e of acting) {
+  if(e.type==='buff'){b.enemyStrength=(b.enemyStrength||0)+e.n;log(s,`对手火力 +${e.n}。`);}
+  if(e.type==='aim'){b.aim=1;log(s,'对手进入瞄准。');}
+  if(e.type==='cleanse'){b.enemyWeak=0;b.enemyVulnerable=0;log(s,'对手清除了负面状态。');}
+  if(e.type==='vuln'){b.vulnerable=(b.vulnerable||0)+e.n;log(s,`我方易伤 +${e.n} 回合。`);}
+  if(e.type==='snipe'){b.aim=0;e.type='hit';e.times=1;}
   if(e.type==='hit')for(let i=0;i<e.times;i++){
    const incoming=b.vulnerable>0?Math.floor(e.n*1.5):e.n,absorbed=Math.min(b.block,incoming);b.block-=absorbed;s.hp=Math.max(0,s.hp-incoming+absorbed);
    log(s,`对手攻击 ${incoming}：格挡抵消 ${absorbed}，失去 ${incoming-absorbed} 声望（剩余 ${s.hp}）。`);
@@ -9918,9 +10021,10 @@ function endTurn(s) {
   if(e.type==='weak'){b.weak+=e.n;log(s,`我方虚弱 +${e.n} 回合。`);}
   if(e.type==='jam')for(let i=0;i<e.n;i++){b.discard.push(instance(s,e.id));log(s,`${CARDS[e.id].name} 加入弃牌堆。`);}
  }
+ if(b.trait?.id==='ritual'){b.enemyStrength=(b.enemyStrength||0)+b.trait.n;log(s,`手感渐热：对手火力 +${b.trait.n}。`);}
  b.enemyWeak=Math.max(0,b.enemyWeak-1);b.enemyVulnerable=Math.max(0,b.enemyVulnerable-1);
  if(b.vulnerable)b.vulnerable=Math.max(0,b.vulnerable-1);
- b.intent++;if(b.intent===ENEMIES[b.enemy].script.length){b.intent=0;b.cycles++;if(ENEMIES[b.enemy].boss)log(s,`Boss 完成一轮意图，之后每段攻击基础值 +${ENEMIES[b.enemy].growth??2}（累计 +${b.cycles*(ENEMIES[b.enemy].growth??2)}）。`);}
+ b.intent++;if(b.intent===enemyScript(b).length){b.intent=0;b.cycles++;if(ENEMIES[b.enemy].boss)log(s,`Boss 完成一轮意图，之后每段攻击基础值 +${ENEMIES[b.enemy].growth??2}（累计 +${b.cycles*(ENEMIES[b.enemy].growth??2)}）。`);}
  beginTurn(s);
 }
 function advance(s) {
@@ -12371,6 +12475,198 @@ const ENEMY_ART={
     "skinId": "master1",
     "skinName": "Prime Vandal",
     "accent": "#FFD700"
+  },
+  "S_E02": {
+    "path": "assets/opponents/elite.png",
+    "name": "远点狙击手",
+    "archetype": "狙击枪 · 锁定",
+    "skinId": "elite",
+    "skinName": "Ion Operator",
+    "accent": "#00D4FF"
+  },
+  "S_E03": {
+    "path": "assets/opponents/twin.png",
+    "name": "突破手双枪",
+    "archetype": "双枪 · 连击",
+    "skinId": "twin",
+    "skinName": "Sensation Stinger",
+    "accent": "#00FFAA"
+  },
+  "S_E04": {
+    "path": "assets/opponents/wall.png",
+    "name": "哨位架枪组",
+    "archetype": "霰弹枪 · 壁垒",
+    "skinId": "wall",
+    "skinName": "Glitchpop Judge",
+    "accent": "#FF00AA"
+  },
+  "S_E05": {
+    "path": "assets/opponents/control.png",
+    "name": "烟雾控场手",
+    "archetype": "重机枪 · 封锁",
+    "skinId": "control",
+    "skinName": "Glitchpop Odin",
+    "accent": "#AA00FF"
+  },
+  "S_E06": {
+    "path": "assets/opponents/intel.png",
+    "name": "前哨侦察兵",
+    "archetype": "消音步枪 · 扫描",
+    "skinId": "intel",
+    "skinName": "Recon Phantom",
+    "accent": "#00C2FF"
+  },
+  "S_EL01": {
+    "path": "assets/opponents/elite.png",
+    "name": "王牌突击手",
+    "archetype": "狙击枪 · 锁定",
+    "skinId": "elite",
+    "skinName": "Ion Operator",
+    "accent": "#00D4FF"
+  },
+  "S_EL02": {
+    "path": "assets/opponents/control.png",
+    "name": "战术指挥官",
+    "archetype": "重机枪 · 封锁",
+    "skinId": "control",
+    "skinName": "Glitchpop Odin",
+    "accent": "#AA00FF"
+  },
+  "S_B01": {
+    "path": "assets/opponents/master1.png",
+    "name": "大师赛冠军卫队",
+    "archetype": "金白晶体 · 大师赛",
+    "skinId": "master1",
+    "skinName": "Prime Vandal",
+    "accent": "#FFD700"
+  },
+  "A2_S_E02": {
+    "path": "assets/opponents/elite.png",
+    "name": "二幕·远点狙击手",
+    "archetype": "狙击枪 · 锁定",
+    "skinId": "elite",
+    "skinName": "Ion Operator",
+    "accent": "#00D4FF"
+  },
+  "A2_S_E03": {
+    "path": "assets/opponents/twin.png",
+    "name": "二幕·突破手双枪",
+    "archetype": "双枪 · 连击",
+    "skinId": "twin",
+    "skinName": "Sensation Stinger",
+    "accent": "#00FFAA"
+  },
+  "A2_S_E04": {
+    "path": "assets/opponents/wall.png",
+    "name": "二幕·哨位架枪组",
+    "archetype": "霰弹枪 · 壁垒",
+    "skinId": "wall",
+    "skinName": "Glitchpop Judge",
+    "accent": "#FF00AA"
+  },
+  "A2_S_E05": {
+    "path": "assets/opponents/control.png",
+    "name": "二幕·烟雾控场手",
+    "archetype": "重机枪 · 封锁",
+    "skinId": "control",
+    "skinName": "Glitchpop Odin",
+    "accent": "#AA00FF"
+  },
+  "A2_S_E06": {
+    "path": "assets/opponents/intel.png",
+    "name": "二幕·前哨侦察兵",
+    "archetype": "消音步枪 · 扫描",
+    "skinId": "intel",
+    "skinName": "Recon Phantom",
+    "accent": "#00C2FF"
+  },
+  "A2_S_EL01": {
+    "path": "assets/opponents/elite.png",
+    "name": "二幕·王牌突击手",
+    "archetype": "狙击枪 · 锁定",
+    "skinId": "elite",
+    "skinName": "Ion Operator",
+    "accent": "#00D4FF"
+  },
+  "A2_S_EL02": {
+    "path": "assets/opponents/control.png",
+    "name": "二幕·战术指挥官",
+    "archetype": "重机枪 · 封锁",
+    "skinId": "control",
+    "skinName": "Glitchpop Odin",
+    "accent": "#AA00FF"
+  },
+  "A2_S_B01": {
+    "path": "assets/opponents/master2.png",
+    "name": "晋级赛冠军卫队",
+    "archetype": "幽紫能量 · 大师赛",
+    "skinId": "master2",
+    "skinName": "Reaver Operator",
+    "accent": "#8B0000"
+  },
+  "A3_S_E02": {
+    "path": "assets/opponents/elite.png",
+    "name": "决赛·远点狙击手",
+    "archetype": "狙击枪 · 锁定",
+    "skinId": "elite",
+    "skinName": "Ion Operator",
+    "accent": "#00D4FF"
+  },
+  "A3_S_E03": {
+    "path": "assets/opponents/twin.png",
+    "name": "决赛·突破手双枪",
+    "archetype": "双枪 · 连击",
+    "skinId": "twin",
+    "skinName": "Sensation Stinger",
+    "accent": "#00FFAA"
+  },
+  "A3_S_E04": {
+    "path": "assets/opponents/wall.png",
+    "name": "决赛·哨位架枪组",
+    "archetype": "霰弹枪 · 壁垒",
+    "skinId": "wall",
+    "skinName": "Glitchpop Judge",
+    "accent": "#FF00AA"
+  },
+  "A3_S_E05": {
+    "path": "assets/opponents/control.png",
+    "name": "决赛·烟雾控场手",
+    "archetype": "重机枪 · 封锁",
+    "skinId": "control",
+    "skinName": "Glitchpop Odin",
+    "accent": "#AA00FF"
+  },
+  "A3_S_E06": {
+    "path": "assets/opponents/intel.png",
+    "name": "决赛·前哨侦察兵",
+    "archetype": "消音步枪 · 扫描",
+    "skinId": "intel",
+    "skinName": "Recon Phantom",
+    "accent": "#00C2FF"
+  },
+  "A3_S_EL01": {
+    "path": "assets/opponents/elite.png",
+    "name": "决赛·王牌突击手",
+    "archetype": "狙击枪 · 锁定",
+    "skinId": "elite",
+    "skinName": "Ion Operator",
+    "accent": "#00D4FF"
+  },
+  "A3_S_EL02": {
+    "path": "assets/opponents/control.png",
+    "name": "决赛·战术指挥官",
+    "archetype": "重机枪 · 封锁",
+    "skinId": "control",
+    "skinName": "Glitchpop Odin",
+    "accent": "#AA00FF"
+  },
+  "A3_S_B01": {
+    "path": "assets/opponents/champion.png",
+    "name": "总决赛冠军卫队",
+    "archetype": "龙焰 · 冠军赛",
+    "skinId": "champion",
+    "skinName": "Elderflame Vandal",
+    "accent": "#FF4500"
   }
 };
 
@@ -13334,10 +13630,105 @@ function flyCardsFromPile(cards, pile, { stagger = 125, duration = 430 } = {}) {
 return {flyCardsToPile,flyCardsFromPile};
 })();
 const module16=(()=>{
+// Shared status vocabulary for both demos: one icon, colour and rule text per
+// combat status, plus a card-text highlighter that bolds the same keywords.
+// Plain ES module with named exports only (bundled for the Wa demo by
+// tools/build-browser.mjs and imported directly by the new demo).
+
+const svg = body => `<svg class="status-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${body}</svg>`;
+
+const ICONS = {
+  block: svg('<path d="M12 2.5 4 5.6v6.1c0 5 3.4 8.7 8 9.8 4.6-1.1 8-4.8 8-9.8V5.6z" fill="currentColor"/><path d="M12 6v12" stroke="rgba(0,0,0,.35)" stroke-width="1.6"/>'),
+  weak: svg('<path d="M5 4l9 9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M13.5 12.5l2-2 3 3-2 2z" fill="currentColor"/><path d="M12 15.5v5M9 18l3 3 3-3" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'),
+  vuln: svg('<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M10 8.5l3 3-2.2 1.2 2.6 3" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>'),
+  smoke: svg('<path d="M6.5 18.5h11a4 4 0 0 0 .6-7.9 5.5 5.5 0 0 0-10.6-1.2A4.6 4.6 0 0 0 6.5 18.5z" fill="currentColor"/><circle cx="5" cy="7" r="1.8" fill="currentColor" opacity=".7"/><circle cx="8.5" cy="4.5" r="1.2" fill="currentColor" opacity=".5"/>'),
+  flash: svg('<path d="M12 1.8l2.1 6.3 6.3-2.4-3.9 5.5 5.7 3.1-6.6.6.9 6.6L12 16.5l-4.5 5 .9-6.6-6.6-.6 5.7-3.1-3.9-5.5 6.3 2.4z" fill="currentColor"/>'),
+  strength: svg('<path d="M12.5 2c.6 3.4 4.8 5.2 4.8 10.2A5.3 5.3 0 0 1 12 17.6a5.3 5.3 0 0 1-5.3-5.4c0-2.3 1.2-3.9 2.3-5 .1 1.6.8 2.7 1.8 3.2C10.8 7.3 11.5 4.3 12.5 2z" fill="currentColor"/><path d="M7 20.5h10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>'),
+  thorns: svg('<path d="M12 3 4.5 6v5.5c0 4.6 3.1 8 7.5 9.5 4.4-1.5 7.5-4.9 7.5-9.5V6z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7l1.4 3.6L17 12l-3.6 1.4L12 17l-1.4-3.6L7 12l3.6-1.4z" fill="currentColor"/>'),
+  aim: svg('<circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 1.5v5M12 17.5v5M1.5 12h5M17.5 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'),
+  enrage: svg('<path d="M4 20 8 9l3 5 2-9 3 7 2-3 2 11z" fill="currentColor"/>'),
+  sentry: svg('<path d="M9 13h6l1.5 7h-9z" fill="currentColor"/><rect x="6.5" y="6.5" width="11" height="6.5" rx="1.5" fill="currentColor"/><path d="M17.5 9.5H22" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="10.5" cy="9.7" r="1.4" fill="rgba(0,0,0,.45)"/>'),
+  overload: svg('<path d="M13 2 5 13.5h5.5L9 22l9-12h-5.8z" fill="currentColor"/>'),
+  exhaust: svg('<path d="M12 21c-4 0-7-2.8-7-6.6 0-3.1 2.2-4.9 3.5-6.8.4 1.6 1.3 2.6 2.4 3 .1-3.4 1.5-6.1 3.6-8.6.3 3.3 2.2 5.2 3.5 7.3a7 7 0 0 1 1 3.9c0 4-3 7.8-7 7.8z" fill="none" stroke="currentColor" stroke-width="2"/>'),
+  draw: svg('<rect x="4" y="5" width="10" height="14" rx="1.6" fill="none" stroke="currentColor" stroke-width="2"/><rect x="9" y="3" width="10" height="14" rx="1.6" fill="currentColor"/>'),
+  status: svg('<path d="M12 2.5 22 20H2z" fill="currentColor"/><path d="M12 9v5" stroke="rgba(0,0,0,.55)" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="17" r="1.3" fill="rgba(0,0,0,.55)"/>'),
+  burn: svg('<path d="M9 3h6v3l-1.5 1.5V9c2.6.9 4.5 3.3 4.5 6.2A6 6 0 0 1 12 21a6 6 0 0 1-6-5.8C6 12.3 7.9 9.9 10.5 9V7.5L9 6z" fill="currentColor"/><path d="M12 12.5c1 1.2 2.4 2 2.4 3.6a2.4 2.4 0 0 1-4.8 0c0-1.1.9-1.9 1.3-2.4.2.6.6 1 1.1 1.1z" fill="rgba(0,0,0,.45)"/>'),
+  retain: svg('<path d="M7 3h10v18l-5-4-5 4z" fill="currentColor"/>'),
+  discover: svg('<circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15 15l6 6" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M10.5 7.5v6M7.5 10.5h6" stroke="currentColor" stroke-width="2"/>'),
+  combo: svg('<path d="M4 17 10 7l3 5 3-5 4 10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="4" cy="17" r="2" fill="currentColor"/><circle cx="20" cy="17" r="2" fill="currentColor"/>'),
+  tempo: svg('<circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 8.5V13l3 2" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M9 2.5h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>'),
+  curse: svg('<circle cx="12" cy="11" r="7.5" fill="currentColor"/><circle cx="9.3" cy="10.5" r="1.7" fill="rgba(0,0,0,.55)"/><circle cx="14.7" cy="10.5" r="1.7" fill="rgba(0,0,0,.55)"/><path d="M9 20v-2.5M12 20v-2.5M15 20v-2.5" stroke="currentColor" stroke-width="2"/>')
+};
+
+// label: short on-body name; rule: the full hover explanation.
+const STATUS_INFO = {
+  block: { label: '布防', color: '#7fb4ff', rule: '布防：抵消等量伤害。' },
+  weak: { label: '压制', color: '#c49bff', rule: '压制：造成的攻击伤害 ×0.75，每回合 -1 层。' },
+  vuln: { label: '易伤', color: '#ff8a4c', rule: '易伤：受到的攻击伤害 ×1.5，每回合 -1 层。' },
+  smoke: { label: '烟雾', color: '#b9c4cf', rule: '烟雾：敌方每次命中伤害 -层数，敌方回合结束 -1 层。' },
+  flash: { label: '闪光', color: '#ffe066', rule: '闪光：敌方下一次命中伤害 -3×层数，触发后清空。' },
+  strength: { label: '火力', color: '#ff5a5a', rule: '火力：每次命中伤害 +层数，本场持续。' },
+  thorns: { label: '反击', color: '#e0a15a', rule: '反击：每次被攻击命中时，对攻击方造成等量伤害。' },
+  aim: { label: '瞄准', color: '#ff4d8d', rule: '瞄准：下回合将打出致命狙击；让它失去瞄准或做好布防。' },
+  enrage: { label: '狂热', color: '#ff7043', rule: '狂热：你每打出一张技能牌，它获得等量火力。' },
+  sentry: { label: '哨戒', color: '#5fd3c6', rule: '哨戒炮：回合结束时自动开火。' },
+  overload: { label: '过载', color: '#8fd3ff', rule: '过载：本回合行动点已被上回合的爆发扣减等量。' },
+  burn: { label: '燃烧', color: '#ff7a1a', rule: '燃烧：敌方回合开始时失去等同层数的生命（无视布防），然后 -1 层。' },
+  retain: { label: '保留', color: '#9fd8ff', rule: '保留：回合结束时不会被弃掉，留在手中。' },
+  discover: { label: '发现', color: '#f5d76e', rule: '发现：从三张随机牌中选一张加入手牌，本回合 0 费，打出后消耗。' },
+  combo: { label: '连击', color: '#ff9ecf', rule: '连击：本回合已打出过其他牌时触发额外效果。' },
+  exhaust: { label: '消耗', color: '#ffb36b', rule: '消耗：打出后本场移出牌组循环。' },
+  draw: { label: '抽牌', color: '#9fe3a0', rule: '抽牌：从抽牌堆抽取卡牌。' },
+  status: { label: '异常', color: '#ff6b6b', rule: '异常：对手塞入的状态牌，不能打出，常在回合末造成惩罚。' },
+  curse: { label: '隐患', color: '#d17bff', rule: '俱乐部隐患：跨比赛保留的负面牌，需要永久移除。' }
+};
+
+const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+
+function statusIcon(key) {
+  return ICONS[key] || ICONS.status;
+}
+
+// One badge: icon + stack count, coloured, with the rule as tooltip.
+function statusBadge(key, value, extraRule = '') {
+  const info = STATUS_INFO[key] || { label: key, color: '#ddd', rule: key };
+  const title = `${info.label} ${value}｜${info.rule}${extraRule ? ' ' + extraRule : ''}`;
+  return `<span class="status-badge status-${esc(key)}" style="--status-color:${info.color}" tabindex="0" role="img" aria-label="${esc(title)}" title="${esc(title)}">${statusIcon(key)}<b>${esc(value)}</b><em>${esc(info.label)}</em></span>`;
+}
+
+// statuses: object {key: value} or array of [key, value]; zero/empty values are skipped.
+function statusBadges(statuses) {
+  const entries = Array.isArray(statuses) ? statuses : Object.entries(statuses || {});
+  return entries.filter(([, v]) => v !== undefined && v !== null && v !== 0 && v !== '').map(([k, v]) => statusBadge(k, v)).join('');
+}
+
+// Keywords in card/rule text → bold coloured tag with icon. Longer words first
+// so "虚弱" and "布防" style synonyms map to one status each.
+const KEYWORDS = [
+  ['烟雾', 'smoke'], ['闪光', 'flash'], ['压制', 'weak'], ['虚弱', 'weak'], ['易伤', 'vuln'],
+  ['布防', 'block'], ['格挡', 'block'], ['火力', 'strength'], ['反击', 'thorns'], ['瞄准', 'aim'],
+  ['哨戒炮', 'sentry'], ['哨戒', 'sentry'], ['过载', 'overload'], ['消耗', 'exhaust'], ['异常', 'status'],
+  ['燃烧', 'burn'], ['保留', 'retain'], ['发现', 'discover'], ['连击', 'combo']
+];
+const KEYWORD_RE = new RegExp(KEYWORDS.map(([w]) => w).join('|'), 'g');
+const KEYWORD_MAP = new Map(KEYWORDS);
+
+// Pass escaped=true when the text is already HTML-safe (e.g. contains <strong> markup).
+function highlightKeywords(text, escaped = false) {
+  return (escaped ? String(text ?? '') : esc(text)).replace(KEYWORD_RE, word => {
+    const key = KEYWORD_MAP.get(word);
+    return `<b class="kw kw-${key}" style="--status-color:${STATUS_INFO[key].color}">${statusIcon(key)}${word}</b>`;
+  });
+}
+
+return {STATUS_INFO,statusIcon,statusBadge,statusBadges,highlightKeywords};
+})();
+const module17=(()=>{
 const { cardArtwork, opponentArtwork, artCredit } = module10;
 const { combatEvents } = module11;
 const { clearCombatFx, captureCombatStage, playCombatFx } = module12;
-const { VERSION, CARDS, SKINS, ENEMIES, describe, cardName, effects, TACTICS, displayText, compactLines, cardKeywords, REGIONS, CURSE_RULES } = module5;
+const { VERSION, CARDS, SKINS, ENEMIES, describe, cardName, effects, TACTICS, displayText, compactLines, cardKeywords, REGIONS, CURSE_RULES, TRAITS, FIELDS } = module5;
+const { statusBadges, statusIcon, highlightKeywords } = module16;
 const { createRun, canPlay, preview, intent, intentText, healAmount, removalReason, observe } = module6;
 const { createWaSeason, waAct:act, waLegalActions:legalActions } = module13;
 const { syncWaCheckpoint } = module14;
@@ -13346,9 +13737,9 @@ const createSeason=(seed,tutorial,region)=>createWaSeason(seed,tutorial,region,c
 const { routeNodes, mapEntry, nextScreen, restoreScreen } = module7;
 const { ACTS, availableNodes } = module4;
 const app=document.querySelector('#app'),dialog=document.querySelector('#dialog'),modal=document.querySelector('#dialog-content');
-const SAVE='bao-yi-ba-D0.1-save-route-v2',SEASON_SAVE='peak-season-D0.2-save-route-v3',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view-route-v3',LEGACY_VIEW='bao-yi-ba-view-legacy-route-v2';
+const SAVE='bao-yi-ba-D0.1-save-route-v2',SEASON_SAVE='peak-season-D0.2-save-route-v4',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view-route-v4',LEGACY_VIEW='bao-yi-ba-view-legacy-route-v2';
 // Internal beta: old maps cannot be resumed under the new route rules.
-try{for(const key of ['bao-yi-ba-D0.1-save','peak-season-D0.2-save','bao-yi-ba-view','bao-yi-ba-view-legacy','peak-season-D0.2-save-route-v2','bao-yi-ba-view-route-v2'])localStorage.removeItem(key);}catch{}
+try{for(const key of ['bao-yi-ba-D0.1-save','peak-season-D0.2-save','bao-yi-ba-view','bao-yi-ba-view-legacy','peak-season-D0.2-save-route-v2','bao-yi-ba-view-route-v2','peak-season-D0.2-save-route-v3','bao-yi-ba-view-route-v3'])localStorage.removeItem(key);}catch{}
 let state=null,atHome=true,hints=true,saveError='',saved=null,screen='map',selected=null,echo=null,dragging=null,pointerDrag=null,suppressClick=false,region='CN',turnAnimating=false;
 let libraryFilter='all',libraryRegionFilter='all';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -13385,7 +13776,7 @@ const shapes={
 };
 function icon(key,cls=''){return `<svg class="icon ${cls}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${shapes[key]||shapes.cards}</svg>`;}
 const roleIcon={'决斗':'battle','哨位':'shield','控场':'smoke','先锋':'eye','自由人':'power'};
-function face(c,instance=false){const t=CARDS[c.id],f=TACTICS[c.id],tag=t.zone==='exhaust'?'消耗':t.zone==='temporary'?'临时 · 消耗':t.zone==='exhaustEnd'?'回合末消耗':t.zone==='power'?'持续能力':t.id.startsWith('CU')?'跨比赛保留':c.up?'已训练':t.player?'选手牌':'辅助牌';return `<span class="card-cost">${t.cost===null?'—':t.cost}</span><span class="card-title">${esc(cardName(c))}</span><span class="card-portrait" aria-hidden="true">${cardArtwork(c.id)}<span class="portrait-role">${esc(t.player?t.role:t.id.startsWith('CU')?'隐患':'行动')}</span></span><b class="card-tactic">${esc(f.title)}</b><span class="card-effect">${compactLines(c).map(line=>`<span>${esc(line).replace(/(\d+)/g,'<strong>$1</strong>')}</span>`).join('')}</span><span class="card-foot"><b class="${['exhaust','temporary','exhaustEnd'].includes(t.zone)?'exhaust-tag':''}">${tag}</b>${instance?' · '+c.uid:''}</span>`;}
+function face(c,instance=false){const t=CARDS[c.id],f=TACTICS[c.id],tag=t.zone==='exhaust'?'消耗':t.zone==='temporary'?'临时 · 消耗':t.zone==='exhaustEnd'?'回合末消耗':t.zone==='power'?'持续能力':t.id.startsWith('CU')?'跨比赛保留':c.up?'已训练':t.player?'选手牌':'辅助牌';return `<span class="card-cost">${t.cost===null?'—':t.cost}</span><span class="card-title">${esc(cardName(c))}</span><span class="card-portrait" aria-hidden="true">${cardArtwork(c.id)}<span class="portrait-role">${esc(t.player?t.role:t.id.startsWith('CU')?'隐患':'行动')}</span></span><b class="card-tactic">${esc(f.title)}</b><span class="card-effect">${compactLines(c).map(line=>`<span>${highlightKeywords(esc(line).replace(/(\d+)/g,'<strong>$1</strong>'),true)}</span>`).join('')}</span><span class="card-foot"><b class="${['exhaust','temporary','exhaustEnd'].includes(t.zone)?'exhaust-tag':''}">${tag}</b>${instance?' · '+c.uid:''}</span>`;}
 function card(c,options={}){const t=CARDS[c.id];return `<article tabindex="0" data-card-id="${c.id}" data-card-up="${!!c.up}" aria-label="${esc(cardName(c)+'，'+t.role+'，'+describe(c))}" class="card role-${t.player?t.role:t.id.slice(0,2)} ${c.up?'upgraded':''}"><div class="card-face">${face(c,options.instance)}</div>${options.upgrade?`<div class="upgrade-text"><strong>训练后</strong><p>${esc(describe({...c,up:true}))}</p></div>`:''}${options.action?`<div class="card-action">${button(options.label||'选择',options.action,'',options.disabled||'')}</div>`:''}</article>`;}
 function heading(kicker,title,text=''){return `<div class="section-heading"><div class="eyebrow">${kicker}</div><h2 tabindex="-1" id="page-title">${title}</h2>${text?`<p>${text}</p>`:''}</div>`;}
 function home(){
@@ -13453,14 +13844,29 @@ function handCard(c,i,n){const t=CARDS[c.id],reason=canPlay(state,c.uid),offset=
 function fighter(which){
  const own=which==='self',b=state.battle,e=ENEMIES[b.enemy],hp=own?state.hp:b.enemyHp,max=own?state.maxHp:e.hp,block=own?b.block:b.enemyBlock;
  const growth=e.growth??2;
- return `<section data-drop-target="${which}" class="fighter ${own?'ally':'enemy'}">${!own?`<div class="intent-bubble"><small>对手意图</small><strong>${displayText(intentText(state))}</strong>${e.boss?`<span>长战增伤 +${b.cycles*growth}</span>`:''}</div>`:'<div class="team-label">'+(state.region||'CN')+'俱乐部</div>'}<button class="combat-target" data-target="${which}" aria-label="${own?'我方俱乐部':'对手队伍'}，可作为出牌目标">${own?`<span class="crest">${icon('shield')}<b>${state.region||'CN'}</b></span>`:opponentArtwork(b.enemy)}<span class="target-caption">${own?'施放到我方':'施放到对手'}</span></button><h2>${own?(REGIONS[state.region]?.name||'新锐')+'俱乐部':e.name}</h2><div class="life-row"><span class="shield-value" title="布防：陷阱、墙与阻滞提供的伤害抵消；下次己方回合开始清空。" aria-label="布防 ${block}">${icon('shield')}<small>布防</small> ${block}</span><div class="life-bar ${own?'own':''}"><i style="width:${hp/max*100}%"></i><span>${hp} / ${max} ${own?'声望':'防线'}</span></div></div><div class="statuses">${own?(b.weak?`<span>压制 ${b.weak}</span>`:''):`${b.enemyWeak?`<span>压制 ${b.enemyWeak}</span>`:''}${b.enemyVulnerable?`<span>易伤 ${b.enemyVulnerable}</span>`:''}`}</div>${own?`<div class="active-powers">${b.powers.map(c=>`<span title="${esc(describe(c))}">${icon('power')}${esc(cardName(c))}</span>`).join('')}</div>`:''}</section>`;
+ const badges=own?statusBadges([['block',b.block],['weak',b.weak],['vuln',b.vulnerable]]):statusBadges([['block',b.enemyBlock],['strength',b.enemyStrength],['aim',b.aim],['weak',b.enemyWeak],['vuln',b.enemyVulnerable]]);
+ const trait=!own&&b.trait&&TRAITS[b.trait.id];
+ const traitHtml=trait?`<div class="trait-row"><span class="trait-tag" tabindex="0" title="${esc(trait.text(b.trait.n))}">${statusIcon(trait.icon)}${esc(trait.name)}${b.trait.id==='tempo'?` ${b.tempoCount||0}/${b.trait.n}`:''}</span></div>`:'';
+ const look=e.look||(/E01$/.test(b.enemy)?'rookie':b.enemy);
+ return `<section data-drop-target="${which}" class="fighter ${own?'ally':'enemy'}"${own?'':` data-character-variant="${esc(look)}"`}>${!own?`<div class="intent-bubble"><small>对手意图</small><strong>${highlightKeywords(displayText(intentText(state)))}</strong>${e.boss?`<span>长战增伤 +${b.cycles*growth}</span>`:''}</div>`:'<div class="team-label">'+(state.region||'CN')+'俱乐部</div>'}<button class="combat-target" data-target="${which}" aria-label="${own?'我方俱乐部':'对手队伍'}，可作为出牌目标">${own?`<span class="crest">${icon('shield')}<b>${state.region||'CN'}</b></span>`:opponentArtwork(b.enemy)}<span class="target-caption">${own?'施放到我方':'施放到对手'}</span><span class="status-overlay">${badges}</span></button><h2>${own?(REGIONS[state.region]?.name||'新锐')+'俱乐部':e.name}</h2>${traitHtml}<div class="life-row"><span class="shield-value" title="布防：陷阱、墙与阻滞提供的伤害抵消；下次己方回合开始清空。" aria-label="布防 ${block}">${icon('shield')}<small>布防</small> ${block}</span><div class="life-bar ${own?'own':''}"><i style="width:${hp/max*100}%"></i><span>${hp} / ${max} ${own?'声望':'防线'}</span></div></div>${own?`<div class="active-powers">${b.powers.map(c=>`<span title="${esc(describe(c))}">${icon('power')}${esc(cardName(c))}</span>`).join('')}</div>`:''}</section>`;
 }
 function battle(){
  const b=state.battle,incoming=intent(state).filter(a=>a.type==='hit').reduce((n,a)=>n+a.n*a.times*(b.vulnerable>0?1.5:1),0),hurt=Math.max(0,Math.floor(incoming)-b.block),curse=b.hand.reduce((n,c)=>n+(CURSE_RULES[c.id]?.trigger==='endTurnLoseHp'?CURSE_RULES[c.id].n:0),0);
  const actInfo=state.mode==='season'?ACTS[state.act-1]:null;
  const battleLabel=state.mode==='season'?`第 ${state.act} 赛段 · ${actInfo?.name||''} ${actInfo?.bossName||''}`:'第 '+(state.wins+1)+' 场 / 6';
  const growth=ENEMIES[b.enemy]?.growth??2;
- return `<main class="combat-screen"><div class="arena-top"><span>${esc(battleLabel)} <b>·</b> 回合 ${b.turn}${ENEMIES[b.enemy]?.boss?` · 增长 ${growth}`:''}</span><div class="skin-rack">${state.skins.map(id=>`<span title="${esc(SKINS[id].text)}">${icon('power')}${SKINS[id].name}</span>`).join('')||'<span class="muted">暂无皮肤被动</span>'}</div></div><section class="arena"><div class="arena-backdrop" aria-hidden="true"><i></i><i></i><i></i></div>${fighter('self')}<div class="arena-center"><span class="versus">VS</span>${echo?`<div class="played-echo">${icon(roleIcon[CARDS[echo.id].role]||'cards')}<span>已打出</span><strong>${esc(cardName(echo))} · ${esc(TACTICS[echo.id].title)}</strong></div>`:'<span class="arena-center-label">'+(state.mode==='season'?actInfo?.name||'赛季赛段':'大师赛资格赛')+'</span>'}<div id="target-hint" class="target-hint">先选一张手牌</div></div>${fighter('enemy')}<div class="arena-floor" aria-hidden="true"></div></section><div class="combat-controls"><div class="turn-warning">${curse?`<strong>舆论压力：回合末另失去 ${curse} 声望</strong>`:`结束回合预计失去 <b>${hurt}</b> 声望`}<small class="discard-reminder">未用手牌回合末弃置；回合末消耗牌除外</small></div><div id="selection-panel" class="selection-panel"></div>${button('结束回合',{type:'end'},'end-turn')}</div><section class="hand-dock"><div class="deck-console"><div class="energy-orb"><b>${b.energy}</b><span>行动点</span></div>${ui(`抽牌堆 ${b.draw.length}`,'pile-draw','pile-button draw-pile')}</div><div class="hand-fan" style="--slots:${Math.max(1,b.hand.length)}">${b.hand.length?b.hand.map((c,i)=>handCard(c,i,b.hand.length)).join(''):'<p class="empty-hand">手牌已空<br>结束回合后重新抽牌</p>'}</div><div class="discard-console">${ui(`弃牌堆 ${b.discard.length}`,'pile-discard','pile-button discard-pile')}${ui(`消耗 ${b.exhaust.length}`,'pile-exhaust','exhaust-link')}</div></section><div class="combat-bottom"><span>${b.hand.length} / 10 张手牌</span><span>${state.tutorial&&hints?'悬停看说明 · 点牌选目标 · 拖动出牌':'1–0 选牌 · Enter 打出 · Esc 取消 · E 结束回合'}</span>${state.tutorial&&hints?ui('隐藏提示','hide-hints','text-button'):ui('战斗记录','logs','text-button')}</div></main>`;
+ const field=b.field&&FIELDS[b.field];
+ return `<main class="combat-screen"><div class="arena-top"><span>${esc(battleLabel)} <b>·</b> 回合 ${b.turn}${ENEMIES[b.enemy]?.boss&&growth?` · 增长 ${growth}`:''}</span>${field?`<span class="battlefield-tag" tabindex="0" title="${esc(field.text)}">战场 <b>${esc(field.name)}</b> · ${esc(field.text)}</span>`:''}<div class="skin-rack">${state.skins.map(id=>`<span title="${esc(SKINS[id].text)}">${icon('power')}${SKINS[id].name}</span>`).join('')||'<span class="muted">暂无皮肤被动</span>'}</div></div><section class="arena"><div class="arena-backdrop" aria-hidden="true"><i></i><i></i><i></i></div>${fighter('self')}<div class="arena-center"><span class="versus">VS</span>${echo?`<div class="played-echo">${icon(roleIcon[CARDS[echo.id].role]||'cards')}<span>已打出</span><strong>${esc(cardName(echo))} · ${esc(TACTICS[echo.id].title)}</strong></div>`:'<span class="arena-center-label">'+(state.mode==='season'?actInfo?.name||'赛季赛段':'大师赛资格赛')+'</span>'}<div id="target-hint" class="target-hint">先选一张手牌</div></div>${fighter('enemy')}<div class="arena-floor" aria-hidden="true"></div></section><div class="combat-controls"><div class="turn-warning">${curse?`<strong>舆论压力：回合末另失去 ${curse} 声望</strong>`:`结束回合预计失去 <b>${hurt}</b> 声望`}<small class="discard-reminder">未用手牌回合末弃置；回合末消耗牌除外</small></div><div id="selection-panel" class="selection-panel"></div>${button('结束回合',{type:'end'},'end-turn')}</div><section class="hand-dock"><div class="deck-console"><div class="energy-orb"><b>${b.energy}</b><span>行动点</span></div>${ui(`抽牌堆 ${b.draw.length}`,'pile-draw','pile-button draw-pile')}</div><div class="hand-fan" style="--slots:${Math.max(1,b.hand.length)}">${b.hand.length?b.hand.map((c,i)=>handCard(c,i,b.hand.length)).join(''):'<p class="empty-hand">手牌已空<br>结束回合后重新抽牌</p>'}</div><div class="discard-console">${ui(`弃牌堆 ${b.discard.length}`,'pile-discard','pile-button discard-pile')}${ui(`消耗 ${b.exhaust.length}`,'pile-exhaust','exhaust-link')}</div></section><div class="combat-bottom"><span>${b.hand.length} / 10 张手牌</span><span>${state.tutorial&&hints?'悬停看说明 · 点牌选目标 · 拖动出牌':'1–0 选牌 · Enter 打出 · Esc 取消 · E 结束回合'}</span>${state.tutorial&&hints?ui('隐藏提示','hide-hints','text-button'):ui('战斗记录','logs','text-button')}</div></main>`;
+}
+// Transfer market: an agent NPC at a booth, three contracts on the board, and a release desk.
+function agentLine(s){
+ const left=s.shop.slots.filter(Boolean).length,lines=s.money<40?['预算见底了？先解约一个不合拍的，阵容反而更顺。','没钱也能谈——先看看离队服务。']:left===0?['这批合同都被你签完了，下一站再见。']:s.money>=90?['大手笔！最右边那份顶薪合同，能改变整套打法。','预算够用，挑一个能和现有阵容配合的人。']:['三份合同，三个价位。别只看数值，看他能和谁打出配合。','刚谈下来的新人，签不签随你。','转会窗口不等人，想好了就签字。'];
+ return lines[s.rev%lines.length];
+}
+function marketScene(s){
+ const prices=[40,65,90],labels=['新秀合同','主力合同','顶薪合同'];
+ const board=s.shop.slots.map((id,slot)=>id?`<div class="contract-slot tier-${slot}"><div class="price-tag"><b>${prices[slot]}</b><span>资金</span></div><div class="contract-label">${labels[slot]}</div>${card({id,up:false},{label:s.money<prices[slot]?'资金不足':'签下合同',action:{type:'buy',slot},disabled:s.money<prices[slot]?'资金不足':''})}</div>`:`<div class="contract-slot signed"><div class="contract-label">${labels[slot]}</div><article class="card sold"><h3>已签约</h3><p>这份合同已经签下。</p></article></div>`).join('');
+ return `<section class="shop-scene market-scene"><div class="shop-header"><div class="npc-booth"><div class="npc-stage" data-npc="agent" aria-hidden="true"></div><div class="npc-info"><div class="npc-name">转会经纪人 · 老K <small>转会市场</small></div><div class="npc-bubble">${esc(agentLine(s))}</div></div></div><div class="shop-wallet"><span>俱乐部资金</span><b>${s.money}</b></div></div><h3 class="shelf-title">转会名单</h3><div class="shop-shelf contract-board">${board}</div><div class="shop-counter"><section class="counter-service"><h4>解约离队 · 永久移除一张牌</h4><p>50 资金，每个市场限一次。可移除选手或隐患；至少保留 5 张选手牌及一张直接攻击牌。</p>${ui(s.shop.removed?'本次服务已使用':'选择移除对象','remove-target','secondary',s.shop.removed||s.money<50?'disabled':'')}</section><section class="counter-service"><h4>市场规则</h4><p>签约与解约可以组合进行；离开后不能返回。空出的货位不会刷新。</p></section></div><div class="page-footer">${button('离开市场，继续赛程 →',{type:'leaveShop'})}</div></section>`;
 }
 function choice(title,text,label,action,disabled=''){return `<article class="choice"><h3>${title}</h3><p>${text}</p>${button(label,action,'',disabled)}</article>`;}
 function between(){
@@ -13479,7 +13885,7 @@ function between(){
  if(s.phase==='trial')return `${heading('紧急试训','选择补强对象','确认招募时，会同时加入一张不能打出的磨合不足。返回不会刷新候选。')}<div class="cards reward-cards">${s.eventOffers.map(id=>card({id,up:false},{label:'招募，并加入磨合不足',action:{type:'trial',id}})).join('')}</div>${button('返回事件选择',{type:'trial',id:null},'secondary')}`;
  if(s.phase==='branch')return `${heading('赛程选择','为下一场，做一次准备。','两条路线只能选择一条。')}<div class="choices">${choice('转会市场','三名选手可供购买；也可花 50 资金永久移除一张牌。当前资金 '+s.money+'。','前往转会市场',{type:'branch',choice:'shop'})}${choice('俱乐部活动','粉丝见面会恢复声望、训练升级一张牌，或团建移除隐患。三选一。','安排俱乐部活动',{type:'branch',choice:'activity'})}</div>`;
  if(s.phase==='opponent')return `${heading('挑战选择','稳步晋级，还是争取更多？','强敌会带来更高压力，但能奖励一件本赛季皮肤。')}<div class="choices">${choice('防守反击队 · 普通','38 防线，擅长布防与反击。胜利获得 20 资金和一次招募。','选择普通比赛',{type:'opponent',id:'E04'})}${choice('高压强敌队 · 强敌','54 防线，多段攻击，并塞入疲劳与节奏受阻。胜利获得 35 资金、招募和一件皮肤。','挑战强敌',{type:'opponent',id:'EL01'})}</div>`;
- if(s.phase==='shop')return `${heading('转会市场','用资金，调整你的牌组。','招募与移除可以组合进行；离开后不能返回。')}<div class="cards reward-cards">${s.shop.slots.map((id,slot)=>id?card({id,up:false},{label:`${[40,65,90][slot]} 资金 · 招募`,action:{type:'buy',slot},disabled:s.money<[40,65,90][slot]?'资金不足':''}):'<article class="card sold"><h3>该货位已空</h3><p>没有其他候选，不会刷新。</p></article>').join('')}</div><div class="shop-service"><div><h3>转会离队 · 永久移除一张牌</h3><p>50 资金，每个市场限一次。可移除选手或隐患；至少保留 5 张选手牌及一张直接攻击牌。</p></div>${ui(s.shop.removed?'本次服务已使用':'选择移除对象','remove-target','secondary',s.shop.removed||s.money<50?'disabled':'')}</div>${s.money<50&&!s.shop.removed?'<p class="muted">移除服务需要 50 资金。</p>':''}<div class="page-footer">${button('离开市场，继续赛程 →',{type:'leaveShop'})}</div>`;
+ if(s.phase==='shop')return marketScene(s);
  if(s.phase==='activity')return `${heading('俱乐部活动','比赛之外，也有取舍。','选择一项活动，然后继续赛程。')}<div class="choices">${choice('粉丝见面会',`恢复最大声望的 30%，向上取整。当前 ${s.hp}/${s.maxHp} → ${s.hp+healAmount(s)}/${s.maxHp}，实际恢复 ${healAmount(s)}。`,'举办粉丝见面会',{type:'activity',choice:'fans'},s.hp===s.maxHp?'声望已满':'')}${choice('训练','升级一张选手或战术牌。费用不变，只改变这张牌的效果。','选择训练对象',{type:'activity',choice:'upgrade'},!s.deck.some(c=>CARDS[c.id].trainable&&!c.up)?'没有可升级选手':'')}${choice('团建','永久移除一张俱乐部隐患。可以处理磨合不足或舆论压力。','处理俱乐部隐患',{type:'activity',choice:'cleanse'},!s.deck.some(c=>c.id.startsWith('CU'))?'没有俱乐部隐患':'')}${s.waVersion ? choice('体能集训', `提升体能上限：最大声望与当前声望各 +6。当前 ${s.hp}/${s.maxHp} → ${s.hp+6}/${s.maxHp+6}。消耗本次休整机会。`,'开始集训',{type:'activity',choice:'toughness'}) : ''}</div>${button('跳过活动 →',{type:'activity',choice:'skip'},'secondary')}`;
  if(s.phase==='upgrade'||s.phase==='cleanse')return `${heading('俱乐部活动',s.phase==='upgrade'?'选择一张牌，进行训练。':'解决一项俱乐部隐患。',s.phase==='upgrade'?'展示升级前后效果；同名选手的其他牌不会一起升级。':'这张隐患将永久离开本次赛季牌组。')}<div class="cards">${s.deck.filter(c=>s.phase==='upgrade'?CARDS[c.id].trainable&&!c.up:c.id.startsWith('CU')).map(c=>card(c,{instance:true,upgrade:s.phase==='upgrade',label:s.phase==='upgrade'?'训练这张牌':'永久移除此隐患',action:{type:s.phase,uid:c.uid}})).join('')}</div><div class="page-footer">${button('返回活动选择',{type:'activityBack'},'secondary')}</div>`;
  if(s.phase==='result')return `<section class="result">${heading(s.outcome==='win'?'首幕通关':s.outcome==='loss'?'赛季结束':'本次试玩结束',s.outcome==='win'?'大师赛冠军，属于你的俱乐部。':s.outcome==='loss'?'声望耗尽，俱乐部暂别赛场。':'调整思路，再来一局。',s.outcome==='win'?'你已走完第一款 Demo 的完整流程。后两幕尚未制作，现在可以回顾牌组与记录。':'试着调整进攻、防守和招募的取舍。每次赛季都从全新的初始牌组开始。')}<div class="result-stats"><span><strong>${s.wins} / 6</strong>场比赛获胜</span><span><strong>${s.hp} / ${s.maxHp}</strong>剩余声望</span><span><strong>${s.deck.length}</strong>张赛季牌</span></div><div class="button-row">${ui('再开一个赛季','home','primary')}${ui('查看最终牌组','deck')}${ui('导出本局记录','export')}</div><p class="muted">种子：${esc(s.seed)} · ${s.actions.length} 次操作 · ${VERSION}</p></section>`;

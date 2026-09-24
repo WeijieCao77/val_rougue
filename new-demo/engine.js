@@ -1,6 +1,6 @@
 // new-demo/engine.js
 import { buildMap, availableNodes } from './season-map.js';
-import { CARDS, CARD_IDS, REGION_CARD_IDS, SHARED_CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, RELICS } from './content.js';
+import { CARDS, CARD_IDS, REGION_CARD_IDS, SHARED_CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, RELICS, ARCHETYPES } from './content.js';
 import { CURSES, CURSE_RULES, EXTRA_STATUS_RULES } from '../afflictions.js';
 
 const VERSION = 'new-1';
@@ -88,6 +88,13 @@ function getEnemyDef(id) {
   return ENEMIES[id] || null;
 }
 
+// Discovered cards cost 0 until played or the turn ends.
+function cardCost(c) {
+  if (c.free) return 0;
+  const def = CARDS[c.id];
+  return c.up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost;
+}
+
 function nextUid(state) {
   return `u${state.uidCounter++}`;
 }
@@ -101,11 +108,10 @@ export function legalActions(state) {
   } else if (state.phase === 'combat') {
     const b = state.battle;
     if (!b) return [];
+    if (b.pendingDiscover) return b.pendingDiscover.options.map(id => ({ type: 'discover', id }));
     for (const c of b.hand) {
       if (c.id in STATUS_CARDS) continue;
-      const def = CARDS[c.id];
-      const cost = c.up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost;
-      if (b.energy >= cost && b.playsThisTurn < MAX_PLAYS_PER_TURN) actions.push({ type: 'play', uid: c.uid });
+      if (b.energy >= cardCost(c) && b.playsThisTurn < MAX_PLAYS_PER_TURN) actions.push({ type: 'play', uid: c.uid });
     }
     if (b.energy >= 1 && !b.stanceSwitchUsedThisTurn) actions.push({ type: 'stance' });
     actions.push({ type: 'end' });
@@ -120,7 +126,7 @@ export function legalActions(state) {
     if (shop) {
       for (let i = 0; i < shop.cards.length; i++) {
         const item = shop.cards[i];
-        if (state.money >= priceOf(item.id)) actions.push({ type: 'buy', id: item.id, index: i });
+        if (state.money >= shopPrice(item)) actions.push({ type: 'buy', id: item.id, index: i });
       }
       const rmCost = removePrice(state);
       if (state.money >= rmCost) {
@@ -182,7 +188,7 @@ export function observe(state) {
       },
       playerStatuses: b.statuses.player,
       playerBlock: b.playerBlock,
-      hand: b.hand.map(c => { const def = CARDS[c.id]; const cost = c.up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost; return { uid: c.uid, id: c.id, name: def.name, cost, text: c.up ? def.upgradeText || def.text : def.text }; }),
+      hand: b.hand.map(c => { const def = CARDS[c.id]; return { uid: c.uid, id: c.id, name: def.name, cost: cardCost(c), text: c.up ? def.upgradeText || def.text : def.text }; }),
       drawPileCount: b.drawPile.length,
       discardPileCount: b.discardPile.length,
       exhaustPileCount: b.exhaustPile.length,
@@ -200,13 +206,22 @@ export function describeIntent(state) {
   if (state.phase !== 'combat' || !state.battle?.enemyIntent) return null;
   const parts = [];
   // Actions resolve in order, so a buff listed first already raises the hit after it.
-  let strength = state.battle.statuses.enemy.strength || 0;
-  for (const act of state.battle.enemyIntent) {
-    if (act.type === 'hit') parts.push(`攻击${act.n + strength}×${act.times}`);
+  const b = state.battle;
+  let strength = b.statuses.enemy.strength || 0;
+  if (b.field === 'overtime' && b.turn >= 5) strength += 2;
+  for (const act of b.enemyIntent) {
+    if (act.type === 'hit') parts.push(`攻击${enemyHitBase(b, act.n, act.times) + strength}×${act.times}`);
     else if (act.type === 'buff') { strength += act.n; parts.push(`强化火力+${act.n}`); }
     else if (act.type === 'block') parts.push(`布防${act.n}`);
-    else if (act.type === 'jam') parts.push(`施加${act.id}`);
-    else if (act.type === 'weak') parts.push(`施加虚弱${act.n}`);
+    else if (act.type === 'jam') parts.push(`塞入${act.n || 1}张「${STATUS_CARDS[act.id]?.name || act.id}」`);
+    else if (act.type === 'weak') parts.push(`施加压制${act.n}`);
+    else if (act.type === 'vuln') parts.push(`施加易伤${act.n}`);
+    else if (act.type === 'aim') parts.push('瞄准（下回合重狙）');
+    else if (act.type === 'snipe') {
+      const full = enemyHitBase(b, act.n, 1) + strength;
+      parts.push(b.statuses.enemy.aim ? `重狙${full}（闪光可打断）` : `仓促射击${Math.ceil(act.n / 3) + strength}（瞄准已被打断）`);
+    }
+    else if (act.type === 'cleanse') parts.push('清除自身负面状态');
   }
   return parts.join('，');
 }
@@ -217,7 +232,7 @@ export function preview(state, uid) {
   if (!card) return null;
   const def = CARDS[card.id];
   return {
-    card: { uid, id: card.id, name: def.name, cost: card.up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost, text: card.up && def.upgradeText ? def.upgradeText : def.text },
+    card: { uid, id: card.id, name: def.name, cost: cardCost(card), text: card.up && def.upgradeText ? def.upgradeText : def.text },
     stance: state.battle.stance
   };
 }
@@ -243,6 +258,7 @@ function applyAction(state, action) {
     case 'enter': return enterNode(state, action);
     case 'play': return playCard(state, action);
     case 'stance': return manualStance(state);
+    case 'discover': return chooseDiscover(state, action);
     case 'end': return endTurn(state);
     case 'reward': return chooseReward(state, action);
     case 'buy': return buyCard(state, action);
@@ -292,7 +308,7 @@ function startBattle(state, node) {
     enemyName: def.name,
     enemyHp: def.hp,
     enemyMaxHp: def.hp,
-    enemyScript: shuffledEnemyScript(def.script, state),
+    enemyScript: def.ordered ? deepClone(def.script) : shuffledEnemyScript(def.script, state),
     enemyScriptIndex: 0,
     enemyIntent: null,
     turn: 1,
@@ -314,10 +330,18 @@ function startBattle(state, node) {
     statuses: { player: {}, enemy: {} },
     rewardPool: null,
     rewardTaken: false,
-    playerBlock: 0
+    playerBlock: 0,
+    field: node.field || null,
+    trait: def.trait ? deepClone(def.trait) : null,
+    traitState: {},
+    tempoCount: 0
   };
   state.phase = 'combat';
+  const b = state.battle;
+  if (def.startBlock) b.statuses.enemy.block = def.startBlock;
+  if (b.field === 'smoky') b.statuses.enemy.smoke = 2;
   const opening=hand.slice();
+  if (b.field === 'eco') { b.energy += 1; drawCards(state, 1); }
   applyRelicsAtBattleStart(state);
   if(state.phase!=='combat')return null;
   for(const card of opening){if(!hand.some(c=>c.uid===card.uid))continue;applyDrawAffliction(state,card);if(state.phase!=='combat')return null;}
@@ -334,9 +358,48 @@ function nextEnemyIntent(state) {
   b.enemyIntent = script[idx];
 }
 
+function chooseDiscover(state, action) {
+  const b = state.battle;
+  if (state.phase !== 'combat' || !b?.pendingDiscover) return '当前没有可发现的牌';
+  if (!b.pendingDiscover.options.includes(action.id)) return '不是可选的牌';
+  b.pendingDiscover = null;
+  if (b.hand.length < MAX_HAND) b.hand.push({ uid: nextUid(state), id: action.id, up: false, free: true, temp: true });
+  pushLog(state, 'discover', { id: action.id });
+  return null;
+}
+
+function discoverOptions(state, pool) {
+  const regional = REGION_CARD_IDS[TEAMS[state.team]?.region] || REGION_CARD_IDS.AM;
+  const ids = [...SHARED_CARD_IDS, ...regional].filter(id => {
+    const d = CARDS[id];
+    if (d.tag === 'discover' || d.type === 'power') return false;
+    return pool === 'any' || d.type === pool;
+  });
+  const out = [];
+  while (out.length < 3 && out.length < ids.length) {
+    const id = ids[Math.floor(nextRand(state) * ids.length)];
+    if (!out.includes(id)) out.push(id);
+  }
+  return out;
+}
+
+// End-of-player-turn automation: deployed turrets fire, barriers add block.
+function turretDamage(b, d) { return d.n + 3 * (b.powerStacks.turret_core || 0); }
+function runDeployables(state) {
+  const b = state.battle;
+  for (const d of b.deployables || []) {
+    if (d.kind === 'turret') { dealDamageToEnemy(state, turretDamage(b, d)); checkEnemyHpTraits(state); }
+    else b.playerBlock += d.n;
+    d.turns--;
+    if (b.enemyHp <= 0) break;
+  }
+  b.deployables = (b.deployables || []).filter(d => d.turns > 0);
+}
+
 function playCard(state, action) {
   if (state.phase !== 'combat') return '不在战斗阶段';
   const b = state.battle;
+  if (b.pendingDiscover) return '请先选择发现的牌';
   if (b.playsThisTurn >= MAX_PLAYS_PER_TURN) return '本回合打出牌数已达上限';
   const idx = b.hand.findIndex(c => c.uid === action.uid);
   if (idx === -1) return '手牌中没有该牌';
@@ -344,7 +407,7 @@ function playCard(state, action) {
   const def = CARDS[card.id];
   if (!def) return '未知卡牌';
   if (def.type === 'status') return '状态牌不能打出';
-  const cost = card.up && def.upgradeCost !== undefined ? def.upgradeCost : def.cost;
+  const cost = cardCost(card);
   if (b.energy < cost) return '能量不足';
 
   const preAttackPlayed = b.attackPlayedThisTurn;
@@ -355,6 +418,8 @@ function playCard(state, action) {
     preAttackPlayed,
     preBlockPlayed,
     preStanceChanged,
+    preCount: b.playsThisTurn,
+    cardId: card.id,
     attackBonusUsed: false,
     blockBonusUsed: false
   };
@@ -380,9 +445,11 @@ function playCard(state, action) {
     }
     b.powerCards.push(card);
     // Power card is removed from rotation, not discarded or exhausted
-  } else if (def.exhaust || effects.some(e => e.type === 'exhaustSelf')) {
+  } else if (def.exhaust || card.temp || effects.some(e => e.type === 'exhaustSelf')) {
+    delete card.free;
     b.exhaustPile.push(card);
     if (b.powerStacks.dark_embrace) drawCards(state, b.powerStacks.dark_embrace);
+    if (b.powerStacks.feel_no_pain) b.playerBlock += 3 * b.powerStacks.feel_no_pain;
   } else {
     b.discardPile.push(card);
   }
@@ -398,6 +465,16 @@ function playCard(state, action) {
   if (isAttack) b.attackPlayedThisTurn = true;
   if (isBlock) b.blockPlayedThisTurn = true;
   if (effects.some(e => e.type === 'stanceSwitch')) b.stanceChangedThisTurn = true;
+
+  if (b.enemyHp > 0 && b.trait?.id === 'enrageOnSkill' && def.type === 'skill') {
+    b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + b.trait.n;
+  }
+  if (b.enemyHp > 0 && b.trait?.id === 'tempo' && ++b.tempoCount >= b.trait.n) {
+    b.tempoCount = 0;
+    b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + 2;
+    b.statuses.enemy.block = (b.statuses.enemy.block || 0) + 8;
+    pushLog(state, 'trait', { id: 'tempo' });
+  }
 
   if (b.enemyHp <= 0) {
     b.enemyHp = 0;
@@ -423,11 +500,25 @@ function applyEffect(state, eff, sourceCard, mods, context) {
       }
       const times = eff.times || 1;
       const clutchBonus = (b.powers.includes('clutch_core') && ((b.statuses.enemy.smoke || 0) > 0 || (b.statuses.enemy.flash || 0) > 0)) ? 2 * (b.powerStacks.clutch_core || 1) : 0;
+      let fieldBonus = 0;
+      if (b.field === 'corridor' && times > 1) fieldBonus += 1;
+      if (b.field === 'longrange' && baseDamage >= 10) fieldBonus += 3;
+      let firstHitBonus = 0;
+      if (b.field === 'highground' && !context.preAttackPlayed && !context.highgroundUsed) { firstHitBonus = 3; context.highgroundUsed = true; }
+      if (context.cardId === 'TK01') fieldBonus += 3 * (b.powerStacks.knife_master || 0);
+      if (b.powerStacks.combo_core && context.preCount >= 2) fieldBonus += 3 * b.powerStacks.combo_core;
       for (let i = 0; i < times; i++) {
-        let dmg = baseDamage + (b.powerStacks.inflame || 0);
+        let dmg = baseDamage + (b.powerStacks.inflame || 0) + fieldBonus;
         if (i === 0 && bonus > 0) dmg += bonus;
+        if (i === 0) dmg += firstHitBonus;
         if (clutchBonus > 0) dmg += clutchBonus;
         dealDamageToEnemy(state, dmg);
+        checkEnemyHpTraits(state);
+        if (b.enemyHp <= 0) break;
+        if (b.trait?.id === 'thorns') {
+          damagePlayerDirect(state, b.trait.n);
+          if (state.phase !== 'combat') return;
+        }
       }
       break;
     }
@@ -450,6 +541,7 @@ function applyEffect(state, eff, sourceCard, mods, context) {
         n += 2;
         b.smokeBonusUsedThisTurn = true;
       }
+      if (b.field === 'smoky' && !b.fieldSmokeUsedThisTurn) { n += 1; b.fieldSmokeUsedThisTurn = true; }
       b.statuses.enemy.smoke = (b.statuses.enemy.smoke || 0) + n;
       break;
     }
@@ -460,6 +552,7 @@ function applyEffect(state, eff, sourceCard, mods, context) {
         b.flashBonusUsedThisTurn = true;
       }
       b.statuses.enemy.flash = (b.statuses.enemy.flash || 0) + n;
+      if (b.statuses.enemy.aim) { b.statuses.enemy.aim = 0; pushLog(state, 'aim_broken'); }
       break;
     }
     case 'weak':
@@ -537,6 +630,43 @@ function applyEffect(state, eff, sourceCard, mods, context) {
       applyEffect(state, {type:'attack', n:eff.base + eff.per * Math.min(eff.cap, upgraded)}, sourceCard, mods, context);
       break;
     }
+    case 'burn':
+      b.statuses.enemy.burn = (b.statuses.enemy.burn || 0) + eff.n;
+      break;
+    case 'burnMultiply':
+      b.statuses.enemy.burn = (b.statuses.enemy.burn || 0) * eff.n;
+      break;
+    case 'detonate': {
+      const stacks = b.statuses.enemy.burn || 0;
+      b.statuses.enemy.burn = 0;
+      if (stacks > 0) applyEffect(state, { type: 'attack', n: stacks * eff.per }, sourceCard, mods, context);
+      break;
+    }
+    case 'deploy':
+      (b.deployables ||= []).push({ kind: eff.kind, n: eff.n, turns: eff.turns });
+      break;
+    case 'fireTurrets':
+      for (const d of b.deployables || []) {
+        if (d.kind !== 'turret') continue;
+        dealDamageToEnemy(state, turretDamage(b, d));
+        checkEnemyHpTraits(state);
+        if (b.enemyHp <= 0) break;
+      }
+      break;
+    case 'attackFromBlock':
+      applyEffect(state, { type: 'attack', n: b.playerBlock * (eff.mult || 1) }, sourceCard, mods, context);
+      break;
+    case 'discover':
+      b.pendingDiscover = { options: discoverOptions(state, eff.pool) };
+      if (!b.pendingDiscover.options.length) b.pendingDiscover = null;
+      break;
+    case 'strength':
+      if (!b.powers.includes('inflame')) b.powers.push('inflame');
+      b.powerStacks.inflame = (b.powerStacks.inflame || 0) + eff.n;
+      break;
+    case 'overload':
+      b.overloadNext = (b.overloadNext || 0) + eff.n;
+      break;
     case 'conditional': {
       if (checkCondition(state, eff.condition, context)) {
         applyEffect(state, eff.effect, sourceCard, mods, context);
@@ -578,6 +708,12 @@ function checkCondition(state, cond, context) {
       return b.stance === 'push';
     case 'stance_changed_this_turn':
       return context.preStanceChanged;
+    case 'combo':
+      return context.preCount > 0;
+    case 'enemy_vuln':
+      return (b.statuses.enemy.vuln || 0) > 0;
+    case 'enemy_burn':
+      return (b.statuses.enemy.burn || 0) > 0;
     default:
       return false;
   }
@@ -598,6 +734,46 @@ function dealDamageToEnemy(state, dmg) {
     final -= blocked;
   }
   b.enemyHp = Math.max(0, b.enemyHp - final);
+}
+
+// Battlefield modifiers that change a single enemy hit before strength.
+function enemyHitBase(b, n, times) {
+  let base = n;
+  if (b.field === 'corridor' && times > 1) base += 1;
+  if (b.field === 'longrange' && n >= 10) base += 3;
+  return base;
+}
+
+// Damage that ignores smoke/flash/weak (e.g. counter-fire); block still absorbs it.
+function damagePlayerDirect(state, n) {
+  const b = state.battle;
+  const blocked = Math.min(b.playerBlock, n);
+  b.playerBlock -= blocked;
+  state.hp = Math.max(0, state.hp - (n - blocked));
+  if (state.hp <= 0) finishBattleLoss(state);
+}
+
+// Passive traits that react to the enemy's HP dropping.
+function checkEnemyHpTraits(state) {
+  const b = state.battle;
+  const trait = b.trait;
+  if (!trait || b.enemyHp <= 0) return;
+  if (trait.id === 'berserk' && !b.traitState.berserk && b.enemyHp <= b.enemyMaxHp / 2) {
+    b.traitState.berserk = true;
+    b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + trait.n;
+    pushLog(state, 'trait', { id: 'berserk' });
+  }
+  if (trait.id === 'phase2' && !b.traitState.phase2 && b.enemyHp <= b.enemyMaxHp / 2) {
+    b.traitState.phase2 = true;
+    for (const k of ['weak', 'vuln', 'smoke', 'flash']) b.statuses.enemy[k] = 0;
+    b.statuses.enemy.block = (b.statuses.enemy.block || 0) + 12;
+    b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + 2;
+    const def = getEnemyDef(b.enemyId);
+    b.enemyScript = deepClone(def.phase2);
+    b.enemyIntent = b.enemyScript[0];
+    b.enemyScriptIndex = 1;
+    pushLog(state, 'trait', { id: 'phase2' });
+  }
 }
 
 function dealDamageToPlayer(state, baseDamage) {
@@ -660,6 +836,7 @@ function applyDrawAffliction(state,card){
 function manualStance(state) {
   if (state.phase !== 'combat') return '不在战斗阶段';
   const b = state.battle;
+  if (b.pendingDiscover) return '请先选择发现的牌';
   if (b.energy < 1) return '能量不足';
   if (b.stanceSwitchUsedThisTurn) return '本回合已切换过姿态';
   b.energy--;
@@ -678,6 +855,7 @@ function switchStance(state) {
 function endTurn(state) {
   if (state.phase !== 'combat') return '不在战斗阶段';
   const b = state.battle;
+  if (b.pendingDiscover) return '请先选择发现的牌';
 
   // Discard hand, apply status card damage
   for (const card of b.hand) {
@@ -692,8 +870,23 @@ function endTurn(state) {
       }
     }
   }
-  b.discardPile.push(...b.hand);
-  b.hand = [];
+  const kept = [];
+  for (const card of b.hand) {
+    if (CARDS[card.id]?.retain) kept.push(card);
+    else if (card.temp) b.exhaustPile.push(card);
+    else b.discardPile.push(card);
+  }
+  b.hand = kept;
+
+  runDeployables(state);
+  if (b.enemyHp <= 0) { b.enemyHp = 0; finishBattleWin(state); return null; }
+  // Burn ticks at the start of the enemy turn and ignores block.
+  if (b.statuses.enemy.burn > 0) {
+    b.enemyHp = Math.max(0, b.enemyHp - b.statuses.enemy.burn);
+    b.statuses.enemy.burn--;
+    checkEnemyHpTraits(state);
+    if (b.enemyHp <= 0) { finishBattleWin(state); return null; }
+  }
 
   // Player turn ends: decrement player weak only
   if (b.statuses.player.weak > 0) b.statuses.player.weak--;
@@ -719,9 +912,12 @@ function endTurn(state) {
   b.playsThisTurn = 0;
   b.smokeBonusUsedThisTurn = false;
   b.flashBonusUsedThisTurn = false;
+  b.fieldSmokeUsedThisTurn = false;
   b.upgradeEnergyUsedThisTurn = false;
   b.turn++;
-  b.energy = 3;
+  b.energy = Math.max(0, 3 - (b.overloadNext || 0));
+  b.overload = b.overloadNext || 0;
+  b.overloadNext = 0;
   if (!b.powers.includes('barricade')) {
     b.playerBlock = 0;
   }
@@ -734,11 +930,12 @@ function endTurn(state) {
 
 function executeEnemyTurn(state) {
   const b = state.battle;
+  if (b.field === 'overtime' && b.turn >= 5) b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + 2;
   for (const action of b.enemyIntent) {
     if (state.phase !== 'combat') return;
     if (action.type === 'hit') {
       for (let i = 0; i < action.times; i++) {
-        dealDamageToPlayer(state, action.n);
+        dealDamageToPlayer(state, enemyHitBase(b, action.n, action.times));
         if (state.hp <= 0) {
           finishBattleLoss(state);
           return;
@@ -756,8 +953,20 @@ function executeEnemyTurn(state) {
     } else if (action.type === 'buff') {
       // Permanent for this fight: every later hit gains this much damage.
       b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + action.n;
+    } else if (action.type === 'vuln') {
+      b.statuses.player.vuln = (b.statuses.player.vuln || 0) + action.n;
+    } else if (action.type === 'aim') {
+      b.statuses.enemy.aim = 1;
+    } else if (action.type === 'snipe') {
+      const aimed = (b.statuses.enemy.aim || 0) > 0;
+      b.statuses.enemy.aim = 0;
+      dealDamageToPlayer(state, aimed ? enemyHitBase(b, action.n, 1) : Math.ceil(action.n / 3));
+      if (state.hp <= 0) { finishBattleLoss(state); return; }
+    } else if (action.type === 'cleanse') {
+      for (const k of ['weak', 'vuln', 'smoke', 'flash']) b.statuses.enemy[k] = 0;
     }
   }
+  if (b.trait?.id === 'ritual') b.statuses.enemy.strength = (b.statuses.enemy.strength || 0) + b.trait.n;
 }
 
 function finishBattleWin(state) {
@@ -770,14 +979,18 @@ function finishBattleWin(state) {
   const weights = { common: 10, uncommon: 4, rare: 1 };
   const regional = REGION_CARD_IDS[TEAMS[state.team]?.region] || REGION_CARD_IDS.AM;
   const available = [...SHARED_CARD_IDS, ...regional];
-  const weightOf = id => weights[CARDS[id].rarity] * (CARDS[id].region ? 3 : 1);
+  // Build-direction cards are weighted like regional ones so every reward
+  // screen tends to offer a real choice between directions.
+  const weightOf = id => weights[CARDS[id].rarity] * (CARDS[id].region || ARCHETYPES[CARDS[id].tag] ? 3 : 1);
   const pool = [];
   while (pool.length < 3) {
-    const total = available.reduce((s, id) => s + (pool.includes(id) ? 0 : weightOf(id)), 0);
+    // Prefer a card whose tag differs from the ones already offered.
+    const fresh = available.filter(id => !pool.includes(id) && !pool.some(p => CARDS[p].tag === CARDS[id].tag));
+    const candidates = fresh.length ? fresh : available.filter(id => !pool.includes(id));
+    const total = candidates.reduce((s, id) => s + weightOf(id), 0);
     let roll = nextRand(state) * total;
-    let chosen = available.find(id=>!pool.includes(id));
-    for (const id of available) {
-      if(pool.includes(id))continue;
+    let chosen = candidates[0];
+    for (const id of candidates) {
       roll -= weightOf(id);
       if (roll <= 0) {
         chosen = id;
@@ -885,6 +1098,10 @@ function generateShop(state) {
     const id = choices[Math.floor(nextRand(state) * choices.length)];
     cards.push({ id, price: priceOf(id) });
   }
+  // One random item is on sale each visit (half price), so shops differ.
+  const saleIndex = Math.floor(nextRand(state) * cards.length);
+  cards[saleIndex].sale = true;
+  cards[saleIndex].price = Math.floor(cards[saleIndex].price / 2);
   return { cards, categoryUpgradeUsed:false };
 }
 
@@ -893,6 +1110,10 @@ export function categoryUpgradeQuote(state, category) {
   const targets = state.deck.filter(c => !c.up && CARDS[c.id]?.type === category && CARDS[c.id]?.upgradeEffects?.length);
   const price = targets.length ? 60 + targets.reduce((sum, c) => sum + ({common:28, uncommon:42, rare:56}[CARDS[c.id].rarity] || 28), 0) : 0;
   return {count:targets.length, price, used:!!state.shop?.categoryUpgradeUsed};
+}
+
+export function shopPrice(item) {
+  return item.price ?? priceOf(item.id);
 }
 
 function priceOf(cardId) {
@@ -912,7 +1133,7 @@ function buyCard(state, action) {
   const idx = action.index;
   const item = state.shop.cards[idx];
   if (!item) return '无效索引';
-  const cost = priceOf(item.id);
+  const cost = shopPrice(item);
   if (state.money < cost) return '金币不足';
   state.money -= cost;
   state.deck.push({ uid: nextUid(state), id: item.id, up: false });
@@ -1088,6 +1309,8 @@ function applyTurnStartPowers(state) {
       b.energy += 2 * stacks;
     } else if (p === 'final_push') {
       b.playerBlock += 3 * stacks;
+    } else if (p === 'burn_core') {
+      b.statuses.enemy.burn = (b.statuses.enemy.burn || 0) + 3 * stacks;
     }
   }
   for (const rel of state.relics) {

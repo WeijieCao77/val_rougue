@@ -2098,5 +2098,197 @@ export const ENEMY_ART={
     "skinId": "master1",
     "skinName": "Prime Vandal",
     "accent": "#FFD700"
+  },
+  "S_E02": {
+    "path": "assets/opponents/elite.png",
+    "name": "远点狙击手",
+    "archetype": "狙击枪 · 锁定",
+    "skinId": "elite",
+    "skinName": "Ion Operator",
+    "accent": "#00D4FF"
+  },
+  "S_E03": {
+    "path": "assets/opponents/twin.png",
+    "name": "突破手双枪",
+    "archetype": "双枪 · 连击",
+    "skinId": "twin",
+    "skinName": "Sensation Stinger",
+    "accent": "#00FFAA"
+  },
+  "S_E04": {
+    "path": "assets/opponents/wall.png",
+    "name": "哨位架枪组",
+    "archetype": "霰弹枪 · 壁垒",
+    "skinId": "wall",
+    "skinName": "Glitchpop Judge",
+    "accent": "#FF00AA"
+  },
+  "S_E05": {
+    "path": "assets/opponents/control.png",
+    "name": "烟雾控场手",
+    "archetype": "重机枪 · 封锁",
+    "skinId": "control",
+    "skinName": "Glitchpop Odin",
+    "accent": "#AA00FF"
+  },
+  "S_E06": {
+    "path": "assets/opponents/intel.png",
+    "name": "前哨侦察兵",
+    "archetype": "消音步枪 · 扫描",
+    "skinId": "intel",
+    "skinName": "Recon Phantom",
+    "accent": "#00C2FF"
+  },
+  "S_EL01": {
+    "path": "assets/opponents/elite.png",
+    "name": "王牌突击手",
+    "archetype": "狙击枪 · 锁定",
+    "skinId": "elite",
+    "skinName": "Ion Operator",
+    "accent": "#00D4FF"
+  },
+  "S_EL02": {
+    "path": "assets/opponents/control.png",
+    "name": "战术指挥官",
+    "archetype": "重机枪 · 封锁",
+    "skinId": "control",
+    "skinName": "Glitchpop Odin",
+    "accent": "#AA00FF"
+  },
+  "S_B01": {
+    "path": "assets/opponents/master1.png",
+    "name": "大师赛冠军卫队",
+    "archetype": "金白晶体 · 大师赛",
+    "skinId": "master1",
+    "skinName": "Prime Vandal",
+    "accent": "#FFD700"
+  },
+  "A2_S_E02": {
+    "path": "assets/opponents/elite.png",
+    "name": "二幕·远点狙击手",
+    "archetype": "狙击枪 · 锁定",
+    "skinId": "elite",
+    "skinName": "Ion Operator",
+    "accent": "#00D4FF"
+  },
+  "A2_S_E03": {
+    "path": "assets/opponents/twin.png",
+    "name": "二幕·突破手双枪",
+    "archetype": "双枪 · 连击",
+    "skinId": "twin",
+    "skinName": "Sensation Stinger",
+    "accent": "#00FFAA"
+  },
+  "A2_S_E04": {
+    "path": "assets/opponents/wall.png",
+    "name": "二幕·哨位架枪组",
+    "archetype": "霰弹枪 · 壁垒",
+    "skinId": "wall",
+    "skinName": "Glitchpop Judge",
+    "accent": "#FF00AA"
+  },
+  "A2_S_E05": {
+    "path": "assets/opponents/control.png",
+    "name": "二幕·烟雾控场手",
+    "archetype": "重机枪 · 封锁",
+    "skinId": "control",
+    "skinName": "Glitchpop Odin",
+    "accent": "#AA00FF"
+  },
+  "A2_S_E06": {
+    "path": "assets/opponents/intel.png",
+    "name": "二幕·前哨侦察兵",
+    "archetype": "消音步枪 · 扫描",
+    "skinId": "intel",
+    "skinName": "Recon Phantom",
+    "accent": "#00C2FF"
+  },
+  "A2_S_EL01": {
+    "path": "assets/opponents/elite.png",
+    "name": "二幕·王牌突击手",
+    "archetype": "狙击枪 · 锁定",
+    "skinId": "elite",
+    "skinName": "Ion Operator",
+    "accent": "#00D4FF"
+  },
+  "A2_S_EL02": {
+    "path": "assets/opponents/control.png",
+    "name": "二幕·战术指挥官",
+    "archetype": "重机枪 · 封锁",
+    "skinId": "control",
+    "skinName": "Glitchpop Odin",
+    "accent": "#AA00FF"
+  },
+  "A2_S_B01": {
+    "path": "assets/opponents/master2.png",
+    "name": "晋级赛冠军卫队",
+    "archetype": "幽紫能量 · 大师赛",
+    "skinId": "master2",
+    "skinName": "Reaver Operator",
+    "accent": "#8B0000"
+  },
+  "A3_S_E02": {
+    "path": "assets/opponents/elite.png",
+    "name": "决赛·远点狙击手",
+    "archetype": "狙击枪 · 锁定",
+    "skinId": "elite",
+    "skinName": "Ion Operator",
+    "accent": "#00D4FF"
+  },
+  "A3_S_E03": {
+    "path": "assets/opponents/twin.png",
+    "name": "决赛·突破手双枪",
+    "archetype": "双枪 · 连击",
+    "skinId": "twin",
+    "skinName": "Sensation Stinger",
+    "accent": "#00FFAA"
+  },
+  "A3_S_E04": {
+    "path": "assets/opponents/wall.png",
+    "name": "决赛·哨位架枪组",
+    "archetype": "霰弹枪 · 壁垒",
+    "skinId": "wall",
+    "skinName": "Glitchpop Judge",
+    "accent": "#FF00AA"
+  },
+  "A3_S_E05": {
+    "path": "assets/opponents/control.png",
+    "name": "决赛·烟雾控场手",
+    "archetype": "重机枪 · 封锁",
+    "skinId": "control",
+    "skinName": "Glitchpop Odin",
+    "accent": "#AA00FF"
+  },
+  "A3_S_E06": {
+    "path": "assets/opponents/intel.png",
+    "name": "决赛·前哨侦察兵",
+    "archetype": "消音步枪 · 扫描",
+    "skinId": "intel",
+    "skinName": "Recon Phantom",
+    "accent": "#00C2FF"
+  },
+  "A3_S_EL01": {
+    "path": "assets/opponents/elite.png",
+    "name": "决赛·王牌突击手",
+    "archetype": "狙击枪 · 锁定",
+    "skinId": "elite",
+    "skinName": "Ion Operator",
+    "accent": "#00D4FF"
+  },
+  "A3_S_EL02": {
+    "path": "assets/opponents/control.png",
+    "name": "决赛·战术指挥官",
+    "archetype": "重机枪 · 封锁",
+    "skinId": "control",
+    "skinName": "Glitchpop Odin",
+    "accent": "#AA00FF"
+  },
+  "A3_S_B01": {
+    "path": "assets/opponents/champion.png",
+    "name": "总决赛冠军卫队",
+    "archetype": "龙焰 · 冠军赛",
+    "skinId": "champion",
+    "skinName": "Elderflame Vandal",
+    "accent": "#FF4500"
   }
 };

@@ -125,7 +125,7 @@ function isWebGLAvailable() {
 // Static SVG fallback (used when WebGL fails or during initial load)
 // -----------------------------------------------------------------------------
 function showStaticFallback(container, side, variant) {
-  const color = side === 'ally' ? '#4a7a8c' : '#8c4a4a';
+  const color = side === 'ally' ? '#4a7a8c' : side === 'npc' ? '#8c7a4a' : '#8c4a4a';
   const variantColor = variant === 'default' ? color : shadeColor(color, (hashString(variant) % 40) - 20);
   const svg = `
     <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
@@ -142,7 +142,7 @@ function showStaticFallback(container, side, variant) {
       <g stroke="#000" stroke-width="1.5" fill="none">
         <path d="M60 25v10M60 35l-5 10M60 35l5 10"/>
       </g>
-      <text x="60" y="75" font-size="8" fill="#888" text-anchor="middle">${side === 'ally' ? 'ALLY' : 'ENEMY'}</text>
+      <text x="60" y="75" font-size="8" fill="#888" text-anchor="middle">${side === 'ally' ? 'ALLY' : side === 'npc' ? 'NPC' : 'ENEMY'}</text>
     </svg>`;
   const fallbackDiv = document.createElement('div');
   fallbackDiv.className = 'character-stage-fallback';
@@ -220,7 +220,8 @@ function createThreeStage(container, side, variant, block) {
   const dirLight = new THREE.DirectionalLight(0xffffff, 2.15);
   dirLight.position.set(2, 3, 4);
   scene.add(dirLight);
-  const rimLight = new THREE.DirectionalLight(side === 'ally' ? 0x86d9f6 : 0xff8b73, 1.1);
+  // Shop NPCs get a neutral warm light instead of the hostile red rim.
+  const rimLight = new THREE.DirectionalLight(side === 'ally' ? 0x86d9f6 : side === 'npc' ? 0xffe2a8 : 0xff8b73, 1.1);
   rimLight.position.set(-2, 2, -2);
   scene.add(rimLight);
 
@@ -571,7 +572,7 @@ function createThreeStage(container, side, variant, block) {
 // -----------------------------------------------------------------------------
 async function buildSquadModels(side, variant) {
   const model = buildChibiFigure(side, variant);
-  model.group.rotation.y = side === 'ally' ? -0.18 : 0.18;
+  model.group.rotation.y = side === 'ally' ? -0.18 : side === 'npc' ? 0 : 0.18;
   return [model];
 }
 

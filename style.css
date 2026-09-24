@@ -1645,3 +1645,151 @@ body.home-mode img {
 @keyframes armor-glint { to { transform:scale(1.15); filter:drop-shadow(0 0 9px #b9ebff); } }
 @media(max-width:720px) { .combat-target:has(.character-stage-host canvas) { width:135px; height:91px; } }
 @media(prefers-reduced-motion:reduce) { .block-value .mini-armor { animation:none !important; } }
+
+/* Status badges shown on fighters, and bold keywords inside card text. */
+.status-svg { width: 1em; height: 1em; flex: none; display: inline-block; vertical-align: -0.14em; }
+
+.status-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 30px; margin-top: 6px; }
+.status-badge {
+  --status-color: #ddd;
+  position: relative; display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 8px 3px 5px; border-radius: 999px;
+  background: color-mix(in srgb, var(--status-color) 18%, rgba(8, 12, 18, .88));
+  border: 1.5px solid color-mix(in srgb, var(--status-color) 75%, transparent);
+  color: var(--status-color); font-size: 13px; line-height: 1; cursor: help;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.35);
+  animation: status-pop .28s ease-out;
+}
+.status-badge .status-svg { width: 18px; height: 18px; filter: drop-shadow(0 0 3px color-mix(in srgb, var(--status-color) 60%, transparent)); }
+.status-badge b { font-weight: 900; font-size: 14px; color: #fff; text-shadow: 0 1px 2px #000; }
+.status-badge em { font-style: normal; font-weight: 700; font-size: 12px; }
+.status-badge:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@keyframes status-pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Badges pinned onto the character art (top-left corner of the figure). */
+.status-overlay { position: absolute; left: 6px; right: 6px; bottom: 6px; z-index: 4; display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-start; pointer-events: auto; }
+.status-overlay .status-badge { padding: 2px 6px 2px 4px; font-size: 12px; }
+.status-overlay .status-badge em { display: none; }
+@media (min-width: 900px) { .status-overlay .status-badge em { display: inline; } }
+
+/* Keywords inside card faces, tooltips and rule text. */
+.kw { --status-color: #fff; font-weight: 900; color: var(--status-color); white-space: nowrap; text-shadow: 0 0 1px rgba(0,0,0,.6); }
+.kw .status-svg { margin-right: 1px; }
+/* Light card faces need darker keyword ink. */
+.card-face .kw, .hand-card .kw, .shop-card .kw, .reward-card .kw, .card .kw, .discover-card .kw {
+  color: color-mix(in srgb, var(--status-color) 55%, #1b1208);
+  text-shadow: none;
+}
+
+/* Deployed turrets / barriers on the player's side. */
+.deploy-row { position: absolute; top: 6px; left: 6px; z-index: 5; display: flex; gap: 4px; }
+.deploy-chip { display: inline-flex; align-items: center; gap: 2px; padding: 2px 6px; border-radius: 6px; background: rgba(8, 40, 38, .9); border: 1.5px solid #5fd3c6; color: #5fd3c6; font-size: 12px; animation: status-pop .28s ease-out; }
+.deploy-chip b { color: #fff; } .deploy-chip small { color: #9fe; font-size: 10px; }
+.deploy-chip .status-svg { width: 16px; height: 16px; }
+
+/* Discover: pick one of three. */
+.discover-overlay { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgba(4, 8, 14, .72); backdrop-filter: blur(2px); }
+.discover-panel { width: min(760px, 94vw); padding: 18px; border-radius: 14px; background: #121a24; border: 1px solid #f5d76e88; box-shadow: 0 10px 40px #000a; text-align: center; color: #eef; }
+.discover-panel h3 { margin: 0 0 4px; color: #f5d76e; display: flex; gap: 8px; align-items: center; justify-content: center; }
+.discover-panel p { margin: 0 0 12px; font-size: 13px; color: #aab; }
+.discover-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.discover-card { display: flex; flex-direction: column; gap: 6px; align-items: center; padding: 10px; border-radius: 10px; background: linear-gradient(#efe3c4, #d9c79b); color: #2a1d0c; border: 2px solid #8a6a2e; cursor: pointer; font: inherit; transition: transform .15s; }
+.discover-card:hover, .discover-card:focus-visible { transform: translateY(-4px); outline: 2px solid #f5d76e; }
+.discover-card .discover-art svg { width: 100%; height: 70px; display: block; border-radius: 6px; }
+.discover-card span:last-child { font-size: 12px; line-height: 1.4; }
+@media (max-width: 560px) { .discover-options { grid-template-columns: 1fr; } .discover-card .discover-art { display: none; } }
+
+.card-archetype { font-size: 11px; font-weight: 800; color: #8a7a5a; margin: 2px 0; }
+.card-archetype.is-archetype { color: #b3541e; }
+.reward-hint { color: #9ab; font-size: 13px; margin: -4px 0 10px; }
+
+/* Trait tags describing an enemy's special behaviour. */
+.trait-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }
+.trait-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 6px; font-size: 12px; font-weight: 800; color: #ffd9a0; background: rgba(60, 30, 10, .78); border: 1px solid rgba(255, 190, 110, .55); cursor: help; }
+.trait-tag .status-svg { width: 15px; height: 15px; }
+
+.battlefield-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; color: #cfe8ff; background: rgba(18, 40, 64, .8); border: 1px solid rgba(120, 190, 255, .45); cursor: help; }
+.battlefield-tag b { color: #fff; }
+
+/* Wa demo: badges sit along the bottom of the clickable fighter art. */
+.combat-target .status-overlay { left: 0; right: 0; bottom: -4px; justify-content: center; }
+.arena-top .battlefield-tag { font-size: 11px; padding: 2px 8px; }
+
+/* The new demo's fighter art boxes host the badge overlay. */
+.enemy-art-container, .ally-art-container { position: relative; }
+.battlefield-strip { display: flex; justify-content: center; margin: 2px 0 6px; }
+/* The 3D stage hides the flat art under it; keep the status badges visible. */
+.combat-target:has(.character-stage-host canvas) > .status-overlay,
+.enemy-art-container:has(.character-stage-host canvas) > .status-overlay,
+.ally-art-container:has(.character-stage-host canvas) > .status-overlay { opacity: 1 !important; z-index: 5; }
+
+/* Shop scenes for both demos: an NPC at a booth, goods on a shelf with price
+   tags, and a service counter. Uses only local CSS; the NPC figure is the
+   shared procedural 3D stage mounted into .npc-stage. */
+.shop-scene { max-width: 1120px; margin: 0 auto; padding: 12px 16px 28px; }
+.shop-header { display: flex; gap: 16px; align-items: stretch; justify-content: space-between; flex-wrap: wrap; margin-bottom: 14px; }
+.npc-booth { flex: 1 1 420px; display: flex; gap: 14px; align-items: center; padding: 10px 14px; border-radius: 14px;
+  background: linear-gradient(135deg, rgba(40, 32, 18, .92), rgba(18, 22, 30, .92)); border: 1px solid rgba(214, 178, 102, .45);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, .35), 0 6px 20px rgba(0, 0, 0, .35); }
+.npc-stage { position: relative; flex: none; width: 190px; height: 150px; border-radius: 10px; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 85%, rgba(255, 210, 120, .22), transparent 60%), linear-gradient(#1c2430, #10151d); border: 1px solid rgba(255, 255, 255, .08); }
+.npc-info { flex: 1; min-width: 0; }
+.npc-name { font-weight: 900; font-size: 17px; color: #f3d48a; letter-spacing: 1px; margin-bottom: 8px; }
+.npc-name small { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 600; color: #a99a78; letter-spacing: 0; }
+.npc-bubble { position: relative; padding: 10px 14px; border-radius: 12px; background: #f5ecd6; color: #2b2112; font-size: 14px; line-height: 1.55;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .35); animation: npc-talk .35s ease-out; }
+.npc-bubble::before { content: ''; position: absolute; left: -9px; top: 18px; border: 9px solid transparent; border-left: 0; border-right-color: #f5ecd6; }
+@keyframes npc-talk { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+.shop-wallet { flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px 22px; border-radius: 14px;
+  background: rgba(20, 26, 34, .9); border: 1px solid rgba(240, 200, 90, .5); color: #c9b27a; }
+.shop-wallet b { font-size: 34px; color: #ffd76a; text-shadow: 0 0 12px rgba(255, 200, 80, .45); line-height: 1.1; }
+
+.shelf-title { margin: 6px 0 10px; color: #e8dcc0; letter-spacing: 2px; }
+.shop-shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 22px 16px; padding: 22px 16px 26px; border-radius: 12px;
+  background: linear-gradient(transparent 0 calc(100% - 14px), #5b4327 calc(100% - 14px)), repeating-linear-gradient(90deg, #2a2118 0 2px, transparent 2px 120px), #1c1812;
+  border: 1px solid #4d3b25; box-shadow: inset 0 -10px 0 #3d2c19, inset 0 8px 18px rgba(0, 0, 0, .45); }
+.shelf-item { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 26px 10px 10px; border-radius: 10px; text-align: center;
+  background: linear-gradient(#f1e6c9, #dccb9f); color: #2b1f0e; border: 2px solid #8b6c33; box-shadow: 0 8px 14px rgba(0, 0, 0, .45); transition: transform .15s; }
+.shelf-item:hover { transform: translateY(-4px) rotate(-.4deg); }
+.shelf-item.rarity-uncommon { border-color: #3f7fc4; }
+.shelf-item.rarity-rare { border-color: #d4a017; box-shadow: 0 8px 14px rgba(0, 0, 0, .45), 0 0 16px rgba(255, 196, 40, .45); }
+.shelf-item .card-art svg { width: 100%; height: 84px; display: block; border-radius: 6px; }
+.shelf-item .card-title { font-weight: 900; font-size: 15px; }
+.shelf-item .card-cost { font-size: 12px; color: #6d5a38; }
+.shelf-item .card-desc { font-size: 12.5px; line-height: 1.45; flex: 1; }
+.shelf-item .btn { margin-top: 4px; }
+.price-tag { position: absolute; top: -12px; right: 10px; display: flex; align-items: baseline; gap: 3px; padding: 3px 10px 4px; border-radius: 4px 4px 10px 10px;
+  background: #ffd24a; color: #3a2600; font-size: 11px; box-shadow: 0 3px 6px rgba(0, 0, 0, .45); transform: rotate(3deg); }
+.price-tag::before { content: ''; position: absolute; top: -9px; left: 50%; width: 1px; height: 9px; background: #9b7a3a; }
+.price-tag b { font-size: 17px; }
+.price-tag s { opacity: .6; margin-right: 2px; }
+.sale-ribbon { position: absolute; top: 8px; left: -6px; padding: 2px 10px; background: #d7263d; color: #fff; font-size: 11px; font-weight: 900; transform: rotate(-8deg);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .4); }
+.shelf-empty { grid-column: 1 / -1; text-align: center; color: #b7a782; }
+
+.shop-counter { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+.counter-service { padding: 12px 14px; border-radius: 12px; background: rgba(18, 24, 32, .9); border: 1px solid rgba(160, 190, 220, .25); color: #d6dde6; }
+.counter-service h4 { margin: 0 0 4px; color: #f0d78e; font-size: 15px; display: inline; }
+.counter-service p { margin: 4px 0 10px; font-size: 12.5px; color: #9aa7b4; }
+.remove-service summary { cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; list-style: none; }
+.remove-service summary span { font-size: 12px; color: #9fc3e6; }
+.remove-service[open] summary span { display: none; }
+.remove-service .deck-list { margin-top: 10px; max-height: 320px; overflow: auto; }
+.shop-leave { display: block; margin: 20px auto 0; }
+/* Wa transfer market: contracts pinned to a board. */
+.contract-board { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); justify-items: center; }
+.contract-slot { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 10px; }
+.contract-label { font-size: 12px; font-weight: 900; letter-spacing: 2px; color: #e9d7a6; }
+.contract-slot.tier-1 .contract-label { color: #9fc8ff; }
+.contract-slot.tier-2 .contract-label { color: #ffd24a; text-shadow: 0 0 8px rgba(255, 210, 74, .5); }
+.contract-slot .price-tag { top: -6px; right: 4px; z-index: 3; }
+@media (max-width: 720px) {
+  .shop-counter { grid-template-columns: 1fr; }
+  .npc-booth { flex-direction: column; text-align: center; }
+  .npc-bubble::before { display: none; }
+  .npc-stage { width: 170px; height: 132px; }
+}
+/* Dark ink on the light shelf cards (overrides each demo's card text colours). */
+.shop-scene .shelf-item .card-title { color: #2b1f0e; }
+.shop-scene .shelf-item .card-desc { color: #3a2c16; }
+.shop-scene .shelf-item .card-cost { color: #6d5a38; }

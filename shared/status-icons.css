@@ -1,0 +1,76 @@
+/* Status badges shown on fighters, and bold keywords inside card text. */
+.status-svg { width: 1em; height: 1em; flex: none; display: inline-block; vertical-align: -0.14em; }
+
+.status-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 30px; margin-top: 6px; }
+.status-badge {
+  --status-color: #ddd;
+  position: relative; display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 8px 3px 5px; border-radius: 999px;
+  background: color-mix(in srgb, var(--status-color) 18%, rgba(8, 12, 18, .88));
+  border: 1.5px solid color-mix(in srgb, var(--status-color) 75%, transparent);
+  color: var(--status-color); font-size: 13px; line-height: 1; cursor: help;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.35);
+  animation: status-pop .28s ease-out;
+}
+.status-badge .status-svg { width: 18px; height: 18px; filter: drop-shadow(0 0 3px color-mix(in srgb, var(--status-color) 60%, transparent)); }
+.status-badge b { font-weight: 900; font-size: 14px; color: #fff; text-shadow: 0 1px 2px #000; }
+.status-badge em { font-style: normal; font-weight: 700; font-size: 12px; }
+.status-badge:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@keyframes status-pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Badges pinned onto the character art (top-left corner of the figure). */
+.status-overlay { position: absolute; left: 6px; right: 6px; bottom: 6px; z-index: 4; display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-start; pointer-events: auto; }
+.status-overlay .status-badge { padding: 2px 6px 2px 4px; font-size: 12px; }
+.status-overlay .status-badge em { display: none; }
+@media (min-width: 900px) { .status-overlay .status-badge em { display: inline; } }
+
+/* Keywords inside card faces, tooltips and rule text. */
+.kw { --status-color: #fff; font-weight: 900; color: var(--status-color); white-space: nowrap; text-shadow: 0 0 1px rgba(0,0,0,.6); }
+.kw .status-svg { margin-right: 1px; }
+/* Light card faces need darker keyword ink. */
+.card-face .kw, .hand-card .kw, .shop-card .kw, .reward-card .kw, .card .kw, .discover-card .kw {
+  color: color-mix(in srgb, var(--status-color) 55%, #1b1208);
+  text-shadow: none;
+}
+
+/* Deployed turrets / barriers on the player's side. */
+.deploy-row { position: absolute; top: 6px; left: 6px; z-index: 5; display: flex; gap: 4px; }
+.deploy-chip { display: inline-flex; align-items: center; gap: 2px; padding: 2px 6px; border-radius: 6px; background: rgba(8, 40, 38, .9); border: 1.5px solid #5fd3c6; color: #5fd3c6; font-size: 12px; animation: status-pop .28s ease-out; }
+.deploy-chip b { color: #fff; } .deploy-chip small { color: #9fe; font-size: 10px; }
+.deploy-chip .status-svg { width: 16px; height: 16px; }
+
+/* Discover: pick one of three. */
+.discover-overlay { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgba(4, 8, 14, .72); backdrop-filter: blur(2px); }
+.discover-panel { width: min(760px, 94vw); padding: 18px; border-radius: 14px; background: #121a24; border: 1px solid #f5d76e88; box-shadow: 0 10px 40px #000a; text-align: center; color: #eef; }
+.discover-panel h3 { margin: 0 0 4px; color: #f5d76e; display: flex; gap: 8px; align-items: center; justify-content: center; }
+.discover-panel p { margin: 0 0 12px; font-size: 13px; color: #aab; }
+.discover-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.discover-card { display: flex; flex-direction: column; gap: 6px; align-items: center; padding: 10px; border-radius: 10px; background: linear-gradient(#efe3c4, #d9c79b); color: #2a1d0c; border: 2px solid #8a6a2e; cursor: pointer; font: inherit; transition: transform .15s; }
+.discover-card:hover, .discover-card:focus-visible { transform: translateY(-4px); outline: 2px solid #f5d76e; }
+.discover-card .discover-art svg { width: 100%; height: 70px; display: block; border-radius: 6px; }
+.discover-card span:last-child { font-size: 12px; line-height: 1.4; }
+@media (max-width: 560px) { .discover-options { grid-template-columns: 1fr; } .discover-card .discover-art { display: none; } }
+
+.card-archetype { font-size: 11px; font-weight: 800; color: #8a7a5a; margin: 2px 0; }
+.card-archetype.is-archetype { color: #b3541e; }
+.reward-hint { color: #9ab; font-size: 13px; margin: -4px 0 10px; }
+
+/* Trait tags describing an enemy's special behaviour. */
+.trait-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }
+.trait-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 6px; font-size: 12px; font-weight: 800; color: #ffd9a0; background: rgba(60, 30, 10, .78); border: 1px solid rgba(255, 190, 110, .55); cursor: help; }
+.trait-tag .status-svg { width: 15px; height: 15px; }
+
+.battlefield-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; color: #cfe8ff; background: rgba(18, 40, 64, .8); border: 1px solid rgba(120, 190, 255, .45); cursor: help; }
+.battlefield-tag b { color: #fff; }
+
+/* Wa demo: badges sit along the bottom of the clickable fighter art. */
+.combat-target .status-overlay { left: 0; right: 0; bottom: -4px; justify-content: center; }
+.arena-top .battlefield-tag { font-size: 11px; padding: 2px 8px; }
+
+/* The new demo's fighter art boxes host the badge overlay. */
+.enemy-art-container, .ally-art-container { position: relative; }
+.battlefield-strip { display: flex; justify-content: center; margin: 2px 0 6px; }
+/* The 3D stage hides the flat art under it; keep the status badges visible. */
+.combat-target:has(.character-stage-host canvas) > .status-overlay,
+.enemy-art-container:has(.character-stage-host canvas) > .status-overlay,
+.ally-art-container:has(.character-stage-host canvas) > .status-overlay { opacity: 1 !important; z-index: 5; }

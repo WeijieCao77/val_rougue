@@ -31,6 +31,15 @@ const upgradeAllInCombatDeck = () => ({ type: 'upgradeAllInCombatDeck' });
 const attackScaledByUpgradedHand = (base, per, cap) => ({ type: 'attackScaledByUpgradedHand', base, per, cap });
 const conditional = (condition, effect) => ({ type: 'conditional', condition, effect });
 const repeat = (times, effect) => ({ type: 'repeat', times, effect });
+const burn = (n) => ({ type: 'burn', n });
+const burnMultiply = (n) => ({ type: 'burnMultiply', n });
+const detonate = (per) => ({ type: 'detonate', per });
+const deploy = (kind, n, turns) => ({ type: 'deploy', kind, n, turns });
+const fireTurrets = () => ({ type: 'fireTurrets' });
+const attackFromBlock = (mult = 1) => ({ type: 'attackFromBlock', mult });
+const discover = (pool) => ({ type: 'discover', pool });
+const strength = (n) => ({ type: 'strength', n });
+const overload = (n) => ({ type: 'overload', n });
 
 // ----------------------------- Effect formatting -----------------------------
 function formatEffects(effects) {
@@ -73,6 +82,33 @@ function formatEffects(effects) {
         break;
       case 'exhaustSelf':
         parts.push('消耗');
+        break;
+      case 'burn':
+        parts.push(`给予${eff.n}层燃烧`);
+        break;
+      case 'burnMultiply':
+        parts.push(`敌人燃烧层数×${eff.n}`);
+        break;
+      case 'detonate':
+        parts.push(`引爆：造成燃烧层数×${eff.per}点伤害并清空燃烧`);
+        break;
+      case 'deploy':
+        parts.push(eff.kind === 'turret' ? `部署哨戒炮：回合结束时造成${eff.n}点伤害，持续${eff.turns}回合` : `部署屏障无人机：回合结束时获得${eff.n}点布防，持续${eff.turns}回合`);
+        break;
+      case 'fireTurrets':
+        parts.push('所有哨戒炮立即开火一次');
+        break;
+      case 'attackFromBlock':
+        parts.push(eff.mult > 1 ? `造成等同于布防×${eff.mult}的伤害` : '造成等同于当前布防的伤害');
+        break;
+      case 'discover':
+        parts.push(`发现一张${{ attack: '攻击', skill: '技能', any: '' }[eff.pool] || ''}牌（本回合0费，打出后消耗）`);
+        break;
+      case 'strength':
+        parts.push(`本场获得${eff.n}层火力`);
+        break;
+      case 'overload':
+        parts.push(`过载${eff.n}`);
         break;
       case 'stanceSwitch':
         parts.push('切换姿态');
@@ -129,7 +165,10 @@ function conditionText(cond) {
     first_block_this_turn: '本回合尚未打出技能牌',
     stance_cover: '处于掩护姿态',
     stance_push: '处于前压姿态',
-    stance_changed_this_turn: '本回合切换过姿态'
+    stance_changed_this_turn: '本回合切换过姿态',
+    combo: '连击（本回合已打出过其他牌）',
+    enemy_vuln: '敌人有易伤',
+    enemy_burn: '敌人正在燃烧'
   };
   return map[cond] || cond;
 }
@@ -148,13 +187,19 @@ function powerDesc(powerId) {
     barricade: '布防在回合交替时不会清零',
     inflame: '本场每次攻击伤害+2',
     footwork: '本场每次布防+2',
-    dark_embrace: '每消耗一张牌，抽1张牌'
+    dark_embrace: '每消耗一张牌，抽1张牌',
+    knife_master: '你的飞刀伤害+3',
+    feel_no_pain: '每消耗一张牌，获得3点布防',
+    burn_core: '每回合开始时给予敌人3层燃烧',
+    turret_core: '你的哨戒炮每次开火伤害+3',
+    combo_core: '每回合第3张及之后的牌，攻击伤害+3'
   };
   return map[powerId] || '';
 }
 
 // ----------------------------- Card definition helper -----------------------------
 function def(card) {
+  if (card.retain) card.keywords = [...(card.keywords || []), '保留'];
   if (card.type === 'status') {
     // For status cards, no effects, just fixed text.
     STATUS_CARDS[card.id] = card;
@@ -164,15 +209,15 @@ function def(card) {
       card.text = `能力：${powerDesc(card.power)}`;
       card.upgradeText = card.upgradePowerText;
     } else {
-      card.text = formatEffects(card.effects);
+      card.text = formatEffects(card.effects) + (card.retain ? '。保留' : '');
       if (card.upgradeEffects && card.upgradeEffects.length) {
-        card.upgradeText = formatEffects(card.upgradeEffects);
+        card.upgradeText = formatEffects(card.upgradeEffects) + (card.retain ? '。保留' : '');
       } else {
         card.upgradeText = undefined;
       }
     }
     CARDS[card.id] = card;
-    CARD_IDS.push(card.id);
+    if (!card.token) CARD_IDS.push(card.id);
   }
 }
 
@@ -281,13 +326,65 @@ const defs = [
   { id:'TA84', name:'长期工事', cost:3, upgradeCost:2, type:'power', tag:'response', rarity:'rare', power:'barricade', effects:[], upgradeEffects:[] },
   { id:'TA85', name:'火力训练', cost:1, type:'power', tag:'response', rarity:'uncommon', power:'inflame', effects:[], upgradeEffects:[], upgradePowerText:'能力：本场每次攻击伤害+3' },
   { id:'TA86', name:'架点训练', cost:1, type:'power', tag:'response', rarity:'uncommon', power:'footwork', effects:[], upgradeEffects:[], upgradePowerText:'能力：本场每次布防+3' },
-  { id:'TA87', name:'消耗复盘', cost:2, upgradeCost:1, type:'power', tag:'response', rarity:'rare', power:'dark_embrace', effects:[], upgradeEffects:[] }
+  { id:'TA87', name:'消耗复盘', cost:2, upgradeCost:1, type:'power', tag:'response', rarity:'rare', power:'dark_embrace', effects:[], upgradeEffects:[] },
+
+  // Archetype packages (burn / deploy / combo & knives / fortify / overload / execute / discover).
+  // These give rewards real build directions; numbers are this project's own tuning.
+  { id:'TA88', name:'燃烧瓶投掷', cost:1, type:'skill', tag:'burn', rarity:'common', effects:[burn(4)], upgradeEffects:[burn(6)] },
+  { id:'TA89', name:'火墙封路', cost:1, type:'skill', tag:'burn', rarity:'common', effects:[burn(2), block(6)], upgradeEffects:[burn(3), block(8)] },
+  { id:'TA90', name:'点燃补枪', cost:1, type:'attack', tag:'burn', rarity:'common', effects:[atk(5), burn(2)], upgradeEffects:[atk(7), burn(3)] },
+  { id:'TA91', name:'助燃剂', cost:1, type:'skill', tag:'burn', rarity:'uncommon', effects:[burnMultiply(2), exhaustSelf()], exhaust:true, upgradeEffects:[burnMultiply(3), exhaustSelf()] },
+  { id:'TA92', name:'引爆', cost:2, type:'attack', tag:'burn', rarity:'rare', effects:[detonate(2)], upgradeEffects:[detonate(3)] },
+  { id:'TA93', name:'纵火专家', cost:2, type:'power', tag:'burn', rarity:'rare', power:'burn_core', effects:[], upgradeEffects:[] },
+  { id:'TA94', name:'余烬追击', cost:0, type:'attack', tag:'burn', rarity:'uncommon', effects:[atk(3), conditional('enemy_burn', atk(5))], upgradeEffects:[atk(4), conditional('enemy_burn', atk(7))] },
+
+  { id:'TA95', name:'哨戒炮', cost:2, type:'skill', tag:'deploy', rarity:'common', effects:[deploy('turret', 5, 3)], upgradeEffects:[deploy('turret', 7, 3)] },
+  { id:'TA96', name:'屏障无人机', cost:1, type:'skill', tag:'deploy', rarity:'common', effects:[deploy('barrier', 5, 2)], upgradeEffects:[deploy('barrier', 7, 2)] },
+  { id:'TA97', name:'蜂群炮台', cost:1, type:'skill', tag:'deploy', rarity:'uncommon', effects:[deploy('turret', 3, 2), vuln(1)], upgradeEffects:[deploy('turret', 4, 3), vuln(1)] },
+  { id:'TA98', name:'集火指令', cost:1, type:'skill', tag:'deploy', rarity:'uncommon', effects:[fireTurrets(), draw(1)], upgradeEffects:[fireTurrets(), fireTurrets()] },
+  { id:'TA99', name:'炮台大师', cost:2, type:'power', tag:'deploy', rarity:'rare', power:'turret_core', effects:[], upgradeEffects:[] },
+  { id:'TA100', name:'自动炮台阵', cost:3, type:'skill', tag:'deploy', rarity:'rare', effects:[deploy('turret', 8, 4)], upgradeEffects:[deploy('turret', 11, 4)] },
+
+  { id:'TA101', name:'飞刀雨', cost:1, type:'skill', tag:'combo', rarity:'common', effects:[addCardToHand('TK01', 2)], upgradeEffects:[addCardToHand('TK01', 3)] },
+  { id:'TA102', name:'刀锋大师', cost:1, type:'power', tag:'combo', rarity:'rare', power:'knife_master', effects:[], upgradeEffects:[] },
+  { id:'TA103', name:'连续交火', cost:1, type:'attack', tag:'combo', rarity:'common', effects:[atk(6), conditional('combo', atk(6))], upgradeEffects:[atk(8), conditional('combo', atk(8))] },
+  { id:'TA104', name:'补位掩护', cost:0, type:'skill', tag:'combo', rarity:'common', effects:[block(3), conditional('combo', draw(1))], upgradeEffects:[block(5), conditional('combo', draw(1))] },
+  { id:'TA105', name:'一穿三', cost:2, type:'attack', tag:'combo', rarity:'rare', effects:[atk(5,3), conditional('combo', atk(4,3))], upgradeEffects:[atk(6,3), conditional('combo', atk(5,3))] },
+  { id:'TA106', name:'节奏大师', cost:2, type:'power', tag:'combo', rarity:'rare', power:'combo_core', effects:[], upgradeEffects:[] },
+
+  { id:'TA107', name:'以守代攻', cost:1, type:'attack', tag:'fortify', rarity:'uncommon', effects:[attackFromBlock(1)], upgradeEffects:[attackFromBlock(1)], upgradeCost:0 },
+  { id:'TA108', name:'铁壁', cost:2, type:'skill', tag:'fortify', rarity:'uncommon', effects:[block(14), draw(1)], upgradeEffects:[block(18), draw(1)] },
+  { id:'TA109', name:'痛觉屏蔽', cost:1, type:'power', tag:'fortify', rarity:'uncommon', power:'feel_no_pain', effects:[], upgradeEffects:[] },
+  { id:'TA110', name:'弃子战术', cost:1, type:'skill', tag:'fortify', rarity:'common', effects:[block(7), addCardToHand('TK02', 1)], upgradeEffects:[block(10), addCardToHand('TK02', 1)] },
+
+  { id:'TA111', name:'全火力倾泻', cost:1, type:'attack', tag:'overload', rarity:'uncommon', effects:[atk(15), overload(1)], upgradeEffects:[atk(20), overload(1)] },
+  { id:'TA112', name:'超频架点', cost:0, type:'skill', tag:'overload', rarity:'uncommon', effects:[block(10), overload(1)], upgradeEffects:[block(14), overload(1)] },
+  { id:'TA113', name:'孤注一掷', cost:2, type:'attack', tag:'overload', rarity:'rare', effects:[atk(30), overload(2)], upgradeEffects:[atk(38), overload(2)] },
+  { id:'TA114', name:'肾上腺素', cost:1, type:'skill', tag:'overload', rarity:'uncommon', effects:[strength(2), energy(1), overload(1), exhaustSelf()], exhaust:true, upgradeEffects:[strength(3), energy(1), overload(1), exhaustSelf()] },
+
+  { id:'TA115', name:'弱点处决', cost:1, type:'attack', tag:'execute', rarity:'uncommon', effects:[atk(7), conditional('enemy_vuln', atk(7))], upgradeEffects:[atk(9), conditional('enemy_vuln', atk(9))] },
+  { id:'TA116', name:'架枪等待', cost:1, type:'skill', tag:'execute', rarity:'common', retain:true, effects:[block(7), conditional('enemy_intends_attack', block(4))], upgradeEffects:[block(9), conditional('enemy_intends_attack', block(5))] },
+  { id:'TA117', name:'留枪', cost:1, type:'attack', tag:'execute', rarity:'common', retain:true, effects:[atk(10)], upgradeEffects:[atk(14)] },
+
+  { id:'TA118', name:'战术研判', cost:1, type:'skill', tag:'discover', rarity:'uncommon', effects:[discover('attack')], upgradeEffects:[discover('attack'), draw(1)] },
+  { id:'TA119', name:'情报共享', cost:0, type:'skill', tag:'discover', rarity:'uncommon', effects:[discover('skill'), exhaustSelf()], exhaust:true, upgradeEffects:[discover('any'), exhaustSelf()] },
+  { id:'TA120', name:'临场指挥', cost:1, type:'skill', tag:'discover', rarity:'rare', effects:[discover('any'), block(4)], upgradeEffects:[discover('any'), block(8)] }
 ];
 
+// Tokens created during a fight (never offered as rewards).
+export const TOKEN_CARDS = {
+  TK01: { id:'TK01', name:'飞刀', cost:0, type:'attack', tag:'combo', rarity:'common', token:true, exhaust:true, effects:[atk(4), exhaustSelf()], upgradeEffects:[atk(6), exhaustSelf()] },
+  TK02: { id:'TK02', name:'弃子', cost:0, type:'skill', tag:'fortify', rarity:'common', token:true, exhaust:true, effects:[draw(1), exhaustSelf()], upgradeEffects:[draw(2), exhaustSelf()] }
+};
+
+// Tokens first so card text that creates them can show their names.
+for (const card of Object.values(TOKEN_CARDS)) def(card);
 defs.forEach(c => def(c));
 for (const card of REGIONAL_CARDS) def(card);
 export const REGION_CARD_IDS = Object.fromEntries(['CN','AM','EMEA','PAC'].map(region => [region, REGIONAL_CARDS.filter(card => card.region === region).map(card => card.id)]));
 export const SHARED_CARD_IDS = defs.map(card => card.id);
+// Build direction shown on cards and used to keep reward choices varied.
+export const ARCHETYPES = { burn:'燃烧', deploy:'部署', combo:'连击', fortify:'布防反击', overload:'过载爆发', execute:'易伤处决', discover:'发现' };
 
 // ----------------------------- Status cards -----------------------------
 def({ id:'ST01', name:'失误', cost:0, type:'status', tag:'status', rarity:'common', text:'不可打出。弃掉时受到1点伤害', effects:[] });
@@ -304,34 +401,84 @@ export const TEAMS = {
   rotation: { id:'rotation', region:'PAC', name:'太平洋 · 调度', desc:'抽牌循环与姿态节奏。', startingDeck:[['TA01',1],['TA05',1],['TA28',1],['TA02',1],['TA08',1],['TA27',1],['TA02',1],['TA42',1],['TA74',1],['TA64',1]] }
 };
 
-// ----------------------------- Enemies (at least 12 distinct teams across acts) -----------------------------
+// ----------------------------- Enemies -----------------------------
+// Each archetype has its own look, behaviour pattern and (often) a passive
+// trait, so fights ask for different answers. Act 2/3 versions are scaled
+// copies with the same identity; bosses are hand-authored per act.
+const H = (n, times = 1) => ({ type: 'hit', n, times });
+const BL = n => ({ type: 'block', n });
+const BUFF = n => ({ type: 'buff', n });
+const JAM = (id, n = 1) => ({ type: 'jam', id, n });
+const WEAKP = n => ({ type: 'weak', n });
+const VULNP = n => ({ type: 'vuln', n });
+const AIM = () => ({ type: 'aim' });
+const SNIPE = n => ({ type: 'snipe', n });
+const CLEANSE = () => ({ type: 'cleanse' });
+
+export const TRAITS = {
+  berserk: { name: '背水一战', icon: 'enrage', text: n => `生命首次降到一半以下时，获得${n}层火力。` },
+  thorns: { name: '交叉火力', icon: 'thorns', text: n => `每次被你的攻击命中，反击你${n}点伤害（布防可挡）。` },
+  enrageOnSkill: { name: '信息读取', icon: 'enrage', text: n => `你每打出一张技能牌，它获得${n}层火力。` },
+  ritual: { name: '手感渐热', icon: 'strength', text: n => `每个敌方回合结束时，获得${n}层火力。` },
+  tempo: { name: '控制节奏', icon: 'tempo', text: n => `你每打出${n}张牌，它获得2层火力与8点布防。` },
+  phase2: { name: '决胜局', icon: 'enrage', text: () => '生命降到一半时清除自身负面状态，获得12点布防、2层火力，并换成全新打法。' },
+  sniper: { name: '狙击位', icon: 'aim', text: () => '瞄准一回合后打出重狙；在它开枪前给予闪光可以打断瞄准，让这一枪只剩三分之一伤害。' }
+};
+
+const ACT1_ENEMIES = {
+  E01: { name:'新秀步枪组', look:'rookie', hp:50, script:[[H(12)],[BUFF(2),H(7)],[BL(6),H(9)]] },
+  E02: { name:'远点狙击手', look:'sniper', hp:48, ordered:true, trait:{ id:'sniper' }, script:[[AIM(),BL(5)],[SNIPE(24)],[H(8)]] },
+  E03: { name:'突破手双枪', look:'rusher', hp:56, trait:{ id:'berserk', n:4 }, script:[[H(5,3)],[H(12)],[BL(6),H(9)]] },
+  E04: { name:'哨位架枪组', look:'sentinel', hp:50, startBlock:10, trait:{ id:'thorns', n:2 }, script:[[BL(6),H(6)],[H(13)],[BL(5),H(8)]] },
+  E05: { name:'烟雾控场手', look:'controller', hp:52, script:[[WEAKP(1),JAM('ST01',2),H(6)],[H(12)],[VULNP(1),H(8)]] },
+  E06: { name:'前哨侦察兵', look:'recon', hp:54, trait:{ id:'enrageOnSkill', n:1 }, script:[[H(10)],[BL(8),H(6)],[H(4,2)]] },
+  EL01:{ name:'王牌突击手', look:'ace', hp:90, elite:true, trait:{ id:'ritual', n:1 }, script:[[H(13),JAM('ST03')],[H(6,3)],[BL(12),H(5)]] },
+  EL02:{ name:'战术指挥官', look:'igl', hp:84, elite:true, ordered:true, script:[[BUFF(2),BL(10)],[H(9,2)],[CLEANSE(),BL(15),JAM('ST02')],[H(18)]] },
+  B01: { name:'资格赛冠军卫队', look:'boss1', hp:120, boss:true, trait:{ id:'tempo', n:18 }, script:[[WEAKP(1),H(8)],[JAM('ST02',2),BL(12)],[H(5,3)],[H(14)]] }
+};
+
+function scaleAction(a, k) {
+  const r = n => Math.max(1, Math.round(n * k));
+  if (a.type === 'hit') return { ...a, n: r(a.n) };
+  if (a.type === 'block' || a.type === 'snipe') return { ...a, n: r(a.n) };
+  if (a.type === 'buff') return { ...a, n: a.n + (k > 1.5 ? 2 : 1) };
+  return { ...a };
+}
+function scaledAct(prefix, label, hpK, dmgK) {
+  const out = {};
+  for (const [id, e] of Object.entries(ACT1_ENEMIES)) {
+    if (e.boss) continue;
+    out[prefix + id] = {
+      ...e,
+      name: label + e.name,
+      hp: Math.round(e.hp * hpK * (e.elite ? 0.93 : 1)),
+      startBlock: e.startBlock ? Math.round(e.startBlock * dmgK) : undefined,
+      // Ritual already compounds every turn, so only flat traits grow per act.
+      trait: e.trait ? { ...e.trait, n: e.trait.n && e.trait.id !== 'ritual' ? e.trait.n + (dmgK > 1.45 ? 2 : 1) : e.trait.n } : undefined,
+      script: e.script.map(turn => turn.map(a => scaleAction(a, dmgK)))
+    };
+  }
+  return out;
+}
+
 export const ENEMIES = {
-  // Act 1
-  E01: { name:'基础进攻小队', hp:50, script:[[{type:'hit',n:12,times:1}],[{type:'buff',n:2},{type:'hit',n:7,times:1}],[{type:'block',n:6},{type:'hit',n:9,times:1}]] },
-  E02: { name:'信息压制小队', hp:52, script:[[{type:'hit',n:11,times:1}],[{type:'jam',id:'ST01',n:1},{type:'hit',n:8,times:1}],[{type:'hit',n:14,times:1}]] },
-  E03: { name:'多段突击小队', hp:56, script:[[{type:'hit',n:5,times:3}],[{type:'hit',n:12,times:1}],[{type:'block',n:6},{type:'hit',n:9,times:1}]] },
-  E04: { name:'防守反击小队', hp:56, script:[[{type:'block',n:8},{type:'hit',n:7,times:1}],[{type:'hit',n:16,times:1}],[{type:'jam',id:'ST03',n:1},{type:'hit',n:9,times:1}]] },
-  E05: { name:'纪律控制小队', hp:60, script:[[{type:'weak',n:1},{type:'buff',n:2}],[{type:'hit',n:12,times:1}],[{type:'block',n:8},{type:'hit',n:10,times:1}]] },
-  EL01:{ name:'高压强敌小队', hp:90, elite:true, script:[[{type:'hit',n:13,times:1},{type:'jam',id:'ST03',n:1}],[{type:'hit',n:6,times:3}],[{type:'block',n:12},{type:'buff',n:3}]] },
-  B01: { name:'资格赛冠军卫队', hp:130, boss:true, script:[[{type:'weak',n:1},{type:'hit',n:8,times:1}],[{type:'jam',id:'ST02',n:2},{type:'block',n:12}],[{type:'hit',n:5,times:3}],[{type:'hit',n:14,times:1}],[{type:'buff',n:3},{type:'hit',n:6,times:1}]] },
+  ...ACT1_ENEMIES,
+  ...scaledAct('A2_', '二幕·', 1.35, 1.25),
+  A2_B01: { name:'晋级赛冠军卫队', look:'boss2', hp:165, boss:true, ordered:true, script:[[BL(18),H(6)],[BUFF(2),H(7,3)],[H(10),JAM('ST02',2)],[H(20)]] },
+  ...scaledAct('A3_', '决赛·', 1.75, 1.5),
+  A3_B01: { name:'总决赛冠军卫队', look:'boss3', hp:165, boss:true, trait:{ id:'phase2' },
+    script:[[H(14),JAM('ST03')],[WEAKP(1),H(6,3)],[BL(18),JAM('ST01',2)],[H(22)]],
+    phase2:[[BUFF(2),H(10,2)],[H(8,3),VULNP(1)],[BL(20),H(12)]] }
+};
 
-  // Act 2
-  A2_E01: { name:'第二幕基础进攻小队', hp:72, script:[[{type:'hit',n:14,times:1}],[{type:'buff',n:3},{type:'hit',n:9,times:1}],[{type:'block',n:10},{type:'hit',n:11,times:1}]] },
-  A2_E02: { name:'第二幕信息压制小队', hp:76, script:[[{type:'hit',n:13,times:1}],[{type:'jam',id:'ST04',n:1},{type:'hit',n:10,times:1}],[{type:'hit',n:18,times:1}]] },
-  A2_E03: { name:'第二幕多段突击小队', hp:80, script:[[{type:'hit',n:6,times:3}],[{type:'hit',n:15,times:1}],[{type:'block',n:10},{type:'hit',n:11,times:1}]] },
-  A2_E04: { name:'第二幕防守反击小队', hp:80, script:[[{type:'block',n:14},{type:'hit',n:8,times:1}],[{type:'hit',n:20,times:1}],[{type:'jam',id:'ST03',n:1},{type:'hit',n:12,times:1}]] },
-  A2_E05: { name:'第二幕纪律控制小队', hp:86, script:[[{type:'weak',n:1},{type:'buff',n:3}],[{type:'hit',n:16,times:1}],[{type:'block',n:12},{type:'hit',n:12,times:1}]] },
-  A2_EL01:{ name:'第二幕强敌小队', hp:118, elite:true, script:[[{type:'hit',n:16,times:1},{type:'jam',id:'ST03',n:1}],[{type:'hit',n:7,times:3}],[{type:'block',n:16},{type:'buff',n:3}]] },
-  A2_B01:{ name:'晋级赛冠军卫队', hp:180, boss:true, script:[[{type:'weak',n:1},{type:'hit',n:12,times:1}],[{type:'jam',id:'ST02',n:2},{type:'block',n:16}],[{type:'hit',n:7,times:3}],[{type:'hit',n:20,times:1}],[{type:'buff',n:4},{type:'hit',n:8,times:1}]] },
-
-  // Act 3
-  A3_E01: { name:'第三幕基础进攻小队', hp:96, script:[[{type:'hit',n:18,times:1}],[{type:'buff',n:4},{type:'hit',n:12,times:1}],[{type:'block',n:12},{type:'hit',n:14,times:1}]] },
-  A3_E02: { name:'第三幕信息压制小队', hp:100, script:[[{type:'hit',n:17,times:1}],[{type:'jam',id:'ST05',n:2},{type:'hit',n:13,times:1}],[{type:'hit',n:22,times:1}]] },
-  A3_E03: { name:'第三幕多段突击小队', hp:106, script:[[{type:'hit',n:7,times:3}],[{type:'hit',n:19,times:1}],[{type:'block',n:12},{type:'hit',n:14,times:1}]] },
-  A3_E04: { name:'第三幕防守反击小队', hp:104, script:[[{type:'block',n:18},{type:'hit',n:10,times:1}],[{type:'hit',n:25,times:1}],[{type:'jam',id:'ST03',n:2},{type:'hit',n:15,times:1}]] },
-  A3_E05: { name:'第三幕纪律控制小队', hp:112, script:[[{type:'weak',n:2},{type:'buff',n:4}],[{type:'hit',n:21,times:1}],[{type:'block',n:15},{type:'hit',n:15,times:1}]] },
-  A3_EL01:{ name:'第三幕强敌小队', hp:140, elite:true, script:[[{type:'hit',n:20,times:1},{type:'jam',id:'ST03',n:2}],[{type:'hit',n:8,times:3}],[{type:'block',n:20},{type:'buff',n:4}]] },
-  A3_B01:{ name:'总决赛冠军卫队', hp:245, boss:true, script:[[{type:'hit',n:16,times:1},{type:'jam',id:'ST03',n:1}],[{type:'weak',n:1},{type:'hit',n:7,times:3}],[{type:'block',n:20},{type:'jam',id:'ST01',n:2}],[{type:'hit',n:26,times:1}],[{type:'buff',n:5},{type:'hit',n:10,times:1}]] }
+// Battlefield modifiers rolled per ordinary/elite fight (not the first two stops or bosses).
+export const FIELDS = {
+  corridor: { name: '狭窄走廊', text: '所有多段攻击（双方）每段伤害 +1。' },
+  longrange: { name: '开阔长廊', text: '单段基础伤害≥10的攻击（双方）伤害 +3。' },
+  smoky: { name: '烟雾弥漫', text: '开局敌人获得2层烟雾；你每回合第一次给予烟雾时额外 +1 层。' },
+  highground: { name: '高点优势', text: '你每回合第一张攻击牌伤害 +3。' },
+  overtime: { name: '加时赛', text: '从第5回合起，敌人每回合开始时获得2层火力。' },
+  eco: { name: '经济局', text: '第一回合你多1点能量、多抽1张牌。' }
 };
 
 // ----------------------------- Relics -----------------------------

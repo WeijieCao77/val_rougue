@@ -50,7 +50,9 @@ export const EXTRA_ENEMIES = {
 
 // Seeded PRNG: FNV-1a hash to initialize sfc32 generator.
 const roomNames = { battle: '常规比赛', elite: '高压强敌', event: '未知事件', shop: "转会市场", rest: "俱乐部活动" };
-const battleNames = { E01: '基础进攻', E02: '信息压制', E03: '多段突击', E04: '防守反击', E05: '纪律控制' };
+const battleNames = { E01: '基础进攻', S_E02: '远点狙击', S_E03: '突破双枪', S_E04: '哨位架枪', S_E05: '烟雾控场', S_E06: '前哨侦察' };
+// Keys of FIELDS in content.js (kept here to avoid a map→content import cycle).
+const FIELD_IDS = ['corridor', 'longrange', 'suppress', 'highground', 'overtime', 'eco'];
 function choice(seed, values) {
   let hash = 2166136261;
   for (const char of String(seed)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
@@ -68,17 +70,19 @@ export function buildMap(seed, act) {
   const prefix = act === 1 ? '' : 'A' + act + '_';
   for (const node of map.nodes) {
     if (node.kind === 'battle') {
-      const ids = node.step <= 2 ? ['E01'] : node.step === 3 ? ['E01', 'E02'] : ['E01', 'E02', 'E03', 'E04', 'E05'];
+      const ids = node.step <= 2 ? (act === 1 ? ['E01'] : ['E01', 'S_E03', 'S_E06']) : node.step === 3 ? ['S_E02', 'S_E03', 'S_E06'] : ['S_E02', 'S_E03', 'S_E04', 'S_E05', 'S_E06'];
       const parents = map.edges.filter(edge => edge.to === node.key).map(edge => byKey.get(edge.from));
       const fresh = ids.filter(id => !parents.some(parent => parent.enemy === prefix + id));
       const id = choice(seed + '|' + act + '|' + node.key + '|enemy', fresh.length ? fresh : ids);
       node.enemy = prefix + id;
       node.name = battleNames[id];
+      if (node.step > 2) node.field = choice(seed + '|' + act + '|' + node.key + '|field', FIELD_IDS);
     } else if (node.kind === 'elite') {
-      node.enemy = prefix + 'EL01';
+      node.enemy = prefix + choice(seed + '|' + act + '|' + node.key + '|elite', ['S_EL01', 'S_EL02']);
+      node.field = choice(seed + '|' + act + '|' + node.key + '|field', FIELD_IDS);
       node.name = roomNames.elite;
     } else if (node.kind === 'boss') {
-      node.enemy = prefix + 'B01';
+      node.enemy = prefix + 'S_B01';
       node.name = ACTS[act - 1].bossName;
     } else {
       node.name = roomNames[node.kind];

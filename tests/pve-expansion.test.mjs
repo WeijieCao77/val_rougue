@@ -14,7 +14,7 @@ test('both climb modes keep regional rewards separate from 14 global curses and 
   const s=createSeason('pool-audit',false,region);
   for(let i=0;i<60;i++)assert.ok(offers(s).every(id=>r.pool.includes(id)&&!id.startsWith('CU')&&!id.startsWith('ST')));
  }
- assert.equal(CARD_IDS.length,387);
+ assert.equal(CARD_IDS.length,420,'new demo: 120 shared (incl. 33 archetype cards) + 300 regional');
  assert.equal(Object.keys(STATUS_CARDS).length,19);
  for(const ids of Object.values(REGION_CARD_IDS))assert.equal(ids.length,75);
  for(const [team,def] of Object.entries(TEAMS)){

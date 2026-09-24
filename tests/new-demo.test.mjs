@@ -94,9 +94,9 @@ function totalBattleCards(battle) {
 
 // ----------------------------- Tests -----------------------------
 
-test('content: 87 shared plus four 75-card regional pools and 19 afflictions', () => {
-  assert.equal(CARD_IDS.length, 387);
-  assert.equal(new Set(CARD_IDS).size, 387);
+test('content: 120 shared (87 core + 33 archetype) plus four 75-card regional pools and 19 afflictions', () => {
+  assert.equal(CARD_IDS.length, 420);
+  assert.equal(new Set(CARD_IDS).size, 420);
   assert.equal(Object.keys(STATUS_CARDS).length, 19);
   for (const id of CARD_IDS) {
     const c = CARDS[id];
@@ -619,4 +619,127 @@ test('intent preview counts a same-turn buff before the hit it strengthens', () 
   s.battle.enemyScript = [[{ type: 'block', n: 1 }]];
   const after = act(s, { type: 'end' }).state;
   assert.equal(after.hp, hpBefore - 9);
+});
+
+test('sniper aims then fires a heavy shot, and a flash in between breaks the aim', () => {
+  const fight = () => {
+    const s = createTestBattle({ enemyIntent: [{ type: 'aim' }], stance: 'cover' });
+    s.battle.enemyId = 'E02';
+    s.battle.enemyScript = [[{ type: 'snipe', n: 24 }]];
+    return act(s, { type: 'end' }).state;
+  };
+  let s = fight();
+  assert.equal(s.battle.statuses.enemy.aim, 1);
+  assert.match(engine.describeIntent(s), /重狙24/);
+  const hp = s.hp;
+  s.battle.enemyScript = [[{ type: 'block', n: 1 }]];
+  assert.equal(act(s, { type: 'end' }).state.hp, hp - 24);
+  s.battle.hand = [{ uid: 'fl', id: 'TA04', up: false }];
+  s.battle.energy = 3;
+  s = act(s, { type: 'play', uid: 'fl' }).state;
+  assert.equal(s.battle.statuses.enemy.aim, 0, 'flash breaks the aim');
+  assert.match(engine.describeIntent(s), /仓促射击8/);
+});
+
+test('sentinel counter-fire punishes each attack hit, rusher enrages once below half', () => {
+  let s = createTestBattle({ handCards: ['TA31'], enemyHp: 50, energy: 3 });
+  s.battle.trait = { id: 'thorns', n: 3 };
+  const hp = s.hp;
+  s = act(s, { type: 'play', uid: 'h0' }).state;
+  assert.equal(s.hp, hp - 6, 'two hits, three counter damage each');
+  s = createTestBattle({ handCards: ['TA25'], enemyHp: 40, energy: 3 });
+  s.battle.enemyMaxHp = 40;
+  s.battle.trait = { id: 'berserk', n: 4 };
+  s.battle.traitState = {};
+  s = act(s, { type: 'play', uid: 'h0' }).state;
+  assert.equal(s.battle.statuses.enemy.strength, 4);
+});
+
+test('battlefield modifiers change both sides and the preview shows it', () => {
+  let s = createTestBattle({ handCards: ['TA31'], enemyHp: 50, energy: 3, enemyIntent: [{ type: 'hit', n: 4, times: 2 }] });
+  s.battle.field = 'corridor';
+  assert.equal(engine.describeIntent(s), '攻击5×2');
+  s = act(s, { type: 'play', uid: 'h0' }).state;
+  assert.equal(s.battle.enemyHp, 50 - 2 * 5, 'player multi-hit also gains one per hit');
+  s = createTestBattle({ handCards: ['TA01', 'TA01'], enemyHp: 50, energy: 3 });
+  s.battle.field = 'highground';
+  s = act(s, { type: 'play', uid: 'h0' }).state;
+  s = act(s, { type: 'play', uid: 'h1' }).state;
+  assert.equal(s.battle.enemyHp, 50 - 9 - 6, 'only the first attack of the turn gets +3');
+});
+
+test('every map battle has a known enemy and later fights carry a battlefield', async () => {
+  const { ENEMIES, FIELDS } = await import('../new-demo/content.js');
+  for (const seed of ['a', 'b', 'c']) for (const actNo of [1, 2, 3]) {
+    const map = buildMap(seed, actNo);
+    for (const node of map.nodes) {
+      if (['battle', 'elite', 'boss'].includes(node.kind)) assert.ok(ENEMIES[node.enemy], node.enemy);
+      if (node.kind === 'elite' || (node.kind === 'battle' && node.step > 2)) assert.ok(FIELDS[node.field], `${node.key} field`);
+    }
+  }
+});
+
+test('burn ticks through block at the enemy turn and detonate cashes it in', () => {
+  let s = createTestBattle({ handCards: ['TA88', 'TA92'], enemyHp: 60, energy: 3, enemyStatuses: { block: 20 }, enemyIntent: [{ type: 'block', n: 1 }] });
+  s.battle.enemyScript = [[{ type: 'block', n: 1 }]];
+  s = act(s, { type: 'play', uid: 'h0' }).state;
+  assert.equal(s.battle.statuses.enemy.burn, 4);
+  s = act(s, { type: 'play', uid: 'h1' }).state;
+  assert.equal(s.battle.statuses.enemy.burn, 0);
+  assert.equal(s.battle.enemyHp, 60, 'detonate damage (8) is an attack, soaked by the 20 block');
+  s = createTestBattle({ handCards: ['TA88'], enemyHp: 60, energy: 3, enemyStatuses: { block: 20 }, enemyIntent: [{ type: 'block', n: 1 }] });
+  s.battle.enemyScript = [[{ type: 'block', n: 1 }]];
+  s = act(s, { type: 'play', uid: 'h0' }).state;
+  s = act(s, { type: 'end' }).state;
+  assert.equal(s.battle.enemyHp, 56, 'burn ignores block');
+  assert.equal(s.battle.statuses.enemy.burn, 3);
+});
+
+test('turrets fire at end of turn for their duration, barriers add block', () => {
+  let s = createTestBattle({ handCards: ['TA95', 'TA96'], enemyHp: 60, energy: 3, enemyIntent: [{ type: 'block', n: 1 }] });
+  s.battle.enemyScript = [[{ type: 'block', n: 1 }]];
+  s = act(s, { type: 'play', uid: 'h0' }).state;
+  s = act(s, { type: 'play', uid: 'h1' }).state;
+  s = act(s, { type: 'end' }).state;
+  assert.equal(s.battle.enemyHp, 55);
+  assert.equal(s.battle.deployables.length, 2);
+  s = act(s, { type: 'end' }).state;
+  s = act(s, { type: 'end' }).state;
+  assert.deepEqual(s.battle.deployables, [], 'both expire');
+});
+
+test('knives, combo, overload, retain and block-to-damage behave as written', () => {
+  let s = createTestBattle({ handCards: ['TA102', 'TA101'], enemyHp: 60, energy: 3 });
+  s = act(s, { type: 'play', uid: 'h0' }).state;
+  s = act(s, { type: 'play', uid: 'h1' }).state;
+  const knife = s.battle.hand.find(c => c.id === 'TK01');
+  s = act(s, { type: 'play', uid: knife.uid }).state;
+  assert.equal(s.battle.enemyHp, 53, 'knife 4 + knife master 3');
+  s = createTestBattle({ handCards: ['TA103', 'TA103'], enemyHp: 60, energy: 3 });
+  s = act(s, { type: 'play', uid: 'h0' }).state;
+  s = act(s, { type: 'play', uid: 'h1' }).state;
+  assert.equal(s.battle.enemyHp, 60 - 6 - 12);
+  s = createTestBattle({ handCards: ['TA111', 'TA117'], enemyHp: 60, energy: 3, enemyIntent: [{ type: 'block', n: 1 }] });
+  s.battle.enemyScript = [[{ type: 'block', n: 1 }]];
+  s = act(s, { type: 'play', uid: 'h0' }).state;
+  s = act(s, { type: 'end' }).state;
+  assert.equal(s.battle.energy, 2, 'overload 1');
+  assert.ok(s.battle.hand.some(c => c.id === 'TA117'), 'retained card stays in hand');
+  s = createTestBattle({ handCards: ['TA107'], enemyHp: 60, energy: 3, playerBlock: 13 });
+  s = act(s, { type: 'play', uid: 'h0' }).state;
+  assert.equal(s.battle.enemyHp, 47);
+});
+
+test('discover pauses play until a choice is made; the found card is free and exhausts', () => {
+  let s = createTestBattle({ handCards: ['TA118', 'TA01'], enemyHp: 60, energy: 1 });
+  s = act(s, { type: 'play', uid: 'h0' }).state;
+  const options = legalActions(s);
+  assert.equal(options.length, 3);
+  assert.ok(options.every(a => a.type === 'discover' && CARDS[a.id].type === 'attack'));
+  assert.ok(act(s, { type: 'play', uid: 'h1' }).error);
+  s = act(s, options[0]).state;
+  const found = s.battle.hand.find(c => c.temp);
+  assert.ok(legalActions(s).some(a => a.uid === found.uid), 'free even with 0 energy');
+  s = act(s, { type: 'play', uid: found.uid }).state;
+  if (s.phase === 'combat') assert.ok(s.battle.exhaustPile.some(c => c.uid === found.uid));
 });

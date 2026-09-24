@@ -90,6 +90,61 @@ export const SKINS = {
   SK03:{name:'守望涂层',text:'补上防守空隙：每回合第一次打出哨位牌后，额外获得 2 布防。'},
 };
 const jam = (id,n=1) => ({type:'jam',id,n});
+// Season-mode opponents (legacy tutorial ids E01–B01 above stay frozen for replays).
+// Each archetype has a look, a behaviour pattern and often a passive trait.
+const buff = n => ({type:'buff',n});
+const aim = () => ({type:'aim'});
+const snipe = n => ({type:'snipe',n});
+const cleanse = () => ({type:'cleanse'});
+const vulnP = n => ({type:'vuln',n});
+export const TRAITS = {
+ berserk:{name:'背水一战',icon:'enrage',text:n=>`防线首次降到一半以下时，获得${n}层火力。`},
+ thorns:{name:'交叉火力',icon:'thorns',text:n=>`每次被你的攻击命中，反击你${n}点伤害（布防可挡）。`},
+ enrageOnSkill:{name:'信息读取',icon:'enrage',text:n=>`你每打出一张不造成伤害的牌，它获得${n}层火力。`},
+ ritual:{name:'手感渐热',icon:'strength',text:n=>`每个对手回合结束时，获得${n}层火力。`},
+ tempo:{name:'控制节奏',icon:'tempo',text:n=>`你每打出${n}张牌，它获得2层火力与6点布防。`},
+ phase2:{name:'决胜局',icon:'enrage',text:()=>'防线降到一半时清除自身负面状态，获得10点布防、2层火力，并换成全新打法。'},
+ sniper:{name:'狙击位',icon:'aim',text:()=>'瞄准一回合后打出重狙；开枪前让它陷入压制可打断瞄准，这一枪只剩三分之一伤害。'}
+};
+export const FIELDS = {
+ corridor:{name:'狭窄走廊',text:'所有多段攻击（双方）每段伤害 +1。'},
+ longrange:{name:'开阔长廊',text:'单段基础伤害≥8的攻击（双方）伤害 +2。'},
+ suppress:{name:'火力压制',text:'开局对手压制 2 回合。'},
+ highground:{name:'高点优势',text:'你每回合第一张造成伤害的牌，首段伤害 +3。'},
+ overtime:{name:'加时赛',text:'从第 5 回合起，对手每回合行动前获得 2 层火力。'},
+ eco:{name:'经济局',text:'第一回合你多 1 行动点、多抽 1 张牌。'}
+};
+const SEASON_ACT1 = {
+ S_E02:{name:'远点狙击手',look:'sniper',hp:36,trait:{id:'sniper'},script:[[aim(),block(4)],[snipe(18)],[hit(6)]]},
+ S_E03:{name:'突破手双枪',look:'rusher',hp:40,trait:{id:'berserk',n:3},script:[[hit(3,3)],[hit(8)],[block(5),hit(6)]]},
+ S_E04:{name:'哨位架枪组',look:'sentinel',hp:38,startBlock:8,trait:{id:'thorns',n:2},script:[[block(6),hit(4)],[hit(11)],[block(5),hit(6)]]},
+ S_E05:{name:'烟雾控场手',look:'controller',hp:40,script:[[weak(1),jam('ST01',2),hit(4)],[hit(9)],[vulnP(1),hit(6)]]},
+ S_E06:{name:'前哨侦察兵',look:'recon',hp:42,trait:{id:'enrageOnSkill',n:1},script:[[hit(8)],[block(6),hit(5)],[hit(3,2)]]},
+ S_EL01:{name:'王牌突击手',look:'ace',hp:60,elite:true,trait:{id:'ritual',n:1},script:[[hit(8),jam('ST03')],[hit(4,3)],[block(10),hit(4)]]},
+ S_EL02:{name:'战术指挥官',look:'igl',hp:56,elite:true,script:[[buff(2),block(8)],[hit(7,2)],[cleanse(),block(12),jam('ST02')],[hit(14)]]},
+ S_B01:{name:'大师赛冠军卫队',look:'boss1',hp:90,boss:true,growth:0,trait:{id:'tempo',n:16},script:[[weak(1),hit(7)],[jam('ST02',2),block(10)],[hit(4,3)],[hit(12)]]}
+};
+function scaleSeason(prefix,label,hpK,dmgK){
+ const out={};
+ const r=n=>Math.max(1,Math.round(n*dmgK));
+ for(const [id,e] of Object.entries(SEASON_ACT1)){
+  if(e.boss)continue;
+  out[prefix+id]={...e,name:label+e.name,hp:Math.round(e.hp*hpK*(e.elite?0.93:1)),startBlock:e.startBlock?r(e.startBlock):undefined,
+   // Ritual and skill-enrage already compound during a fight, so only flat traits grow per act.
+   trait:e.trait?{...e.trait,n:e.trait.n&&!['ritual','enrageOnSkill'].includes(e.trait.id)?e.trait.n+(dmgK>1.4?2:1):e.trait.n}:undefined,
+   script:e.script.map(turn=>turn.map(a=>['hit','block','snipe'].includes(a.type)?{...a,n:r(a.n)}:a.type==='buff'?{...a,n:a.n+1}:{...a}))};
+ }
+ return out;
+}
+const SEASON_ENEMIES = {
+ ...SEASON_ACT1,
+ ...scaleSeason('A2_','二幕·',1.25,1.15),
+ A2_S_B01:{name:'晋级赛冠军卫队',look:'boss2',hp:110,boss:true,growth:0,script:[[block(12),hit(5)],[buff(1),hit(5,3)],[hit(8),jam('ST02',2)],[hit(16)]]},
+ ...scaleSeason('A3_','决赛·',1.45,1.25),
+ A3_S_B01:{name:'总决赛冠军卫队',look:'boss3',hp:115,boss:true,growth:0,trait:{id:'phase2'},
+  script:[[hit(10),jam('ST03')],[weak(1),hit(4,3)],[block(12),jam('ST01',2)],[hit(15)]],
+  phase2:[[buff(1),hit(7,2)],[hit(5,3),vulnP(1)],[block(12),hit(9)]]}
+};
 export const ENEMIES = {
  ...EXTRA_ENEMIES,
  E01:{name:'基础试训队',hp:28,script:[[hit(6)],[hit(8)],[block(4),hit(4)]]},
@@ -99,6 +154,7 @@ export const ENEMIES = {
  E05:{name:'纪律控制队',hp:44,script:[[weak(1)],[hit(10)],[block(6),hit(6)]]},
  EL01:{name:'高压强敌队',hp:54,elite:true,script:[[hit(8),jam('ST03')],[hit(4,3)],[block(10),jam('ST02')]]},
  B01:{name:'大师赛种子队',hp:80,boss:true,script:[[hit(8),jam('ST01')],[hit(4,3)],[weak(1),hit(6)],[block(10),jam('ST02')]]},
+ ...SEASON_ENEMIES,
 };
 export const ROUTE = ['基础试训','信息压制','赛程外的机会','双核突击','市场 / 俱乐部活动','普通 / 强敌','俱乐部活动','纪律控制','大师赛 · BOSS'];
 export const START = ['CN03','CN07','CN11','CN14','CN16','CN03','CN07','CN03','CN07','CN14'];

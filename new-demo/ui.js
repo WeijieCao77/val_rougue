@@ -1,5 +1,6 @@
-import { createRun, act, legalActions, observe, preview, describeIntent, categoryUpgradeQuote } from './engine.js';
-import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS } from './content.js';
+import { createRun, act, legalActions, observe, preview, describeIntent, categoryUpgradeQuote, shopPrice } from './engine.js';
+import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS, TRAITS, FIELDS, ARCHETYPES } from './content.js';
+import { statusBadges, statusBadge, statusIcon, highlightKeywords } from '/shared/status-icons.js';
 import { ACTS } from './season-map.js';
 import { cardArt, combatArt, relicArt } from './art.js';
 import { captureCombatPresentation, animateCombatTransition, clearCombatPresentation } from './fx.js';
@@ -20,7 +21,7 @@ let presentationBusy = false;
 
 const typeMap = { attack: '攻击', skill: '技能', power: '能力', status: '状态' };
 const rarityMap = { common: '普通', uncommon: '罕见', rare: '稀有' };
-const tagMap = { basic: '基础通用', damage: '交火输出', utility: '战术道具', stance: '掩护前压', core: '构筑核心', hybrid: '混搭连接', response: '应对调度', status: '特殊' };
+const tagMap = { basic: '基础通用', damage: '交火输出', utility: '战术道具', stance: '掩护前压', core: '构筑核心', hybrid: '混搭连接', response: '应对调度', status: '特殊', ...Object.fromEntries(Object.entries(ARCHETYPES).map(([k, v]) => [k, '流派·' + v])) };
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -408,28 +409,19 @@ function renderMap(root) {
   }
 }
 
-function renderStatuses(statusObj) {
-  const mapping = {
-    smoke: { label: '烟雾', desc: '烟雾：敌方每次命中伤害 -1/层，敌方回合结束 -1层' },
-    flash: { label: '闪光', desc: '闪光：敌方下一次命中伤害 -3×层数，触发后消耗全部层数' },
-    weak: { label: '压制', desc: '压制：攻击伤害 ×0.75' },
-    vuln: { label: '易伤', desc: '易伤：受到攻击 ×1.5' },
-    block: { label: '布防', desc: '布防：抵消等量伤害' },
-    strength: { label: '火力', desc: '火力：敌方每次命中伤害 +层数，本场持续' }
-  };
-  return Object.entries(statusObj).filter(([k,v]) => v > 0).map(([k,v]) => {
-    const info = mapping[k] || { label: k, desc: `${k}:${v}` };
-    return `<span class="status-chip" tabindex="0" title="${escapeHtml(info.desc)}">${info.label}:${v}</span>`;
-  }).join('');
-}
-
 function renderCombat(root) {
   const b = state.battle;
   if (!b) return;
-  const enemyDef = getEnemyDef(b.enemyId);
+  const enemyDef = getEnemyDef(b.enemyId) || {};
   const intentStr = describeIntent(state) || '未知';
-  const playerStatuses = renderStatuses(b.statuses.player);
-  const enemyStatuses = renderStatuses(b.statuses.enemy);
+  const enemyBadges = statusBadges([['block', b.statuses.enemy.block], ['strength', b.statuses.enemy.strength], ['aim', b.statuses.enemy.aim], ['burn', b.statuses.enemy.burn], ['smoke', b.statuses.enemy.smoke], ['flash', b.statuses.enemy.flash], ['weak', b.statuses.enemy.weak], ['vuln', b.statuses.enemy.vuln]]);
+  const playerBadges = statusBadges([['block', b.playerBlock], ['strength', b.powerStacks.inflame], ['overload', b.overload], ['weak', b.statuses.player.weak], ['vuln', b.statuses.player.vuln]]);
+  const deployHtml = (b.deployables || []).map(d => `<span class="deploy-chip" tabindex="0" title="${d.kind === 'turret' ? `哨戒炮：回合结束时造成${d.n + 3 * (b.powerStacks.turret_core || 0)}点伤害` : `屏障无人机：回合结束时获得${d.n}点布防`}，剩余${d.turns}回合">${statusIcon(d.kind === 'turret' ? 'sentry' : 'block')}<b>${d.kind === 'turret' ? d.n + 3 * (b.powerStacks.turret_core || 0) : d.n}</b><small>×${d.turns}</small></span>`).join('');
+  const discoverHtml = b.pendingDiscover ? `<div class="discover-overlay" role="dialog" aria-label="发现一张牌"><div class="discover-panel"><h3>${statusIcon('discover')} 发现：选一张加入手牌</h3><p>本回合 0 费，打出后消耗。</p><div class="discover-options">${b.pendingDiscover.options.map(id => `<button class="discover-card" data-discover="${id}"><span class="discover-art">${cardArt(id)}</span><b>${escapeHtml(CARDS[id].name)}</b><small>${CARDS[id].cost}费 · ${escapeHtml(tagMap[CARDS[id].tag] || '')}</small><span>${highlightKeywords(CARDS[id].text)}</span></button>`).join('')}</div></div></div>` : '';
+  const traitInfo = b.trait && TRAITS[b.trait.id];
+  const traitHtml = traitInfo ? `<div class="trait-row"><span class="trait-tag" tabindex="0" title="${escapeHtml(traitInfo.text(b.trait.n))}">${statusIcon(traitInfo.icon)}${escapeHtml(traitInfo.name)}${b.trait.id === 'tempo' ? ` ${b.tempoCount}/${b.trait.n}` : ''}</span></div>` : '';
+  const field = b.field && FIELDS[b.field];
+  const fieldHtml = field ? `<div class="battlefield-strip"><span class="battlefield-tag" tabindex="0" title="${escapeHtml(field.text)}">战场：<b>${escapeHtml(field.name)}</b> · ${escapeHtml(field.text)}</span></div>` : '';
   const legal = legalActions(state);
   const playableUids = new Set(legal.filter(a => a.type === 'play').map(a => a.uid));
   const canStance = legal.some(a => a.type === 'stance');
@@ -448,7 +440,7 @@ function renderCombat(root) {
         <span class="card-title">${escapeHtml(display.name)}</span>
         <span class="card-portrait">${cardArt(card.id)}<span class="portrait-role">${escapeHtml(typeMap[display.type] || display.type)}</span></span>
         <b class="card-tactic">${escapeHtml(tagMap[display.tag] || display.tag || typeMap[display.type] || '')}</b>
-        <span class="card-effect"><span>${escapeHtml(display.text)}</span></span>
+        <span class="card-effect"><span>${highlightKeywords(display.text)}</span></span>
         <span class="card-foot">${escapeHtml(rarityMap[display.rarity] || '')}${display.exhaust ? ' · 消耗' : ''}</span>
       </div>
     </div>`;
@@ -471,28 +463,28 @@ function renderCombat(root) {
 
   root.innerHTML = `
     ${guideStrip('combat', '先看对手意图，再看手牌费用和效果。点牌后“执行战术”，或把牌拖向战场；不想再出牌就结束回合。')}
+    ${fieldHtml}
     <div class="battle" data-presentation-busy="${presentationBusy}">
       <div class="enemy-area">
-        <div class="enemy-art-container" data-character-variant="${escapeHtml(b.enemyId)}">${enemyArt}</div>
+        <div class="enemy-art-container" data-character-variant="${escapeHtml(enemyDef.look || b.enemyId)}">${enemyArt}<div class="status-overlay" aria-label="对手状态">${enemyBadges}</div></div>
         <div class="enemy-box" id="enemy-box">
           <div class="enemy-name">${escapeHtml(b.enemyName)}</div>
+          ${traitHtml}
           <div class="enemy-hp" data-hp="${b.enemyHp}">
             <div class="hp-bar"><i style="width:${b.enemyHp/b.enemyMaxHp*100}%"></i></div>
             <span>${b.enemyHp}/${b.enemyMaxHp}</span>
           </div>
-          ${enemyStatuses ? `<div class="enemy-statuses">${enemyStatuses}</div>` : ''}
-          <div class="intent">意图：${escapeHtml(intentStr)}</div>
+          <div class="intent">意图：${highlightKeywords(intentStr)}</div>
         </div>
       </div>
       <div class="player-area">
-        <div class="ally-art-container">${allyArt}</div>
+        <div class="ally-art-container">${allyArt}<div class="status-overlay" aria-label="我方状态">${playerBadges}</div>${deployHtml ? `<div class="deploy-row" aria-label="已部署">${deployHtml}</div>` : ''}</div>
         <div class="player-box" id="player-box">
           <div class="label">队伍状态</div>
           <div class="value">HP ${state.hp}/${state.maxHp}</div>
           <div class="hp-bar"><i style="width:${state.hp/state.maxHp*100}%"></i></div>
           <div>能量 ${b.energy}/3</div>
           <div class="block-value" data-block="${b.playerBlock}"><span class="mini-armor" aria-hidden="true"></span><span>布防 ${b.playerBlock}</span></div>
-          ${playerStatuses ? `<div class="player-statuses">${playerStatuses}</div>` : ''}
         </div>
         <div class="stance-box">
           <div>姿态：${b.stance === 'cover' ? '掩护' : '前压'}</div>
@@ -514,7 +506,9 @@ function renderCombat(root) {
         ${handHtml}
       </div>
     </div>
+    ${discoverHtml}
   `;
+  root.querySelectorAll('[data-discover]').forEach(el => el.addEventListener('click', () => dispatch({ type: 'discover', id: el.dataset.discover })));
   bindGuideStrip(root, 'combat');
 
   // attach events
@@ -670,13 +664,15 @@ function renderReward(root) {
     return `<div class="reward-card" data-id="${id}">
       <div class="card-art">${cardArt(id)}</div>
       <div class="card-title">${escapeHtml(def.name)}</div>
-      <div class="card-cost">${def.cost}费</div>
-      <div class="card-desc">${escapeHtml(def.text)}</div>
+      <div class="card-cost">${def.cost}费 · ${escapeHtml({ attack: '攻击', skill: '技能', power: '能力' }[def.type] || '')}</div>
+      <div class="card-archetype${ARCHETYPES[def.tag] ? ' is-archetype' : ''}">${escapeHtml(tagMap[def.tag] || '')}</div>
+      <div class="card-desc">${highlightKeywords(def.text)}</div>
     </div>`;
   }).join('');
   root.innerHTML = `
     <div class="phase-container">
       <h2>战斗胜利！选择奖励</h2>
+      <p class="reward-hint">三张牌来自不同方向：挑一张能和你现有牌组叠加的。</p>
       <div class="reward-cards">
         ${rewardHtml}
       </div>
@@ -689,21 +685,37 @@ function renderReward(root) {
   document.getElementById('btn-skip').addEventListener('click', () => dispatch({ type: 'reward', id: null }));
 }
 
+// The quartermaster's line depends on what the player can afford right now.
+function quartermasterLine(shop) {
+  const cheapest = Math.min(...shop.cards.map(shopPrice), Infinity);
+  const sale = shop.cards.find(item => item.sale);
+  const lines = state.money < 50
+    ? ['手头紧？删掉一张基础牌也是变强，牌组越精越好抽到王牌。', '钱不够没关系，先看看柜台的服务。']
+    : state.money >= 150
+      ? ['大客户！稀有货在最右边，能撑起一整套打法。', '预算充足，挑一张能和你现有牌叠起来的。']
+      : [sale ? `今天「${CARDS[sale.id]?.name}」半价，错过就没了。` : '都是刚到的货，看看哪张合你的打法。', '别只看伤害数字——燃烧、部署、连击，各有各的玩法。', `最便宜的只要 ${cheapest} 金币。`];
+  return lines[state.rev % lines.length];
+}
+
 function renderShop(root) {
   const shop = state.shop;
+  const rarityName = { common: '普通', uncommon: '罕见', rare: '稀有' };
   const shopCards = shop.cards.map((item, idx) => {
     const def = CARDS[item.id];
     if (!def) return '';
-    const cost = priceOf(item.id);
+    const cost = shopPrice(item);
     const canBuy = state.money >= cost;
-    return `<div class="shop-card">
+    return `<div class="shop-card shelf-item rarity-${def.rarity}${item.sale ? ' on-sale' : ''}">
+      <div class="price-tag">${item.sale ? `<s>${priceOf(item.id)}</s>` : ''}<b>${cost}</b><span>金币</span></div>
+      ${item.sale ? '<div class="sale-ribbon">今日半价</div>' : ''}
       <div class="card-art">${cardArt(item.id)}</div>
       <div class="card-title">${escapeHtml(def.name)}</div>
-      <div class="card-cost">价格：${cost}</div>
-      <div class="card-desc">${escapeHtml(def.text)}</div>
-      <button class="btn" data-buy-index="${idx}" ${canBuy ? '' : 'disabled'}>购买</button>
+      <div class="card-cost">${def.cost}费 · ${escapeHtml({ attack: '攻击', skill: '技能', power: '能力' }[def.type] || '')} · ${rarityName[def.rarity] || ''}</div>
+      <div class="card-archetype${ARCHETYPES[def.tag] ? ' is-archetype' : ''}">${escapeHtml(tagMap[def.tag] || '')}</div>
+      <div class="card-desc">${highlightKeywords(def.text)}</div>
+      <button class="btn" data-buy-index="${idx}" ${canBuy ? '' : 'disabled'}>${canBuy ? '买下' : '金币不足'}</button>
     </div>`;
-  }).join('');
+  }).join('') || '<p class="shelf-empty">货架已经被你买空了。</p>';
   const rmCost = removePrice(state);
   const upgradeServices = ['attack', 'skill'].map(category => {
     const quote = categoryUpgradeQuote(state, category);
@@ -722,17 +734,31 @@ function renderShop(root) {
     </div>`;
   }).join('');
   root.innerHTML = `
-    <div class="phase-container">
-      <h2>商店</h2>
-      <p>金币：${state.money}</p>
-      <h3>出售卡牌</h3>
-      <div style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;">${shopCards}</div>
-      <h3>战术训练 · 选一类永久升级</h3>
-      <p>每次到店只能选一次；当前牌组升级后，后续比赛都会保留。</p>
-      <div class="upgrade-services">${upgradeServices}</div>
-      <h3>删除卡牌（每张${rmCost}金币）</h3>
-      <div class="deck-list">${deckItems}</div>
-      <button class="btn" id="btn-leave">离开商店</button>
+    <div class="phase-container shop-scene">
+      <div class="shop-header">
+        <div class="npc-booth">
+          <div class="npc-stage" data-npc="quartermaster" aria-hidden="true"></div>
+          <div class="npc-info">
+            <div class="npc-name">军需官 · 老周 <small>战术补给站</small></div>
+            <div class="npc-bubble">${escapeHtml(quartermasterLine(shop))}</div>
+          </div>
+        </div>
+        <div class="shop-wallet"><span>你的金币</span><b>${state.money}</b></div>
+      </div>
+      <h3 class="shelf-title">补给货架</h3>
+      <div class="shop-shelf">${shopCards}</div>
+      <div class="shop-counter">
+        <section class="counter-service">
+          <h4>战术训练 · 选一类永久升级</h4>
+          <p>每次到店只能选一次；升级会保留到后续比赛。</p>
+          <div class="upgrade-services">${upgradeServices}</div>
+        </section>
+        <details class="counter-service remove-service">
+          <summary><h4>精简牌组 · 删一张牌（${rmCost} 金币）</h4><span>展开牌组</span></summary>
+          <div class="deck-list">${deckItems}</div>
+        </details>
+      </div>
+      <button class="btn primary shop-leave" id="btn-leave">离开补给站，继续赛程 →</button>
     </div>
   `;
   document.querySelectorAll('[data-buy-index]').forEach(el => {
@@ -915,12 +941,12 @@ function renderLibraryModal() {
         html = filtered.map(id => {
           const c = CARDS[id];
           const tooltip = describeCardFull({id, uid:'', up:false});
-          const upgradeHtml = c.upgradeText ? `<details class="upgrade-details"><summary>升级文本</summary><div class="upgrade-text">${escapeHtml(c.upgradeText)}</div></details>` : '';
+          const upgradeHtml = c.upgradeText ? `<details class="upgrade-details"><summary>升级文本</summary><div class="upgrade-text">${highlightKeywords(c.upgradeText)}</div></details>` : '';
           return `<div class="library-card" data-tooltip="${escapeHtml(tooltip)}" tabindex="0">
             <div class="card-art">${cardArt(id)}</div>
             <div class="name">${escapeHtml(c.name)}</div>
             <div class="meta">${c.cost}费${c.upgradeCost !== undefined ? ` → ${c.upgradeCost}费` : ''} ${typeMap[c.type]} ${tagMap[c.tag]} ${rarityMap[c.rarity]}</div>
-            <div class="card-text">${escapeHtml(c.text)}</div>
+            <div class="card-text">${highlightKeywords(c.text)}</div>
             ${upgradeHtml}
           </div>`;
         }).join('');
@@ -934,7 +960,7 @@ function renderLibraryModal() {
           <div class="card-art">${cardArt(c.id)}</div>
           <div class="name">${escapeHtml(c.name)}</div>
           <div class="meta">${c.curse?'全赛区共享诅咒 · 跨比赛保留':'比赛状态 · 战后消失'} · 不计入${CARD_IDS.length}张可选牌</div>
-          <div class="card-text">${escapeHtml(c.text)}</div>
+          <div class="card-text">${highlightKeywords(c.text)}</div>
         </div>`;
       }).join('');
     } else if (activeTab === 'relic') {

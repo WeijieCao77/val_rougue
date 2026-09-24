@@ -13,7 +13,7 @@ const OUT = args.out || 'reports/playtest/new-demo-act1.json';
 
 const costOf = c => (c.up && CARDS[c.id].upgradeCost !== undefined ? CARDS[c.id].upgradeCost : CARDS[c.id].cost);
 const step = (s, a) => { const r = act(s, a); if (r.error) throw Error(`${JSON.stringify(a)}: ${r.error}`); r.state.logs = []; return r.state; };
-const enemyStatusValue = b => (b.statuses.enemy.vuln || 0) * 3 + (b.statuses.enemy.weak || 0) * 2.5 + (b.statuses.enemy.smoke || 0) * 1.5 + (b.statuses.enemy.flash || 0) * 2.5 - (b.statuses.enemy.block || 0) * 0.9;
+const enemyStatusValue = b => (b.statuses.enemy.burn || 0) * 2 + (b.deployables || []).reduce((v, d) => v + d.n * d.turns * 0.7, 0) - (b.statuses.enemy.strength || 0) * 2 + (b.statuses.enemy.vuln || 0) * 3 + (b.statuses.enemy.weak || 0) * 2.5 + (b.statuses.enemy.smoke || 0) * 1.5 + (b.statuses.enemy.flash || 0) * 2.5 - (b.statuses.enemy.block || 0) * 0.9;
 
 // Score the state right after the enemy turn resolved (1-ply lookahead on the
 // revealed intent). HP is worth more than enemy HP, as a careful player plays.
@@ -41,8 +41,10 @@ function searchTurn(s, hpWeight, budget = 2500) {
     if (seen.has(k)) return;
     seen.add(k);
     if (++nodes > budget) return;
-    const ended = step(cur, { type: 'end' });
-    outcomes.push({ line, score: evaluate(ended, hpWeight), end: ended, pre: cur });
+    if (!cur.battle.pendingDiscover) {
+      const ended = step(cur, { type: 'end' });
+      outcomes.push({ line, score: evaluate(ended, hpWeight), end: ended, pre: cur });
+    }
     for (const a of legalActions(cur)) {
       if (a.type === 'end' || (a.type === 'play' && cur.battle.playsThisTurn >= 40)) continue;
       dfs(step(cur, a), [...line, a]);
@@ -57,7 +59,7 @@ function naiveLine(s) {
   let cur = s; const line = [];
   for (;;) {
     if (cur.phase !== 'combat') break;
-    const a = cur.battle.playsThisTurn < 40 && legalActions(cur).find(x => x.type === 'play');
+    const a = cur.battle.pendingDiscover ? legalActions(cur)[0] : cur.battle.playsThisTurn < 40 && legalActions(cur).find(x => x.type === 'play');
     if (!a) break;
     cur = step(cur, a); line.push(a);
   }
@@ -68,6 +70,7 @@ function randomLine(s, rand) {
   let cur = s; const line = [];
   for (;;) {
     if (cur.phase !== 'combat') break;
+    if (cur.battle.pendingDiscover) { const a = legalActions(cur)[0]; cur = step(cur, a); line.push(a); continue; }
     const options = cur.battle.playsThisTurn < 40 ? legalActions(cur).filter(x => x.type === 'play') : [];
     if (!options.length || rand() < 0.08) break;
     const a = options[Math.floor(rand() * options.length)];
@@ -80,7 +83,7 @@ function randomLine(s, rand) {
 function cardValue(id) {
   const d = CARDS[id];
   if (!d) return -5;
-  if (d.type === 'power') return { tactical_core: 9, attack_core: 8, defense_core: 6, tactical_master: 11, inflame: 9, footwork: 7, barricade: 5, clutch_core: 6, final_push: 6, dark_embrace: 4, smoke_core: 5, flash_core: 5, upgrade_core: 4 }[d.power] || 5;
+  if (d.type === 'power') return { tactical_core: 9, attack_core: 8, defense_core: 6, tactical_master: 11, inflame: 9, footwork: 7, barricade: 5, clutch_core: 6, final_push: 6, dark_embrace: 4, smoke_core: 5, flash_core: 5, upgrade_core: 4, knife_master: 5, feel_no_pain: 6, burn_core: 9, turret_core: 5, combo_core: 6 }[d.power] || 5;
   let v = 0;
   const walk = (e, m = 1) => {
     if (e.type === 'attack') v += e.n * (e.times || 1) * m;
@@ -95,6 +98,13 @@ function cardValue(id) {
     else if (e.type === 'conditional') walk(e.effect, 0.6 * m);
     else if (e.type === 'repeat') walk(e.effect, e.times * m);
     else if (e.type === 'stanceSwitch') v += 1;
+    else if (e.type === 'burn') v += e.n * 2.2 * m;
+    else if (e.type === 'deploy') v += e.n * e.turns * 0.8 * m;
+    else if (e.type === 'discover') v += 6 * m;
+    else if (e.type === 'addCardToHand') v += 4 * e.n * m;
+    else if (e.type === 'overload') v -= 4 * e.n * m;
+    else if (e.type === 'attackFromBlock' || e.type === 'detonate' || e.type === 'burnMultiply' || e.type === 'fireTurrets') v += 7 * m;
+    else if (e.type === 'strength') v += 5 * e.n * m;
   };
   d.effects.forEach(e => walk(e));
   const eff = v / (d.cost + 0.8);

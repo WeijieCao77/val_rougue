@@ -174,6 +174,150 @@
       "asset": "assets/opponents/master1.png",
       "name": "大师赛种子队",
       "archetype": "master1"
+    },
+    {
+      "id": "S_E02",
+      "asset": "assets/opponents/elite.png",
+      "name": "远点狙击手",
+      "archetype": "elite"
+    },
+    {
+      "id": "S_E03",
+      "asset": "assets/opponents/twin.png",
+      "name": "突破手双枪",
+      "archetype": "twin"
+    },
+    {
+      "id": "S_E04",
+      "asset": "assets/opponents/wall.png",
+      "name": "哨位架枪组",
+      "archetype": "wall"
+    },
+    {
+      "id": "S_E05",
+      "asset": "assets/opponents/control.png",
+      "name": "烟雾控场手",
+      "archetype": "control"
+    },
+    {
+      "id": "S_E06",
+      "asset": "assets/opponents/intel.png",
+      "name": "前哨侦察兵",
+      "archetype": "intel"
+    },
+    {
+      "id": "S_EL01",
+      "asset": "assets/opponents/elite.png",
+      "name": "王牌突击手",
+      "archetype": "elite"
+    },
+    {
+      "id": "S_EL02",
+      "asset": "assets/opponents/control.png",
+      "name": "战术指挥官",
+      "archetype": "control"
+    },
+    {
+      "id": "S_B01",
+      "asset": "assets/opponents/master1.png",
+      "name": "大师赛冠军卫队",
+      "archetype": "master1"
+    },
+    {
+      "id": "A2_S_E02",
+      "asset": "assets/opponents/elite.png",
+      "name": "二幕·远点狙击手",
+      "archetype": "elite"
+    },
+    {
+      "id": "A2_S_E03",
+      "asset": "assets/opponents/twin.png",
+      "name": "二幕·突破手双枪",
+      "archetype": "twin"
+    },
+    {
+      "id": "A2_S_E04",
+      "asset": "assets/opponents/wall.png",
+      "name": "二幕·哨位架枪组",
+      "archetype": "wall"
+    },
+    {
+      "id": "A2_S_E05",
+      "asset": "assets/opponents/control.png",
+      "name": "二幕·烟雾控场手",
+      "archetype": "control"
+    },
+    {
+      "id": "A2_S_E06",
+      "asset": "assets/opponents/intel.png",
+      "name": "二幕·前哨侦察兵",
+      "archetype": "intel"
+    },
+    {
+      "id": "A2_S_EL01",
+      "asset": "assets/opponents/elite.png",
+      "name": "二幕·王牌突击手",
+      "archetype": "elite"
+    },
+    {
+      "id": "A2_S_EL02",
+      "asset": "assets/opponents/control.png",
+      "name": "二幕·战术指挥官",
+      "archetype": "control"
+    },
+    {
+      "id": "A2_S_B01",
+      "asset": "assets/opponents/master2.png",
+      "name": "晋级赛冠军卫队",
+      "archetype": "master2"
+    },
+    {
+      "id": "A3_S_E02",
+      "asset": "assets/opponents/elite.png",
+      "name": "决赛·远点狙击手",
+      "archetype": "elite"
+    },
+    {
+      "id": "A3_S_E03",
+      "asset": "assets/opponents/twin.png",
+      "name": "决赛·突破手双枪",
+      "archetype": "twin"
+    },
+    {
+      "id": "A3_S_E04",
+      "asset": "assets/opponents/wall.png",
+      "name": "决赛·哨位架枪组",
+      "archetype": "wall"
+    },
+    {
+      "id": "A3_S_E05",
+      "asset": "assets/opponents/control.png",
+      "name": "决赛·烟雾控场手",
+      "archetype": "control"
+    },
+    {
+      "id": "A3_S_E06",
+      "asset": "assets/opponents/intel.png",
+      "name": "决赛·前哨侦察兵",
+      "archetype": "intel"
+    },
+    {
+      "id": "A3_S_EL01",
+      "asset": "assets/opponents/elite.png",
+      "name": "决赛·王牌突击手",
+      "archetype": "elite"
+    },
+    {
+      "id": "A3_S_EL02",
+      "asset": "assets/opponents/control.png",
+      "name": "决赛·战术指挥官",
+      "archetype": "control"
+    },
+    {
+      "id": "A3_S_B01",
+      "asset": "assets/opponents/champion.png",
+      "name": "总决赛冠军卫队",
+      "archetype": "champion"
     }
   ]
 }

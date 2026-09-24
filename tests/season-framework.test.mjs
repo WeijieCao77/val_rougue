@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {buildMap,availableNodes} from '../season-map.js';
-import {createSeason,act,instance,startBattle,preview,replay,offers,intent,drawCards} from '../engine.js';
-import {CARDS,REGIONS,compactLines,TACTICS,effects} from '../content.js';
+import {createSeason,act,instance,startBattle,preview,replay,offers,intent,intentText,drawCards} from '../engine.js';
+import {CARDS,REGIONS,ENEMIES,compactLines,TACTICS,effects} from '../content.js';
 import {routeNodes,mapEntry,nextScreen,restoreScreen} from '../navigation.js';
 const step=(s,a)=>{const r=act(s,a);assert.equal(r.error,null);return r.state;};
 function bossFixture(actNo,skins=[]){const s=createSeason('fixture');s.act=actNo;s.map=buildMap(s.seed,actNo);s.currentNode=s.map.bossId;s.node=actNo*12;s.hp=31;s.skins=skins;startBattle(s,s.map.nodes.find(n=>n.key===s.currentNode).enemy);s.battle.enemyHp=1;s.battle.hand=[instance(s,'CN03')];return s;}
@@ -58,8 +58,8 @@ test('all early boss outcomes carry deck/resources, heal once after skin and ent
   assert.deepEqual(s.deck,deck);s=step(s,{type:'nextAct'});assert.equal(s.act,actNo+1);assert.equal(s.hp,55);assert.equal(s.currentNode,null);assert.equal(s.phase,'map');assert.deepEqual(s.deck,deck);assert.equal(availableNodes(s).length,4);
  }
 });
-test('championship uses growth 3 and only its defeat wins the whole season',()=>{
- let s=bossFixture(3);s.battle.cycles=2;assert.equal(intent(s)[0].n,18);s=step(s,{type:'play',uid:s.battle.hand[0].uid});assert.equal(s.outcome,'win');assert.ok(s.completed.includes(s.map.bossId));assert.equal(s.hp,31);assert.ok(act(s,{type:'nextAct'}).error);
+test('championship is the two-phase final boss and only its defeat wins the whole season',()=>{
+ let s=bossFixture(3);assert.equal(s.battle.enemy,'A3_S_B01');assert.equal(s.battle.trait.id,'phase2');s.battle.cycles=2;assert.equal(intent(s)[0].n,10,'no cycle growth; phase two replaces it');s=step(s,{type:'play',uid:s.battle.hand[0].uid});assert.equal(s.outcome,'win');assert.ok(s.completed.includes(s.map.bossId));assert.equal(s.hp,31);assert.ok(act(s,{type:'nextAct'}).error);
 });
 test('battle draw is seeded permutation, not independent generation or replacement',()=>{
  const openings=new Set();
@@ -102,4 +102,20 @@ test('all four regions complete the 36-room state machine (combat victories are 
 });
 test('new route actions replay deterministically without fixture mutations',()=>{
  let s=createSeason('new-route-replay');s=step(s,{type:'chooseNode',key:s.map.starts[2]});s=step(s,{type:'end'});assert.deepEqual(replay(s),s);
+});
+test('season opponents: sniper aim is broken by suppression, sentinel counter-fires, fields apply to both sides',()=>{
+ let s=createSeason('traits');s=step(s,{type:'chooseNode',key:s.map.starts[0]});
+ s.battle.enemy='S_E02';s.battle.trait={id:'sniper'};s.battle.intent=0;s.battle.hand=[];
+ s=step(s,{type:'end'});assert.equal(s.battle.aim,1);assert.match(intentText(s),/重狙 18/);
+ const weakCard=Object.keys(CARDS).find(id=>CARDS[id].cost===1&&CARDS[id].effects?.some(e=>e.type==='weak'));
+ s.battle.hand=[instance(s,weakCard)];s.battle.energy=3;s=step(s,{type:'play',uid:s.battle.hand[0].uid});
+ assert.equal(s.battle.aim,0);assert.match(intentText(s),/仓促射击 4/,'one third of 18, then suppressed ×0.75');
+ s=createSeason('thorns');s=step(s,{type:'chooseNode',key:s.map.starts[0]});
+ s.battle.enemy='S_E04';s.battle.trait={id:'thorns',n:2};s.battle.traitState={};s.battle.enemyHp=40;s.battle.enemyBlock=0;s.battle.block=0;
+ const hitter=Object.keys(CARDS).find(id=>CARDS[id].cost===1&&CARDS[id].effects?.length===1&&CARDS[id].effects[0].type==='hit'&&CARDS[id].effects[0].times===1);
+ s.battle.hand=[instance(s,hitter)];s.battle.energy=3;const hp=s.hp;s=step(s,{type:'play',uid:s.battle.hand[0].uid});assert.equal(s.hp,hp-2);
+ s.battle.field='corridor';s.battle.intent=0;s.battle.enemy='S_E03';s.battle.enemyWeak=0;s.battle.enemyStrength=0;assert.equal(intent(s)[0].n,4,'3×3 multi-hit gains +1 per hit');
+});
+test('legacy tutorial enemies are untouched by season traits',()=>{
+ for(const id of ['E01','E02','E03','E04','E05','EL01','B01'])assert.ok(!ENEMIES[id].trait&&!ENEMIES[id].look,id);
 });
