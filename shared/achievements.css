@@ -1,0 +1,70 @@
+/* Achievements (成就): unlock toasts, hall page, results list, worn title — both demos. */
+.ach-toasts{position:fixed;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9000;display:flex;flex-direction:column;align-items:center;gap:8px;width:min(420px,calc(100vw - 24px));pointer-events:none}
+.ach-toast{pointer-events:auto;cursor:pointer;display:flex;gap:12px;align-items:center;width:100%;box-sizing:border-box;padding:10px 14px;border-radius:10px;border:1px solid #e2c27a88;background:linear-gradient(135deg,#1d1a12f2,#12161ef2);color:#f3ecd9;box-shadow:0 10px 30px #000a,0 0 0 1px #0006 inset;opacity:0;transform:translateY(-14px) scale(.97);transition:opacity .28s ease,transform .32s cubic-bezier(.2,.9,.3,1.2)}
+.ach-toast.is-in{opacity:1;transform:none}
+.ach-toast.is-out{opacity:0;transform:translateY(-10px);transition-duration:.25s}
+.ach-toast.is-secret{border-color:#b89cff99;background:linear-gradient(135deg,#1b1526f2,#12161ef2)}
+.ach-toast-icon{flex:0 0 auto;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe7a3,#c9973a);color:#2a1d05;box-shadow:0 0 16px #e2c27a66}
+.ach-toast.is-secret .ach-toast-icon{background:radial-gradient(circle at 35% 30%,#e3d6ff,#8a6ad8)}
+.ach-toast-icon svg{width:22px;height:22px}
+.ach-toast-text{display:flex;flex-direction:column;min-width:0;line-height:1.35}
+.ach-toast-text small{font-size:10px;letter-spacing:2px;color:#e2c27a;opacity:.9}
+.ach-toast.is-secret .ach-toast-text small{color:#cdb8ff}
+.ach-toast-text b{font-size:15px;font-weight:700}
+.ach-toast-text em{font-style:normal;font-size:12px;opacity:.78;overflow-wrap:anywhere}
+.ach-toast-reward{font-style:normal;font-size:11px;margin-top:2px;color:#f6d98f}
+@media (prefers-reduced-motion:reduce){.ach-toast,.ach-toast.is-in,.ach-toast.is-out{transition:opacity .2s linear;transform:none}}
+
+/* Hall */
+.ach-hall{display:flex;flex-direction:column;gap:14px;text-align:left}
+.ach-summary{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:10px;border:1px solid #e2c27a44;background:#e2c27a12}
+.ach-total{display:flex;align-items:baseline;gap:8px}
+.ach-total strong{font-size:34px;line-height:1;color:#f0cf7c;font-variant-numeric:tabular-nums}
+.ach-total span{font-size:13px;opacity:.75}
+.ach-note{margin:0;font-size:12px;line-height:1.6;opacity:.75}
+.ach-bar{height:6px;border-radius:999px;background:#ffffff1a;overflow:hidden}
+.ach-bar i{display:block;height:100%;background:linear-gradient(90deg,#c9973a,#f0cf7c);border-radius:inherit}
+.ach-titles{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.ach-titles-label{font-size:11px;letter-spacing:1px;opacity:.65;margin-right:2px}
+button.ach-title-chip{font:inherit;font-size:12px;line-height:1.2;padding:5px 11px;min-height:30px;min-width:0;width:auto;border-radius:999px;border:1px solid #e2c27a55;background:#ffffff0a;color:inherit;cursor:pointer;box-shadow:none;letter-spacing:0;text-transform:none;transform:none}
+button.ach-title-chip:hover{background:#e2c27a22}
+button.ach-title-chip.is-worn{border-color:#f0cf7c;background:#e2c27a3a;color:#fbe7b5;font-weight:700}
+button.ach-title-chip:focus-visible{outline:2px solid #e2c27a;outline-offset:2px}
+.ach-cat{display:flex;flex-direction:column;gap:8px}
+.ach-cat header{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ach-cat h3{margin:0;font-size:15px;letter-spacing:1px}
+.ach-cat-count{font-size:12px;opacity:.7;font-variant-numeric:tabular-nums}
+.ach-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.ach-item{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:8px;border:1px solid #ffffff14;background:#ffffff08;opacity:.62;min-width:0}
+.ach-item.is-done{opacity:1;border-color:#e2c27a55;background:#e2c27a10}
+.ach-item-icon{flex:0 0 auto;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#ffffff14;color:#cfd6dc}
+.ach-item.is-done .ach-item-icon{background:radial-gradient(circle at 35% 30%,#ffe7a3,#c9973a);color:#2a1d05}
+.ach-item-icon svg{width:17px;height:17px}
+.ach-item-body{display:flex;flex-direction:column;gap:2px;min-width:0;line-height:1.4}
+.ach-item-body b{font-size:13px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ach-tag{font-size:10px;font-weight:400;padding:1px 6px;border-radius:999px;border:1px solid #b89cff77;color:#cdb8ff}
+.ach-item-desc{font-size:12px;opacity:.8;overflow-wrap:anywhere}
+.ach-item-reward{font-size:11px;color:#f0cf7c}
+.ach-item-when{font-size:11px;opacity:.6}
+
+/* Results */
+.ach-run{margin:4px auto 14px;text-align:left;align-self:stretch;width:100%;max-width:980px;box-sizing:border-box}
+.ach-run-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
+.ach-run-list li{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;border:1px solid #e2c27a55;background:#e2c27a10}
+.ach-run-list .ach-item-icon{background:radial-gradient(circle at 35% 30%,#ffe7a3,#c9973a);color:#2a1d05}
+.ach-run-list span{display:flex;flex-direction:column;min-width:0;line-height:1.4}
+.ach-run-list b{font-size:13px}
+.ach-run-list small{font-size:12px;opacity:.78;overflow-wrap:anywhere}
+.ach-run-list em{font-style:normal;font-size:11px;color:#f0cf7c}
+
+/* Worn title */
+.ach-badge{display:inline-flex;align-items:center;gap:8px;margin:6px auto 0;padding:4px 12px 4px 4px;border-radius:999px;border:1px solid #e2c27a77;background:#0008;color:#f6e3b0;font-size:13px}
+.ach-badge span{font-size:10px;letter-spacing:2px;padding:3px 8px;border-radius:999px;background:#e2c27a;color:#2a1d05}
+.ach-badge b{font-weight:700;letter-spacing:1px}
+
+@media (max-width:520px){
+  .ach-list,.ach-run-list{grid-template-columns:1fr}
+  .ach-total strong{font-size:28px}
+  .ach-toast{padding:9px 12px}
+  .ach-toast-text b{font-size:14px}
+}

@@ -15292,7 +15292,7 @@ const module19=(()=>{
 
 const SFX_STORAGE_KEY = 'val-sfx-v1';
 const SFX_DEFAULT_VOLUME = 0.5;
-const SFX_NAMES = ['click', 'draw', 'shuffle', 'cardAttack', 'cardSkill', 'cardPower', 'hit', 'hitHeavy', 'multiHit', 'block', 'debuff', 'enemyDeath', 'hurt', 'heal', 'turnEnd', 'reward', 'coin', 'victory', 'defeat'];
+const SFX_NAMES = ['click', 'draw', 'shuffle', 'cardAttack', 'cardSkill', 'cardPower', 'hit', 'hitHeavy', 'multiHit', 'block', 'debuff', 'enemyDeath', 'hurt', 'heal', 'turnEnd', 'reward', 'coin', 'victory', 'defeat', 'achieve'];
 
 function clampVolume(value) {
   const n = Number(value);
@@ -15452,6 +15452,8 @@ const RECIPES = {
   reward: t => { [523, 659, 784].forEach((f, i) => tone(t + i * 0.07, { freq: f, type: 'triangle', dur: 0.14, gain: 0.09 })); },
   coin: t => { tone(t, { freq: 988, type: 'square', dur: 0.06, gain: 0.05 }); tone(t + 0.06, { freq: 1319, type: 'square', dur: 0.2, gain: 0.05 }); },
   victory: t => { [392, 523, 659, 784].forEach((f, i) => tone(t + i * 0.09, { freq: f, type: 'triangle', dur: 0.16, gain: 0.1 })); [523, 659, 784].forEach(f => tone(t + 0.36, { freq: f, type: 'sine', dur: 0.6, gain: 0.06, attack: 0.02 })); },
+  // Achievement unlock: a bright rising arpeggio with a soft shimmer.
+  achieve: t => { [659, 880, 1175, 1568].forEach((f, i) => tone(t + i * 0.06, { freq: f, type: 'triangle', dur: 0.18, gain: 0.07 })); tone(t + 0.26, { freq: 1760, to: 1975, type: 'sine', dur: 0.5, gain: 0.04, attack: 0.03 }); noise(t + 0.24, { dur: 0.3, gain: 0.03, filter: 'highpass', freq: 6000 }); },
   defeat: t => { [392, 330, 262, 196].forEach((f, i) => tone(t + i * 0.16, { freq: f, to: f * 0.97, type: 'triangle', dur: 0.3, gain: 0.1, attack: 0.01 })); },
 };
 
@@ -17027,6 +17029,577 @@ function formatDuration(ms) {
 return {HISTORY_CAP,SCORE_RULES,DIFFICULTY_BONUS,computeScore,scoreFormulaText,loadHistory,addHistory,recordRun,SEEN_CATEGORIES,emptyCollection,loadCollection,mergeSeen,markSeen,seenCount,newTracker,trackStep,loadTracker,saveTracker,filterSortCards,SORT_LABELS,COST_FILTERS,formatDuration};
 })();
 const module28=(()=>{
+// Achievements (成就) shared by both demos: storage, the per-run memory that
+// turns engine transitions into concrete moments, evaluation, and the small
+// pieces of UI (unlock toast, hall page, results list, worn title).
+//
+// Each demo supplies a *view* adapter (engine state -> a plain normalized
+// object, see VIEW below) and its own list of definitions. A definition is
+//   { key, cat, name, desc, secret?, career?, reward?: { title }, test(ctx) }
+// and `test` is a pure function of the context built for one transition:
+//   ctx = { prev, next, action, raw, mem, fight, ended, hit, entered, runEnd, career }
+// Nothing here changes game state or rules: it only reads before/after states.
+// No imports: the Wa build packs this file as-is and the new demo loads it
+// from /shared/achievements-core.js.
+//
+// VIEW (what an adapter returns; null when there is no run):
+//   { runId, phase, inCombat, result: 'win'|'loss'|'abandon'|null, hp, maxHp,
+//     money, act, floor, nodeKind, team, asc,
+//     deck: [{ id, up, cost, type, tag, basic, curse, upgradable, role }],
+//     gear: [ids], gearMax, supplies, supplyMax,
+//     combat: null | { turn, plays, block, encounter, kind, bossId, warmup,
+//       enemies: [{ uid, id, hp, maxHp, boss, elite, aim, block, weak, trait, traitState, intent }],
+//       hand: [{ uid, id, type, cost }] } }
+
+const ACH_BOOK_VERSION = 1;
+
+const clone = v => JSON.parse(JSON.stringify(v));
+const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+function readJson(storage, key, fallback) {
+  try { const raw = storage?.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch { return fallback; }
+}
+function writeJson(storage, key, value) {
+  try { storage?.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
+}
+
+// ---------------------------------------------------------------- book
+// The saved book: what is unlocked (with when and in which run), the worn
+// title, and a small career record of facts (not grind counters).
+function emptyCareer() {
+  return { runs: 0, wins: 0, losses: 0, lossStreak: 0, streakBeforeWin: 0, teamWins: {}, bossWins: {}, bossLosses: {}, fastestWinMs: null, seeded: false };
+}
+function emptyBook() {
+  return { v: ACH_BOOK_VERSION, unlocked: {}, order: [], worn: null, career: emptyCareer() };
+}
+function normalizeBook(raw) {
+  const book = emptyBook();
+  if (!raw || typeof raw !== 'object') return book;
+  if (raw.unlocked && typeof raw.unlocked === 'object') {
+    for (const [k, v] of Object.entries(raw.unlocked)) if (typeof k === 'string' && v && typeof v === 'object') book.unlocked[k] = { at: num(v.at) || null, run: v.run == null ? null : String(v.run), label: typeof v.label === 'string' ? v.label : '' };
+  }
+  const order = Array.isArray(raw.order) ? raw.order.filter(k => book.unlocked[k]) : [];
+  book.order = [...new Set([...order, ...Object.keys(book.unlocked)])];
+  book.worn = typeof raw.worn === 'string' ? raw.worn : null;
+  const c = raw.career && typeof raw.career === 'object' ? raw.career : {};
+  const obj = v => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
+  book.career = { ...emptyCareer(), runs: num(c.runs), wins: num(c.wins), losses: num(c.losses), lossStreak: num(c.lossStreak), streakBeforeWin: num(c.streakBeforeWin), teamWins: obj(c.teamWins), bossWins: obj(c.bossWins), bossLosses: obj(c.bossLosses), fastestWinMs: c.fastestWinMs == null ? null : num(c.fastestWinMs), seeded: !!c.seeded };
+  return book;
+}
+function loadBook(storage, key) { return normalizeBook(readJson(storage, key, null)); }
+function saveBook(storage, key, book) { return writeJson(storage, key, book); }
+
+// A book made before any run was tracked learns what the run history already
+// holds (wins per team and difficulty, fastest win), once.
+function seedCareer(career, history = []) {
+  if (career.seeded) return career;
+  const out = { ...career, teamWins: { ...career.teamWins }, seeded: true };
+  const list = [...history].filter(e => e && e.outcome !== 'abandon').sort((a, b) => num(a.endedAt) - num(b.endedAt));
+  for (const e of list) {
+    out.runs++;
+    if (e.outcome === 'win') {
+      out.wins++;
+      out.streakBeforeWin = Math.max(out.streakBeforeWin, out.lossStreak);
+      out.lossStreak = 0;
+      const team = e.teamId;
+      if (team) out.teamWins[team] = Math.max(out.teamWins[team] ?? -1, num(e.ascension));
+      if (e.durationMs != null && (out.fastestWinMs == null || e.durationMs < out.fastestWinMs)) out.fastestWinMs = num(e.durationMs);
+    } else { out.losses++; out.lossStreak++; }
+  }
+  return out;
+}
+
+// Records the keys (known defs only, never twice). Returns the fresh defs.
+function unlockKeys(book, defs, keys, meta = {}) {
+  const byKey = new Map(defs.map(d => [d.key, d]));
+  const fresh = [];
+  for (const key of keys) {
+    const d = byKey.get(key);
+    if (!d || book.unlocked[key]) continue;
+    book.unlocked[key] = { at: meta.at ?? Date.now(), run: meta.run == null ? null : String(meta.run), label: meta.label || '' };
+    book.order.push(key);
+    fresh.push(d);
+  }
+  return fresh;
+}
+
+// ---------------------------------------------------------------- run memory
+function newRunMemory(runId, now = Date.now()) {
+  return {
+    runId: String(runId), startedAt: now, fight: null, lastFight: null, shop: null,
+    run: { fightsWon: 0, elitesWon: 0, elitesFought: 0, bossesWon: [], shopsVisited: 0, removed: 0, sold: 0, flags: {} },
+    acts: {}, unlocked: []
+  };
+}
+function actMemory(mem, act) {
+  const k = String(act || 1);
+  if (!mem.acts[k]) mem.acts[k] = { rest: 0, event: 0, shop: 0, elite: 0, battle: 0, boss: 0, crate: 0, eliteWins: 0 };
+  return mem.acts[k];
+}
+function newFight(v, partial = false) {
+  const c = v.combat || {};
+  return {
+    kind: c.kind || 'battle', encounter: c.encounter ?? null, bossId: c.bossId ?? null, enemyIds: (c.enemies || []).map(e => e.id),
+    act: v.act, floor: v.floor, hpStart: v.hp, maxHp: v.maxHp, hpLost: 0, turn: c.turn ?? 1,
+    kills: 0, turnKills: 0, turnDamage: 0, maxTurnKills: 0, maxTurnDamage: 0, maxCardDamage: 0,
+    maxPlays: 0, maxBlock: 0, played: 0, types: {}, flags: {}, warmup: !!c.warmup, partial
+  };
+}
+
+// Folds one transition into the run memory. `observe(ctx)` (per demo) may add
+// fight/run flags before a fight is closed. Returns what happened this step.
+function stepMemory(mem0, prev, next, action, { now = Date.now(), raw = {}, observe } = {}) {
+  const mem = mem0 && next && mem0.runId === String(next.runId) ? clone(mem0) : newRunMemory(next?.runId ?? 'none', now);
+  const hit = { damage: 0, kills: 0, card: null };
+  let ended = null, entered = null, runEnd = null;
+  if (!next) return { mem, hit, ended, entered, runEnd };
+  const wasIn = !!prev?.inCombat, isIn = !!next.inCombat;
+  if (isIn && (!wasIn || !mem.fight)) mem.fight = newFight(next, wasIn);
+  const f = mem.fight;
+  if (wasIn && prev.combat) {
+    const won = !isIn && next.hp > 0 && (next.result == null || next.result === 'win');
+    const after = new Map((next.combat?.enemies || []).map(e => [e.uid, e]));
+    for (const e of prev.combat.enemies || []) {
+      if (!(e.hp > 0)) continue;
+      const n = after.get(e.uid) || (won ? { hp: 0 } : null);
+      if (!n) continue;
+      const d = e.hp - Math.max(0, n.hp);
+      if (d > 0) hit.damage += d;
+      if (n.hp <= 0) hit.kills++;
+    }
+    if (action?.type === 'play') hit.card = (prev.combat.hand || []).find(c => c.uid === action.uid) || null;
+  }
+  const ctx = { prev, next, action, raw, mem, fight: f, hit };
+  if (f && wasIn) {
+    f.hpLost += Math.max(0, num(prev.hp) - num(next.hp));
+    f.kills += hit.kills;
+    f.turnKills += hit.kills;
+    f.turnDamage += hit.damage;
+    f.maxTurnKills = Math.max(f.maxTurnKills, f.turnKills);
+    f.maxTurnDamage = Math.max(f.maxTurnDamage, f.turnDamage);
+    if (hit.card) {
+      f.played++;
+      f.types[hit.card.type || 'other'] = (f.types[hit.card.type || 'other'] || 0) + 1;
+      f.maxCardDamage = Math.max(f.maxCardDamage, hit.damage);
+    }
+  }
+  if (f && next.combat && isIn) {
+    f.maxPlays = Math.max(f.maxPlays, num(next.combat.plays));
+    f.maxBlock = Math.max(f.maxBlock, num(next.combat.block));
+  }
+  try { observe?.(ctx); } catch {}
+  if (f && next.combat && isIn && next.combat.turn !== f.turn) { f.turn = next.combat.turn; f.turnKills = 0; f.turnDamage = 0; }
+  if (f && wasIn && !isIn) {
+    const outcome = next.result === 'abandon' ? 'abandon' : next.hp > 0 && next.result !== 'loss' ? 'win' : 'loss';
+    ended = { ...f, outcome, hpEnd: next.hp, turns: prev.combat?.turn ?? f.turn };
+    mem.lastFight = ended;
+    mem.fight = null;
+    if (outcome === 'win') {
+      mem.run.fightsWon++;
+      if (ended.kind === 'elite') { mem.run.elitesWon++; actMemory(mem, ended.act).eliteWins++; }
+      if (ended.kind === 'boss' && ended.bossId) mem.run.bossesWon.push(ended.bossId);
+    }
+  }
+  if (prev && prev.phase === 'map' && next.phase !== 'map' && next.nodeKind) {
+    entered = next.nodeKind;
+    const a = actMemory(mem, next.act);
+    a[entered] = (a[entered] || 0) + 1;
+    if (entered === 'elite') mem.run.elitesFought++;
+    if (entered === 'shop') mem.run.shopsVisited++;
+  }
+  if (next.phase === 'shop') {
+    if (prev?.phase !== 'shop' || !mem.shop) mem.shop = { spent: 0 };
+    else mem.shop.spent += Math.max(0, num(prev.money) - num(next.money));
+  } else mem.shop = null;
+  if (action?.type === 'remove') mem.run.removed++;
+  if (action?.type === 'sellRelic' || action?.type === 'sellGear') mem.run.sold++;
+  if (prev && prev.phase !== 'result' && next.phase === 'result') runEnd = next.result || 'loss';
+  return { mem, hit, ended, entered, runEnd };
+}
+
+// Career facts at the end of a run (abandoned runs change nothing).
+function updateCareer(career, { runEnd, next, mem, now = Date.now() }) {
+  const c = { ...career, teamWins: { ...career.teamWins }, bossWins: { ...career.bossWins }, bossLosses: { ...career.bossLosses } };
+  if (!runEnd || runEnd === 'abandon') return c;
+  c.runs++;
+  if (runEnd === 'win') {
+    c.wins++;
+    c.streakBeforeWin = Math.max(c.streakBeforeWin, c.lossStreak);
+    c.lastStreakBeforeWin = c.lossStreak;
+    c.lossStreak = 0;
+    if (next?.team) c.teamWins[next.team] = Math.max(c.teamWins[next.team] ?? -1, num(next.asc));
+    const ms = mem?.startedAt ? now - mem.startedAt : null;
+    if (ms != null && ms > 0 && (c.fastestWinMs == null || ms < c.fastestWinMs)) c.fastestWinMs = ms;
+  } else {
+    c.losses++;
+    c.lossStreak++;
+    const lf = mem?.lastFight;
+    if (lf && lf.outcome === 'loss' && lf.kind === 'boss' && lf.bossId) c.bossLosses[lf.bossId] = (c.bossLosses[lf.bossId] || 0) + 1;
+  }
+  return c;
+}
+
+// Tests every locked definition against ctx; unlocks the ones that pass.
+function evaluate(defs, ctx, book, meta = {}) {
+  const fresh = [];
+  for (const d of defs) {
+    if (book.unlocked[d.key]) continue;
+    if (meta.careerOnly && !d.career) continue;
+    let ok = false;
+    try { ok = !!d.test(ctx); } catch { ok = false; }
+    if (ok) fresh.push(...unlockKeys(book, defs, [d.key], meta));
+  }
+  return fresh;
+}
+
+// One engine transition: update memory and career, evaluate, return fresh unlocks.
+function achStep({ defs, book, mem, prev, next, action, raw = {}, observe, now = Date.now(), label = '' }) {
+  const s = stepMemory(mem, prev, next, action, { now, raw, observe });
+  if (s.ended && s.ended.outcome === 'win' && s.ended.kind === 'boss' && s.ended.bossId) {
+    book.career = { ...book.career, bossWins: { ...book.career.bossWins, [s.ended.bossId]: (book.career.bossWins[s.ended.bossId] || 0) + 1 } };
+  }
+  if (s.runEnd) book.career = updateCareer(book.career, { runEnd: s.runEnd, next, mem: s.mem, now });
+  const ctx = { prev, next, action, raw, mem: s.mem, fight: s.mem.fight, ended: s.ended, hit: s.hit, entered: s.entered, runEnd: s.runEnd, career: book.career };
+  const fresh = evaluate(defs, ctx, book, { at: now, run: next?.runId ?? null, label });
+  if (fresh.length) s.mem.unlocked = [...new Set([...(s.mem.unlocked || []), ...fresh.map(d => d.key)])];
+  return { book, mem: s.mem, fresh, ctx };
+}
+
+// Career definitions only, from the book alone (e.g. when the hall opens).
+function evaluateCareer(defs, book, now = Date.now()) {
+  return evaluate(defs, { career: book.career, prev: null, next: null, mem: null, fight: null, ended: null, hit: { damage: 0, kills: 0, card: null }, entered: null, runEnd: null, action: null, raw: {} }, book, { at: now, run: null, label: '生涯记录', careerOnly: true });
+}
+
+// ---------------------------------------------------------------- small helpers for definitions
+const wonFight = ctx => ctx.ended?.outcome === 'win';
+const wonKind = (ctx, kind) => wonFight(ctx) && ctx.ended.kind === kind;
+const wonBoss = (ctx, id) => wonKind(ctx, 'boss') && (!id || ctx.ended.bossId === id);
+const deckOf = ctx => ctx.next?.deck || [];
+const costAtLeast = (card, n) => card.cost === 'x' || (typeof card.cost === 'number' && card.cost >= n);
+
+// ---------------------------------------------------------------- titles
+function earnedTitles(defs, book) {
+  const byKey = new Map(defs.map(d => [d.key, d]));
+  return book.order.map(k => byKey.get(k)?.reward?.title).filter(Boolean);
+}
+function wornTitle(defs, book) {
+  const all = earnedTitles(defs, book);
+  return book.worn && all.includes(book.worn) ? book.worn : all[all.length - 1] || null;
+}
+function wearTitle(defs, book, title) {
+  if (title === null) { book.worn = null; return true; }
+  if (!earnedTitles(defs, book).includes(title)) return false;
+  book.worn = title;
+  return true;
+}
+
+// ---------------------------------------------------------------- UI (browser only when called)
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const TROPHY = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 01-8 0V4zM8 6H4v1a4 4 0 004 4M16 6h4v1a4 4 0 01-4 4M12 13v4M8 20h8M9 17h6"/></svg>';
+const LOCK = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>';
+const rewardText = d => (d?.reward?.title ? `称号「${d.reward.title}」` : '');
+const dateText = at => (at ? new Date(at).toLocaleDateString('zh-CN') : '');
+
+// Non-blocking unlock toasts at the top of the screen, one after another.
+function showAchToasts(list, { delay = 0, sound = true } = {}) {
+  if (!list?.length || typeof document === 'undefined') return;
+  const go = () => {
+    let host = document.getElementById('ach-toasts');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'ach-toasts';
+      host.className = 'ach-toasts';
+      host.setAttribute('role', 'status');
+      host.setAttribute('aria-live', 'polite');
+      document.body.append(host);
+    }
+    list.forEach((d, i) => setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = `ach-toast${d.secret ? ' is-secret' : ''}`;
+      el.innerHTML = `<span class="ach-toast-icon">${TROPHY}</span><span class="ach-toast-text"><small>${d.secret ? '隐藏成就解锁' : '成就解锁'}</small><b>${esc(d.name)}</b><em>${esc(d.desc)}</em>${d.reward?.title ? `<i class="ach-toast-reward">${esc(rewardText(d))}</i>` : ''}</span>`;
+      el.addEventListener('click', () => dismiss());
+      host.append(el);
+      requestAnimationFrame(() => el.classList.add('is-in'));
+      if (sound) try { globalThis.gameSfx?.play?.('achieve'); } catch {}
+      let gone = false;
+      function dismiss() { if (gone) return; gone = true; el.classList.remove('is-in'); el.classList.add('is-out'); setTimeout(() => el.remove(), 320); }
+      setTimeout(dismiss, 4200);
+    }, i * 700));
+  };
+  if (delay > 0) setTimeout(go, delay); else go();
+}
+
+// The hall (成就页): summary, worn title, then each category with progress.
+function hallHtml(defs, cats, book, { note = '' } = {}) {
+  const total = defs.length, got = defs.filter(d => book.unlocked[d.key]).length;
+  const titles = earnedTitles(defs, book), worn = wornTitle(defs, book);
+  const titleRow = titles.length
+    ? `<div class="ach-titles"><span class="ach-titles-label">佩戴称号</span>${[...new Set(titles)].map(t => `<button type="button" class="ach-title-chip${t === worn ? ' is-worn' : ''}" data-ach-wear="${esc(t)}" aria-pressed="${t === worn}">${esc(t)}</button>`).join('')}</div>`
+    : '<p class="ach-note">解锁带称号的成就后，可以在这里选择佩戴，称号会显示在首页和结算页。</p>';
+  const sections = cats.map(cat => {
+    const list = defs.filter(d => d.cat === cat.key);
+    if (!list.length) return '';
+    const n = list.filter(d => book.unlocked[d.key]).length;
+    const rows = list.map(d => {
+      const u = book.unlocked[d.key];
+      const hidden = d.secret && !u;
+      return `<li class="ach-item${u ? ' is-done' : ''}${d.secret ? ' is-secret' : ''}">
+        <span class="ach-item-icon">${u ? TROPHY : LOCK}</span>
+        <span class="ach-item-body"><b>${hidden ? '？？？' : esc(d.name)}${d.secret ? '<small class="ach-tag">隐藏</small>' : ''}</b>
+        <span class="ach-item-desc">${hidden ? '隐藏成就：达成后揭晓。' : esc(d.desc)}</span>
+        ${d.reward?.title && !hidden ? `<span class="ach-item-reward">${esc(rewardText(d))}</span>` : ''}
+        ${u ? `<span class="ach-item-when">${esc(dateText(u.at))}${u.label ? ` · ${esc(u.label)}` : ''}</span>` : ''}</span>
+      </li>`;
+    }).join('');
+    return `<section class="ach-cat"><header><h3>${esc(cat.name)}</h3><span class="ach-cat-count">${n} / ${list.length}</span></header><div class="ach-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${list.length}" aria-valuenow="${n}"><i style="width:${Math.round(n / list.length * 100)}%"></i></div><ul class="ach-list">${rows}</ul></section>`;
+  }).join('');
+  return `<div class="ach-hall"><div class="ach-summary"><div class="ach-total"><strong>${got}</strong><span>/ ${total} 已解锁</span></div><div class="ach-bar ach-bar-total"><i style="width:${total ? Math.round(got / total * 100) : 0}%"></i></div>${note ? `<p class="ach-note">${esc(note)}</p>` : ''}${titleRow}</div>${sections}</div>`;
+}
+
+// Wires the title chips inside a rendered hall. onChange(book) persists and re-renders.
+function bindHall(root, defs, book, onChange) {
+  root?.querySelectorAll?.('[data-ach-wear]').forEach(btn => btn.addEventListener('click', () => {
+    const t = btn.dataset.achWear;
+    wearTitle(defs, book, t);
+    onChange?.(book);
+  }));
+}
+
+// Results screen: what this run unlocked.
+function runAchievementsHtml(defs, book, runId) {
+  const id = runId == null ? null : String(runId);
+  const list = defs.filter(d => book.unlocked[d.key] && book.unlocked[d.key].run === id);
+  if (!list.length) return '';
+  return `<section class="ach-run"><h3 class="rm-h">本局解锁的成就 · ${list.length}</h3><ul class="ach-run-list">${list.map(d => `<li><span class="ach-item-icon">${TROPHY}</span><span><b>${esc(d.name)}</b><small>${esc(d.desc)}</small>${d.reward?.title ? `<em>${esc(rewardText(d))}</em>` : ''}</span></li>`).join('')}</ul></section>`;
+}
+
+// Home / results: the worn title.
+function titleBadgeHtml(defs, book, extraClass = '') {
+  const t = wornTitle(defs, book);
+  return t ? `<p class="ach-badge ${extraClass}"><span>称号</span><b>${esc(t)}</b></p>` : '';
+}
+
+return {ACH_BOOK_VERSION,emptyCareer,emptyBook,normalizeBook,loadBook,saveBook,seedCareer,unlockKeys,newRunMemory,actMemory,stepMemory,updateCareer,evaluate,achStep,evaluateCareer,wonFight,wonKind,wonBoss,deckOf,costAtLeast,earnedTitles,wornTitle,wearTitle,rewardText,showAchToasts,hallHtml,bindHall,runAchievementsHtml,titleBadgeHtml};
+})();
+const module29=(()=>{
+// Achievements (成就) for the Wa demo: the season-state view adapter, the list
+// of definitions and the glue ui-source.js calls. Storage, evaluation and the
+// toast / hall / results rendering live in shared/achievements-core.js.
+// Client-side only: nothing here enters a run's action list, so the server
+// replay of a season is unaffected.
+const { achStep, loadBook, saveBook, seedCareer, evaluateCareer, showAchToasts, hallHtml, bindHall, runAchievementsHtml, titleBadgeHtml, wonKind, wonBoss, costAtLeast, actMemory } = module28;
+const { CARDS, effects, ENEMIES, REGIONS, BOSS_INFO } = module8;
+const { R, battleFoes, enemyMaxHp, supplySlots } = module13;
+const { GEAR_SLOTS } = module9;
+
+const WA_ACH_KEY='wa-achievements-v1';
+const WA_ACH_RUN_KEY='wa-ach-run-v1';
+const WA_HISTORY_KEY='wa-run-history-v1';
+const FIGHT_KINDS=new Set(['battle','elite','boss']);
+const nodeOf=s=>s?.map?.nodes?.find(n=>n.key===s.currentNode)||null;
+const isJam=id=>CARDS[id]?.role==='比赛干扰';
+
+function waType(t,c){
+ if(!t)return 'status';
+ if(c.id.startsWith('ST')||c.id.startsWith('CU'))return 'status';
+ if(t.zone==='power')return 'power';
+ return (effects(c)||[]).some(e=>e.type==='hit')?'attack':'skill';
+}
+function cardView(s,c){
+ const t=CARDS[c.id];
+ return {uid:c.uid,id:c.id,up:!!c.up,cost:t?.x?'x':typeof t?.cost==='number'?t.cost:null,type:waType(t,c),tag:'',basic:!!REGIONS[s.region]?.start?.includes(c.id),curse:c.id.startsWith('CU'),upgradable:!!t?.trainable,role:t?.player?t.role:null};
+}
+
+// Season state -> the normalized view the shared core reads (null outside a season).
+function waView(s){
+ if(!s||s.mode!=='season'||!Array.isArray(s.deck))return null;
+ const node=nodeOf(s),b=s.battle;
+ let combat=null;
+ if(b){
+  const foes=battleFoes(b)||[{enemy:b.enemy,enemyHp:b.enemyHp,enemyMaxHp:b.enemyMaxHp,enemyBlock:b.enemyBlock,enemyWeak:b.enemyWeak,trait:b.trait,traitState:b.traitState,aim:b.aim}];
+  const enemies=foes.map((f,i)=>{const d=ENEMIES[f.enemy]||{};return {uid:b.foes?'f'+i:'enemy',id:f.enemy,hp:Math.max(0,f.enemyHp||0),maxHp:enemyMaxHp(f),boss:!!d.boss,elite:!!d.elite,aim:(f.aim||0)>0,block:f.enemyBlock||0,weak:f.enemyWeak||0,trait:f.trait?.id||null,traitState:f.traitState||{},intent:null};});
+  combat={turn:b.turn||1,plays:b.plays||0,block:b.block||0,encounter:b.group||b.enemy,kind:node&&FIGHT_KINDS.has(node.kind)?node.kind:'battle',bossId:node?.kind==='boss'?node.enemy:null,warmup:false,enemies,hand:(b.hand||[]).map(c=>cardView(s,c))};
+ }
+ return {runId:String(s.runId||s.seed),phase:s.phase,inCombat:s.phase==='combat'&&!!b,
+  result:s.phase==='result'?(s.outcome==='win'?'win':s.outcome==='abandoned'?'abandon':'loss'):null,
+  hp:s.hp,maxHp:s.maxHp,money:s.money||0,act:s.act||1,floor:node?.step??null,nodeKind:node?.kind||null,team:s.region,asc:R(s)?s.ascension||0:0,
+  deck:s.deck.map(c=>cardView(s,c)),gear:[...(s.skins||[])],gearMax:GEAR_SLOTS,supplies:(s.supplies||[]).length,supplyMax:R(s)?supplySlots(s):0,combat};
+}
+
+// Season-specific moments: the text log and a few battle fields.
+function waObserve(ctx){
+ const f=ctx.fight,before=ctx.raw?.prev,after=ctx.raw?.next;
+ if(ctx.action?.type==='opening'&&ctx.action.choice==='hpForGear')ctx.mem.run.flags.hpForGear=true;
+ if(!f)return;
+ const logs=(after?.logs||[]).slice((before?.logs||[]).length);
+ for(const l of logs){
+  const t=String(l?.text||'');
+  if(t.startsWith('控制节奏'))f.flags.trait_tempo=(f.flags.trait_tempo||0)+1;
+  if(t.startsWith('决胜局'))f.flags.trait_phase2=(f.flags.trait_phase2||0)+1;
+  if(t.includes('打断了对手的瞄准'))f.flags.aimBroken=(f.flags.aimBroken||0)+1;
+ }
+ const pc=ctx.prev?.combat,nc=ctx.next?.combat;
+ if(!pc)return;
+ // An opponent still aiming when the turn ends fires its full shot this enemy turn.
+ if(ctx.action?.type==='end')for(const e of pc.enemies)if(e.hp>0&&e.aim)f.flags.aimedSnipe=(f.flags.aimedSnipe||0)+1;
+ const nextById=new Map((nc?.enemies||[]).map(e=>[e.uid,e]));
+ const fell=e=>{const n=nextById.get(e.uid);return e.hp>0&&(!n||n.hp<=0);};
+ for(const e of pc.enemies){
+  const n=nextById.get(e.uid);
+  if(e.id==='S_B02'&&ctx.action?.type==='play'&&n&&e.block-n.block>=25)f.flags.wallBreak=true;
+  if(e.id==='A2_S_B03'&&fell(e)){const pb=before?.battle;const jams=['hand','draw','discard'].reduce((k,p)=>k+(pb?.[p]||[]).filter(c=>isJam(c.id)).length,0);if(!jams)f.flags.cleanKill=true;}
+  if(e.id==='A3_S_B03'&&fell(e)&&pc.enemies.filter(x=>x.hp>0).length>=3)f.flags.escortsAlive=true;
+ }
+ const nb=after?.battle;
+ if(nb&&Object.keys(nb.roleCounts||{}).length>=5)f.flags.cn5=true;
+ if((nb?.rt?.temps||0)>=10)f.flags.pac10=true;
+ if(nc&&ctx.next.inCombat&&nc.block>=40&&nc.enemies.some(e=>e.hp>0&&e.weak>0))f.flags.emea40=true;
+}
+
+const WA_CATS=[
+ {key:'route',name:'开局与路线'},
+ {key:'fight',name:'比赛技巧'},
+ {key:'deck',name:'阵容构筑'},
+ {key:'boss',name:'强敌与幕末决赛'},
+ {key:'econ',name:'资金与补给'},
+ {key:'risk',name:'事件与风险'},
+ {key:'asc',name:'难度等级'},
+ {key:'team',name:'赛区专属'},
+ {key:'career',name:'生涯'}
+];
+
+const E=ctx=>ctx.ended;
+const F=ctx=>ctx.fight||ctx.ended||null;
+const won=ctx=>ctx.ended?.outcome==='win';
+const bossWin=ctx=>wonKind(ctx,'boss');
+const deck=ctx=>ctx.next?.deck||[];
+const regionName=r=>REGIONS[r]?.name||r;
+const regionWin=r=>ctx=>(ctx.career?.teamWins?.[r]??-1)>=0;
+const inRegion=(ctx,r)=>ctx.next?.team===r||ctx.prev?.team===r;
+
+const WA_ACHIEVEMENTS=[
+ // ---- 开局与路线
+ {key:'first_win',cat:'route',name:'开门红',desc:'赢下本赛季的第一场比赛',test:ctx=>won(ctx)&&ctx.mem.run.fightsWon===1},
+ {key:'act1_clear',cat:'route',name:'晋级',desc:'赢下第一幕的幕末决赛',reward:{title:'晋级者'},test:ctx=>bossWin(ctx)&&E(ctx).act===1},
+ {key:'run_clear',cat:'route',name:'赛季冠军',desc:'赢下第三幕冠军赛，完成整个赛季',reward:{title:'赛季冠军'},test:ctx=>ctx.runEnd==='win'},
+ {key:'no_rest_act',cat:'route',name:'连轴转',desc:'一幕之内没有进入俱乐部活动，赢下该幕的幕末决赛',reward:{title:'铁人'},test:ctx=>bossWin(ctx)&&!actMemory(ctx.mem,E(ctx).act).rest},
+ {key:'unknown5',cat:'route',name:'赛程外的机会',desc:'同一幕进入 5 个未知节点',test:ctx=>ctx.entered==='event'&&actMemory(ctx.mem,ctx.next.act).event>=5},
+ {key:'elite3_act',cat:'route',name:'强敌猎人',desc:'同一幕击败 3 场强敌',reward:{title:'猎人'},test:ctx=>wonKind(ctx,'elite')&&actMemory(ctx.mem,E(ctx).act).eliteWins>=3},
+ {key:'no_elite_clear',cat:'route',secret:true,name:'绕行者',desc:'完成整个赛季，全程没有进入过强敌节点',reward:{title:'绕行者'},test:ctx=>ctx.runEnd==='win'&&ctx.mem.run.elitesFought===0},
+
+ // ---- 比赛技巧
+ {key:'flawless_elite',cat:'fight',name:'零失误',desc:'不失去声望击败一场强敌',test:ctx=>wonKind(ctx,'elite')&&!E(ctx).partial&&E(ctx).hpLost===0},
+ {key:'flawless_boss',cat:'fight',name:'完美决赛',desc:'不失去声望赢下一场幕末决赛',reward:{title:'无懈可击'},test:ctx=>bossWin(ctx)&&!E(ctx).partial&&E(ctx).hpLost===0},
+ {key:'big40',cat:'fight',name:'一波带走',desc:'一张牌让对手防线减少 40 点以上',test:ctx=>ctx.hit?.card&&ctx.hit.damage>=40},
+ {key:'big80',cat:'fight',secret:true,name:'高光时刻',desc:'一张牌让对手防线减少 80 点以上',reward:{title:'高光选手'},test:ctx=>ctx.hit?.card&&ctx.hit.damage>=80},
+ {key:'triple',cat:'fight',name:'一回合三杀',desc:'群战中同一回合击倒 3 名对手',reward:{title:'收割者'},test:ctx=>(F(ctx)?.maxTurnKills||0)>=3},
+ {key:'one_hp',cat:'fight',name:'一滴血',desc:'以恰好 1 点声望赢下一场比赛',reward:{title:'悬崖边'},test:ctx=>won(ctx)&&E(ctx).hpEnd===1},
+ {key:'turn1',cat:'fight',name:'首回合终结',desc:'在第 1 回合就赢下一场比赛',test:ctx=>won(ctx)&&E(ctx).turns===1&&!E(ctx).partial},
+ {key:'long_fight',cat:'fight',name:'拉锯战',desc:'一场比赛打到第 12 回合并获胜',test:ctx=>won(ctx)&&E(ctx).turns>=12},
+ {key:'ten_plays',cat:'fight',name:'连续操作',desc:'一回合打出 10 张牌',test:ctx=>(ctx.next?.combat?.plays||0)>=10},
+ {key:'block40',cat:'fight',name:'铜墙铁壁',desc:'格挡一度达到 40 点',test:ctx=>(ctx.next?.combat?.block||0)>=40},
+ {key:'aim_break',cat:'fight',name:'打断瞄准',desc:'在狙击手开枪前用压制打断它的瞄准',test:ctx=>(F(ctx)?.flags?.aimBroken||0)>0},
+
+ // ---- 阵容构筑
+ {key:'thin_deck',cat:'deck',name:'精兵简政',desc:'牌组不超过 15 张时赢下第二或第三幕的幕末决赛',reward:{title:'精兵'},test:ctx=>bossWin(ctx)&&E(ctx).act>=2&&deck(ctx).length<=15},
+ {key:'light_deck',cat:'deck',name:'轻装上阵',desc:'赢下幕末决赛时，牌组里没有 2 行动点及以上的牌',reward:{title:'轻骑'},test:ctx=>bossWin(ctx)&&!deck(ctx).some(c=>costAtLeast(c,2))},
+ {key:'polished',cat:'deck',name:'全员特训',desc:'牌组至少 15 张，且每张可训练的牌都已训练',test:ctx=>{const d=deck(ctx);return d.length>=15&&d.filter(c=>c.upgradable).length>=12&&d.every(c=>!c.upgradable||c.up);}},
+ {key:'power3',cat:'deck',name:'体系成型',desc:'一场比赛中打出 3 张持续能力牌',test:ctx=>(F(ctx)?.types?.power||0)>=3},
+ {key:'same3',cat:'deck',name:'三张同名',desc:'牌组中同一张非初始选手牌达到 3 张',test:ctx=>{const n={};for(const c of deck(ctx))if(c.role&&!c.basic)n[c.id]=(n[c.id]||0)+1;return Object.values(n).some(v=>v>=3);}},
+ {key:'role10',cat:'deck',name:'清一色',desc:'牌组中同一定位的选手牌达到 10 张',test:ctx=>{const n={};for(const c of deck(ctx))if(c.role)n[c.role]=(n[c.role]||0)+1;return Object.values(n).some(v=>v>=10);}},
+ {key:'cursed_boss',cat:'deck',secret:true,name:'带伤作战',desc:'牌组里带着 3 张及以上俱乐部隐患赢下幕末决赛',reward:{title:'百毒不侵'},test:ctx=>bossWin(ctx)&&deck(ctx).filter(c=>c.curse).length>=3},
+
+ // ---- 强敌与幕末决赛
+ {key:'first_elite',cat:'boss',name:'第一个强敌',desc:'击败一场强敌',test:ctx=>wonKind(ctx,'elite')},
+ {key:'elite_early',cat:'boss',name:'早早出手',desc:'在一幕的第 6 层或更早击败强敌',test:ctx=>wonKind(ctx,'elite')&&E(ctx).floor!=null&&E(ctx).floor<=6},
+ {key:'boss_tempo',cat:'boss',name:'不给节奏',desc:'击败大师赛冠军卫队，它一次也没有触发「控制节奏」',test:ctx=>wonBoss(ctx,'S_B01')&&!E(ctx).partial&&!E(ctx).flags.trait_tempo},
+ {key:'boss_wall',cat:'boss',name:'破壁',desc:'对铁壁教官一张牌打掉 25 点以上布防，并赢下这场比赛',test:ctx=>wonBoss(ctx,'S_B02')&&!!E(ctx).flags.wallBreak},
+ {key:'boss_sniper',cat:'boss',name:'截断狙击',desc:'击败狙击教官，它一次也没有打出瞄准后的重狙',test:ctx=>wonBoss(ctx,'S_BG1')&&!E(ctx).partial&&!E(ctx).flags.aimedSnipe},
+ {key:'boss_blitz',cat:'boss',name:'以快打快',desc:'在第 5 回合或更早击败爆破突击长',test:ctx=>wonBoss(ctx,'A2_S_B02')&&E(ctx).turns<=5},
+ {key:'boss_toxin',cat:'boss',name:'干净利落',desc:'击倒毒雾控场长时，你的手牌、抽牌堆和弃牌堆里没有比赛干扰',test:ctx=>wonBoss(ctx,'A2_S_B03')&&!!E(ctx).flags.cleanKill},
+ {key:'boss_phase2',cat:'boss',secret:true,name:'一口气',desc:'击败总决赛冠军卫队，没有让它进入决胜局',reward:{title:'一气呵成'},test:ctx=>wonBoss(ctx,'A3_S_B01')&&!E(ctx).partial&&!E(ctx).flags.trait_phase2},
+ {key:'boss_escort',cat:'boss',name:'擒贼先擒王',desc:'两名近卫都还在场时击倒总指挥',test:ctx=>wonBoss(ctx,'A3_S_BG1')&&!!E(ctx).flags.escortsAlive},
+ {key:'all_bosses',cat:'boss',career:true,name:'九场决赛',desc:'击败过全部 9 名幕末决赛对手',reward:{title:'决赛之王'},test:ctx=>Object.keys(BOSS_INFO).every(id=>(ctx.career?.bossWins?.[id]||0)>0)},
+
+ // ---- 资金与补给
+ {key:'rich',cat:'econ',name:'资金充裕',desc:'同时持有 400 资金',test:ctx=>(ctx.next?.money||0)>=400},
+ {key:'spree',cat:'econ',name:'转会窗疯狂',desc:'在一次转会市场里花掉 300 资金',test:ctx=>(ctx.mem?.shop?.spent||0)>=300},
+ {key:'broke_boss',cat:'econ',name:'零预算',desc:'以 0 资金赢下幕末决赛（结算奖励前）',test:ctx=>bossWin(ctx)&&(ctx.prev?.money??1)===0},
+ {key:'gear_full',cat:'econ',name:'满配',desc:'同时持有 6 件装备',test:ctx=>(ctx.next?.gear?.length||0)>=(ctx.next?.gearMax||6)},
+ {key:'sell_gear',cat:'econ',name:'以旧换新',desc:'卖掉一件装备',test:ctx=>ctx.action?.type==='sellGear'},
+ {key:'supply_full',cat:'econ',name:'后勤满载',desc:'补给品栏全部装满',test:ctx=>ctx.next&&ctx.next.supplyMax>0&&ctx.next.supplies>=ctx.next.supplyMax},
+ {key:'no_shop',cat:'econ',secret:true,name:'青训自给',desc:'完成整个赛季，全程没有进入转会市场',reward:{title:'青训派'},test:ctx=>ctx.runEnd==='win'&&ctx.mem.run.shopsVisited===0},
+
+ // ---- 事件与风险
+ {key:'hard_sponsor',cat:'risk',name:'高强度商业赛',desc:'签约日选择高强度商业赛后，赢下第一幕的幕末决赛',test:ctx=>bossWin(ctx)&&E(ctx).act===1&&!!ctx.mem.run.flags.hpForGear},
+ {key:'no_heal_rest',cat:'risk',name:'不开见面会',desc:'声望低于三成时，在俱乐部活动没有选择粉丝见面会',test:ctx=>ctx.action?.type==='activity'&&ctx.action.choice!=='fans'&&ctx.prev&&ctx.prev.hp<ctx.prev.maxHp*0.3},
+ {key:'low_boss',cat:'risk',name:'残血翻盘',desc:'声望不超过上限一成时赢下幕末决赛',reward:{title:'绝境'},test:ctx=>bossWin(ctx)&&E(ctx).hpEnd<=Math.floor(E(ctx).maxHp*0.1)},
+ {key:'remove4',cat:'risk',name:'阵容瘦身',desc:'一个赛季中在转会市场移除 4 张牌',test:ctx=>(ctx.mem?.run.removed||0)>=4},
+
+ // ---- 难度等级（生涯）
+ {key:'asc1',cat:'asc',career:true,name:'更进一步',desc:'在难度 1 或更高完成赛季',test:ctx=>Object.values(ctx.career?.teamWins||{}).some(v=>v>=1)},
+ {key:'asc5',cat:'asc',career:true,name:'高压赛程',desc:'在难度 5 或更高完成赛季',reward:{title:'硬骨头'},test:ctx=>Object.values(ctx.career?.teamWins||{}).some(v=>v>=5)},
+ {key:'asc10',cat:'asc',career:true,name:'极限难度',desc:'在难度 10 完成赛季',reward:{title:'传奇'},test:ctx=>Object.values(ctx.career?.teamWins||{}).some(v=>v>=10)},
+ {key:'asc3_all',cat:'asc',career:true,name:'四赛区高难',desc:'四个赛区都在难度 3 或更高完成赛季',reward:{title:'全球巡回'},test:ctx=>Object.keys(REGIONS).every(r=>(ctx.career?.teamWins?.[r]??-1)>=3)},
+
+ // ---- 赛区专属
+ ...Object.keys(REGIONS).map(r=>({key:'win_'+r,cat:'team',career:true,name:`${regionName(r)}赛区夺冠`,desc:`以${regionName(r)}赛区完成赛季`,reward:{title:`${regionName(r)}代表`},test:regionWin(r)})),
+ {key:'trait_CN',cat:'team',name:'五人齐全',desc:'使用中国赛区时，一回合内打出五种定位的选手牌',test:ctx=>inRegion(ctx,'CN')&&!!F(ctx)?.flags?.cn5},
+ {key:'trait_AM',cat:'team',name:'火力倾泻',desc:'使用美洲赛区时，一回合内让对手防线减少 60 点以上',test:ctx=>inRegion(ctx,'AM')&&(F(ctx)?.maxTurnDamage||0)>=60},
+ {key:'trait_EMEA',cat:'team',name:'压制反打',desc:'使用 EMEA 赛区时，对手处于压制中且你的格挡达到 40 点',test:ctx=>inRegion(ctx,'EMEA')&&!!F(ctx)?.flags?.emea40},
+ {key:'trait_PAC',cat:'team',name:'临场发挥',desc:'使用太平洋赛区时，一场比赛打出 10 张临时牌',test:ctx=>inRegion(ctx,'PAC')&&!!F(ctx)?.flags?.pac10},
+
+ // ---- 生涯
+ {key:'first_loss',cat:'career',name:'从头再来',desc:'第一次出局',test:ctx=>ctx.runEnd==='loss'},
+ {key:'act1_bosses',cat:'career',career:true,secret:true,name:'三座大山',desc:'分别输给过第一幕的三名幕末决赛对手',reward:{title:'越挫越勇'},test:ctx=>['S_B01','S_B02','S_BG1'].every(id=>(ctx.career?.bossLosses?.[id]||0)>0)},
+ {key:'comeback',cat:'career',secret:true,name:'事不过三',desc:'连续出局 3 个赛季之后，下一个赛季夺冠',reward:{title:'不屈'},test:ctx=>ctx.runEnd==='win'&&(ctx.career?.lastStreakBeforeWin||0)>=3},
+ {key:'speedrun',cat:'career',career:true,name:'速通',desc:'在 45 分钟内完成整个赛季',reward:{title:'速攻'},test:ctx=>ctx.career?.fastestWinMs!=null&&ctx.career.fastestWinMs<=45*60*1000},
+ {key:'all_regions',cat:'career',career:true,name:'四赛区制霸',desc:'四个赛区都完成过赛季',reward:{title:'全能教练'},test:ctx=>Object.keys(REGIONS).every(r=>(ctx.career?.teamWins?.[r]??-1)>=0)}
+];
+
+// ---------------------------------------------------------------- glue for ui-source.js
+const store=()=>{try{return globalThis.localStorage||null;}catch{return null;}};
+function readMem(){try{const raw=store()?.getItem(WA_ACH_RUN_KEY);return raw?JSON.parse(raw):null;}catch{return null;}}
+function writeMem(mem){try{store()?.setItem(WA_ACH_RUN_KEY,JSON.stringify(mem));}catch{}}
+function history(){try{const v=JSON.parse(store()?.getItem(WA_HISTORY_KEY)||'[]');return Array.isArray(v)?v:[];}catch{return [];}}
+function loadWaBook(){
+ const book=loadBook(store(),WA_ACH_KEY);
+ if(!book.career.seeded){book.career=seedCareer(book.career,history());saveBook(store(),WA_ACH_KEY,book);}
+ return book;
+}
+function runLabel(v){return v?`${regionName(v.team)}赛区 · 难度 ${v.asc} · 第 ${v.act} 幕${v.floor!=null?`第 ${v.floor} 站`:''}`:'';}
+
+// Called in commit() right after the engine accepts an action.
+function waAchieve(before,after,action,{delay=0}={}){
+ try{
+  const pv=waView(before),nv=waView(after);
+  if(!nv)return [];
+  const book=loadWaBook();
+  const r=achStep({defs:WA_ACHIEVEMENTS,book,mem:readMem(),prev:pv,next:nv,action,raw:{prev:before,next:after},observe:waObserve,label:runLabel(nv)});
+  writeMem(r.mem);
+  if(r.fresh.length){saveBook(store(),WA_ACH_KEY,r.book);showAchToasts(r.fresh,{delay});}
+  else if(r.ctx.runEnd||r.ctx.ended)saveBook(store(),WA_ACH_KEY,r.book);
+  return r.fresh;
+ }catch{return [];}
+}
+const HALL_NOTE='局内成就在赛季中达成时解锁；生涯成就按你的全部赛季记录判定。每项只解锁一次，奖励是可佩戴的称号，不影响比赛数值。';
+function waHallHtml(){
+ const book=loadWaBook(),fresh=evaluateCareer(WA_ACHIEVEMENTS,book);
+ saveBook(store(),WA_ACH_KEY,book);
+ if(fresh.length)showAchToasts(fresh,{delay:300});
+ return hallHtml(WA_ACHIEVEMENTS,WA_CATS,book,{note:HALL_NOTE});
+}
+// Wires title chips in a rendered hall; re-renders the hall in place on change.
+function bindWaHall(root,onChange){
+ const book=loadWaBook();
+ bindHall(root,WA_ACHIEVEMENTS,book,b=>{saveBook(store(),WA_ACH_KEY,b);const host=root.querySelector('.ach-hall');if(host)host.outerHTML=hallHtml(WA_ACHIEVEMENTS,WA_CATS,b,{note:HALL_NOTE});bindWaHall(root,onChange);onChange?.();});
+}
+function waAchResultHtml(runId){try{return runAchievementsHtml(WA_ACHIEVEMENTS,loadWaBook(),runId);}catch{return '';}}
+function waTitleHtml(extraClass=''){try{return titleBadgeHtml(WA_ACHIEVEMENTS,loadWaBook(),extraClass);}catch{return '';}}
+
+return {WA_ACH_KEY,WA_ACH_RUN_KEY,waView,waObserve,WA_CATS,WA_ACHIEVEMENTS,loadWaBook,waAchieve,waHallHtml,bindWaHall,waAchResultHtml,waTitleHtml};
+})();
+const module30=(()=>{
 // Phone feel shared by both demos: long-press card details and the drag hint.
 // Plain ES module with named exports and no imports (bundled into the Wa app.js
 // by tools/build-browser.mjs, imported directly by the new demo).
@@ -17164,7 +17737,7 @@ function touchLift(element, y) {
 
 return {cardSheetOpen,closeCardSheet,openCardSheet,attachCardDetail,showDragHint,hideDragHint,touchLift};
 })();
-const module29=(()=>{
+const module31=(()=>{
 const { cardArtwork, opponentArtwork, artCredit } = module17;
 const { combatEvents } = module18;
 const { clearCombatFx, captureCombatStage, playCombatFx } = module22;
@@ -17178,8 +17751,9 @@ const { createWaSeason, waAct:act, waLegalActions:legalActions } = module23;
 const { syncWaCheckpoint } = module24;
 const { flyCardsFromPile, flyCardsToPile } = module25;
 const { soundToggleHtml } = module19;
-const { attachCardDetail, cardSheetOpen, showDragHint, hideDragHint, touchLift } = module28;
+const { attachCardDetail, cardSheetOpen, showDragHint, hideDragHint, touchLift } = module30;
 const { waJuiceAction, waSlam } = module21;
+const { waAchieve, waHallHtml, bindWaHall, waAchResultHtml, waTitleHtml } = module29;
 const { computeScore, scoreFormulaText, recordRun, loadHistory, markSeen, loadCollection, seenCount, trackStep, loadTracker, saveTracker, newTracker, filterSortCards, SORT_LABELS, COST_FILTERS, formatDuration } = module27;
 const createSeason=(seed,tutorial,region,opts)=>createWaSeason(seed,tutorial,region,crypto.randomUUID(),opts);
 // Difficulty unlocks per region: the highest level the player may pick (0–10).
@@ -17290,6 +17864,7 @@ function home(){
      <div class="eyebrow">四大赛区 · 卡牌肉鸽</div>
      <h1>登峰赛季</h1>
      <p class="cover-sub">把这支队伍，带到赛季最后一场。</p>
+     ${waTitleHtml('cover-title-badge')}
      <div class="cover-actions">
        ${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}
        <a class="primary cover-select-link" href="#cover-setup">选择赛区 ↓</a>
@@ -17308,6 +17883,7 @@ function home(){
      ${ui('游戏规则','rules','text-button')}
      ${ui('图鉴','library','text-button')}
      ${ui('战绩','history','text-button')}
+     ${ui('成就','achievements','text-button')}
      <a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a>
      <a class="text-button" href="/pvp/">好友PvP</a>
      <a class="text-button" href="/">选择版本</a>
@@ -17571,11 +18147,13 @@ function commit(action){
   const enemyAt=reduceMotion()?220:Math.max(580,oldHand.length?440+(oldHand.length-1)*95:0);
   const events=combatEvents(before,r.state,action);
   waJuiceAction(before,r.state,action,played,enemyAt);
+  waAchieve(before,r.state,action,{delay:enemyAt+600});
   setTimeout(()=>{banner.querySelector('strong').textContent='对手回合';banner.querySelector('span').textContent='攻击结算';playCombatFx(events,stage);globalThis.characterStages?.cueFromTransition('wa',before,r.state,action);},enemyAt);
   setTimeout(()=>{state=r.state;screen=nextScreen(before,state);selected=null;echo=null;dialog.close();persist();notice(saveError||'');render();if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);const drawn=[...document.querySelectorAll('.hand-fan [data-select]')];flyCardsFromPile(drawn,document.querySelector('.draw-pile')).finally(()=>{turnAnimating=false;});},enemyAt+(reduceMotion()?420:1100));
   return r;
  }
  waJuiceAction(before,r.state,action,played);
+ waAchieve(before,r.state,action,{delay:action.type==='play'?350:0});
  state=r.state;screen=nextScreen(before,state);selected=null;echo=played||null;dialog.close();persist();notice(saveError||'');render();
  if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);
  animateResolution(before,state,played,flight,action);
@@ -17702,7 +18280,7 @@ function entryDetail(e){
 function runResultScreen(s){
  const id=String(s.runId||s.seed),o=outcomeOf(s),e=loadHistory(store,HISTORY_KEY).find(x=>x.id===id)||runEntry(s,o,loadTracker(store,TRACK_KEY,s.seed));
  const title=o==='win'?['赛季冠军','你赢得了最终赛段冠军。']:o==='abandon'?['赛季结束','本次赛季已主动结束。']:['赛季结束','声望耗尽，俱乐部暂别赛场。'];
- return `<section class="result rm-result rm-${o}">${heading(title[0],title[1],'')}<div class="rm-score-big"><span>本局得分</span><strong>${e.score}</strong></div>${R(s)?`<p class="asc-result">难度 ${s.ascension||0}${s.ascensionNotice?` · ${esc(s.ascensionNotice)}`:''}</p>`:''}${unlockNoticeHtml(s)}${entryDetail(e)}<div class="button-row">${ui('再开一个赛季','home','primary')}${ui('查看最终牌组','deck')}${ui('查看战绩','history')}${ui('导出本局记录','export')}</div><p class="muted">种子：${esc(s.seed)} · ${s.actions.length} 次操作 · D0.2.0${R(s)?' · 规则 '+s.rules:''}</p></section>`;
+ return `<section class="result rm-result rm-${o}">${heading(title[0],title[1],'')}<div class="rm-score-big"><span>本局得分</span><strong>${e.score}</strong></div>${R(s)?`<p class="asc-result">难度 ${s.ascension||0}${s.ascensionNotice?` · ${esc(s.ascensionNotice)}`:''}</p>`:''}${unlockNoticeHtml(s)}${waTitleHtml('rm-title')}${waAchResultHtml(id)}${entryDetail(e)}<div class="button-row">${ui('再开一个赛季','home','primary')}${ui('查看最终牌组','deck')}${ui('查看战绩','history')}${ui('导出本局记录','export')}</div><p class="muted">种子：${esc(s.seed)} · ${s.actions.length} 次操作 · D0.2.0${R(s)?' · 规则 '+s.rules:''}</p></section>`;
 }
 function showHistory(){
  const list=loadHistory(store,HISTORY_KEY),best=list.reduce((m,e)=>Math.max(m,e.score||0),0);
@@ -17785,6 +18363,7 @@ function handleUI(name){
  }
  if(name==='deck'){showDeckViewer('deck');return;}
  if(name==='history'){showHistory();return;}
+ if(name==='achievements'){showModal('成就',waHallHtml());bindWaHall(modal,()=>{if(atHome)render();});return;}
  if(name.startsWith('dv-')){const [,k,...rest]=name.split('-'),val=rest.join('-');if(k==='src'&&PILES[val])showDeckViewer(val);else{if(k==='type')deckView.type=val;if(k==='cost')deckView.cost=val;if(k==='sort'&&SORT_LABELS[val])deckView.sort=val;showDeckViewer();}return;}
   if(name==='library'||name.startsWith('library-')){
     if(name==='library'){libraryFilter='all';libraryRegionFilter='all';libraryRarityFilter='all';showCardOverview();return;}

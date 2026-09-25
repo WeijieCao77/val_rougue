@@ -13,7 +13,8 @@ import { soundToggleHtml } from '/shared/sfx.js';
 import { juiceAction, juiceImpact, juiceSlam } from './juice-hooks.js';
 import { restHealRate, econOn } from './engine.js';
 import { unlockRunOptions, recordUnlockProgress, recordAbandonedRun, unlockBarHtml, unlockTestHtml, toggleAllUnlocks, unlockNoticeHtml, skipOptionsHtml, rerollButtonHtml, investOfferHtml, investChipHtml, investListHtml } from './economy.js';
-import { trackNewRun, recordNewAbandon, entryFor, resultPageHtml, openHistory, openDeckViewer, collection, foundText, unseenTileHtml, enemyTileHtml, gearTile, tagCard, initUpgradePeek, ALL_ENEMIES } from './run-screens.js';
+import { achieveNew, openNewAchievements, newAchResultHtml, newTitleHtml } from './achievements.js';
+import { openModal, trackNewRun, recordNewAbandon, entryFor, resultPageHtml, openHistory, openDeckViewer, collection, foundText, unseenTileHtml, enemyTileHtml, gearTile, tagCard, initUpgradePeek, ALL_ENEMIES } from './run-screens.js';
 
 const STORAGE_KEY = 'new-demo-run-route-v5';
 const GUIDE_KEY = 'new-demo-guide-v2-';
@@ -223,6 +224,7 @@ function renderHome() {
         <div class="eyebrow">原创建构 · 三幕赛程</div>
         <h1 class="hero-title">战术试炼</h1>
         <p class="hero-tagline">一支队伍，${CARD_IDS.length}种战术，三段赛程</p>
+        ${newTitleHtml()}
       </div>
     </section>
     <section class="home-section" id="team-selection">
@@ -241,6 +243,7 @@ function renderHome() {
         <button class="hero-link" id="btn-guide-home">怎么玩</button>
         <button class="hero-link" id="btn-library">图鉴</button>
         <button class="hero-link" id="btn-history">战绩</button>
+        <button class="hero-link" id="btn-achievements">成就</button>
         <a href="/">选择版本</a>
       </nav>
       <footer class="credit">猪之家出品</footer>
@@ -333,6 +336,12 @@ function renderHome() {
   });
   document.getElementById('btn-guide-home').addEventListener('click', renderGuideModal);
   document.getElementById('btn-history').addEventListener('click', openHistory);
+  document.getElementById('btn-achievements').addEventListener('click', () => openNewAchievements(openModal, () => {
+    const badge = document.querySelector('.hero-content .ach-badge');
+    const html = newTitleHtml();
+    if (badge) badge.outerHTML = html || '';
+    else if (html) document.querySelector('.hero-tagline')?.insertAdjacentHTML('afterend', html);
+  }));
 }
 
 // Difficulty picker for the selected team: unlocked levels are selectable, the
@@ -1316,7 +1325,7 @@ function renderResult(root) {
   const win = state.result === 'win';
   const unlocked = win ? recordAscensionWin(state.team, state.ascension || 0) : null;
   const entry = entryFor(state);
-  root.innerHTML = resultPageHtml(entry, (unlocked !== null ? `<p class="asc-unlock">已为${escapeHtml(TEAMS[state.team].name.split(' · ')[0])}解锁难度 ${unlocked}：${escapeHtml(ASCENSION_RULES[unlocked])}</p>` : '') + unlockNoticeHtml(state));
+  root.innerHTML = resultPageHtml(entry, (unlocked !== null ? `<p class="asc-unlock">已为${escapeHtml(TEAMS[state.team].name.split(' · ')[0])}解锁难度 ${unlocked}：${escapeHtml(ASCENSION_RULES[unlocked])}</p>` : '') + unlockNoticeHtml(state) + newTitleHtml('rm-title') + newAchResultHtml(state.seed));
   bindResultButtons(entry, () => { clearState(); state = null; renderHome(); });
 }
 function renderLibraryModal() {
@@ -1561,6 +1570,7 @@ function dispatch(action) {
     const prev = state;
     state = result.state;
     juiceAction(prev, state, action);
+    achieveNew(prev, state, action, { delay: action.type === 'end' ? 1400 : action.type === 'play' ? 350 : 0 });
     saveState();
     selectedCardUid = null;
 
