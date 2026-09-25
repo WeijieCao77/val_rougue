@@ -1,4 +1,5 @@
 import { cardSheetOpen, hideDragHint, touchLift } from './touch-feel.js';
+import { allowCardDrag } from './tap-play.js';
 
 // Lift the actual card, as in the Wa demo. Rules and targets stay game-specific.
 // On touch the card is enlarged and raised above the finger (.drag-touch) so the
@@ -10,6 +11,8 @@ export function attachCardGesture(container, callbacks) {
   container.addEventListener('pointerdown', event => {
     const element = event.target instanceof Element ? event.target.closest('.hand-card') : null;
     if (!element || !container.contains(element) || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    // Phones play by tapping: a finger never drags a card (no lag, no mis-drops).
+    if (!allowCardDrag(event.pointerType)) return;
     const card = callbacks.getCard(element);
     if (!card || !callbacks.canDrag(card, element)) return;
     drag = { element, card, id: event.pointerId, x: event.clientX, y: event.clientY, active: false, touch: event.pointerType !== 'mouse' };

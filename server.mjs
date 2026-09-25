@@ -15,6 +15,7 @@ const assets = new Map([
   ['/shared/card-feel.css', ['shared/card-feel.css', 'text/css; charset=utf-8']],
   ['/shared/card-gesture.js', ['shared/card-gesture.js', 'text/javascript; charset=utf-8']],
   ['/shared/touch-feel.js', ['shared/touch-feel.js', 'text/javascript; charset=utf-8']],
+  ['/shared/tap-play.js', ['shared/tap-play.js', 'text/javascript; charset=utf-8']],
   ['/shared/touch-feel.css', ['shared/touch-feel.css', 'text/css; charset=utf-8']],
   ['/shared/card-pile-motion.js', ['shared/card-pile-motion.js', 'text/javascript; charset=utf-8']],
   ['/shared/character-stage.css', ['shared/character-stage.css', 'text/css; charset=utf-8']],
@@ -27,6 +28,8 @@ const assets = new Map([
   ['/shared/run-meta.js', ['shared/run-meta.js', 'text/javascript; charset=utf-8']],
   ['/shared/result-summary.js', ['shared/result-summary.js', 'text/javascript; charset=utf-8']],
   ['/shared/run-meta.css', ['shared/run-meta.css', 'text/css; charset=utf-8']],
+  ['/shared/achievements-core.js', ['shared/achievements-core.js', 'text/javascript; charset=utf-8']],
+  ['/shared/achievements.css', ['shared/achievements.css', 'text/css; charset=utf-8']],
   ['/shared/models/soldier.glb', ['shared/models/soldier.glb', 'model/gltf-binary']],
   ['/shared/models/hazmat.glb', ['shared/models/hazmat.glb', 'model/gltf-binary']],
   ['/shared/models/enemy.glb', ['shared/models/enemy.glb', 'model/gltf-binary']],
@@ -80,6 +83,7 @@ const assets = new Map([
   ['/new/economy.css', ['new-demo/economy.css', 'text/css; charset=utf-8']],
   ['/new/phone.css', ['new-demo/phone.css', 'text/css; charset=utf-8']],
   ['/new/run-screens.js', ['new-demo/run-screens.js', 'text/javascript; charset=utf-8']],
+  ['/new/achievements.js', ['new-demo/achievements.js', 'text/javascript; charset=utf-8']],
 ]);
 
 const imageTypes = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', svg: 'image/svg+xml' };

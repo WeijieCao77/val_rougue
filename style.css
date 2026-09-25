@@ -2128,22 +2128,93 @@ button.rm-chip:focus-visible{outline:2px solid #e2c27a;outline-offset:2px}
 /* Result summary popup (random upgrades, cards, curses, equipment…) — both demos. */
 .rs-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:#05080bcc;backdrop-filter:blur(2px);animation:rs-fade .16s ease-out}
 .rs-panel{width:min(460px,100%);max-height:calc(100dvh - 32px);overflow-y:auto;box-sizing:border-box;padding:18px 18px 16px;border:1px solid #e2c27a66;border-radius:10px;background:linear-gradient(180deg,#1b242d,#10161d);color:#e9eef0;box-shadow:0 18px 50px #000a;text-align:left}
-.rs-eyebrow{margin:0 0 2px;font-size:11px;letter-spacing:3px;color:#e2c27a;opacity:.85}
+.rs-eyebrow{margin:0 0 2px;font-size:12px;letter-spacing:3px;color:#e2c27a;opacity:.85}
 .rs-panel h2{margin:0 0 12px;font-size:19px;line-height:1.35;color:#f6e3b0;overflow-wrap:anywhere;text-transform:none;letter-spacing:0}
 .rs-list{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-direction:column;gap:7px}
 .rs-entry{display:flex;align-items:flex-start;gap:9px;padding:8px 10px;border-radius:7px;background:#ffffff0b;border:1px solid #ffffff14;font-size:14px;line-height:1.5}
 .rs-entry.is-random{background:#e2c27a14;border-color:#e2c27a45}
-.rs-icon{flex:0 0 20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#ffffff1a;font-size:11px;line-height:1;margin-top:1px}
+.rs-icon{flex:0 0 20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#ffffff1a;font-size:12px;line-height:1;margin-top:1px}
 .rs-upgrade .rs-icon{background:#4f9d6a;color:#fff}.rs-transform .rs-icon{background:#5a7fb0;color:#fff}.rs-curse .rs-icon{background:#9b3b3b;color:#fff}
 .rs-card .rs-icon{background:#3f8a96;color:#fff}.rs-equip .rs-icon{background:#a07a2e;color:#fff}.rs-gamble .rs-icon{background:#7a5ea8;color:#fff}
 .rs-text{flex:1;min-width:0;overflow-wrap:anywhere}
-.rs-tag{flex:0 0 auto;font-style:normal;font-size:10px;letter-spacing:1px;padding:2px 6px;border-radius:999px;border:1px solid #e2c27a88;color:#f0d79c;margin-top:2px}
+.rs-tag{flex:0 0 auto;font-style:normal;font-size:12px;letter-spacing:1px;padding:2px 6px;border-radius:999px;border:1px solid #e2c27a88;color:#f0d79c;margin-top:2px}
 button.rs-ok{display:block;width:100%;min-height:44px;margin:0;font:inherit;font-size:15px;font-weight:600;border-radius:7px;border:1px solid #e2c27a;background:#e2c27a;color:#1a1408;cursor:pointer;letter-spacing:1px;text-transform:none;transform:none;box-shadow:none}
 button.rs-ok:hover{filter:brightness(1.08)}
 button.rs-ok:focus-visible{outline:2px solid #fff;outline-offset:2px}
 @keyframes rs-fade{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.rs-overlay{animation:none}}
 @media (max-width:420px){.rs-panel{padding:14px 14px 12px}.rs-panel h2{font-size:17px}.rs-entry{font-size:13px}}
+
+/* Achievements (成就): unlock toasts, hall page, results list, worn title — both demos. */
+.ach-toasts{position:fixed;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9000;display:flex;flex-direction:column;align-items:center;gap:8px;width:min(420px,calc(100vw - 24px));pointer-events:none}
+.ach-toast{pointer-events:auto;cursor:pointer;display:flex;gap:12px;align-items:center;width:100%;box-sizing:border-box;padding:10px 14px;border-radius:10px;border:1px solid #e2c27a88;background:linear-gradient(135deg,#1d1a12f2,#12161ef2);color:#f3ecd9;box-shadow:0 10px 30px #000a,0 0 0 1px #0006 inset;opacity:0;transform:translateY(-14px) scale(.97);transition:opacity .28s ease,transform .32s cubic-bezier(.2,.9,.3,1.2)}
+.ach-toast.is-in{opacity:1;transform:none}
+.ach-toast.is-out{opacity:0;transform:translateY(-10px);transition-duration:.25s}
+.ach-toast.is-secret{border-color:#b89cff99;background:linear-gradient(135deg,#1b1526f2,#12161ef2)}
+.ach-toast-icon{flex:0 0 auto;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe7a3,#c9973a);color:#2a1d05;box-shadow:0 0 16px #e2c27a66}
+.ach-toast.is-secret .ach-toast-icon{background:radial-gradient(circle at 35% 30%,#e3d6ff,#8a6ad8)}
+.ach-toast-icon svg{width:22px;height:22px}
+.ach-toast-text{display:flex;flex-direction:column;min-width:0;line-height:1.35}
+.ach-toast-text small{font-size:10px;letter-spacing:2px;color:#e2c27a;opacity:.9}
+.ach-toast.is-secret .ach-toast-text small{color:#cdb8ff}
+.ach-toast-text b{font-size:15px;font-weight:700}
+.ach-toast-text em{font-style:normal;font-size:12px;opacity:.78;overflow-wrap:anywhere}
+.ach-toast-reward{font-style:normal;font-size:11px;margin-top:2px;color:#f6d98f}
+@media (prefers-reduced-motion:reduce){.ach-toast,.ach-toast.is-in,.ach-toast.is-out{transition:opacity .2s linear;transform:none}}
+
+/* Hall */
+.ach-hall{display:flex;flex-direction:column;gap:14px;text-align:left}
+.ach-summary{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:10px;border:1px solid #e2c27a44;background:#e2c27a12}
+.ach-total{display:flex;align-items:baseline;gap:8px}
+.ach-total strong{font-size:34px;line-height:1;color:#f0cf7c;font-variant-numeric:tabular-nums}
+.ach-total span{font-size:13px;opacity:.75}
+.ach-note{margin:0;font-size:12px;line-height:1.6;opacity:.75}
+.ach-bar{height:6px;border-radius:999px;background:#ffffff1a;overflow:hidden}
+.ach-bar i{display:block;height:100%;background:linear-gradient(90deg,#c9973a,#f0cf7c);border-radius:inherit}
+.ach-titles{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.ach-titles-label{font-size:11px;letter-spacing:1px;opacity:.65;margin-right:2px}
+button.ach-title-chip{font:inherit;font-size:12px;line-height:1.2;padding:5px 11px;min-height:30px;min-width:0;width:auto;border-radius:999px;border:1px solid #e2c27a55;background:#ffffff0a;color:inherit;cursor:pointer;box-shadow:none;letter-spacing:0;text-transform:none;transform:none}
+button.ach-title-chip:hover{background:#e2c27a22}
+button.ach-title-chip.is-worn{border-color:#f0cf7c;background:#e2c27a3a;color:#fbe7b5;font-weight:700}
+button.ach-title-chip:focus-visible{outline:2px solid #e2c27a;outline-offset:2px}
+.ach-cat{display:flex;flex-direction:column;gap:8px}
+.ach-cat header{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ach-cat h3{margin:0;font-size:15px;letter-spacing:1px}
+.ach-cat-count{font-size:12px;opacity:.7;font-variant-numeric:tabular-nums}
+.ach-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.ach-item{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:8px;border:1px solid #ffffff14;background:#ffffff08;opacity:.62;min-width:0}
+.ach-item.is-done{opacity:1;border-color:#e2c27a55;background:#e2c27a10}
+.ach-item-icon{flex:0 0 auto;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#ffffff14;color:#cfd6dc}
+.ach-item.is-done .ach-item-icon{background:radial-gradient(circle at 35% 30%,#ffe7a3,#c9973a);color:#2a1d05}
+.ach-item-icon svg{width:17px;height:17px}
+.ach-item-body{display:flex;flex-direction:column;gap:2px;min-width:0;line-height:1.4}
+.ach-item-body b{font-size:13px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ach-tag{font-size:10px;font-weight:400;padding:1px 6px;border-radius:999px;border:1px solid #b89cff77;color:#cdb8ff}
+.ach-item-desc{font-size:12px;opacity:.8;overflow-wrap:anywhere}
+.ach-item-reward{font-size:11px;color:#f0cf7c}
+.ach-item-when{font-size:11px;opacity:.6}
+
+/* Results */
+.ach-run{margin:4px auto 14px;text-align:left;align-self:stretch;width:100%;max-width:980px;box-sizing:border-box}
+.ach-run-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
+.ach-run-list li{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;border:1px solid #e2c27a55;background:#e2c27a10}
+.ach-run-list .ach-item-icon{background:radial-gradient(circle at 35% 30%,#ffe7a3,#c9973a);color:#2a1d05}
+.ach-run-list span{display:flex;flex-direction:column;min-width:0;line-height:1.4}
+.ach-run-list b{font-size:13px}
+.ach-run-list small{font-size:12px;opacity:.78;overflow-wrap:anywhere}
+.ach-run-list em{font-style:normal;font-size:11px;color:#f0cf7c}
+
+/* Worn title */
+.ach-badge{display:inline-flex;align-items:center;gap:8px;margin:6px auto 0;padding:4px 12px 4px 4px;border-radius:999px;border:1px solid #e2c27a77;background:#0008;color:#f6e3b0;font-size:13px}
+.ach-badge span{font-size:10px;letter-spacing:2px;padding:3px 8px;border-radius:999px;background:#e2c27a;color:#2a1d05}
+.ach-badge b{font-weight:700;letter-spacing:1px}
+
+@media (max-width:520px){
+  .ach-list,.ach-run-list{grid-template-columns:1fr}
+  .ach-total strong{font-size:28px}
+  .ach-toast{padding:9px 12px}
+  .ach-toast-text b{font-size:14px}
+}
 
 /* Phone feel shared by both demos: long-press card sheet, lifted drag card, drag hint. */
 
@@ -2162,14 +2233,18 @@ button.rs-ok:focus-visible{outline:2px solid #fff;outline-offset:2px}
 /* Long-press detail sheet (a modal <dialog>, above every other layer). */
 dialog.card-sheet{position:fixed;inset:auto 0 0;margin:0 auto;width:min(760px,100%);max-width:100%;max-height:min(92dvh,760px);padding:0;border:0;background:transparent;color:#e9e3d2;overflow:visible}
 dialog.card-sheet::backdrop{background:#050a0dcc;backdrop-filter:blur(2px)}
-.card-sheet-panel{position:relative;box-sizing:border-box;max-height:min(92dvh,760px);overflow-y:auto;overscroll-behavior:contain;padding:18px 18px calc(14px + env(safe-area-inset-bottom));border:1px solid #6c6a58;border-bottom:0;border-radius:16px 16px 0 0;background:linear-gradient(#18242b,#0f171d);box-shadow:0 -10px 40px #000b;font:15px/1.6 system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;animation:card-sheet-in .18s ease-out}
+/* Panel = fixed close bar + scrolling body, so 关闭 never scrolls out of reach. */
+.card-sheet-panel{position:relative;box-sizing:border-box;display:flex;flex-direction:column;max-height:min(92dvh,760px);overflow:hidden;border:1px solid #6c6a58;border-bottom:0;border-radius:16px 16px 0 0;background:linear-gradient(#18242b,#0f171d);box-shadow:0 -10px 40px #000b;font:15px/1.6 system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;animation:card-sheet-in .18s ease-out}
+.card-sheet-bar{flex:none;display:flex;justify-content:flex-end;padding:8px 10px 0}
+.card-sheet-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:14px 18px calc(14px + env(safe-area-inset-bottom))}
 @keyframes card-sheet-in{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
-.card-sheet-close{position:absolute;top:10px;right:12px;z-index:2;min-width:64px;min-height:44px;padding:8px 14px;border:1px solid #7c806e;border-radius:8px;background:#26343a;color:#f1e7cc;font:600 14px system-ui,sans-serif}
+.card-sheet-close{min-width:88px;min-height:44px;padding:8px 14px;border:1px solid #9a9c86;border-radius:8px;background:#2c3c42;color:#f7eed4;font:700 15px system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;cursor:pointer;touch-action:manipulation}
+.card-sheet-close:focus-visible{outline:2px solid #f1d383;outline-offset:2px}
 .card-sheet-body{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:start}
 .card-sheet-art{display:flex;justify-content:center;padding-top:14px}
 .card-sheet-art>*{pointer-events:none}
 .card-sheet-info{min-width:0;padding-top:4px}
-.card-sheet-info h3{margin:0 76px 2px 0;font-size:22px;line-height:1.3;color:#f4dea5}
+.card-sheet-info h3{margin:0 0 2px;font-size:22px;line-height:1.3;color:#f4dea5}
 .card-sheet-meta{margin:0 0 10px;color:#9fb0ab;font-size:13px}
 .card-sheet-text{margin:0 0 12px;padding:10px 12px;border-left:3px solid #d8b86a;border-radius:4px;background:#ffffff0d;font-size:16px;line-height:1.65;color:#fff6e0}
 .card-sheet-text .kw{font-weight:700}
@@ -2187,18 +2262,24 @@ dialog.card-sheet::backdrop{background:#050a0dcc;backdrop-filter:blur(2px)}
 .new-sheet-art .tc{width:210px;height:300px;font-size:14px}
 @media(max-width:600px){
  .card-sheet-body{grid-template-columns:1fr;gap:10px}
- .card-sheet-art{padding-top:36px}
+ .card-sheet-art{padding-top:0}
  .card-sheet-info h3{margin-right:0;text-align:center}
  .card-sheet-meta{text-align:center}
 }
 @media(orientation:landscape) and (max-height:500px){
- dialog.card-sheet{max-height:100dvh}.card-sheet-panel{max-height:100dvh;padding-top:12px}
+ dialog.card-sheet{max-height:100dvh}.card-sheet-panel{max-height:100dvh}
+ .card-sheet-bar{padding-top:4px}
  .card-sheet-body{grid-template-columns:auto minmax(0,1fr)}
  .card-sheet-art{padding-top:0}
  .wa-sheet-art .card{width:170px}.wa-sheet-art .card>.card-face{height:246px}
  .new-sheet-art .tc{width:180px;height:258px}
 }
 @media(prefers-reduced-motion:reduce){.card-sheet-panel{animation:none}}
+
+/* Tap-play (phones, html.tap-play from shared/tap-play.js): no hover tooltips,
+   upgrade peeks or drag hints floating over the battlefield. */
+html.tap-play #card-tooltip,html.tap-play .rm-peek,html.tap-play .drag-hint{display:none!important}
+html.tap-play .hand-card{touch-action:pan-x;-webkit-tap-highlight-color:transparent}
 
 /* Wa demo on phones: compact header, 44px touch targets, scrollable hand,
    landscape fit and notch safe areas. Loaded last in style.css. */
@@ -2207,7 +2288,9 @@ html,body{overflow-x:hidden}
 .hud-resources>span{display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
 body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 .game-hud{padding-top:env(safe-area-inset-top)}
-#notice:not(:empty){bottom:calc(12px + env(safe-area-inset-bottom))}
+/* One compact line under the header. (Setting only `bottom` here used to stretch
+   the box from the header to the screen bottom, covering the whole game.) */
+#notice:not(:empty){top:calc(56px + env(safe-area-inset-top));bottom:auto;width:max-content;max-width:calc(100vw - 24px);box-sizing:border-box;font-size:13px;line-height:1.4;text-align:center}
 
 /* ---------- Header: one row, every control ≥44px, links moved to 菜单 ---------- */
 @media(max-width:720px){
@@ -2264,7 +2347,8 @@ body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-ri
  .hand-dock .hand-fan{grid-area:fan}
  .hand-dock .deck-console{grid-area:deck;justify-self:start;padding:0 0 max(6px,env(safe-area-inset-bottom)) 8px}
  .hand-dock .discard-console{grid-area:discard;justify-self:end;padding:0 8px max(6px,env(safe-area-inset-bottom)) 0}
- .energy-orb{width:50px;height:50px}.energy-orb b{font-size:22px;line-height:1}
+ .energy-orb{width:54px;height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}.energy-orb b{font-size:21px;line-height:1}.energy-orb span{line-height:1.1}
+ .fighter.ally .life-row{flex-wrap:nowrap}.fighter.ally .life-bar{min-width:96px}.fighter.ally .life-bar span{white-space:nowrap}
  .pile-button,.hand-dock .exhaust-link{box-sizing:border-box;width:auto;height:44px;min-width:76px;min-height:44px;padding:0 10px;font-size:13px;display:inline-flex;align-items:center;justify-content:center;box-shadow:2px 2px 0 #142029}
  .hand-fan{position:relative;inset:auto;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:24px 10px 8px;scroll-snap-type:x proximity;overscroll-behavior-x:contain;scrollbar-width:thin;--step:0px}
  .hand-card{position:relative;left:auto;bottom:auto;flex:0 0 112px;width:112px;min-width:112px;height:168px;transform:none;scroll-snap-align:start;z-index:1;touch-action:pan-x}
@@ -2330,3 +2414,47 @@ body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-ri
  .arena-center{top:30%}.target-hint{font-size:12px}
  .map-screen{height:auto}
 }
+
+/* ---------- Phones (text under 12px is raised by enforceTextFloor in shared/tap-play.js) ---------- */
+@media(max-width:720px),(orientation:landscape) and (max-height:500px){
+ .energy-orb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}.energy-orb b{line-height:1}.energy-orb span{line-height:1.1}
+}
+
+/* ---------- Market on phones: price tags never sit on item names ---------- */
+@media(max-width:720px){
+ .shop-shelf.market-row{display:grid!important;grid-template-columns:minmax(0,1fr)!important}
+ .shop-shelf.market-row>article h4{padding-right:100px}
+ .contract-slot .contract-label{text-align:left;padding-left:12px;padding-right:110px}
+}
+
+/* ---------- Group fights on a portrait phone: opponents across the empty top of
+   the arena, big enough for 12px names, intents, traits and life. ---------- */
+@media(max-width:720px) and (orientation:portrait){
+ /* VS and the target hint live in the empty top of the arena, above the intent bubbles. */
+ .combat-screen .arena-center{top:8%!important}
+ /* Tap-play: the selection bar above the hand already says what to tap next. */
+ html.tap-play .combat-screen .target-hint{display:none}
+ /* In battle the notice sits in the open middle of the arena, not over the intents. */
+ body.combat-mode #notice:not(:empty){top:40dvh}
+ .combat-screen:has(.foe-group) .arena-center{display:none}
+ .combat-screen .fighter.enemy.foe-group{top:34px;bottom:auto;left:6px;right:6px;width:auto;justify-content:center;align-items:flex-start;gap:6px}
+ .foe-group .foe{flex:0 1 118px;width:auto;min-width:0}
+ .foe-group .foe .intent-bubble{padding:3px 4px}.foe-group .foe .intent-bubble strong{font-size:12px;line-height:1.3}
+ .foe-group .combat-target:has(.character-stage-host canvas){width:96px;height:80px}
+ .foe-group .foe .combat-target{max-width:100%}
+ .foe-group .foe h2{font-size:12px;line-height:1.3;margin:6px 0 3px;white-space:nowrap;overflow:visible}
+ .foe-group .foe .trait-row{display:block;margin:0 0 3px}.foe-group .foe .trait-tag{font-size:12px;padding:1px 5px;white-space:normal}
+ .foe-group .foe .life-row{flex-wrap:wrap;justify-content:center;gap:3px}
+ .foe-group .foe .life-row .shield-value{font-size:12px}.foe-group .foe .life-bar{flex:1 1 60px}.foe-group .foe .life-bar span{font-size:12px}
+ .foe-group .foe .target-caption{font-size:12px}
+ .combat-screen:has(.foe-group) .fighter.ally{bottom:4px}
+}
+
+/* ---------- Dialog: a ✕ that stays at the top right while the content scrolls ---------- */
+#dialog .dialog-x{position:sticky;top:-14px;float:right;z-index:5;min-width:44px;min-height:44px;margin:-14px -14px 4px 8px;padding:0;border:1px solid #a99567;border-radius:8px;background:#2e4142;color:#f1e7cc;font-size:18px;line-height:1;cursor:pointer}
+@media(max-width:720px){#dialog{padding:18px 14px}#dialog .dialog-x{top:-8px;margin:-8px -6px 4px 8px}}
+
+/* ---------- Tap-play selection bar (html.tap-play): full card text above the hand ---------- */
+html.tap-play .selection-panel.tap-selection .selection-text{margin:2px 0 3px;font-size:14px;line-height:1.45;color:#f6ecd3;white-space:normal;overflow-wrap:anywhere}
+html.tap-play .selection-panel.tap-selection small{font-size:12px}
+html.tap-play .selection-panel.tap-selection .text-button,html.tap-play .selection-panel.tap-selection button{min-height:44px}

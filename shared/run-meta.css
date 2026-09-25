@@ -118,16 +118,16 @@ button.rm-chip:focus-visible{outline:2px solid #e2c27a;outline-offset:2px}
 /* Result summary popup (random upgrades, cards, curses, equipment…) — both demos. */
 .rs-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:#05080bcc;backdrop-filter:blur(2px);animation:rs-fade .16s ease-out}
 .rs-panel{width:min(460px,100%);max-height:calc(100dvh - 32px);overflow-y:auto;box-sizing:border-box;padding:18px 18px 16px;border:1px solid #e2c27a66;border-radius:10px;background:linear-gradient(180deg,#1b242d,#10161d);color:#e9eef0;box-shadow:0 18px 50px #000a;text-align:left}
-.rs-eyebrow{margin:0 0 2px;font-size:11px;letter-spacing:3px;color:#e2c27a;opacity:.85}
+.rs-eyebrow{margin:0 0 2px;font-size:12px;letter-spacing:3px;color:#e2c27a;opacity:.85}
 .rs-panel h2{margin:0 0 12px;font-size:19px;line-height:1.35;color:#f6e3b0;overflow-wrap:anywhere;text-transform:none;letter-spacing:0}
 .rs-list{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-direction:column;gap:7px}
 .rs-entry{display:flex;align-items:flex-start;gap:9px;padding:8px 10px;border-radius:7px;background:#ffffff0b;border:1px solid #ffffff14;font-size:14px;line-height:1.5}
 .rs-entry.is-random{background:#e2c27a14;border-color:#e2c27a45}
-.rs-icon{flex:0 0 20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#ffffff1a;font-size:11px;line-height:1;margin-top:1px}
+.rs-icon{flex:0 0 20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#ffffff1a;font-size:12px;line-height:1;margin-top:1px}
 .rs-upgrade .rs-icon{background:#4f9d6a;color:#fff}.rs-transform .rs-icon{background:#5a7fb0;color:#fff}.rs-curse .rs-icon{background:#9b3b3b;color:#fff}
 .rs-card .rs-icon{background:#3f8a96;color:#fff}.rs-equip .rs-icon{background:#a07a2e;color:#fff}.rs-gamble .rs-icon{background:#7a5ea8;color:#fff}
 .rs-text{flex:1;min-width:0;overflow-wrap:anywhere}
-.rs-tag{flex:0 0 auto;font-style:normal;font-size:10px;letter-spacing:1px;padding:2px 6px;border-radius:999px;border:1px solid #e2c27a88;color:#f0d79c;margin-top:2px}
+.rs-tag{flex:0 0 auto;font-style:normal;font-size:12px;letter-spacing:1px;padding:2px 6px;border-radius:999px;border:1px solid #e2c27a88;color:#f0d79c;margin-top:2px}
 button.rs-ok{display:block;width:100%;min-height:44px;margin:0;font:inherit;font-size:15px;font-weight:600;border-radius:7px;border:1px solid #e2c27a;background:#e2c27a;color:#1a1408;cursor:pointer;letter-spacing:1px;text-transform:none;transform:none;box-shadow:none}
 button.rs-ok:hover{filter:brightness(1.08)}
 button.rs-ok:focus-visible{outline:2px solid #fff;outline-offset:2px}

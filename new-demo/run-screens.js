@@ -3,6 +3,7 @@
 // history (战绩), the seen collection (图鉴) and the upgraded-card peek.
 // Pure bookkeeping lives in /shared/run-meta.js.
 import { cardSheetOpen } from '/shared/touch-feel.js';
+import { tapPlayMode } from '/shared/tap-play.js';
 import { CARDS, STATUS_CARDS, TEAMS, RELICS, SUPPLIES, ENEMIES } from './content.js';
 import { EXTRA_ENEMIES } from './season-map.js';
 import { battleEnemies } from './engine.js';
@@ -294,6 +295,8 @@ export function initUpgradePeek() {
   document.addEventListener('pointerdown', e => {
     held = false;
     if (e.pointerType !== 'touch') { hidePeek(); return; }
+    // Phones: the long-press sheet already shows the upgraded version.
+    if (tapPlayMode()) { hidePeek(); return; }
     const el = target(e);
     if (!el) { hidePeek(); return; }
     const x = e.clientX, y = e.clientY;
