@@ -54,6 +54,30 @@ function searchTurn(s, budget = 2000) {
   dfs(s, []);
   return best.line;
 }
+
+// A human doesn't know the draw order: plan on a copy with the draw pile and
+// future shuffles re-randomised, play only the first action, then re-plan.
+let fogCounter = 0;
+function fogRand(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function fogged(s) {
+  const c = structuredClone(s);
+  const r = fogRand(0x9e3779b1 ^ (++fogCounter * 2654435761));
+  const pile = c.battle.draw;
+  for (let i = pile.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [pile[i], pile[j]] = [pile[j], pile[i]]; }
+  c.rng = (Math.floor(r() * 4294967295) >>> 0) || 1;
+  return c;
+}
+function foggedTurn(s) {
+  const out = [];
+  let cur = s;
+  for (let guard = 0; guard < 40 && cur.phase === 'combat'; guard++) {
+    const plan = searchTurn(fogged(cur));
+    if (!plan.length) break;
+    out.push(plan[0]);
+    cur = step(cur, plan[0]);
+  }
+  return out;
+}
 // Careless baseline: play affordable cards in hand order.
 function naiveTurn(s) {
   const line = []; let cur = s;
@@ -165,7 +189,7 @@ function playRun(seed, region, policy = 'smart') {
       const boss = policy === 'smart' && (fight?.kind === 'elite' || fight?.kind === 'boss' || /EL|B0/.test(s.battle.enemy));
       while (policy !== 'naive' && (s.supplies || []).length && s.phase === 'combat' && (boss && s.battle.turn <= 2 || s.hp / s.maxHp < 0.4)) { s = step(s, { type: 'useSupply', slot: 0 }); log.suppliesUsed++; }
       if (s.phase !== 'combat') { fight.turns++; fight.lost = fight.hp0 - s.hp; fight.won = s.phase !== 'result' || s.outcome === 'win'; log.fights.push(fight); continue; }
-      for (const a of policy === 'naive' ? naiveTurn(s) : policy === 'casual' ? casualTurn(s) : searchTurn(s)) { s = step(s, a); if (s.phase !== 'combat') break; }
+      for (const a of policy === 'naive' ? naiveTurn(s) : policy === 'casual' ? casualTurn(s) : foggedTurn(s)) { s = step(s, a); if (s.phase !== 'combat') break; }
       if (s.phase === 'combat') s = step(s, { type: 'end' });
       fight.turns++;
       if (s.phase !== 'combat') { fight.lost = fight.hp0 - s.hp; fight.won = s.phase !== 'result' || s.outcome === 'win'; log.fights.push(fight); }

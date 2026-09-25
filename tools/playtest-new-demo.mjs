@@ -63,6 +63,20 @@ function stateKey(s) {
 }
 
 // Enumerate distinct play lines for this turn. Returns terminal outcomes.
+
+// A human doesn't know the draw order. Plans are made on a copy whose draw pile
+// and future shuffles are re-randomised, then only the first action is played
+// on the real state before planning again with what was actually drawn.
+let fogCounter = 0;
+function fogged(s) {
+  const c = JSON.parse(JSON.stringify(s));
+  const r = mulberry(0x9e3779b1 ^ (++fogCounter * 2654435761));
+  const pile = c.battle.drawPile;
+  for (let i = pile.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [pile[i], pile[j]] = [pile[j], pile[i]]; }
+  c.rngState = (Math.floor(r() * 4294967295) >>> 0) || 1;
+  return c;
+}
+
 function searchTurn(s, hpWeight, budget = 2500) {
   const seen = new Set();
   const outcomes = [];
@@ -310,7 +324,7 @@ function playRun(seed, team, policy) {
       let line;
       if (policy === 'smart') {
         const hpWeight = 1.6;
-        const outs = searchTurn(s, hpWeight);
+        const outs = searchTurn(fogged(s), hpWeight);
         outs.sort((x, y) => y.score - x.score);
         const best = outs[0];
         const distinct = [...new Set(outs.map(o => Math.round(o.score)))];
@@ -333,6 +347,17 @@ function playRun(seed, team, policy) {
         line = randomLine(s, rand).line;
       }
       const hpBefore = s.hp;
+      if (policy === 'smart') {
+        // Play one action at a time, re-planning on a fogged copy after each.
+        let plan = line;
+        for (let guard = 0; guard < 40 && plan.length && s.phase === 'combat'; guard++) {
+          s = step(s, plan[0]);
+          if (s.phase !== 'combat') break;
+          const next = searchTurn(fogged(s), 1.6).sort((x, y) => y.score - x.score)[0];
+          plan = next ? next.line : [];
+        }
+        line = [];
+      }
       for (const a of line) { s = step(s, a); if (s.phase !== 'combat') break; }
       if (s.phase === 'combat') s = step(s, { type: 'end' });
       turnInfo.hpLost = hpBefore - s.hp;
