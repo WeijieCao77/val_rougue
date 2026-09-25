@@ -36,6 +36,8 @@ const modules = [
   'shared/card-pile-motion.js',
   'shared/status-icons.js',
   'shared/run-meta.js',
+  'shared/achievements-core.js',
+  'wa-achievements.js',
   'shared/touch-feel.js',
   'shared/tap-play.js',
   'ui-source.js'
@@ -75,7 +77,7 @@ for (const file of modules) {
 
 await writeFile(new URL('app.js', root), output.join('\n'));
 await writeFile(new URL('style.css', root),
-  (await read('base-style.css')) + '\n' + (await read('season-ui.css')) + '\n' + (await read('weapon-style.css')) + '\n' + (await read('art-style.css')) + '\n' + (await read('combat-fx.css')) + '\n' + (await read('cover-wa.css')) + '\n' + (await read('wa-map-redesign.css')) + '\n' + (await read('shared/character-stage.css')) + '\n' + (await read('shared/status-icons.css')) + '\n' + (await read('shared/shop-scene.css')) + '\n' + (await read('shared/juice.css')) + '\n' + (await read('wa-rooms.css')) + '\n' + (await read('wa-rules.css')) + '\n' + (await read('shared/run-meta.css'))
+  (await read('base-style.css')) + '\n' + (await read('season-ui.css')) + '\n' + (await read('weapon-style.css')) + '\n' + (await read('art-style.css')) + '\n' + (await read('combat-fx.css')) + '\n' + (await read('cover-wa.css')) + '\n' + (await read('wa-map-redesign.css')) + '\n' + (await read('shared/character-stage.css')) + '\n' + (await read('shared/status-icons.css')) + '\n' + (await read('shared/shop-scene.css')) + '\n' + (await read('shared/juice.css')) + '\n' + (await read('wa-rooms.css')) + '\n' + (await read('wa-rules.css')) + '\n' + (await read('shared/run-meta.css')) + '\n' + (await read('shared/achievements.css'))
   // Phone feel (long-press sheet, drag hint, touch targets) goes last so it wins.
   + '\n' + (await read('shared/touch-feel.css')) + '\n' + (await read('wa-phone.css'))
 );

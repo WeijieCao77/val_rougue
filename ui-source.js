@@ -14,6 +14,7 @@ import {soundToggleHtml} from './shared/sfx.js';
 import {attachCardDetail,cardSheetOpen,openCardSheet,showDragHint,hideDragHint,touchLift,trackLayer} from './shared/touch-feel.js';
 import {tapPlayMode,tapCardAction,allowCardDrag,watchTapPlay,enforceTextFloor} from './shared/tap-play.js';
 import {waJuiceAction,waSlam} from './wa-juice.js';
+import {waAchieve,waHallHtml,bindWaHall,waAchResultHtml,waTitleHtml} from './wa-achievements.js';
 import {computeScore,scoreFormulaText,recordRun,loadHistory,markSeen,loadCollection,seenCount,trackStep,loadTracker,saveTracker,newTracker,filterSortCards,SORT_LABELS,COST_FILTERS,formatDuration} from './shared/run-meta.js';
 const createSeason=(seed,tutorial,region,opts)=>createWaSeason(seed,tutorial,region,crypto.randomUUID(),opts);
 // Difficulty unlocks per region: the highest level the player may pick (0–10).
@@ -126,6 +127,7 @@ function home(){
      <div class="eyebrow">四大赛区 · 卡牌肉鸽</div>
      <h1>登峰赛季</h1>
      <p class="cover-sub">把这支队伍，带到赛季最后一场。</p>
+     ${waTitleHtml('cover-title-badge')}
      <div class="cover-actions">
        ${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}
        <a class="primary cover-select-link" href="#cover-setup">选择赛区 ↓</a>
@@ -144,6 +146,7 @@ function home(){
      ${ui('游戏规则','rules','text-button')}
      ${ui('图鉴','library','text-button')}
      ${ui('战绩','history','text-button')}
+     ${ui('成就','achievements','text-button')}
      <a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a>
      <a class="text-button" href="/pvp/">好友PvP</a>
      <a class="text-button" href="/">选择版本</a>
@@ -413,11 +416,13 @@ function commit(action){
   const enemyAt=reduceMotion()?220:Math.max(580,oldHand.length?440+(oldHand.length-1)*95:0);
   const events=combatEvents(before,r.state,action);
   waJuiceAction(before,r.state,action,played,enemyAt);
+  waAchieve(before,r.state,action,{delay:enemyAt+600});
   setTimeout(()=>{banner.querySelector('strong').textContent='对手回合';banner.querySelector('span').textContent='攻击结算';playCombatFx(events,stage);globalThis.characterStages?.cueFromTransition('wa',before,r.state,action);},enemyAt);
   setTimeout(()=>{state=r.state;screen=nextScreen(before,state);selected=null;echo=null;dialog.close();persist();notice(saveError||'');render();if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);const drawn=[...document.querySelectorAll('.hand-fan [data-select]')];flyCardsFromPile(drawn,document.querySelector('.draw-pile')).finally(()=>{turnAnimating=false;});},enemyAt+(reduceMotion()?420:1100));
   return r;
  }
  waJuiceAction(before,r.state,action,played);
+ waAchieve(before,r.state,action,{delay:action.type==='play'?350:0});
  state=r.state;screen=nextScreen(before,state);selected=null;echo=played||null;dialog.close();persist();notice(saveError||'');render();
  if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);
  animateResolution(before,state,played,flight,action);
@@ -544,7 +549,7 @@ function entryDetail(e){
 function runResultScreen(s){
  const id=String(s.runId||s.seed),o=outcomeOf(s),e=loadHistory(store,HISTORY_KEY).find(x=>x.id===id)||runEntry(s,o,loadTracker(store,TRACK_KEY,s.seed));
  const title=o==='win'?['赛季冠军','你赢得了最终赛段冠军。']:o==='abandon'?['赛季结束','本次赛季已主动结束。']:['赛季结束','声望耗尽，俱乐部暂别赛场。'];
- return `<section class="result rm-result rm-${o}">${heading(title[0],title[1],'')}<div class="rm-score-big"><span>本局得分</span><strong>${e.score}</strong></div>${R(s)?`<p class="asc-result">难度 ${s.ascension||0}${s.ascensionNotice?` · ${esc(s.ascensionNotice)}`:''}</p>`:''}${unlockNoticeHtml(s)}${entryDetail(e)}<div class="button-row">${ui('再开一个赛季','home','primary')}${ui('查看最终牌组','deck')}${ui('查看战绩','history')}${ui('导出本局记录','export')}</div><p class="muted">种子：${esc(s.seed)} · ${s.actions.length} 次操作 · D0.2.0${R(s)?' · 规则 '+s.rules:''}</p></section>`;
+ return `<section class="result rm-result rm-${o}">${heading(title[0],title[1],'')}<div class="rm-score-big"><span>本局得分</span><strong>${e.score}</strong></div>${R(s)?`<p class="asc-result">难度 ${s.ascension||0}${s.ascensionNotice?` · ${esc(s.ascensionNotice)}`:''}</p>`:''}${unlockNoticeHtml(s)}${waTitleHtml('rm-title')}${waAchResultHtml(id)}${entryDetail(e)}<div class="button-row">${ui('再开一个赛季','home','primary')}${ui('查看最终牌组','deck')}${ui('查看战绩','history')}${ui('导出本局记录','export')}</div><p class="muted">种子：${esc(s.seed)} · ${s.actions.length} 次操作 · D0.2.0${R(s)?' · 规则 '+s.rules:''}</p></section>`;
 }
 function showHistory(){
  const list=loadHistory(store,HISTORY_KEY),best=list.reduce((m,e)=>Math.max(m,e.score||0),0);
@@ -628,6 +633,7 @@ function handleUI(name){
  }
  if(name==='deck'){showDeckViewer('deck');return;}
  if(name==='history'){showHistory();return;}
+ if(name==='achievements'){showModal('成就',waHallHtml());bindWaHall(modal,()=>{if(atHome)render();});return;}
  if(name.startsWith('dv-')){const [,k,...rest]=name.split('-'),val=rest.join('-');if(k==='src'&&PILES[val])showDeckViewer(val);else{if(k==='type')deckView.type=val;if(k==='cost')deckView.cost=val;if(k==='sort'&&SORT_LABELS[val])deckView.sort=val;showDeckViewer();}return;}
   if(name==='library'||name.startsWith('library-')){
     if(name==='library'){libraryFilter='all';libraryRegionFilter='all';libraryRarityFilter='all';showCardOverview();return;}
