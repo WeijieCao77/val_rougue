@@ -37,6 +37,7 @@ const modules = [
   'shared/status-icons.js',
   'shared/run-meta.js',
   'shared/touch-feel.js',
+  'shared/tap-play.js',
   'ui-source.js'
 ];
 

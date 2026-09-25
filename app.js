@@ -17031,8 +17031,58 @@ const module28=(()=>{
 // Plain ES module with named exports and no imports (bundled into the Wa app.js
 // by tools/build-browser.mjs, imported directly by the new demo).
 
+// ---------- Back button closes the top overlay ----------
+// Every open overlay (card sheet, dialogs, modals) owns one browser-history
+// entry, so the phone's back button or gesture closes the top one instead of
+// leaving the game. Closing it any other way removes its entry again.
+const layers = [];
+let skipPops = 0;
+let popWired = false;
+
+function wirePop() {
+  if (popWired || typeof addEventListener !== 'function') return;
+  popWired = true;
+  addEventListener('popstate', () => {
+    if (skipPops > 0) { skipPops--; return; }
+    const top = layers.pop();
+    if (top) top.close();
+  });
+}
+
+function pushLayer(close) {
+  wirePop();
+  const layer = { close };
+  layers.push(layer);
+  try { history.pushState({ ...(history.state || {}), uiLayer: layers.length }, ''); } catch {}
+  return layer;
+}
+
+function dropLayer(layer) {
+  const i = layers.indexOf(layer);
+  if (i < 0) return;
+  layers.splice(i, 1);
+  try { if (history.state?.uiLayer) { skipPops++; history.back(); } } catch {}
+}
+
+// Watches `root` for an overlay opening/closing: `isOpen()` says whether one is
+// open now, `close()` closes it (used by the back button).
+function trackLayer(root, isOpen, close) {
+  if (!root || typeof MutationObserver !== 'function') return;
+  let layer = null;
+  const sync = () => {
+    const open = !!isOpen();
+    // If close() declines (a forced choice), the next sync re-arms the back button.
+    if (open && !layer) layer = pushLayer(() => { layer = null; close(); setTimeout(sync, 0); });
+    else if (!open && layer) { const done = layer; layer = null; dropLayer(done); }
+  };
+  new MutationObserver(sync).observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['open', 'hidden'] });
+  sync();
+}
+
+// ---------- Long-press card sheet ----------
 let sheet = null;
 let sheetOnClose = null;
+let sheetLayer = null;
 
 function cardSheetOpen() {
   return !!(sheet && sheet.open);
@@ -17043,7 +17093,10 @@ function closeCardSheet() {
 }
 
 // A <dialog> opened with showModal() sits above every other layer, including an
-// already open deck/library dialog, so one sheet works everywhere.
+// already open deck/library dialog, so one sheet works everywhere. It closes by
+// the 关闭 button (top right, outside the scrolling area so it never scrolls
+// away), a tap outside the panel, Escape, or the back button; once closed it is
+// removed from the page, so nothing is left to block taps.
 function openCardSheet(html, { onClose } = {}) {
   if (typeof document === 'undefined') return;
   if (!sheet) {
@@ -17055,28 +17108,42 @@ function openCardSheet(html, { onClose } = {}) {
       if (event.target === sheet || event.target.closest('[data-sheet-close]')) sheet.close();
     });
     sheet.addEventListener('close', () => {
+      if (sheet.open) return; // reopened with new content before this event ran
       const done = sheetOnClose;
       sheetOnClose = null;
       sheet.innerHTML = '';
+      sheet.remove();
+      if (sheetLayer) { const layer = sheetLayer; sheetLayer = null; dropLayer(layer); }
       done?.();
     });
   }
-  if (sheet.open) sheet.close();
+  if (sheet.open) {
+    const done = sheetOnClose;
+    sheetOnClose = null;
+    if (sheetLayer) { dropLayer(sheetLayer); sheetLayer = null; }
+    sheet.close();
+    done?.();
+  }
   document.body.append(sheet);
   sheetOnClose = onClose || null;
   sheet.innerHTML = `<div class="card-sheet-panel" role="document">
-    <button type="button" class="card-sheet-close" data-sheet-close aria-label="关闭卡牌详情">关闭</button>
+    <div class="card-sheet-bar"><button type="button" class="card-sheet-close" data-sheet-close aria-label="关闭卡牌详情">✕ 关闭</button></div>
+    <div class="card-sheet-scroll">
     ${html}
-    <p class="card-sheet-foot">点击空白处关闭</p>
+    <p class="card-sheet-foot">点空白处、按返回键或「关闭」均可关闭</p>
+    </div>
   </div>`;
   try { sheet.showModal(); } catch { sheet.setAttribute('open', ''); }
-  sheet.querySelector('.card-sheet-panel').scrollTop = 0;
+  sheetLayer = pushLayer(() => { sheetLayer = null; if (sheet?.open) sheet.close(); });
+  sheet.querySelector('.card-sheet-scroll').scrollTop = 0;
+  sheet.querySelector('.card-sheet-close').focus({ preventScroll: true });
 }
 
-// Long press (touch ≈350 ms, mouse 500 ms, or right click) on any element
+// Long press (500 ms by finger or mouse, or right click) on any element
 // matching `selector` opens `render(el)` in the sheet. The press never counts
-// as a click, so it cannot pick, buy or play the card underneath.
-function attachCardDetail({ selector, render, delay = 350 }) {
+// as a click, so it cannot pick, buy or play the card underneath. Half a second
+// keeps a slow tap from ever opening it.
+function attachCardDetail({ selector, render, delay = 500 }) {
   if (typeof document === 'undefined') return;
   let press = null;
   let swallowClick = false;
@@ -17100,7 +17167,7 @@ function attachCardDetail({ selector, render, delay = 350 }) {
     if (!event.isPrimary) return;
     const el = event.target instanceof Element ? event.target.closest(selector) : null;
     if (!el || el.closest('.card-sheet')) return;
-    const wait = event.pointerType === 'mouse' ? Math.max(delay, 500) : delay;
+    const wait = Math.max(delay, 500);
     press = { el, id: event.pointerId, x: event.clientX, y: event.clientY };
     press.timer = setTimeout(() => {
       const current = press;
@@ -17162,9 +17229,118 @@ function touchLift(element, y) {
   return Math.round(Math.max(Math.min(h + 22, y - 6), h * 0.45));
 }
 
-return {cardSheetOpen,closeCardSheet,openCardSheet,attachCardDetail,showDragHint,hideDragHint,touchLift};
+return {pushLayer,dropLayer,trackLayer,cardSheetOpen,closeCardSheet,openCardSheet,attachCardDetail,showDragHint,hideDragHint,touchLift};
 })();
 const module29=(()=>{
+// Phones play cards by tapping instead of dragging (shared by both demos).
+// Plain ES module with named exports and no imports (bundled into the Wa app.js
+// by tools/build-browser.mjs, imported directly by the new demo).
+//
+// Tap-play rules:
+//   tap a card            → select it (it rises; its full text shows in a bar)
+//   tap the same card     → play it (or, if it needs a target, ask for one)
+//   tap an enemy          → play the selected card on that enemy
+//   tap elsewhere / 取消  → deselect
+// Desktop mouse keeps drag-to-play and click-to-select unchanged.
+
+const TAP_PLAY_MAX_WIDTH = 820;
+
+// Pure decision: is this a phone-like device that should use tap-play?
+// A finger as the primary pointer always is. A narrow screen counts only when
+// it has no hover-capable primary pointer, so a narrow desktop window keeps drag.
+function isTapPlayDevice({ coarse = false, anyCoarse = false, hoverNone = false, width = Infinity } = {}) {
+  if (coarse) return true;
+  return width <= TAP_PLAY_MAX_WIDTH && (anyCoarse || hoverNone);
+}
+
+function tapPlayMode() {
+  if (typeof matchMedia !== 'function' || typeof innerWidth !== 'number') return false;
+  return isTapPlayDevice({
+    coarse: matchMedia('(pointer: coarse)').matches,
+    anyCoarse: matchMedia('(any-pointer: coarse)').matches,
+    hoverNone: matchMedia('(hover: none)').matches,
+    width: innerWidth,
+  });
+}
+
+// Touch and pen never drag cards in tap-play mode; a mouse always may.
+function allowCardDrag(pointerType) {
+  return pointerType === 'mouse' || !tapPlayMode();
+}
+
+// Pure decision for a tap on a hand card in tap-play mode.
+//   selected:    uid of the currently selected card (or null)
+//   tapped:      uid of the tapped card
+//   playable:    the tapped card can be played now
+//   needsTarget: the tapped card still needs an enemy chosen (2+ enemies alive)
+// Returns 'select' | 'play' | 'need-target' | 'deselect'.
+function tapCardAction({ selected = null, tapped, playable = false, needsTarget = false } = {}) {
+  if (!tapped || selected !== tapped) return 'select';
+  if (!playable) return 'deselect';
+  return needsTarget ? 'need-target' : 'play';
+}
+
+// ---------- Phone text floor ----------
+// Same breakpoints as the phone stylesheets: portrait ≤720px or a short landscape.
+const PHONE_QUERY = '(max-width: 720px), (orientation: landscape) and (max-height: 500px)';
+const MIN_TEXT_PX = 12;
+
+// Pure: the size to force for text rendered at `px`, or null when it is fine.
+function floorFontSize(px, min = MIN_TEXT_PX) {
+  return Number.isFinite(px) && px > 0 && px < min - 0.25 ? min : null;
+}
+
+// On phones, any text the stylesheets leave under 12px is raised to 12px as it
+// is rendered, so no screen needs a hand-kept list of small-font selectors.
+function enforceTextFloor({ min = MIN_TEXT_PX, skip = '[aria-hidden="true"], .card-flight, svg' } = {}) {
+  if (typeof document === 'undefined' || typeof MutationObserver !== 'function' || typeof matchMedia !== 'function') return;
+  const mq = matchMedia(PHONE_QUERY);
+  const fix = root => {
+    if (!mq.matches || !root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const seen = new Set();
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const el = n.parentElement;
+      if (!el || seen.has(el) || !n.nodeValue.trim()) continue;
+      seen.add(el);
+      if (skip && el.closest(skip)) continue;
+      const size = floorFontSize(parseFloat(getComputedStyle(el).fontSize), min);
+      if (size) { el.style.fontSize = `${size}px`; el.dataset.fontFloor = ''; }
+    }
+  };
+  new MutationObserver(records => {
+    if (!mq.matches) return;
+    for (const r of records) for (const node of r.addedNodes) {
+      if (node.nodeType === 1) fix(node);
+      else if (node.nodeType === 3 && node.parentElement) fix(node.parentElement);
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+  fix(document.body);
+  mq.addEventListener?.('change', () => {
+    if (mq.matches) fix(document.body);
+    else document.querySelectorAll('[data-font-floor]').forEach(el => { el.style.fontSize = ''; delete el.dataset.fontFloor; });
+  });
+}
+
+// Keeps <html class="tap-play"> in sync so CSS can hide drag hints and show tap UI.
+function watchTapPlay(onChange) {
+  if (typeof document === 'undefined' || typeof matchMedia !== 'function') return;
+  let last = null;
+  const sync = () => {
+    const on = tapPlayMode();
+    document.documentElement.classList.toggle('tap-play', on);
+    if (on !== last) { const first = last === null; last = on; if (!first) onChange?.(on); }
+  };
+  sync();
+  for (const q of ['(pointer: coarse)', '(any-pointer: coarse)', '(hover: none)']) {
+    try { matchMedia(q).addEventListener('change', sync); } catch {}
+  }
+  addEventListener('resize', sync);
+}
+
+return {TAP_PLAY_MAX_WIDTH,isTapPlayDevice,tapPlayMode,allowCardDrag,tapCardAction,PHONE_QUERY,MIN_TEXT_PX,floorFontSize,enforceTextFloor,watchTapPlay};
+})();
+const module30=(()=>{
 const { cardArtwork, opponentArtwork, artCredit } = module17;
 const { combatEvents } = module18;
 const { clearCombatFx, captureCombatStage, playCombatFx } = module22;
@@ -17178,7 +17354,8 @@ const { createWaSeason, waAct:act, waLegalActions:legalActions } = module23;
 const { syncWaCheckpoint } = module24;
 const { flyCardsFromPile, flyCardsToPile } = module25;
 const { soundToggleHtml } = module19;
-const { attachCardDetail, cardSheetOpen, showDragHint, hideDragHint, touchLift } = module28;
+const { attachCardDetail, cardSheetOpen, openCardSheet, showDragHint, hideDragHint, touchLift, trackLayer } = module28;
+const { tapPlayMode, tapCardAction, allowCardDrag, watchTapPlay, enforceTextFloor } = module29;
 const { waJuiceAction, waSlam } = module21;
 const { computeScore, scoreFormulaText, recordRun, loadHistory, markSeen, loadCollection, seenCount, trackStep, loadTracker, saveTracker, newTracker, filterSortCards, SORT_LABELS, COST_FILTERS, formatDuration } = module27;
 const createSeason=(seed,tutorial,region,opts)=>createWaSeason(seed,tutorial,region,crypto.randomUUID(),opts);
@@ -17237,7 +17414,9 @@ let libraryFilter='all',libraryRegionFilter='all',libraryRarityFilter='all';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function loadSave(key,legacy=false){try{const raw=localStorage.getItem(key);if(!raw)return null;const s=JSON.parse(raw);if(!s||!Array.isArray(s.deck)||!Array.isArray(s.actions)||!Number.isInteger(s.rev)||!s.phase)return null;if(legacy){if(s.version!==VERSION)return null;return s;}if(s.version!=='D0.2.0'||s.mode!=='season'||(s.mapVersion||1)<2||!REGIONS[s.region]||!s.map||!Array.isArray(s.map.nodes)||!Array.isArray(s.map.edges)||!Array.isArray(s.completed)||![1,2,3].includes(s.act))return null;return s;}catch{return null;}}
 try{saved=loadSave(SEASON_SAVE)||loadSave(SAVE,true);if(!saved&&(localStorage.getItem(SEASON_SAVE)||localStorage.getItem(SAVE)))saveError='存档无法读取，可重新开始。';hints=localStorage.getItem(HINTS)!=='off';}catch{saveError='本地存档无法读取；仍可开始新赛季。';region='CN';}
-function notice(text){document.querySelector('#notice').textContent=text;}
+// Status line; fades after a few seconds so it never lingers over the game.
+let noticeTimer=null;
+function notice(text){const el=document.querySelector('#notice');el.textContent=text;clearTimeout(noticeTimer);if(text)noticeTimer=setTimeout(()=>{if(el.textContent===text)el.textContent='';},5000);}
 function saveView(){if(state)try{const key=state.mode==='season'?VIEW:LEGACY_VIEW;localStorage.setItem(key,JSON.stringify({seed:state.seed,rev:state.rev,screen,mode:state.mode,region:state.region,version:state.version}));}catch{notice('页面位置未能保存。');}}
 function persist(){
   try{
@@ -17380,6 +17559,8 @@ function fighter(which){
 // Rules-3 group fight: one panel per opponent with its own intent, statuses and
 // line; click (or drop a card on) a panel to aim at it.
 let foeTarget=null;
+// Multi-opponent fights: a targeted card still needs a tapped opponent (2+ alive).
+function needsFoePick(c){return !!(c&&state?.battle?.foes&&cardTargeted(c)&&livingFoes(state.battle).length>1);}
 function currentTarget(){const b=state?.battle,alive=livingFoes(b);return alive.includes(foeTarget)?foeTarget:alive.includes(b?.cur)?b.cur:alive[0];}
 function foeGroup(){
  const views=foeViews(state),target=currentTarget(),hidden=hasGear(state,'BX03');
@@ -17417,7 +17598,7 @@ function battle(){
  const battleLabel=state.mode==='season'?`第 ${state.act} 赛段 · ${actInfo?.name||''} ${actInfo?.bossName||''}`:'第 '+(state.wins+1)+' 场 / 6';
  const growth=bossGrowth(b);
  const field=b.field&&FIELDS[b.field];
- return `<main class="combat-screen"><div class="arena-top"><span>${esc(battleLabel)} <b>·</b> 回合 ${b.turn}${ENEMIES[b.enemy]?.boss&&growth?` · 增长 ${growth}`:''}</span>${field?`<span class="battlefield-tag" tabindex="0" title="${esc(field.text)}">战场 <b>${esc(field.name)}</b> · ${esc(field.text)}</span>`:''}<div class="skin-rack gear-rack">${gearRack(state)}</div></div><section class="arena"><div class="arena-backdrop" aria-hidden="true"><i></i><i></i><i></i></div>${fighter('self')}<div class="arena-center"><span class="versus">VS</span>${echo?`<div class="played-echo">${icon(roleIcon[CARDS[echo.id].role]||'cards')}<span>已打出</span><strong>${esc(cardName(echo))} · ${esc(TACTICS[echo.id].title)}</strong></div>`:'<span class="arena-center-label">'+(state.mode==='season'?actInfo?.name||'赛季赛段':'大师赛资格赛')+'</span>'}<div id="target-hint" class="target-hint">先选一张手牌</div></div>${fighter('enemy')}<div class="arena-floor" aria-hidden="true"></div></section><div class="combat-controls">${supplyBar(state)}<div class="turn-warning">${curse?`<strong>舆论压力：回合末另失去 ${curse} 声望</strong>`:`结束回合预计失去 <b>${hurt}</b> 声望`}<small class="discard-reminder">未用手牌回合末弃置；回合末消耗牌除外</small></div><div id="selection-panel" class="selection-panel"></div>${button('结束回合',{type:'end'},'end-turn')}</div><section class="hand-dock"><div class="deck-console"><div class="energy-orb"><b>${b.energy}</b><span>行动点</span></div>${ui(`抽牌堆 ${b.draw.length}`,'pile-draw','pile-button draw-pile')}</div><div class="hand-fan" style="--slots:${Math.max(1,b.hand.length)}">${b.hand.length?b.hand.map((c,i)=>handCard(c,i,b.hand.length)).join(''):'<p class="empty-hand">手牌已空<br>结束回合后重新抽牌</p>'}</div><div class="discard-console">${ui(`弃牌堆 ${b.discard.length}`,'pile-discard','pile-button discard-pile')}${ui(`消耗 ${b.exhaust.length}`,'pile-exhaust','exhaust-link')}</div></section><div class="combat-bottom"><span>${b.hand.length} / 10 张手牌</span><span>${state.tutorial&&hints?'悬停看说明 · 点牌选目标 · 拖动出牌':'1–0 选牌 · Enter 打出 · Esc 取消 · E 结束回合'}</span>${state.tutorial&&hints?ui('隐藏提示','hide-hints','text-button'):ui('战斗记录','logs','text-button')}</div></main>`;
+ return `<main class="combat-screen"><div class="arena-top"><span>${esc(battleLabel)} <b>·</b> 回合 ${b.turn}${ENEMIES[b.enemy]?.boss&&growth?` · 增长 ${growth}`:''}</span>${field?`<span class="battlefield-tag" tabindex="0" title="${esc(field.text)}">战场 <b>${esc(field.name)}</b> · ${esc(field.text)}</span>`:''}<div class="skin-rack gear-rack">${gearRack(state)}</div></div><section class="arena"><div class="arena-backdrop" aria-hidden="true"><i></i><i></i><i></i></div>${fighter('self')}<div class="arena-center"><span class="versus">VS</span>${echo?`<div class="played-echo">${icon(roleIcon[CARDS[echo.id].role]||'cards')}<span>已打出</span><strong>${esc(cardName(echo))} · ${esc(TACTICS[echo.id].title)}</strong></div>`:'<span class="arena-center-label">'+(state.mode==='season'?actInfo?.name||'赛季赛段':'大师赛资格赛')+'</span>'}<div id="target-hint" class="target-hint">先选一张手牌</div></div>${fighter('enemy')}<div class="arena-floor" aria-hidden="true"></div></section><div class="combat-controls">${supplyBar(state)}<div class="turn-warning">${curse?`<strong>舆论压力：回合末另失去 ${curse} 声望</strong>`:`结束回合预计失去 <b>${hurt}</b> 声望`}<small class="discard-reminder">未用手牌回合末弃置；回合末消耗牌除外</small></div><div id="selection-panel" class="selection-panel"></div>${button('结束回合',{type:'end'},'end-turn')}</div><section class="hand-dock"><div class="deck-console"><div class="energy-orb"><b>${b.energy}</b><span>行动点</span></div>${ui(`抽牌堆 ${b.draw.length}`,'pile-draw','pile-button draw-pile')}</div><div class="hand-fan" style="--slots:${Math.max(1,b.hand.length)}">${b.hand.length?b.hand.map((c,i)=>handCard(c,i,b.hand.length)).join(''):'<p class="empty-hand">手牌已空<br>结束回合后重新抽牌</p>'}</div><div class="discard-console">${ui(`弃牌堆 ${b.discard.length}`,'pile-discard','pile-button discard-pile')}${ui(`消耗 ${b.exhaust.length}`,'pile-exhaust','exhaust-link')}</div></section><div class="combat-bottom"><span>${b.hand.length} / 10 张手牌</span><span>${tapPlayMode()?'点牌看全文 · 再点一次打出 · 长按看详情':state.tutorial&&hints?'悬停看说明 · 点牌选目标 · 拖动出牌':'1–0 选牌 · Enter 打出 · Esc 取消 · E 结束回合'}</span>${state.tutorial&&hints?ui('隐藏提示','hide-hints','text-button'):ui('战斗记录','logs','text-button')}</div></main>`;
 }
 // Transfer market: an agent NPC at a booth, three contracts on the board, and a release desk.
 function agentLine(s){
@@ -17548,8 +17729,12 @@ function refreshSelection(){
  if(!c){panel.innerHTML='<span class="selection-placeholder">从手牌中选择你的下一步</span>';if(document.querySelector('#target-hint'))document.querySelector('#target-hint').textContent='先选一张手牌';return;}
  const reason=canPlay(state,c.uid),p=reason?null:preview(state,c.uid,state.battle.foes&&cardTargeted(c)?currentTarget():undefined),parts=[];
  if(p){if(p.damage||p.enemyBlock)parts.push(`防线 −${p.damage}${p.enemyBlock?' · 布防 −'+p.enemyBlock:''}`);if(p.block)parts.push(`布防 +${p.block}`);if(p.draw)parts.push(`抽 ${p.draw} 张${p.shuffle?'（洗牌）':''}`);if(p.wins)parts.push('可结束比赛');}
- panel.innerHTML=`<div><strong>${esc(cardName(c))} · ${esc(TACTICS[c.id].title)}</strong><small>${reason||parts.join(' / ')||'建立本场效果'}</small></div>${button('打出',{type:'play',uid:c.uid},'play-selected',reason)}${ui('详解','card-detail','text-button')}${ui('取消','deselect','text-button')}`;
- if(document.querySelector('#target-hint'))document.querySelector('#target-hint').textContent=reason||`点击${target==='enemy'?'对手':'我方'}出牌，或拖动卡牌`;
+ // Phones (tap-play): the full card text sits in this bar right above the hand.
+ const tap=tapPlayMode(),pick=tap&&needsFoePick(c);
+ const how=reason?'':tap?(pick?'点击一名对手打出':`再点一次卡牌或点「打出」${target==='enemy'?'；也可点对手':''}`):'';
+ panel.classList.toggle('tap-selection',tap);
+ panel.innerHTML=`<div><strong>${esc(cardName(c))} · ${esc(TACTICS[c.id].title)}</strong>${tap?`<p class="selection-text">${esc(describe(c))}</p>`:''}<small>${reason||parts.join(' / ')||'建立本场效果'}${how?` · ${how}`:''}</small></div>${button('打出',{type:'play',uid:c.uid},'play-selected',reason)}${ui(tap?'详情':'详解',tap?'card-sheet':'card-detail','text-button')}${ui('取消','deselect','text-button')}`;
+ if(document.querySelector('#target-hint'))document.querySelector('#target-hint').textContent=reason||(tap?(pick?'点击一名对手打出':`点击${target==='enemy'?'对手':'我方'}或再点一次卡牌出牌`):`点击${target==='enemy'?'对手':'我方'}出牌，或拖动卡牌`);
 }
 function commit(action){
  if(turnAnimating)return {error:'对手回合进行中'};
@@ -17778,6 +17963,7 @@ function handleUI(name){
  }
  if(name==='intermission-next'){commit({type:'nextAct',rev:state.rev});return;}
  if(name==='deselect'){selected=null;refreshSelection();return;}
+ if(name==='card-sheet'){const el=document.querySelector(`[data-select="${selected}"]`);const html=el&&cardDetailHtml(el);if(html)openCardSheet(html);return;}
  if(name==='card-detail'){
   const c=state?.battle?.hand.find(c=>c.uid===selected);
   if(c){const f=TACTICS[c.id];showModal(cardName(c)+' · '+f.title,`<div class="card-detail">${card(c,{upgrade:CARDS[c.id].trainable&&!c.up})}<div><p class="detail-scene">${esc(f.scene)}</p><p><strong>${esc(f.origin)}</strong></p><p>${esc(f.note)}</p><p>选手与技能搭配为本游戏的战术设定；赛区战术牌为原创设计。</p>${artCredit(c.id)}${f.source?`<a href="${esc(f.source)}" target="_blank" rel="noopener noreferrer">查看技能／赛事出处</a>`:''}</div></div>`);}
@@ -17857,6 +18043,9 @@ const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 function hideCardTip(){clearTimeout(tipTimer);if(tipAnchor)tipAnchor.removeAttribute('aria-describedby');tipAnchor=null;if(cardTip.matches(':popover-open'))cardTip.hidePopover();cardTip.hidden=true;}
 function showCardTip(el){
  clearTimeout(tipTimer);if(!el||!el.isConnected||dragging)return;
+ // Phones: no floating tip (it covered the arena and nothing dismissed it);
+ // the selection bar and the long-press sheet show the text instead.
+ if(tapPlayMode()){hideCardTip();return;}
  const c={id:el.dataset.cardId,up:el.dataset.cardUp==='true'},t=CARDS[c.id],f=TACTICS[c.id];if(!t)return;
  hideCardTip();if(dialog.open)dialog.append(cardTip);else document.body.append(cardTip);tipAnchor=el;el.setAttribute('aria-describedby','card-tooltip');
  const peek=t.trainable&&!c.up;cardTip.classList.toggle('has-upgrade',!!peek);
@@ -17872,7 +18061,9 @@ function showCardTip(el){
 // Touch: press and hold a card to see its rules and trained version; the click that ends the hold is swallowed.
 let holdTimer=null,held=false;
 document.addEventListener('pointerdown',e=>{
- if(e.pointerType!=='touch')return;const el=e.target.closest('[data-card-id]');if(!el)return;
+ // Any press away from the tip's card hides a leftover tip.
+ if(tipAnchor&&!tipAnchor.contains(e.target))hideCardTip();
+ if(e.pointerType!=='touch'||tapPlayMode())return;const el=e.target.closest('[data-card-id]');if(!el)return;
  clearTimeout(holdTimer);held=false;const x=e.clientX,y=e.clientY;
  const stop=ev=>{if(ev.type==='pointermove'&&Math.hypot(ev.clientX-x,ev.clientY-y)<10)return;clearTimeout(holdTimer);for(const t of ['pointermove','pointerup','pointercancel'])document.removeEventListener(t,stop,true);};
  for(const t of ['pointermove','pointerup','pointercancel'])document.addEventListener(t,stop,true);
@@ -17923,7 +18114,20 @@ function animateResolution(before,after,played,flight,action){
 document.addEventListener('click',e=>{
  if(turnAnimating)return;
  if(suppressClick){suppressClick=false;e.preventDefault();return;}
- const btn=e.target.closest('button');if(!btn||btn.disabled)return;
+ const btn=e.target.closest('button');
+ // Phones: a tap on empty space puts the selected card back.
+ if(!btn&&selected&&tapPlayMode()&&!atHome&&state?.phase==='combat'&&!e.target.closest('.selection-panel,.hand-fan,.foe,.fighter,a,input,dialog,[tabindex]')){selected=null;refreshSelection();notice('');return;}
+ if(!btn||btn.disabled)return;
+ if(btn.dataset.select&&tapPlayMode()){
+  // Phones: tap selects, a second tap plays (or asks for an opponent).
+  hideCardTip();const uid=btn.dataset.select,c=state.battle?.hand.find(c=>c.uid===uid),reason=canPlay(state,uid);
+  const choice=tapCardAction({selected,tapped:uid,playable:!reason,needsTarget:needsFoePick(c)});
+  if(choice==='select'){selected=uid;refreshSelection();notice('');}
+  else if(choice==='play')commit({type:'play',uid,rev:state.rev});
+  else if(choice==='need-target')notice('点击一名对手打出这张牌。');
+  else{selected=null;refreshSelection();notice(reason||'');}
+  return;
+ }
  if(btn.dataset.select){selected=selected===btn.dataset.select?null:btn.dataset.select;refreshSelection();notice('');if(selected)showCardTip(btn);else hideCardTip();return;}
  if(btn.dataset.foe!==undefined&&state.battle?.foes){foeTarget=Number(btn.dataset.foe);if(!selected){render();notice('已选定目标。');return;}}
  if(btn.dataset.target){if(!selected){notice('先从底部选择一张牌，再点击目标。');return;}const c=state.battle.hand.find(c=>c.uid===selected);if(targetOf(c)!==btn.dataset.target){notice('这张牌的目标是'+(targetOf(c)==='enemy'?'对手':'我方')+'。');return;}commit({type:'play',uid:selected,rev:state.rev});return;}
@@ -17947,6 +18151,8 @@ document.addEventListener('click',e=>{
 app.addEventListener('dragstart',e=>e.preventDefault());
 app.addEventListener('pointerdown',e=>{
  const el=e.target.closest('[data-select]');if(!el||e.button!==0||canPlay(state,el.dataset.select))return;
+ // Phones play by tapping: a finger never drags a card.
+ if(!allowCardDrag(e.pointerType))return;
  pointerDrag={uid:el.dataset.select,x:e.clientX,y:e.clientY,el,active:false,pointerId:e.pointerId,touch:e.pointerType!=='mouse'};
  el.setPointerCapture(e.pointerId);
 });
@@ -17982,6 +18188,10 @@ document.addEventListener('keydown',e=>{
  if(e.key.toLowerCase()==='e'){e.preventDefault();commit({type:'end',rev:state.rev});}
 });
 document.querySelector('#close-dialog').addEventListener('click',()=>{hideCardTip();dialog.close();});
+// The dialog also closes from its top-right ✕, a tap outside it, and the back button.
+document.querySelector('#dialog-x')?.addEventListener('click',()=>{hideCardTip();dialog.close();});
+dialog.addEventListener('click',e=>{if(e.target!==dialog)return;const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();});
+trackLayer(dialog,()=>dialog.open,()=>dialog.close());
 // Long press (or right click) on any card: full text, keywords and the trained version.
 function cardDetailHtml(el){
  const c={id:el.dataset.cardId,up:el.dataset.cardUp==='true'},t=CARDS[c.id],f=TACTICS[c.id];if(!t)return '';
@@ -17991,6 +18201,9 @@ function cardDetailHtml(el){
 }
 attachCardDetail({selector:'[data-card-id]',render:cardDetailHtml});
 dialog.addEventListener('close',hideCardTip);
+// Switching between finger and mouse (rotation, docking) redraws the selection bar.
+watchTapPlay(()=>{hideCardTip();if(!atHome&&state?.phase==='combat')refreshSelection();});
+enforceTextFloor();
 window.baoDemo={observe:()=>state?observe(state):null,legalActions:()=>state?legalActions(state):[],dispatch:a=>{if(!state)return {error:'No active season'};const r=commit(a);return {error:r.error,observation:observe(state)};}};
 render();
 

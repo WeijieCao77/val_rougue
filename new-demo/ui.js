@@ -2,7 +2,8 @@ import { createRun, act, legalActions, observe, preview, describeIntent, describ
 import { squadChipHtml, traitTagHtml, teamTrait, TRAIT_ICONS, loadAscensionUnlocks, recordAscensionWin, equipIconHtml, supplyGlyphHtml, equipTileHtml, supplyTileHtml, TIER_COLORS } from './run-extras.js';
 import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS, TRAITS, FIELDS, ARCHETYPES, SUPPLIES, SUPPLY_IDS, EQUIP_TIERS, BOSSES } from './content.js';
 import { statusBadges, statusBadge, statusIcon, highlightKeywords, keywordRules, STATUS_INFO } from '/shared/status-icons.js';
-import { attachCardDetail, showDragHint, hideDragHint } from '/shared/touch-feel.js';
+import { attachCardDetail, openCardSheet, showDragHint, hideDragHint, trackLayer } from '/shared/touch-feel.js';
+import { tapPlayMode, tapCardAction, watchTapPlay, enforceTextFloor } from '/shared/tap-play.js';
 import { ACTS } from './season-map.js';
 import { cardArt, combatArt, relicArt } from './art.js';
 import { tacticalCard } from './tactical-card.js';
@@ -70,6 +71,9 @@ function clearState() {
 }
 
 function showNotice(msg) {
+  // One notice at a time: a newer one replaces (never stacks on) the last,
+  // whose removal timer was cancelled and would otherwise stay on screen.
+  document.querySelectorAll('body > .notice').forEach(n => n.remove());
   const notice = document.createElement('div');
   notice.className = 'notice';
   notice.setAttribute('aria-live', 'assertive');
@@ -538,9 +542,9 @@ function renderGame() {
         <div class="app-buttons">
         <button class="btn" id="btn-deck">牌组 ${state.deck.length}</button>
         <button class="btn" id="btn-library">图鉴</button>
-        <button class="btn" id="btn-guide">怎么玩</button>
-        <button class="btn" id="btn-abandon">放弃本局</button>
-        <button class="btn" id="btn-home">返回首页</button>
+        <button class="btn" id="btn-guide" aria-label="怎么玩"><span class="lbl-full">怎么玩</span><span class="lbl-short">玩法</span></button>
+        <button class="btn" id="btn-abandon" aria-label="放弃本局"><span class="lbl-full">放弃本局</span><span class="lbl-short">放弃</span></button>
+        <button class="btn" id="btn-home" aria-label="返回首页"><span class="lbl-full">返回首页</span><span class="lbl-short">首页</span></button>
         ${soundToggleHtml()}
       </div>
     </header>
@@ -806,7 +810,22 @@ function renderCombat(root) {
   }).join('');
 
   let hintHtml = '';
-  if (aimCard) hintHtml = `<div class="arena-hint aiming-hint">选择目标：点击一名敌人打出「${escapeHtml(getCardDisplay(aimCard, aimCard.up).name)}」</div>`;
+  const tapPlay = tapPlayMode();
+  const tapCard = tapPlay && selectedCardUid ? b.hand.find(c => c.uid === selectedCardUid) : null;
+  if (tapCard) {
+    // Phones: the selected card's full text in a readable bar, with 详情 and 取消.
+    const d = getCardDisplay(tapCard, tapCard.up);
+    const def = getCardDefinition(tapCard.id) || {};
+    const cost = def.x ? 'X' : tapCard.free ? 0 : d.cost;
+    const extra = [d.exhaust ? '消耗' : '', def.retain ? '保留' : ''].filter(Boolean).join(' · ');
+    const playable = playableUids.has(tapCard.uid);
+    const how = !playable ? '现在打不出（费用或条件不足）' : aimCard ? '点击一名敌人打出' : '再点一次卡牌，或点「打出」';
+    hintHtml = `<div class="tap-bar${aimCard ? ' is-aiming' : ''}" role="status" aria-live="polite">
+      <div class="tap-bar-head"><b>${escapeHtml(d.name)}${tapCard.up ? '+' : ''}</b><span>${cost === null || cost === undefined ? '不能打出' : `${escapeHtml(cost)} 费`} · ${escapeHtml(typeMap[d.type] || d.type || '')}${extra ? ` · ${escapeHtml(extra)}` : ''}</span></div>
+      <p class="tap-bar-text">${highlightKeywords(d.text)}</p>
+      <div class="tap-bar-foot"><small class="${playable ? '' : 'is-blocked'}">${how}</small><button type="button" class="btn tap-detail" data-card-id="${escapeHtml(tapCard.id)}" data-card-up="${!!tapCard.up}">详情</button><button type="button" class="btn tap-cancel">取消</button></div>
+    </div>`;
+  } else if (aimCard) hintHtml = `<div class="arena-hint aiming-hint">选择目标：点击一名敌人打出「${escapeHtml(getCardDisplay(aimCard, aimCard.up).name)}」</div>`;
   else if (selectedCardUid) {
     const card = b.hand.find(c => c.uid === selectedCardUid);
     if (card) hintHtml = `<div class="arena-hint preview-panel">${escapeHtml(describeCardFull(card))}</div>`;
@@ -814,8 +833,10 @@ function renderCombat(root) {
   const firstLiving = living[0]?.uid;
 
   root.innerHTML = `
-    ${guideStrip('combat', living.length > 1 ? '这是多人对局：攻击和减益要先选目标。点牌后点击敌人，或直接把牌拖到那名敌人身上；范围牌无需目标。' : '先看对手意图，再看手牌费用和效果。点牌后“执行战术”，或把牌拖向战场；不想再出牌就结束回合。')}
-    <div class="battle arena${aimCard ? ' aiming' : ''}" data-enemies="${enemies.length}" data-presentation-busy="${presentationBusy}">
+    ${guideStrip('combat', tapPlay
+      ? (living.length > 1 ? '点一张牌选中并看全文，再点一次打出；攻击和减益选中后点一名敌人。点空白处或“取消”放下。长按看详情。' : '点一张牌选中并看全文，再点一次（或点“打出”）打出；点空白处或“取消”放下。长按看详情。')
+      : living.length > 1 ? '这是多人对局：攻击和减益要先选目标。点牌后点击敌人，或直接把牌拖到那名敌人身上；范围牌无需目标。' : '先看对手意图，再看手牌费用和效果。点牌后“执行战术”，或把牌拖向战场；不想再出牌就结束回合。')}
+    <div class="battle arena${aimCard ? ' aiming' : ''}${tapCard ? ' has-tap-bar' : ''}" data-enemies="${enemies.length}" data-presentation-busy="${presentationBusy}">
       <div class="arena-top">
         <div class="arena-turn"><b>第 ${b.turn} 回合</b>${b.groupName ? `<span>${escapeHtml(b.groupName)} · ${living.length}/${enemies.length} 名在场</span>` : ''}</div>
         ${fieldHtml}
@@ -854,7 +875,7 @@ function renderCombat(root) {
         </div>
         <div class="hud-right">
           <div class="ops-actions">
-            <button class="btn primary" id="btn-play" ${selectedCardUid && playableUids.has(selectedCardUid) ? '' : 'disabled'}>${aimCard ? '选择目标' : '执行战术'}</button>
+            <button class="btn primary" id="btn-play" ${selectedCardUid && playableUids.has(selectedCardUid) ? '' : 'disabled'}>${aimCard ? (tapPlay ? '点选敌人' : '选择目标') : tapPlay ? '打出' : '执行战术'}</button>
             <button class="btn" id="btn-end">结束回合 <small>E</small></button>
           </div>
           <div class="hud-piles">
@@ -879,14 +900,45 @@ function renderCombat(root) {
     return dispatch(target && cardNeedsTarget(card) ? { type: 'play', uid: card.uid, target } : { type: 'play', uid: card.uid });
   };
 
+  // Cards whose effect lands on the enemy side (so tapping an enemy plays them).
+  const targetsEnemy = card => cardNeedsTarget(card) || cardHitsAll(card) || CARDS[card.id]?.type === 'attack';
+  // Selection stays game-specific; dragging uses the same full-card gesture as Wa.
+  const select = uid => {
+    const handScroll = root.querySelector('#hand-area')?.scrollLeft || 0;
+    selectedCardUid = uid;
+    renderCombat(root);
+    const handEl = root.querySelector('#hand-area');
+    if (handEl) handEl.scrollLeft = handScroll;
+  };
+
   root.querySelectorAll('.enemy-unit:not(.is-dead)').forEach(unit => {
-    const fire = () => { if (selectedCardUid) playSelected(unit.dataset.enemyUid); };
+    const fire = () => {
+      if (!selectedCardUid) return;
+      // Phones: an enemy tap only plays cards that act on enemies, so a stray
+      // tap never spends a block or draw card.
+      const card = selectedCard();
+      if (tapPlay && card && !targetsEnemy(card)) { showNotice('这张牌作用于我方：再点一次卡牌或点「打出」'); return; }
+      playSelected(unit.dataset.enemyUid);
+    };
     unit.addEventListener('click', fire);
     unit.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); fire(); } });
   });
   root.querySelector('.ally-zone').addEventListener('click', event => {
     if (event.target.closest('button')) return;
+    // Phones: tapping your own side is "elsewhere" and puts the card back.
+    if (tapPlay) { if (selectedCardUid) select(null); return; }
     if (selectedCardUid) playSelected(null);
+  });
+  root.querySelector('.tap-cancel')?.addEventListener('click', () => select(null));
+  root.querySelector('.tap-detail')?.addEventListener('click', event => {
+    const html = cardDetailHtml(event.currentTarget);
+    if (html) openCardSheet(html);
+  });
+  // Phones: a tap on empty space deselects.
+  if (tapPlay) root.querySelector('.battle').addEventListener('click', event => {
+    if (!selectedCardUid || presentationBusy) return;
+    if (event.target.closest('.hand-card, .enemy-unit, .ally-zone, button, a, input, select, .tap-bar, .discover-overlay, [tabindex]')) return;
+    select(null);
   });
 
   document.getElementById('btn-play').addEventListener('click', () => playSelected(null));
@@ -902,15 +954,22 @@ function renderCombat(root) {
     });
   });
 
-  // Selection stays game-specific; dragging uses the same full-card gesture as Wa.
-  const select = uid => {
-    const handScroll = root.querySelector('#hand-area')?.scrollLeft || 0;
-    selectedCardUid = uid;
-    renderCombat(root);
-    root.querySelector('#hand-area').scrollLeft = handScroll;
+  // Phones: tap selects, a second tap plays (or asks for a target).
+  const tapHandCard = uid => {
+    const card = b.hand.find(c => c.uid === uid);
+    const playable = playableUids.has(uid);
+    const choice = tapCardAction({ selected: selectedCardUid, tapped: uid, playable, needsTarget: needsPick(card) });
+    if (choice === 'select') select(uid);
+    else if (choice === 'play') playSelected(null);
+    else if (choice === 'need-target') showNotice('点击一名敌人打出这张牌');
+    else select(null);
   };
   root.querySelectorAll('.hand-card.shared-card').forEach(el => {
-    el.addEventListener('click', () => { if (!presentationBusy) select(el.dataset.uid); });
+    el.addEventListener('click', () => {
+      if (presentationBusy) return;
+      if (tapPlay) tapHandCard(el.dataset.uid);
+      else select(el.dataset.uid);
+    });
     el.addEventListener('keydown', event => {
       if (presentationBusy || !['Enter',' '].includes(event.key)) return;
       event.preventDefault();event.stopPropagation();
@@ -922,7 +981,6 @@ function renderCombat(root) {
   const clearDrop = () => root.querySelectorAll('.drop-ready').forEach(el => el.classList.remove('drop-ready'));
   // One living enemy: like Slay the Spire, releasing a dragged card anywhere
   // above the hand plays it. Two or more: aimed cards must land on an enemy.
-  const targetsEnemy = card => cardNeedsTarget(card) || cardHitsAll(card) || CARDS[card.id]?.type === 'attack';
   const unitAt = point => document.elementFromPoint(point.x, point.y)?.closest('.enemy-unit:not(.is-dead)') || null;
   const zoneAt = (point, card) => {
     if (needsPick(card)) return unitAt(point);
@@ -2086,6 +2144,9 @@ function initGlobalTooltip() {
     if (!target) return;
     const text = target.getAttribute('data-tooltip');
     if (!text) return;
+    // Phones: no hover tooltips (a tap would leave one stuck over the game);
+    // the tap bar and the long-press sheet carry the text instead.
+    if (tapPlayMode()) { hideTooltip(); return; }
     tooltip.textContent = text;
     tooltip.style.display = 'block';
     // Phones: a tapped hand card already shows its text in the arena hint; a
@@ -2125,6 +2186,7 @@ function initGlobalTooltip() {
     if (e.target.closest('[data-tooltip]')) hideTooltip();
   });
   document.addEventListener('scroll', hideTooltip);
+  document.addEventListener('pointerdown', hideTooltip, true);
   window.addEventListener('resize', hideTooltip);
 }
 
@@ -2132,6 +2194,20 @@ function initGlobalTooltip() {
 document.addEventListener('DOMContentLoaded', () => {
   initGlobalTooltip();
   initUpgradePeek();
+  // Phone back button closes an open modal (deck, piles, library, history…).
+  const modalRoot = document.getElementById('modal-root');
+  trackLayer(modalRoot, () => modalRoot.querySelector('.modal-overlay'), () => {
+    const overlay = modalRoot.querySelector('.modal-overlay');
+    if (!overlay) return;
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    if (!overlay.isConnected) return;
+    const btn = [...overlay.querySelectorAll('button')].find(b => /^close|-close$/.test(b.id) || /^(关闭|返回|完成|知道了|开始|取消)/.test(b.textContent.trim()));
+    btn?.click();
+  });
+  // Phones: no text under 12px on any screen.
+  enforceTextFloor();
+  // Rotating a tablet or plugging in a mouse switches between tap-play and drag.
+  watchTapPlay(() => { if (state?.phase === 'combat' && !presentationBusy) renderCombat(document.getElementById('game-root')); });
   document.addEventListener('keydown', (e) => {
     if (state && state.phase === 'combat' && !presentationBusy && !showLibrary && !document.querySelector('.modal-overlay')) {
       combatKeyHandler(e);

@@ -11,7 +11,8 @@ import {createWaSeason,waAct as act,waLegalActions as legalActions} from './wa-s
 import {syncWaCheckpoint} from './wa-online.js';
 import {flyCardsFromPile,flyCardsToPile} from './shared/card-pile-motion.js';
 import {soundToggleHtml} from './shared/sfx.js';
-import {attachCardDetail,cardSheetOpen,showDragHint,hideDragHint,touchLift} from './shared/touch-feel.js';
+import {attachCardDetail,cardSheetOpen,openCardSheet,showDragHint,hideDragHint,touchLift,trackLayer} from './shared/touch-feel.js';
+import {tapPlayMode,tapCardAction,allowCardDrag,watchTapPlay,enforceTextFloor} from './shared/tap-play.js';
 import {waJuiceAction,waSlam} from './wa-juice.js';
 import {computeScore,scoreFormulaText,recordRun,loadHistory,markSeen,loadCollection,seenCount,trackStep,loadTracker,saveTracker,newTracker,filterSortCards,SORT_LABELS,COST_FILTERS,formatDuration} from './shared/run-meta.js';
 const createSeason=(seed,tutorial,region,opts)=>createWaSeason(seed,tutorial,region,crypto.randomUUID(),opts);
@@ -70,7 +71,9 @@ let libraryFilter='all',libraryRegionFilter='all',libraryRarityFilter='all';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function loadSave(key,legacy=false){try{const raw=localStorage.getItem(key);if(!raw)return null;const s=JSON.parse(raw);if(!s||!Array.isArray(s.deck)||!Array.isArray(s.actions)||!Number.isInteger(s.rev)||!s.phase)return null;if(legacy){if(s.version!==VERSION)return null;return s;}if(s.version!=='D0.2.0'||s.mode!=='season'||(s.mapVersion||1)<2||!REGIONS[s.region]||!s.map||!Array.isArray(s.map.nodes)||!Array.isArray(s.map.edges)||!Array.isArray(s.completed)||![1,2,3].includes(s.act))return null;return s;}catch{return null;}}
 try{saved=loadSave(SEASON_SAVE)||loadSave(SAVE,true);if(!saved&&(localStorage.getItem(SEASON_SAVE)||localStorage.getItem(SAVE)))saveError='存档无法读取，可重新开始。';hints=localStorage.getItem(HINTS)!=='off';}catch{saveError='本地存档无法读取；仍可开始新赛季。';region='CN';}
-function notice(text){document.querySelector('#notice').textContent=text;}
+// Status line; fades after a few seconds so it never lingers over the game.
+let noticeTimer=null;
+function notice(text){const el=document.querySelector('#notice');el.textContent=text;clearTimeout(noticeTimer);if(text)noticeTimer=setTimeout(()=>{if(el.textContent===text)el.textContent='';},5000);}
 function saveView(){if(state)try{const key=state.mode==='season'?VIEW:LEGACY_VIEW;localStorage.setItem(key,JSON.stringify({seed:state.seed,rev:state.rev,screen,mode:state.mode,region:state.region,version:state.version}));}catch{notice('页面位置未能保存。');}}
 function persist(){
   try{
@@ -213,6 +216,8 @@ function fighter(which){
 // Rules-3 group fight: one panel per opponent with its own intent, statuses and
 // line; click (or drop a card on) a panel to aim at it.
 let foeTarget=null;
+// Multi-opponent fights: a targeted card still needs a tapped opponent (2+ alive).
+function needsFoePick(c){return !!(c&&state?.battle?.foes&&cardTargeted(c)&&livingFoes(state.battle).length>1);}
 function currentTarget(){const b=state?.battle,alive=livingFoes(b);return alive.includes(foeTarget)?foeTarget:alive.includes(b?.cur)?b.cur:alive[0];}
 function foeGroup(){
  const views=foeViews(state),target=currentTarget(),hidden=hasGear(state,'BX03');
@@ -250,7 +255,7 @@ function battle(){
  const battleLabel=state.mode==='season'?`第 ${state.act} 赛段 · ${actInfo?.name||''} ${actInfo?.bossName||''}`:'第 '+(state.wins+1)+' 场 / 6';
  const growth=bossGrowth(b);
  const field=b.field&&FIELDS[b.field];
- return `<main class="combat-screen"><div class="arena-top"><span>${esc(battleLabel)} <b>·</b> 回合 ${b.turn}${ENEMIES[b.enemy]?.boss&&growth?` · 增长 ${growth}`:''}</span>${field?`<span class="battlefield-tag" tabindex="0" title="${esc(field.text)}">战场 <b>${esc(field.name)}</b> · ${esc(field.text)}</span>`:''}<div class="skin-rack gear-rack">${gearRack(state)}</div></div><section class="arena"><div class="arena-backdrop" aria-hidden="true"><i></i><i></i><i></i></div>${fighter('self')}<div class="arena-center"><span class="versus">VS</span>${echo?`<div class="played-echo">${icon(roleIcon[CARDS[echo.id].role]||'cards')}<span>已打出</span><strong>${esc(cardName(echo))} · ${esc(TACTICS[echo.id].title)}</strong></div>`:'<span class="arena-center-label">'+(state.mode==='season'?actInfo?.name||'赛季赛段':'大师赛资格赛')+'</span>'}<div id="target-hint" class="target-hint">先选一张手牌</div></div>${fighter('enemy')}<div class="arena-floor" aria-hidden="true"></div></section><div class="combat-controls">${supplyBar(state)}<div class="turn-warning">${curse?`<strong>舆论压力：回合末另失去 ${curse} 声望</strong>`:`结束回合预计失去 <b>${hurt}</b> 声望`}<small class="discard-reminder">未用手牌回合末弃置；回合末消耗牌除外</small></div><div id="selection-panel" class="selection-panel"></div>${button('结束回合',{type:'end'},'end-turn')}</div><section class="hand-dock"><div class="deck-console"><div class="energy-orb"><b>${b.energy}</b><span>行动点</span></div>${ui(`抽牌堆 ${b.draw.length}`,'pile-draw','pile-button draw-pile')}</div><div class="hand-fan" style="--slots:${Math.max(1,b.hand.length)}">${b.hand.length?b.hand.map((c,i)=>handCard(c,i,b.hand.length)).join(''):'<p class="empty-hand">手牌已空<br>结束回合后重新抽牌</p>'}</div><div class="discard-console">${ui(`弃牌堆 ${b.discard.length}`,'pile-discard','pile-button discard-pile')}${ui(`消耗 ${b.exhaust.length}`,'pile-exhaust','exhaust-link')}</div></section><div class="combat-bottom"><span>${b.hand.length} / 10 张手牌</span><span>${state.tutorial&&hints?'悬停看说明 · 点牌选目标 · 拖动出牌':'1–0 选牌 · Enter 打出 · Esc 取消 · E 结束回合'}</span>${state.tutorial&&hints?ui('隐藏提示','hide-hints','text-button'):ui('战斗记录','logs','text-button')}</div></main>`;
+ return `<main class="combat-screen"><div class="arena-top"><span>${esc(battleLabel)} <b>·</b> 回合 ${b.turn}${ENEMIES[b.enemy]?.boss&&growth?` · 增长 ${growth}`:''}</span>${field?`<span class="battlefield-tag" tabindex="0" title="${esc(field.text)}">战场 <b>${esc(field.name)}</b> · ${esc(field.text)}</span>`:''}<div class="skin-rack gear-rack">${gearRack(state)}</div></div><section class="arena"><div class="arena-backdrop" aria-hidden="true"><i></i><i></i><i></i></div>${fighter('self')}<div class="arena-center"><span class="versus">VS</span>${echo?`<div class="played-echo">${icon(roleIcon[CARDS[echo.id].role]||'cards')}<span>已打出</span><strong>${esc(cardName(echo))} · ${esc(TACTICS[echo.id].title)}</strong></div>`:'<span class="arena-center-label">'+(state.mode==='season'?actInfo?.name||'赛季赛段':'大师赛资格赛')+'</span>'}<div id="target-hint" class="target-hint">先选一张手牌</div></div>${fighter('enemy')}<div class="arena-floor" aria-hidden="true"></div></section><div class="combat-controls">${supplyBar(state)}<div class="turn-warning">${curse?`<strong>舆论压力：回合末另失去 ${curse} 声望</strong>`:`结束回合预计失去 <b>${hurt}</b> 声望`}<small class="discard-reminder">未用手牌回合末弃置；回合末消耗牌除外</small></div><div id="selection-panel" class="selection-panel"></div>${button('结束回合',{type:'end'},'end-turn')}</div><section class="hand-dock"><div class="deck-console"><div class="energy-orb"><b>${b.energy}</b><span>行动点</span></div>${ui(`抽牌堆 ${b.draw.length}`,'pile-draw','pile-button draw-pile')}</div><div class="hand-fan" style="--slots:${Math.max(1,b.hand.length)}">${b.hand.length?b.hand.map((c,i)=>handCard(c,i,b.hand.length)).join(''):'<p class="empty-hand">手牌已空<br>结束回合后重新抽牌</p>'}</div><div class="discard-console">${ui(`弃牌堆 ${b.discard.length}`,'pile-discard','pile-button discard-pile')}${ui(`消耗 ${b.exhaust.length}`,'pile-exhaust','exhaust-link')}</div></section><div class="combat-bottom"><span>${b.hand.length} / 10 张手牌</span><span>${tapPlayMode()?'点牌看全文 · 再点一次打出 · 长按看详情':state.tutorial&&hints?'悬停看说明 · 点牌选目标 · 拖动出牌':'1–0 选牌 · Enter 打出 · Esc 取消 · E 结束回合'}</span>${state.tutorial&&hints?ui('隐藏提示','hide-hints','text-button'):ui('战斗记录','logs','text-button')}</div></main>`;
 }
 // Transfer market: an agent NPC at a booth, three contracts on the board, and a release desk.
 function agentLine(s){
@@ -381,8 +386,12 @@ function refreshSelection(){
  if(!c){panel.innerHTML='<span class="selection-placeholder">从手牌中选择你的下一步</span>';if(document.querySelector('#target-hint'))document.querySelector('#target-hint').textContent='先选一张手牌';return;}
  const reason=canPlay(state,c.uid),p=reason?null:preview(state,c.uid,state.battle.foes&&cardTargeted(c)?currentTarget():undefined),parts=[];
  if(p){if(p.damage||p.enemyBlock)parts.push(`防线 −${p.damage}${p.enemyBlock?' · 布防 −'+p.enemyBlock:''}`);if(p.block)parts.push(`布防 +${p.block}`);if(p.draw)parts.push(`抽 ${p.draw} 张${p.shuffle?'（洗牌）':''}`);if(p.wins)parts.push('可结束比赛');}
- panel.innerHTML=`<div><strong>${esc(cardName(c))} · ${esc(TACTICS[c.id].title)}</strong><small>${reason||parts.join(' / ')||'建立本场效果'}</small></div>${button('打出',{type:'play',uid:c.uid},'play-selected',reason)}${ui('详解','card-detail','text-button')}${ui('取消','deselect','text-button')}`;
- if(document.querySelector('#target-hint'))document.querySelector('#target-hint').textContent=reason||`点击${target==='enemy'?'对手':'我方'}出牌，或拖动卡牌`;
+ // Phones (tap-play): the full card text sits in this bar right above the hand.
+ const tap=tapPlayMode(),pick=tap&&needsFoePick(c);
+ const how=reason?'':tap?(pick?'点击一名对手打出':`再点一次卡牌或点「打出」${target==='enemy'?'；也可点对手':''}`):'';
+ panel.classList.toggle('tap-selection',tap);
+ panel.innerHTML=`<div><strong>${esc(cardName(c))} · ${esc(TACTICS[c.id].title)}</strong>${tap?`<p class="selection-text">${esc(describe(c))}</p>`:''}<small>${reason||parts.join(' / ')||'建立本场效果'}${how?` · ${how}`:''}</small></div>${button('打出',{type:'play',uid:c.uid},'play-selected',reason)}${ui(tap?'详情':'详解',tap?'card-sheet':'card-detail','text-button')}${ui('取消','deselect','text-button')}`;
+ if(document.querySelector('#target-hint'))document.querySelector('#target-hint').textContent=reason||(tap?(pick?'点击一名对手打出':`点击${target==='enemy'?'对手':'我方'}或再点一次卡牌出牌`):`点击${target==='enemy'?'对手':'我方'}出牌，或拖动卡牌`);
 }
 function commit(action){
  if(turnAnimating)return {error:'对手回合进行中'};
@@ -611,6 +620,7 @@ function handleUI(name){
  }
  if(name==='intermission-next'){commit({type:'nextAct',rev:state.rev});return;}
  if(name==='deselect'){selected=null;refreshSelection();return;}
+ if(name==='card-sheet'){const el=document.querySelector(`[data-select="${selected}"]`);const html=el&&cardDetailHtml(el);if(html)openCardSheet(html);return;}
  if(name==='card-detail'){
   const c=state?.battle?.hand.find(c=>c.uid===selected);
   if(c){const f=TACTICS[c.id];showModal(cardName(c)+' · '+f.title,`<div class="card-detail">${card(c,{upgrade:CARDS[c.id].trainable&&!c.up})}<div><p class="detail-scene">${esc(f.scene)}</p><p><strong>${esc(f.origin)}</strong></p><p>${esc(f.note)}</p><p>选手与技能搭配为本游戏的战术设定；赛区战术牌为原创设计。</p>${artCredit(c.id)}${f.source?`<a href="${esc(f.source)}" target="_blank" rel="noopener noreferrer">查看技能／赛事出处</a>`:''}</div></div>`);}
@@ -690,6 +700,9 @@ const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 function hideCardTip(){clearTimeout(tipTimer);if(tipAnchor)tipAnchor.removeAttribute('aria-describedby');tipAnchor=null;if(cardTip.matches(':popover-open'))cardTip.hidePopover();cardTip.hidden=true;}
 function showCardTip(el){
  clearTimeout(tipTimer);if(!el||!el.isConnected||dragging)return;
+ // Phones: no floating tip (it covered the arena and nothing dismissed it);
+ // the selection bar and the long-press sheet show the text instead.
+ if(tapPlayMode()){hideCardTip();return;}
  const c={id:el.dataset.cardId,up:el.dataset.cardUp==='true'},t=CARDS[c.id],f=TACTICS[c.id];if(!t)return;
  hideCardTip();if(dialog.open)dialog.append(cardTip);else document.body.append(cardTip);tipAnchor=el;el.setAttribute('aria-describedby','card-tooltip');
  const peek=t.trainable&&!c.up;cardTip.classList.toggle('has-upgrade',!!peek);
@@ -705,7 +718,9 @@ function showCardTip(el){
 // Touch: press and hold a card to see its rules and trained version; the click that ends the hold is swallowed.
 let holdTimer=null,held=false;
 document.addEventListener('pointerdown',e=>{
- if(e.pointerType!=='touch')return;const el=e.target.closest('[data-card-id]');if(!el)return;
+ // Any press away from the tip's card hides a leftover tip.
+ if(tipAnchor&&!tipAnchor.contains(e.target))hideCardTip();
+ if(e.pointerType!=='touch'||tapPlayMode())return;const el=e.target.closest('[data-card-id]');if(!el)return;
  clearTimeout(holdTimer);held=false;const x=e.clientX,y=e.clientY;
  const stop=ev=>{if(ev.type==='pointermove'&&Math.hypot(ev.clientX-x,ev.clientY-y)<10)return;clearTimeout(holdTimer);for(const t of ['pointermove','pointerup','pointercancel'])document.removeEventListener(t,stop,true);};
  for(const t of ['pointermove','pointerup','pointercancel'])document.addEventListener(t,stop,true);
@@ -756,7 +771,20 @@ function animateResolution(before,after,played,flight,action){
 document.addEventListener('click',e=>{
  if(turnAnimating)return;
  if(suppressClick){suppressClick=false;e.preventDefault();return;}
- const btn=e.target.closest('button');if(!btn||btn.disabled)return;
+ const btn=e.target.closest('button');
+ // Phones: a tap on empty space puts the selected card back.
+ if(!btn&&selected&&tapPlayMode()&&!atHome&&state?.phase==='combat'&&!e.target.closest('.selection-panel,.hand-fan,.foe,.fighter,a,input,dialog,[tabindex]')){selected=null;refreshSelection();notice('');return;}
+ if(!btn||btn.disabled)return;
+ if(btn.dataset.select&&tapPlayMode()){
+  // Phones: tap selects, a second tap plays (or asks for an opponent).
+  hideCardTip();const uid=btn.dataset.select,c=state.battle?.hand.find(c=>c.uid===uid),reason=canPlay(state,uid);
+  const choice=tapCardAction({selected,tapped:uid,playable:!reason,needsTarget:needsFoePick(c)});
+  if(choice==='select'){selected=uid;refreshSelection();notice('');}
+  else if(choice==='play')commit({type:'play',uid,rev:state.rev});
+  else if(choice==='need-target')notice('点击一名对手打出这张牌。');
+  else{selected=null;refreshSelection();notice(reason||'');}
+  return;
+ }
  if(btn.dataset.select){selected=selected===btn.dataset.select?null:btn.dataset.select;refreshSelection();notice('');if(selected)showCardTip(btn);else hideCardTip();return;}
  if(btn.dataset.foe!==undefined&&state.battle?.foes){foeTarget=Number(btn.dataset.foe);if(!selected){render();notice('已选定目标。');return;}}
  if(btn.dataset.target){if(!selected){notice('先从底部选择一张牌，再点击目标。');return;}const c=state.battle.hand.find(c=>c.uid===selected);if(targetOf(c)!==btn.dataset.target){notice('这张牌的目标是'+(targetOf(c)==='enemy'?'对手':'我方')+'。');return;}commit({type:'play',uid:selected,rev:state.rev});return;}
@@ -780,6 +808,8 @@ document.addEventListener('click',e=>{
 app.addEventListener('dragstart',e=>e.preventDefault());
 app.addEventListener('pointerdown',e=>{
  const el=e.target.closest('[data-select]');if(!el||e.button!==0||canPlay(state,el.dataset.select))return;
+ // Phones play by tapping: a finger never drags a card.
+ if(!allowCardDrag(e.pointerType))return;
  pointerDrag={uid:el.dataset.select,x:e.clientX,y:e.clientY,el,active:false,pointerId:e.pointerId,touch:e.pointerType!=='mouse'};
  el.setPointerCapture(e.pointerId);
 });
@@ -815,6 +845,10 @@ document.addEventListener('keydown',e=>{
  if(e.key.toLowerCase()==='e'){e.preventDefault();commit({type:'end',rev:state.rev});}
 });
 document.querySelector('#close-dialog').addEventListener('click',()=>{hideCardTip();dialog.close();});
+// The dialog also closes from its top-right ✕, a tap outside it, and the back button.
+document.querySelector('#dialog-x')?.addEventListener('click',()=>{hideCardTip();dialog.close();});
+dialog.addEventListener('click',e=>{if(e.target!==dialog)return;const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();});
+trackLayer(dialog,()=>dialog.open,()=>dialog.close());
 // Long press (or right click) on any card: full text, keywords and the trained version.
 function cardDetailHtml(el){
  const c={id:el.dataset.cardId,up:el.dataset.cardUp==='true'},t=CARDS[c.id],f=TACTICS[c.id];if(!t)return '';
@@ -824,5 +858,8 @@ function cardDetailHtml(el){
 }
 attachCardDetail({selector:'[data-card-id]',render:cardDetailHtml});
 dialog.addEventListener('close',hideCardTip);
+// Switching between finger and mouse (rotation, docking) redraws the selection bar.
+watchTapPlay(()=>{hideCardTip();if(!atHome&&state?.phase==='combat')refreshSelection();});
+enforceTextFloor();
 window.baoDemo={observe:()=>state?observe(state):null,legalActions:()=>state?legalActions(state):[],dispatch:a=>{if(!state)return {error:'No active season'};const r=commit(a);return {error:r.error,observation:observe(state)};}};
 render();

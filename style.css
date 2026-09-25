@@ -2142,14 +2142,18 @@ button.rm-chip:focus-visible{outline:2px solid #e2c27a;outline-offset:2px}
 /* Long-press detail sheet (a modal <dialog>, above every other layer). */
 dialog.card-sheet{position:fixed;inset:auto 0 0;margin:0 auto;width:min(760px,100%);max-width:100%;max-height:min(92dvh,760px);padding:0;border:0;background:transparent;color:#e9e3d2;overflow:visible}
 dialog.card-sheet::backdrop{background:#050a0dcc;backdrop-filter:blur(2px)}
-.card-sheet-panel{position:relative;box-sizing:border-box;max-height:min(92dvh,760px);overflow-y:auto;overscroll-behavior:contain;padding:18px 18px calc(14px + env(safe-area-inset-bottom));border:1px solid #6c6a58;border-bottom:0;border-radius:16px 16px 0 0;background:linear-gradient(#18242b,#0f171d);box-shadow:0 -10px 40px #000b;font:15px/1.6 system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;animation:card-sheet-in .18s ease-out}
+/* Panel = fixed close bar + scrolling body, so 关闭 never scrolls out of reach. */
+.card-sheet-panel{position:relative;box-sizing:border-box;display:flex;flex-direction:column;max-height:min(92dvh,760px);overflow:hidden;border:1px solid #6c6a58;border-bottom:0;border-radius:16px 16px 0 0;background:linear-gradient(#18242b,#0f171d);box-shadow:0 -10px 40px #000b;font:15px/1.6 system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;animation:card-sheet-in .18s ease-out}
+.card-sheet-bar{flex:none;display:flex;justify-content:flex-end;padding:8px 10px 0}
+.card-sheet-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:14px 18px calc(14px + env(safe-area-inset-bottom))}
 @keyframes card-sheet-in{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
-.card-sheet-close{position:absolute;top:10px;right:12px;z-index:2;min-width:64px;min-height:44px;padding:8px 14px;border:1px solid #7c806e;border-radius:8px;background:#26343a;color:#f1e7cc;font:600 14px system-ui,sans-serif}
+.card-sheet-close{min-width:88px;min-height:44px;padding:8px 14px;border:1px solid #9a9c86;border-radius:8px;background:#2c3c42;color:#f7eed4;font:700 15px system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;cursor:pointer;touch-action:manipulation}
+.card-sheet-close:focus-visible{outline:2px solid #f1d383;outline-offset:2px}
 .card-sheet-body{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:start}
 .card-sheet-art{display:flex;justify-content:center;padding-top:14px}
 .card-sheet-art>*{pointer-events:none}
 .card-sheet-info{min-width:0;padding-top:4px}
-.card-sheet-info h3{margin:0 76px 2px 0;font-size:22px;line-height:1.3;color:#f4dea5}
+.card-sheet-info h3{margin:0 0 2px;font-size:22px;line-height:1.3;color:#f4dea5}
 .card-sheet-meta{margin:0 0 10px;color:#9fb0ab;font-size:13px}
 .card-sheet-text{margin:0 0 12px;padding:10px 12px;border-left:3px solid #d8b86a;border-radius:4px;background:#ffffff0d;font-size:16px;line-height:1.65;color:#fff6e0}
 .card-sheet-text .kw{font-weight:700}
@@ -2167,18 +2171,24 @@ dialog.card-sheet::backdrop{background:#050a0dcc;backdrop-filter:blur(2px)}
 .new-sheet-art .tc{width:210px;height:300px;font-size:14px}
 @media(max-width:600px){
  .card-sheet-body{grid-template-columns:1fr;gap:10px}
- .card-sheet-art{padding-top:36px}
+ .card-sheet-art{padding-top:0}
  .card-sheet-info h3{margin-right:0;text-align:center}
  .card-sheet-meta{text-align:center}
 }
 @media(orientation:landscape) and (max-height:500px){
- dialog.card-sheet{max-height:100dvh}.card-sheet-panel{max-height:100dvh;padding-top:12px}
+ dialog.card-sheet{max-height:100dvh}.card-sheet-panel{max-height:100dvh}
+ .card-sheet-bar{padding-top:4px}
  .card-sheet-body{grid-template-columns:auto minmax(0,1fr)}
  .card-sheet-art{padding-top:0}
  .wa-sheet-art .card{width:170px}.wa-sheet-art .card>.card-face{height:246px}
  .new-sheet-art .tc{width:180px;height:258px}
 }
 @media(prefers-reduced-motion:reduce){.card-sheet-panel{animation:none}}
+
+/* Tap-play (phones, html.tap-play from shared/tap-play.js): no hover tooltips,
+   upgrade peeks or drag hints floating over the battlefield. */
+html.tap-play #card-tooltip,html.tap-play .rm-peek,html.tap-play .drag-hint{display:none!important}
+html.tap-play .hand-card{touch-action:pan-x;-webkit-tap-highlight-color:transparent}
 
 /* Wa demo on phones: compact header, 44px touch targets, scrollable hand,
    landscape fit and notch safe areas. Loaded last in style.css. */
@@ -2187,7 +2197,9 @@ html,body{overflow-x:hidden}
 .hud-resources>span{display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
 body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 .game-hud{padding-top:env(safe-area-inset-top)}
-#notice:not(:empty){bottom:calc(12px + env(safe-area-inset-bottom))}
+/* One compact line under the header. (Setting only `bottom` here used to stretch
+   the box from the header to the screen bottom, covering the whole game.) */
+#notice:not(:empty){top:calc(56px + env(safe-area-inset-top));bottom:auto;width:max-content;max-width:calc(100vw - 24px);box-sizing:border-box;font-size:13px;line-height:1.4;text-align:center}
 
 /* ---------- Header: one row, every control ≥44px, links moved to 菜单 ---------- */
 @media(max-width:720px){
@@ -2244,7 +2256,8 @@ body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-ri
  .hand-dock .hand-fan{grid-area:fan}
  .hand-dock .deck-console{grid-area:deck;justify-self:start;padding:0 0 max(6px,env(safe-area-inset-bottom)) 8px}
  .hand-dock .discard-console{grid-area:discard;justify-self:end;padding:0 8px max(6px,env(safe-area-inset-bottom)) 0}
- .energy-orb{width:50px;height:50px}.energy-orb b{font-size:22px;line-height:1}
+ .energy-orb{width:54px;height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}.energy-orb b{font-size:21px;line-height:1}.energy-orb span{line-height:1.1}
+ .fighter.ally .life-row{flex-wrap:nowrap}.fighter.ally .life-bar{min-width:96px}.fighter.ally .life-bar span{white-space:nowrap}
  .pile-button,.hand-dock .exhaust-link{box-sizing:border-box;width:auto;height:44px;min-width:76px;min-height:44px;padding:0 10px;font-size:13px;display:inline-flex;align-items:center;justify-content:center;box-shadow:2px 2px 0 #142029}
  .hand-fan{position:relative;inset:auto;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:24px 10px 8px;scroll-snap-type:x proximity;overscroll-behavior-x:contain;scrollbar-width:thin;--step:0px}
  .hand-card{position:relative;left:auto;bottom:auto;flex:0 0 112px;width:112px;min-width:112px;height:168px;transform:none;scroll-snap-align:start;z-index:1;touch-action:pan-x}
@@ -2310,3 +2323,47 @@ body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-ri
  .arena-center{top:30%}.target-hint{font-size:12px}
  .map-screen{height:auto}
 }
+
+/* ---------- Phones (text under 12px is raised by enforceTextFloor in shared/tap-play.js) ---------- */
+@media(max-width:720px),(orientation:landscape) and (max-height:500px){
+ .energy-orb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}.energy-orb b{line-height:1}.energy-orb span{line-height:1.1}
+}
+
+/* ---------- Market on phones: price tags never sit on item names ---------- */
+@media(max-width:720px){
+ .shop-shelf.market-row{display:grid!important;grid-template-columns:minmax(0,1fr)!important}
+ .shop-shelf.market-row>article h4{padding-right:100px}
+ .contract-slot .contract-label{text-align:left;padding-left:12px;padding-right:110px}
+}
+
+/* ---------- Group fights on a portrait phone: opponents across the empty top of
+   the arena, big enough for 12px names, intents, traits and life. ---------- */
+@media(max-width:720px) and (orientation:portrait){
+ /* VS and the target hint live in the empty top of the arena, above the intent bubbles. */
+ .combat-screen .arena-center{top:8%!important}
+ /* Tap-play: the selection bar above the hand already says what to tap next. */
+ html.tap-play .combat-screen .target-hint{display:none}
+ /* In battle the notice sits in the open middle of the arena, not over the intents. */
+ body.combat-mode #notice:not(:empty){top:40dvh}
+ .combat-screen:has(.foe-group) .arena-center{display:none}
+ .combat-screen .fighter.enemy.foe-group{top:34px;bottom:auto;left:6px;right:6px;width:auto;justify-content:center;align-items:flex-start;gap:6px}
+ .foe-group .foe{flex:0 1 118px;width:auto;min-width:0}
+ .foe-group .foe .intent-bubble{padding:3px 4px}.foe-group .foe .intent-bubble strong{font-size:12px;line-height:1.3}
+ .foe-group .combat-target:has(.character-stage-host canvas){width:96px;height:80px}
+ .foe-group .foe .combat-target{max-width:100%}
+ .foe-group .foe h2{font-size:12px;line-height:1.3;margin:6px 0 3px;white-space:nowrap;overflow:visible}
+ .foe-group .foe .trait-row{display:block;margin:0 0 3px}.foe-group .foe .trait-tag{font-size:12px;padding:1px 5px;white-space:normal}
+ .foe-group .foe .life-row{flex-wrap:wrap;justify-content:center;gap:3px}
+ .foe-group .foe .life-row .shield-value{font-size:12px}.foe-group .foe .life-bar{flex:1 1 60px}.foe-group .foe .life-bar span{font-size:12px}
+ .foe-group .foe .target-caption{font-size:12px}
+ .combat-screen:has(.foe-group) .fighter.ally{bottom:4px}
+}
+
+/* ---------- Dialog: a ✕ that stays at the top right while the content scrolls ---------- */
+#dialog .dialog-x{position:sticky;top:-14px;float:right;z-index:5;min-width:44px;min-height:44px;margin:-14px -14px 4px 8px;padding:0;border:1px solid #a99567;border-radius:8px;background:#2e4142;color:#f1e7cc;font-size:18px;line-height:1;cursor:pointer}
+@media(max-width:720px){#dialog{padding:18px 14px}#dialog .dialog-x{top:-8px;margin:-8px -6px 4px 8px}}
+
+/* ---------- Tap-play selection bar (html.tap-play): full card text above the hand ---------- */
+html.tap-play .selection-panel.tap-selection .selection-text{margin:2px 0 3px;font-size:14px;line-height:1.45;color:#f6ecd3;white-space:normal;overflow-wrap:anywhere}
+html.tap-play .selection-panel.tap-selection small{font-size:12px}
+html.tap-play .selection-panel.tap-selection .text-button,html.tap-play .selection-panel.tap-selection button{min-height:44px}

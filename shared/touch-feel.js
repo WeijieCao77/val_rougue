@@ -2,8 +2,58 @@
 // Plain ES module with named exports and no imports (bundled into the Wa app.js
 // by tools/build-browser.mjs, imported directly by the new demo).
 
+// ---------- Back button closes the top overlay ----------
+// Every open overlay (card sheet, dialogs, modals) owns one browser-history
+// entry, so the phone's back button or gesture closes the top one instead of
+// leaving the game. Closing it any other way removes its entry again.
+const layers = [];
+let skipPops = 0;
+let popWired = false;
+
+function wirePop() {
+  if (popWired || typeof addEventListener !== 'function') return;
+  popWired = true;
+  addEventListener('popstate', () => {
+    if (skipPops > 0) { skipPops--; return; }
+    const top = layers.pop();
+    if (top) top.close();
+  });
+}
+
+export function pushLayer(close) {
+  wirePop();
+  const layer = { close };
+  layers.push(layer);
+  try { history.pushState({ ...(history.state || {}), uiLayer: layers.length }, ''); } catch {}
+  return layer;
+}
+
+export function dropLayer(layer) {
+  const i = layers.indexOf(layer);
+  if (i < 0) return;
+  layers.splice(i, 1);
+  try { if (history.state?.uiLayer) { skipPops++; history.back(); } } catch {}
+}
+
+// Watches `root` for an overlay opening/closing: `isOpen()` says whether one is
+// open now, `close()` closes it (used by the back button).
+export function trackLayer(root, isOpen, close) {
+  if (!root || typeof MutationObserver !== 'function') return;
+  let layer = null;
+  const sync = () => {
+    const open = !!isOpen();
+    // If close() declines (a forced choice), the next sync re-arms the back button.
+    if (open && !layer) layer = pushLayer(() => { layer = null; close(); setTimeout(sync, 0); });
+    else if (!open && layer) { const done = layer; layer = null; dropLayer(done); }
+  };
+  new MutationObserver(sync).observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['open', 'hidden'] });
+  sync();
+}
+
+// ---------- Long-press card sheet ----------
 let sheet = null;
 let sheetOnClose = null;
+let sheetLayer = null;
 
 export function cardSheetOpen() {
   return !!(sheet && sheet.open);
@@ -14,7 +64,10 @@ export function closeCardSheet() {
 }
 
 // A <dialog> opened with showModal() sits above every other layer, including an
-// already open deck/library dialog, so one sheet works everywhere.
+// already open deck/library dialog, so one sheet works everywhere. It closes by
+// the 关闭 button (top right, outside the scrolling area so it never scrolls
+// away), a tap outside the panel, Escape, or the back button; once closed it is
+// removed from the page, so nothing is left to block taps.
 export function openCardSheet(html, { onClose } = {}) {
   if (typeof document === 'undefined') return;
   if (!sheet) {
@@ -26,28 +79,42 @@ export function openCardSheet(html, { onClose } = {}) {
       if (event.target === sheet || event.target.closest('[data-sheet-close]')) sheet.close();
     });
     sheet.addEventListener('close', () => {
+      if (sheet.open) return; // reopened with new content before this event ran
       const done = sheetOnClose;
       sheetOnClose = null;
       sheet.innerHTML = '';
+      sheet.remove();
+      if (sheetLayer) { const layer = sheetLayer; sheetLayer = null; dropLayer(layer); }
       done?.();
     });
   }
-  if (sheet.open) sheet.close();
+  if (sheet.open) {
+    const done = sheetOnClose;
+    sheetOnClose = null;
+    if (sheetLayer) { dropLayer(sheetLayer); sheetLayer = null; }
+    sheet.close();
+    done?.();
+  }
   document.body.append(sheet);
   sheetOnClose = onClose || null;
   sheet.innerHTML = `<div class="card-sheet-panel" role="document">
-    <button type="button" class="card-sheet-close" data-sheet-close aria-label="关闭卡牌详情">关闭</button>
+    <div class="card-sheet-bar"><button type="button" class="card-sheet-close" data-sheet-close aria-label="关闭卡牌详情">✕ 关闭</button></div>
+    <div class="card-sheet-scroll">
     ${html}
-    <p class="card-sheet-foot">点击空白处关闭</p>
+    <p class="card-sheet-foot">点空白处、按返回键或「关闭」均可关闭</p>
+    </div>
   </div>`;
   try { sheet.showModal(); } catch { sheet.setAttribute('open', ''); }
-  sheet.querySelector('.card-sheet-panel').scrollTop = 0;
+  sheetLayer = pushLayer(() => { sheetLayer = null; if (sheet?.open) sheet.close(); });
+  sheet.querySelector('.card-sheet-scroll').scrollTop = 0;
+  sheet.querySelector('.card-sheet-close').focus({ preventScroll: true });
 }
 
-// Long press (touch ≈350 ms, mouse 500 ms, or right click) on any element
+// Long press (500 ms by finger or mouse, or right click) on any element
 // matching `selector` opens `render(el)` in the sheet. The press never counts
-// as a click, so it cannot pick, buy or play the card underneath.
-export function attachCardDetail({ selector, render, delay = 350 }) {
+// as a click, so it cannot pick, buy or play the card underneath. Half a second
+// keeps a slow tap from ever opening it.
+export function attachCardDetail({ selector, render, delay = 500 }) {
   if (typeof document === 'undefined') return;
   let press = null;
   let swallowClick = false;
@@ -71,7 +138,7 @@ export function attachCardDetail({ selector, render, delay = 350 }) {
     if (!event.isPrimary) return;
     const el = event.target instanceof Element ? event.target.closest(selector) : null;
     if (!el || el.closest('.card-sheet')) return;
-    const wait = event.pointerType === 'mouse' ? Math.max(delay, 500) : delay;
+    const wait = Math.max(delay, 500);
     press = { el, id: event.pointerId, x: event.clientX, y: event.clientY };
     press.timer = setTimeout(() => {
       const current = press;
