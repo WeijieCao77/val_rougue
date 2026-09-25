@@ -98,6 +98,32 @@ function naiveLine(s) {
   return { line, cur };
 }
 
+// Careless-human proxy: looks one card ahead only (what does this card do to
+// the coming enemy turn?), never plans a sequence or peeks at the draw order.
+// Plays a card whenever it is not worse than ending the turn now.
+function casualLine(s, hpWeight = 1.6) {
+  let cur = s; const line = [];
+  for (;;) {
+    if (cur.phase !== 'combat') break;
+    if (cur.battle.pendingDiscover) { const a = legalActions(cur)[0]; cur = step(cur, a); line.push(a); continue; }
+    if (cur.battle.playsThisTurn >= 40) break;
+    const endNow = evaluate(step(cur, { type: 'end' }), hpWeight);
+    let best = null;
+    // Cards and the stance switch, one at a time.
+    for (const a of legalActions(cur).filter(x => x.type === 'play' || x.type === 'stance')) {
+      let next = step(cur, a);
+      const picks = [];
+      while (next.phase === 'combat' && next.battle.pendingDiscover) { const d = legalActions(next)[0]; picks.push(d); next = step(next, d); }
+      const drew = next.phase === 'combat' ? Math.max(0, next.battle.hand.length - cur.battle.hand.length + 1) : 0;
+      const v = (next.phase === 'combat' ? evaluate(step(next, { type: 'end' }), hpWeight) : evaluate(next, hpWeight)) + drew * 3;
+      if (!best || v > best.v) best = { a, v, next, picks };
+    }
+    if (!best || best.v < endNow - 0.5) break;
+    cur = best.next; line.push(best.a, ...best.picks);
+  }
+  return { line, cur };
+}
+
 function randomLine(s, rand) {
   let cur = s; const line = [];
   for (;;) {
@@ -257,8 +283,9 @@ function playRun(seed, team, policy) {
       if (policy === 'random') pick = opts[Math.floor(rand() * opts.length)];
       else {
         const hpPct = s.hp / s.maxHp;
-        const rank = n => ({ elite: hpPct > 0.7 ? 5 : -3, rest: hpPct < 0.5 ? 6 : 1, shop: s.money >= 110 ? 4 : 0, event: 3, crate: 4, battle: hpPct > 0.45 ? 2.5 : 0.5, boss: 9 }[n.kind] ?? 0);
-        pick = opts[nodes.map(rank).reduce((bi, v, i, arr) => (v > arr[bi] ? i : bi), 0)];
+        const rank = n => ({ elite: hpPct > 0.7 ? 5 : -3, rest: hpPct < 0.5 ? 6 : 1, shop: s.money >= 110 ? 4 : 0, event: 3, crate: 4, battle: hpPct > 0.45 ? 2.5 : 0.5, boss: 9 }[n.kind] ?? 0) + (policy === 'casual' ? rand() * 4 : 0);
+        const ranks = nodes.map(rank);
+        pick = opts[ranks.reduce((bi, v, i, arr) => (v > arr[bi] ? i : bi), 0)];
       }
       const chosen = s.map.nodes.find(n => n.key === pick.key);
       log.route.push({ step: chosen.step, options: nodes.map(n => n.kind), chose: chosen.kind, enemy: chosen.enemy, hp: s.hp, maxHp: s.maxHp, money: s.money });
@@ -271,8 +298,8 @@ function playRun(seed, team, policy) {
       }
       continue;
     }
-    if (s.phase === 'combat' && policy === 'smart' && !s.battle.pendingDiscover) {
-      const use = supplyAction(s, fight?.kind);
+    if (s.phase === 'combat' && (policy === 'smart' || policy === 'casual') && !s.battle.pendingDiscover) {
+      const use = supplyAction(s, policy === 'casual' ? 'battle' : fight?.kind);
       if (use) { (log.supplies ||= []).push(s.supplies[use.index]); s = step(s, use); continue; }
     }
     if (s.phase === 'combat') {
@@ -300,6 +327,8 @@ function playRun(seed, team, policy) {
         turnInfo.leftUnplayed = s.battle.hand.filter(c => !line.some(a => a.uid === c.uid) && c.id in CARDS).map(c => c.id);
       } else if (policy === 'naive') {
         line = naiveLine(s).line;
+      } else if (policy === 'casual') {
+        line = casualLine(s).line;
       } else {
         line = randomLine(s, rand).line;
       }
@@ -330,6 +359,12 @@ function playRun(seed, team, policy) {
       const pool = s.battle.rewardPool;
       let id = null;
       if (policy === 'random') id = rand() < 0.75 ? pool[Math.floor(rand() * pool.length)] : null;
+      else if (policy === 'casual') {
+        // Random but sensible: any offered card at least about as good as the deck.
+        const deckAvg = s.deck.reduce((sum, c) => sum + cardValue(c.id), 0) / s.deck.length;
+        const fine = pool.filter(pid => cardValue(pid) >= deckAvg * 0.9);
+        id = fine.length ? fine[Math.floor(rand() * fine.length)] : null;
+      }
       else if (policy === 'smart') {
         const deckAvg = s.deck.reduce((sum, c) => sum + cardValue(c.id), 0) / s.deck.length;
         const best = pool.map(pid => ({ pid, v: cardValue(pid) })).sort((a, b) => b.v - a.v)[0];
@@ -355,7 +390,7 @@ function playRun(seed, team, policy) {
     if (s.phase === 'shop') {
       const all = legalActions(s);
       let a = { type: 'leave' };
-      if (policy === 'smart') {
+      if (policy === 'smart' || policy === 'casual') {
         const buys = all.filter(x => x.type === 'buy').sort((x, y) => cardValue(y.id) - cardValue(x.id));
         const idOf = x => s.deck.find(c => c.uid === x.uid).id;
         const removes = all.filter(x => x.type === 'remove' && (!CARDS[idOf(x)] || (CARDS[idOf(x)].tag === 'basic' && cardValue(idOf(x)) < 6))).sort((x, y) => cardValue(idOf(x)) - cardValue(idOf(y)));
@@ -471,4 +506,21 @@ if (ECON.econ) {
   const firsts = smartRuns.map(r => r.fights[0]).filter(Boolean).map(f => f.turns.reduce((n, t) => n + t.hpLost, 0));
   console.log('unlock', UNLOCK, 'first fight avg hp lost', (firsts.reduce((a, b) => a + b, 0) / (firsts.length || 1)).toFixed(1), 'invest', JSON.stringify(count(smartRuns.flatMap(r => r.invest || []))), 'skips', JSON.stringify(count(smartRuns.flatMap(r => r.skips || []))), 'shop', JSON.stringify(count(smartRuns.flatMap(r => r.route.flatMap(x => x.shop || []).map(m => m.split(' ')[0])))));
 }
+// Per-policy run milestones: first fight / act-1 normal fight HP cost, reaching and clearing the act-1 boss, full clear.
+const avg = xs => (xs.length ? +(xs.reduce((x, y) => x + y, 0) / xs.length).toFixed(1) : null);
+const lost = f => f.turns.reduce((n, t) => n + t.hpLost, 0);
+const milestones = rs => ({
+  runs: rs.length,
+  firstFightLost: avg(rs.map(r => r.fights[0]).filter(Boolean).map(lost)),
+  act1NormalLost: avg(rs.flatMap(r => r.fights.filter(f => f.act === 1 && (f.kind === 'battle' || f.kind === 'ambush'))).map(lost)),
+  act1EliteLost: avg(rs.flatMap(r => r.fights.filter(f => f.act === 1 && f.kind === 'elite')).map(lost)),
+  reachBoss1: Math.round(100 * rs.filter(r => r.fights.some(f => f.act === 1 && f.kind === 'boss')).length / rs.length) + '%',
+  act1Clear: Math.round(100 * rs.filter(r => r.actsCleared >= 1).length / rs.length) + '%',
+  act2Clear: Math.round(100 * rs.filter(r => r.actsCleared >= 2).length / rs.length) + '%',
+  fullClear: Math.round(100 * rs.filter(r => r.actsCleared >= 3).length / rs.length) + '%'
+});
+console.log('milestones by policy:');
+console.table(Object.fromEntries(POLICIES.map(p => [p, milestones(runs.filter(r => r.policy === p))])));
+console.log('milestones by team and policy:');
+console.table(Object.fromEntries((args.teams ? args.teams.split(',') : Object.keys(TEAMS)).flatMap(t => POLICIES.map(p => [`${t}/${p}`, milestones(runs.filter(r => r.team === t && r.policy === p))]))));
 console.table(Object.fromEntries(Object.entries(cat).sort().map(([k, c]) => [k, { fights: c.fights, avgHpLost: +(c.hpLost / c.fights).toFixed(1), avgTurns: +(c.turns / c.fights).toFixed(1), deaths: c.losses }])));

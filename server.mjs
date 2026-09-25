@@ -25,6 +25,7 @@ const assets = new Map([
   ['/shared/juice.js', ['shared/juice.js', 'text/javascript; charset=utf-8']],
   ['/shared/juice.css', ['shared/juice.css', 'text/css; charset=utf-8']],
   ['/shared/run-meta.js', ['shared/run-meta.js', 'text/javascript; charset=utf-8']],
+  ['/shared/result-summary.js', ['shared/result-summary.js', 'text/javascript; charset=utf-8']],
   ['/shared/run-meta.css', ['shared/run-meta.css', 'text/css; charset=utf-8']],
   ['/shared/models/soldier.glb', ['shared/models/soldier.glb', 'model/gltf-binary']],
   ['/shared/models/hazmat.glb', ['shared/models/hazmat.glb', 'model/gltf-binary']],

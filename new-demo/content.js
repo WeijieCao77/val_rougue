@@ -613,8 +613,14 @@ const DIFFICULTY = {
   // more card rewards, and the smart bot cleared act 1 in 63% of runs.
   // Boss pool pass (2026-09-24): with three act-1 candidates, weaker openers and
   // team retuning the bot cleared act 1 in ~65% of runs, so 1.5/1.5 -> 1.6/1.55.
-  boss: { hp: 1.6, dmg: 1.55 }
+  // 2026-09-25: players died before the act-1 boss; 1.6/1.55 -> 1.58/1.52 (with the early easing, the smart bot cleared act 1 in 85%).
+  boss: { hp: 1.58, dmg: 1.52 }
 };
+// Early act-1 easing (2026-09-25, applied by the engine per fight): players died
+// before the act-1 boss. Weak floors (1–4), the other fights up to floor `step`
+// and elites up to floor `step` get these extra multipliers; later act-1 fights
+// (`late`, `lateElite`) are eased less.
+export const EARLY_EASE = { step: 8, weak: { hp: 0.85, dmg: 0.8 }, normal: { hp: 0.9, dmg: 0.88 }, elite: { hp: 0.75, dmg: 0.7 }, lateElite: { hp: 0.85, dmg: 0.82 }, late: { hp: 0.95, dmg: 0.93 } };
 function roleOf(e) { return e.boss ? 'boss' : e.elite ? 'elite' : e.member ? 'member' : 'normal'; }
 function tuneEnemy(e, t) {
   const keep = a => (a.type === 'buff' || a.type === 'rally' ? { ...a } : null);
@@ -651,7 +657,8 @@ export const ENEMIES = {
   ...ACT1_ENEMIES,
   // Act 2/3 scaling sits on top of the act-1 difficulty pass, so it is milder
   // than before (was 1.35/1.25 and 1.75/1.5) to keep full runs winnable.
-  ...scaledAct('A2_', '二幕·', 1.45, 1.25),
+  // 2026-09-25: act-2 HP 1.45 -> 1.38 so more runs that clear the eased act 1 carry on (smart full clear was 20%).
+  ...scaledAct('A2_', '二幕·', 1.38, 1.25),
   A2_B01: tuneEnemy({ name:'晋级赛冠军卫队', look:'boss2', hp:165, boss:true, ordered:true, script:[[BL(18),H(6)],[BUFF(2),H(7,3)],[H(10),JAM('ST02',2)],[H(20)]] }, { hp: 1.4, dmg: 1.4 }),
   // 15-floor acts (2026-09-24): act-3 HP 1.85 -> 1.95; more floors meant more
   // rewards and the bot's full-run clear rose to ~23%.

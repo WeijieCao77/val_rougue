@@ -1,9 +1,9 @@
 // new-demo/engine.js
-import { buildMap, availableNodes } from './season-map.js';
-import { CARDS, CARD_IDS, REGION_CARD_IDS, SHARED_CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, GROUPS, RELICS, ARCHETYPES, TEAM_TRAITS, RELIC_IDS_BY_TIER, EQUIP_TIERS, SUPPLIES, SUPPLY_IDS, SUPPLY_SLOTS, grownEffects, cardGrowth, cardTextFor } from './content.js';
+import { buildMap, availableNodes, WEAK_STEPS } from './season-map.js';
+import { CARDS, CARD_IDS, REGION_CARD_IDS, SHARED_CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, GROUPS, RELICS, ARCHETYPES, TEAM_TRAITS, RELIC_IDS_BY_TIER, EQUIP_TIERS, SUPPLIES, SUPPLY_IDS, SUPPLY_SLOTS, grownEffects, cardGrowth, cardTextFor, EARLY_EASE } from './content.js';
 import { CURSES, CURSE_RULES, EXTRA_STATUS_RULES } from '../afflictions.js';
 import { EVENTS, EVENT_POOLS, CRATE_LOOT } from './events.js';
-import { opsReason, describeOps, applyOps, pickKind, pickCandidates } from '../shared-event-core.js';
+import { opsReason, describeOps, applyOps, pickKind, pickCandidates, noteResult, setResultTitle, upgradeEntry, upgradeDiffText } from '../shared-event-core.js';
 import { freshUnknownOdds, resolveUnknown, blockedUnknownKinds, rollCrateSize } from '../shared-unknown-room.js';
 import { ROUTE_STEPS } from '../shared-route-generator.js';
 import { planCardUnlocks, unlockedFrom, tierOfId, validTier, UNLOCK_TIERS } from '../shared-unlock.js';
@@ -198,6 +198,7 @@ export function createRun(seed = String(Date.now()), team = 'breach', options = 
   if (ascension >= 9) {
     const curse = CURSES[Math.floor(nextRand(state) * CURSES.length)];
     state.deck.push({ uid: nextUid(state), id: curse.id, up: false });
+    noteResult(state, curseEntry(curse.id), '难度 9 开局');
   }
   if (options.opening) {
     state.phase = 'opening';
@@ -612,6 +613,8 @@ export function act(state, action) {
   if (state.pendingRelics?.length && !['replaceRelic', 'declineRelic'].includes(action.type)) return { state, error: '请先处理新装备：替换一件或放弃' };
   const next = deepClone(state);
   next.rev = state.rev + 1;
+  // Result summary of this action only (random upgrades, cards, curses, equipment…).
+  delete next.lastResult;
   syncIn(next.battle);
   const err = applyAction(next, action);
   if (err) return { state, error: err };
@@ -687,6 +690,17 @@ function ascensionMods(state, def) {
   const hp = role === 'normal' ? (a >= 7 ? 1.1 : 1) : (a >= 8 ? 1.1 : 1);
   return { dmg, hp, strength: role === 'boss' && a >= 10 ? 3 : 0 };
 }
+// Act 1 is eased most on its first half (2026-09-25): weak floors, then the
+// rest of floors 1–EARLY_EASE.step, and early elites. Bosses and later acts are
+// tuned in content.js. Difficulty levels still multiply on top.
+function earlyEase(state, def) {
+  if (state.act !== 1 || def.boss) return { hp: 1, dmg: 1 };
+  const step = state.map?.nodes.find(n => n.key === state.currentNode)?.step;
+  if (!step) return { hp: 1, dmg: 1 };
+  if (def.elite) return step <= EARLY_EASE.step ? EARLY_EASE.elite : EARLY_EASE.lateElite;
+  if (step > EARLY_EASE.step) return EARLY_EASE.late;
+  return step <= WEAK_STEPS[1] ? EARLY_EASE.weak : EARLY_EASE.normal;
+}
 function scaleScript(script, k) {
   if (k === 1) return deepClone(script);
   return script.map(turn => turn.map(a => (a.type === 'hit' || a.type === 'snipe' ? { ...a, n: Math.round(a.n * k) } : { ...a })));
@@ -694,7 +708,9 @@ function scaleScript(script, k) {
 
 function createEnemy(state, member, index, label) {
   const def = getEnemyDef(member.id);
-  const mods = ascensionMods(state, def);
+  const mods = { ...ascensionMods(state, def) };
+  const ease = earlyEase(state, def);
+  mods.hp *= ease.hp; mods.dmg *= ease.dmg;
   // 热身赛 opening bonus: enemies of the next few fights start weakened.
   const warm = state.warmup > 0 ? 0.7 : 1;
   const bounty = def.elite && hasRelic(state, 'R47') ? 1.25 : 1;
@@ -1206,6 +1222,7 @@ function applyEffect(state, eff, sourceCard, mods, context) {
       if (candidates.length) {
         const chosen = candidates[Math.floor(nextRand(state) * candidates.length)];
         chosen.up = true;
+        noteResult(state, { ...upgradeEntry(EVENT_CTX, chosen.id, true), text: `本场随机升级：${cardName(chosen.id)}（${EVENT_CTX.upgradeDiff(chosen.id)}）` }, '随机升级');
       }
       break;
     }
@@ -1813,7 +1830,7 @@ function chooseReward(state, action) {
     pushLog(state, 'reward_skipped', { comp: action.comp || 'gold' });
   }
   b.rewardTaken = true;
-  if (state.eventBonus) { applyOps(state, state.eventBonus, EVENT_CTX); state.eventBonus = null; }
+  if (state.eventBonus) { applyOps(state, state.eventBonus, EVENT_CTX); setResultTitle(state, '约战额外奖励'); state.eventBonus = null; }
   const wasBoss = state.currentNode && state.map.nodes.find(n => n.key === state.currentNode)?.kind === 'boss';
   state.battle = null;
   completeNode(state);
@@ -1923,12 +1940,15 @@ function grantRelicById(state, id) {
     if (basicIds.length) {
       const cardId = basicIds[Math.floor(nextRand(state) * basicIds.length)];
       state.deck.push({ uid: nextUid(state), id: cardId, up: false });
+      noteResult(state, { kind: 'card', id: cardId, random: true, text: `${RELICS[id].name}：获得卡牌「${cardName(cardId)}」` }, RELICS[id].name);
     }
   } else if (id === 'R50') {
     for (let i = 0; i < 4; i++) {
       const candidates = state.deck.filter(c => !c.up && CARDS[c.id]?.upgradeEffects?.length);
       if (!candidates.length) break;
-      candidates[Math.floor(nextRand(state) * candidates.length)].up = true;
+      const chosen = candidates[Math.floor(nextRand(state) * candidates.length)];
+      chosen.up = true;
+      noteResult(state, upgradeEntry(EVENT_CTX, chosen.id, true), RELICS[id].name);
     }
   }
   pushLog(state, 'relic_gained', { id });
@@ -2196,6 +2216,7 @@ function restAction(state, action) {
       if (!candidates.length) return '无可升级的牌';
       const chosen = candidates[Math.floor(nextRand(state) * candidates.length)];
       chosen.up = true;
+      noteResult(state, upgradeEntry(EVENT_CTX, chosen.id, true), '休整 · 随机升级');
     } else {
       const card = state.deck.find(c => c.uid === action.uid);
       if (!card || card.up || !CARDS[card.id]?.upgradeEffects?.length) return '无效升级目标';
@@ -2214,12 +2235,28 @@ function restAction(state, action) {
 // resolve the same room, crate and event outcome.
 const cardDef = id => CARDS[id] || STATUS_CARDS[id] || null;
 const cardPoolFor = state => [...SHARED_CARD_IDS, ...teamCardIds(state)];
+const cardName = id => cardDef(id)?.name || id;
+const CRATE_TITLES = { small: '小型补给箱', medium: '中型补给箱', large: '大型补给箱' };
+// "伤害 7 → 10" style summary of what an upgrade changes (text clauses and cost).
+const clausesOf = text => String(text || '').split(/[。；;，,]/);
+function upgradeDiffOf(id) {
+  const d = CARDS[id];
+  if (!d) return '';
+  if (d.type === 'power' && !d.upgradeText) return d.upgradeCost !== undefined && d.upgradeCost !== d.cost ? `费用 ${d.cost} → ${d.upgradeCost}` : '效果提升';
+  return upgradeDiffText(clausesOf(cardTextFor(id, false)), clausesOf(cardTextFor(id, true)), d.cost, d.upgradeCost ?? d.cost);
+}
+function curseEntry(id) {
+  return { kind: 'curse', id, random: true, text: `加入俱乐部隐患：${cardName(id)}（${cardTextFor(id)}）` };
+}
 
 const EVENT_CTX = {
   labels: { hp: '生命', money: '金币', equip: '战术装备', equipNone: '已全部拥有时', curse: '俱乐部隐患', upgrade: '升级', tier: { common: '普通牌', uncommon: '罕见牌', rare: '稀有牌' } },
   rand: state => nextRand(state),
   newCard: (state, id, up) => ({ uid: nextUid(state), id, up: !!up }),
   cardName: id => cardDef(id)?.name || id,
+  cardText: id => cardTextFor(id),
+  equipDesc: name => Object.values(RELICS).find(r => r.name === name)?.desc || '',
+  upgradeDiff: id => upgradeDiffOf(id),
   upgradeable: (state, c) => !c.up && !!CARDS[c.id]?.upgradeEffects?.length,
   removable: (state, c) => canRemoveCard(state, c.uid),
   transformable: (state, c) => !!cardDef(c.id) && (!!STATUS_CARDS[c.id]?.curse || canRemoveCard(state, c.uid)),
@@ -2285,6 +2322,8 @@ function crateAction(state, action) {
     const result = { money, equip: null, bonusMoney: 0 };
     if (nextRand(state) < loot.equip) result.equip = EVENT_CTX.gainEquip(state);
     if (!result.equip) { result.bonusMoney = loot.bonus; state.money += loot.bonus; }
+    noteResult(state, { kind: 'money', random: true, inline: true, text: `金币 +${money + result.bonusMoney}${result.bonusMoney ? `（含无装备补偿 ${result.bonusMoney}）` : ''}` }, CRATE_TITLES[state.crate.size] || '补给箱');
+    if (result.equip) noteResult(state, { kind: 'equip', random: true, inline: true, text: `获得战术装备：${result.equip}（${EVENT_CTX.equipDesc(result.equip)}）${state.pendingRelics?.length ? '，装备槽已满，请替换或放弃' : ''}` });
     state.crate.opened = true;
     state.crate.result = result;
     pushLog(state, 'crate_opened', { size: state.crate.size, ...result });
@@ -2378,6 +2417,7 @@ function eventBack(state) {
 
 function resolveEventOption(state, opt, picked) {
   const { log, fight } = applyOps(state, opt.ops, EVENT_CTX, picked);
+  setResultTitle(state, `${EVENTS[state.event.id].title} · ${opt.title}`);
   pushLog(state, 'event_choice', { id: state.event.id, choice: opt.id, log });
   state.event = null;
   if (fight) {
@@ -2447,7 +2487,10 @@ function generateOpening(state) {
 
 // A random (tier-weighted) piece the run does not own yet.
 function grantNewRelic(state) {
-  grantRandomRelic(state);
+  const id = grantRandomRelic(state);
+  noteResult(state, id
+    ? { kind: 'equip', id, random: true, text: `获得战术装备：${RELICS[id].name}（${RELICS[id].desc}）${state.pendingRelics?.includes(id) ? '，装备槽已满，请替换或放弃' : ''}` }
+    : { kind: 'money', random: true, text: '装备已全部拥有，改为金币 +100' }, '赛前准备');
 }
 
 function finishOpening(state) {
@@ -2482,10 +2525,11 @@ function chooseOpening(state, action) {
       const curse = CURSES[Math.floor(nextRand(state) * CURSES.length)];
       state.deck.push({ uid: nextUid(state), id: curse.id, up: false });
       pushLog(state, 'curse_gained', { id: curse.id });
+      noteResult(state, curseEntry(curse.id), '赛前准备');
       grantNewRelic(state);
       break;
     }
-    case 'goldForRelics': state.money = 0; grantNewRelic(state); grantNewRelic(state); break;
+    case 'goldForRelics': state.money = 0; noteResult(state, { kind: 'money', text: '金币清零' }, '赛前准备'); grantNewRelic(state); grantNewRelic(state); break;
     case 'warmup': state.warmup = 3; break;
     default: return '无效选择';
   }

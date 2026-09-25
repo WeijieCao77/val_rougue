@@ -3,6 +3,7 @@ import { squadChipHtml, traitTagHtml, teamTrait, TRAIT_ICONS, loadAscensionUnloc
 import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS, TRAITS, FIELDS, ARCHETYPES, SUPPLIES, SUPPLY_IDS, EQUIP_TIERS, BOSSES } from './content.js';
 import { statusBadges, statusBadge, statusIcon, highlightKeywords, keywordRules, STATUS_INFO } from '/shared/status-icons.js';
 import { attachCardDetail, showDragHint, hideDragHint } from '/shared/touch-feel.js';
+import { showResultSummary, resultWorthShowing } from '/shared/result-summary.js';
 import { ACTS } from './season-map.js';
 import { cardArt, combatArt, relicArt } from './art.js';
 import { tacticalCard } from './tactical-card.js';
@@ -309,6 +310,7 @@ function renderHome() {
       saveState();
       selectedCardUid = null;
       renderGame();
+      presentResult(state);
     } catch (error) {
       console.error('Start failed', error);
       showNotice(`开赛失败：${error.message}`);
@@ -1546,6 +1548,16 @@ function priceOf(cardId) {
   return rarity === 'rare' ? 150 : rarity === 'uncommon' ? 100 : 50;
 }
 
+// Tells the player exactly what a random effect did (which card was upgraded,
+// transformed or added, which curse or equipment arrived). In combat a short
+// notice is enough; elsewhere a popup lists every entry.
+function presentResult(s) {
+  const result = s?.lastResult;
+  if (!resultWorthShowing(result)) return;
+  if (s.phase === 'combat') { showNotice(result.entries.filter(e => e.random && !e.inline).map(e => e.text).join('；')); return; }
+  showResultSummary(result);
+}
+
 function dispatch(action) {
   if (!state || presentationBusy) return false;
   presentationBusy = true;
@@ -1569,20 +1581,25 @@ function dispatch(action) {
 
     // Handle end turn with bespoke timeline
     if (action.type === 'end' && prev.phase === 'combat') {
+      const shown = state;
       handleEndTurnTimeline(prev, state, action, capture, reducedMotion).then(() => {
         presentationBusy = false;
         previousState = state;
+        presentResult(shown);
       }).catch(() => {
         renderPhase();
         presentationBusy = false;
         previousState = state;
+        presentResult(shown);
       });
       return true;
     }
 
     if (action.type === 'play' && prev.phase === 'combat' && capture) {
+      const shown = state;
       handlePlayCardTimeline(prev, state, action, capture, reducedMotion).catch(console.error).then(async () => {
         renderPhase();
+        presentResult(shown);
         await revealDrawnCards(prev);
       }).finally(() => {
         presentationBusy = false;
@@ -1593,6 +1610,7 @@ function dispatch(action) {
 
     // Entering combat also deals a real opening hand from the visible pile.
     renderPhase();
+    presentResult(state);
     globalThis.characterStages?.cueFromTransition('new', prev, state, action);
     revealDrawnCards(prev).finally(() => {
       presentationBusy = false;

@@ -71,6 +71,7 @@ export function waAct(state, action) {
     if (s.phase !== 'activity') return { state, error: '此操作已失效' };
     if (s.gearOffer) return { state, error: '请先处理新装备：替换一件或放弃' };
     if (s.mode !== 'season') return { state, error: '未知操作' };
+    delete s.lastResult;
     s.maxHp += 6;
     s.hp += 6;
     s.rev++;

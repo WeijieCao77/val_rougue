@@ -89,6 +89,64 @@ export function describeOps(ops, ctx) {
   return parts.length ? parts.join('，') : '无事发生，继续赛程';
 }
 
+
+// ----------------------------- Result summaries -----------------------------
+// Whenever the game applies an effect the player did not pick (a random
+// upgrade, transform, curse, card, equipment…), the engine records it in
+// s.lastResult = {title, entries:[{kind, text, random, id?, from?, diff?}]}.
+// Engines clear lastResult at the start of every action; the UI shows the
+// entries after the action resolves. Presentation only: no RNG is consumed.
+export function noteResult(s, entry, title) {
+  if (!s) return;
+  const r = (s.lastResult ||= { title: title || '结果', entries: [] });
+  if (title && r.title === '结果') r.title = title;
+  r.entries.push(entry);
+}
+export function setResultTitle(s, title) {
+  if (s?.lastResult) s.lastResult.title = title;
+}
+export function hasRandomResult(s) {
+  return !!s?.lastResult?.entries?.some(e => e.random);
+}
+
+const NUM = /\d+(?:\.\d+)?/g;
+const skeleton = t => t.replace(NUM, '#');
+// One clause before/after an upgrade: "伤害 7" / "伤害 10" -> "伤害 7 → 10".
+function clauseDiff(a, b) {
+  const na = a.match(NUM) || [];
+  let i = 0;
+  return b.replace(NUM, m => { const old = na[i++]; return old !== m ? ` ${old} → ${m} ` : m; }).replace(/\s+/g, ' ').trim();
+}
+// Short before→after description of an upgrade from the card's text clauses
+// (Wa face lines or new-demo sentences) and costs.
+export function upgradeDiffText(before, after, costBefore, costAfter) {
+  const a = before.map(x => String(x).trim()).filter(Boolean), b = after.map(x => String(x).trim()).filter(Boolean);
+  const parts = [];
+  if (costBefore != null && costAfter != null && costBefore !== costAfter) parts.push(`费用 ${costBefore} → ${costAfter}`);
+  const used = new Set();
+  const added = [];
+  for (const clause of b) {
+    const same = a.findIndex((x, i) => !used.has(i) && x === clause);
+    if (same >= 0) { used.add(same); continue; }
+    const like = a.findIndex((x, i) => !used.has(i) && skeleton(x) === skeleton(clause));
+    if (like >= 0) { used.add(like); parts.push(clauseDiff(a[like], clause)); continue; }
+    added.push(clause);
+  }
+  const removed = a.filter((x, i) => !used.has(i));
+  // One clause rewritten into another: show it as before → after.
+  if (added.length === 1 && removed.length === 1) parts.push(`${removed[0]} → ${added[0]}`);
+  else {
+    for (const x of added) parts.push(`新增「${x}」`);
+    for (const x of removed) parts.push(`去掉「${x}」`);
+  }
+  return parts.join('，') || '效果提升';
+}
+// Upgrade result entry: "已训练：XXX（伤害 7 → 10）".
+export function upgradeEntry(ctx, id, random) {
+  const diff = ctx.upgradeDiff ? ctx.upgradeDiff(id) : '';
+  return { kind: 'upgrade', id, random: !!random, diff, text: `已${ctx.labels.upgrade}：${ctx.cardName(id)}${diff ? `（${diff}）` : ''}` };
+}
+
 function upgradeRandom(s, n, ctx, out) {
   for (let i = 0; i < n; i++) {
     const pool = s.deck.filter(c => ctx.upgradeable(s, c));
@@ -96,6 +154,7 @@ function upgradeRandom(s, n, ctx, out) {
     const c = pool[Math.floor(ctx.rand(s) * pool.length)];
     c.up = true;
     out.push(`${ctx.cardName(c.id)} ${ctx.labels.upgrade}完成`);
+    noteResult(s, upgradeEntry(ctx, c.id, true));
   }
 }
 
@@ -105,6 +164,7 @@ function transformCard(s, c, ctx, out) {
   const idx = s.deck.findIndex(x => x.uid === c.uid);
   s.deck.splice(idx, 1, ctx.newCard(s, id, false));
   out.push(`${ctx.cardName(c.id)} 变换为 ${ctx.cardName(id)}`);
+  noteResult(s, { kind: 'transform', id, from: c.id, random: true, text: `已变换：${ctx.cardName(c.id)} → ${ctx.cardName(id)}` });
 }
 
 // Applies ops. `picked` is the chosen deck card for a {pick} op. Returns
@@ -112,25 +172,26 @@ function transformCard(s, c, ctx, out) {
 export function applyOps(s, ops, ctx, picked = null, out = []) {
   let fight = null;
   for (const op of ops || []) {
-    if (op.money) { s.money = Math.max(0, s.money + op.money); out.push(`${op.money > 0 ? '+' : '−'}${Math.abs(op.money)} ${ctx.labels.money}`); }
-    if (op.hp > 0) { const n = Math.min(op.hp, s.maxHp - s.hp); s.hp += n; out.push(`回复 ${n} ${ctx.labels.hp}`); }
-    if (op.hp < 0) { s.hp = Math.max(1, s.hp + op.hp); out.push(`失去 ${-op.hp} ${ctx.labels.hp}`); }
-    if (op.healPct) { const n = Math.min(Math.ceil(s.maxHp * op.healPct), s.maxHp - s.hp); s.hp += n; out.push(`回复 ${n} ${ctx.labels.hp}`); }
-    if (op.maxHp > 0) { s.maxHp += op.maxHp; s.hp += op.maxHp; out.push(`最大${ctx.labels.hp} +${op.maxHp}`); }
-    if (op.maxHp < 0) { s.maxHp = Math.max(1, s.maxHp + op.maxHp); s.hp = Math.min(s.hp, s.maxHp); out.push(`最大${ctx.labels.hp} −${-op.maxHp}`); }
+    if (op.money) { s.money = Math.max(0, s.money + op.money); out.push(`${op.money > 0 ? '+' : '−'}${Math.abs(op.money)} ${ctx.labels.money}`); noteResult(s, { kind: 'money', text: `${ctx.labels.money} ${op.money > 0 ? '+' : '−'}${Math.abs(op.money)}` }); }
+    if (op.hp > 0) { const n = Math.min(op.hp, s.maxHp - s.hp); s.hp += n; out.push(`回复 ${n} ${ctx.labels.hp}`); noteResult(s, { kind: 'hp', text: `回复 ${n} ${ctx.labels.hp}` }); }
+    if (op.hp < 0) { s.hp = Math.max(1, s.hp + op.hp); out.push(`失去 ${-op.hp} ${ctx.labels.hp}`); noteResult(s, { kind: 'hp', text: `失去 ${-op.hp} ${ctx.labels.hp}` }); }
+    if (op.healPct) { const n = Math.min(Math.ceil(s.maxHp * op.healPct), s.maxHp - s.hp); s.hp += n; out.push(`回复 ${n} ${ctx.labels.hp}`); noteResult(s, { kind: 'hp', text: `回复 ${n} ${ctx.labels.hp}` }); }
+    if (op.maxHp > 0) { s.maxHp += op.maxHp; s.hp += op.maxHp; out.push(`最大${ctx.labels.hp} +${op.maxHp}`); noteResult(s, { kind: 'maxHp', text: `最大${ctx.labels.hp} +${op.maxHp}` }); }
+    if (op.maxHp < 0) { s.maxHp = Math.max(1, s.maxHp + op.maxHp); s.hp = Math.min(s.hp, s.maxHp); out.push(`最大${ctx.labels.hp} −${-op.maxHp}`); noteResult(s, { kind: 'maxHp', text: `最大${ctx.labels.hp} −${-op.maxHp}` }); }
     if (op.equip) {
       const got = ctx.gainEquip(s);
-      if (got) out.push(`获得${ctx.labels.equip}「${got}」`);
-      else { s.money += op.equip.fallback; out.push(`${ctx.labels.equip}已集齐，改为 +${op.equip.fallback} ${ctx.labels.money}`); }
+      if (got) { out.push(`获得${ctx.labels.equip}「${got}」`); noteResult(s, { kind: 'equip', random: true, text: `获得${ctx.labels.equip}：${got}${ctx.equipDesc?.(got) ? `（${ctx.equipDesc(got)}）` : ''}` }); }
+      else { s.money += op.equip.fallback; out.push(`${ctx.labels.equip}已集齐，改为 +${op.equip.fallback} ${ctx.labels.money}`); noteResult(s, { kind: 'money', random: true, text: `${ctx.labels.equip}已集齐，改为 ${ctx.labels.money} +${op.equip.fallback}` }); }
     }
     if (op.curse) {
       const id = op.curse === true ? ctx.curseIds[Math.floor(ctx.rand(s) * ctx.curseIds.length)] : op.curse;
       s.deck.push(ctx.newCard(s, id, false));
       out.push(`加入「${ctx.cardName(id)}」`);
+      noteResult(s, { kind: 'curse', id, random: op.curse === true, text: `加入${ctx.labels.curse}：${ctx.cardName(id)}${ctx.cardText?.(id) ? `（${ctx.cardText(id)}）` : ''}` });
     }
     if (op.card) {
       const id = ctx.randomCard(s, op.card);
-      if (id) { s.deck.push(ctx.newCard(s, id, !!op.up)); out.push(`获得「${ctx.cardName(id)}」${op.up ? '（已' + ctx.labels.upgrade + '）' : ''}`); }
+      if (id) { s.deck.push(ctx.newCard(s, id, !!op.up)); out.push(`获得「${ctx.cardName(id)}」${op.up ? '（已' + ctx.labels.upgrade + '）' : ''}`); noteResult(s, { kind: 'card', id, random: true, text: `获得卡牌：${ctx.cardName(id)}${op.up ? `（已${ctx.labels.upgrade}）` : ''}` }); }
     }
     if (op.upgradeRandom) upgradeRandom(s, op.upgradeRandom, ctx, out);
     if (op.transformRandom) for (let i = 0; i < op.transformRandom; i++) {
@@ -140,14 +201,15 @@ export function applyOps(s, ops, ctx, picked = null, out = []) {
     if (op.pick) {
       if (!picked) throw Error('需要选择一张牌');
       const c = s.deck.find(x => x.uid === picked.uid);
-      if (op.pick === 'upgrade') { c.up = true; out.push(`${ctx.cardName(c.id)} ${ctx.labels.upgrade}完成`); }
-      else if (op.pick === 'remove' || op.pick === 'cleanse') { s.deck = s.deck.filter(x => x.uid !== c.uid); out.push(`移除「${ctx.cardName(c.id)}」`); }
+      if (op.pick === 'upgrade') { c.up = true; out.push(`${ctx.cardName(c.id)} ${ctx.labels.upgrade}完成`); noteResult(s, upgradeEntry(ctx, c.id, false)); }
+      else if (op.pick === 'remove' || op.pick === 'cleanse') { s.deck = s.deck.filter(x => x.uid !== c.uid); out.push(`移除「${ctx.cardName(c.id)}」`); noteResult(s, { kind: 'remove', id: c.id, text: `已移除：${ctx.cardName(c.id)}` }); }
       else if (op.pick === 'transform') transformCard(s, c, ctx, out);
-      else if (op.pick === 'duplicate') { s.deck.push(ctx.newCard(s, c.id, !!c.up)); out.push(`复制「${ctx.cardName(c.id)}」`); }
+      else if (op.pick === 'duplicate') { s.deck.push(ctx.newCard(s, c.id, !!c.up)); out.push(`复制「${ctx.cardName(c.id)}」`); noteResult(s, { kind: 'duplicate', id: c.id, text: `已复制：${ctx.cardName(c.id)}${c.up ? '（已' + ctx.labels.upgrade + '）' : ''}` }); }
     }
     if (op.gamble) {
       const won = ctx.rand(s) < op.gamble.p;
       out.push(won ? '赌中了' : '没赌中');
+      noteResult(s, { kind: 'gamble', random: true, won, text: won ? `判定成功（成功率 ${Math.round(op.gamble.p * 100)}%）` : `判定失败（成功率 ${Math.round(op.gamble.p * 100)}%）` });
       const r = applyOps(s, won ? op.gamble.win : op.gamble.lose, ctx, picked, out);
       if (r.fight) fight = r.fight;
     }

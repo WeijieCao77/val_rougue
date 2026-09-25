@@ -9839,6 +9839,64 @@ function describeOps(ops, ctx) {
   return parts.length ? parts.join('，') : '无事发生，继续赛程';
 }
 
+
+// ----------------------------- Result summaries -----------------------------
+// Whenever the game applies an effect the player did not pick (a random
+// upgrade, transform, curse, card, equipment…), the engine records it in
+// s.lastResult = {title, entries:[{kind, text, random, id?, from?, diff?}]}.
+// Engines clear lastResult at the start of every action; the UI shows the
+// entries after the action resolves. Presentation only: no RNG is consumed.
+function noteResult(s, entry, title) {
+  if (!s) return;
+  const r = (s.lastResult ||= { title: title || '结果', entries: [] });
+  if (title && r.title === '结果') r.title = title;
+  r.entries.push(entry);
+}
+function setResultTitle(s, title) {
+  if (s?.lastResult) s.lastResult.title = title;
+}
+function hasRandomResult(s) {
+  return !!s?.lastResult?.entries?.some(e => e.random);
+}
+
+const NUM = /\d+(?:\.\d+)?/g;
+const skeleton = t => t.replace(NUM, '#');
+// One clause before/after an upgrade: "伤害 7" / "伤害 10" -> "伤害 7 → 10".
+function clauseDiff(a, b) {
+  const na = a.match(NUM) || [];
+  let i = 0;
+  return b.replace(NUM, m => { const old = na[i++]; return old !== m ? ` ${old} → ${m} ` : m; }).replace(/\s+/g, ' ').trim();
+}
+// Short before→after description of an upgrade from the card's text clauses
+// (Wa face lines or new-demo sentences) and costs.
+function upgradeDiffText(before, after, costBefore, costAfter) {
+  const a = before.map(x => String(x).trim()).filter(Boolean), b = after.map(x => String(x).trim()).filter(Boolean);
+  const parts = [];
+  if (costBefore != null && costAfter != null && costBefore !== costAfter) parts.push(`费用 ${costBefore} → ${costAfter}`);
+  const used = new Set();
+  const added = [];
+  for (const clause of b) {
+    const same = a.findIndex((x, i) => !used.has(i) && x === clause);
+    if (same >= 0) { used.add(same); continue; }
+    const like = a.findIndex((x, i) => !used.has(i) && skeleton(x) === skeleton(clause));
+    if (like >= 0) { used.add(like); parts.push(clauseDiff(a[like], clause)); continue; }
+    added.push(clause);
+  }
+  const removed = a.filter((x, i) => !used.has(i));
+  // One clause rewritten into another: show it as before → after.
+  if (added.length === 1 && removed.length === 1) parts.push(`${removed[0]} → ${added[0]}`);
+  else {
+    for (const x of added) parts.push(`新增「${x}」`);
+    for (const x of removed) parts.push(`去掉「${x}」`);
+  }
+  return parts.join('，') || '效果提升';
+}
+// Upgrade result entry: "已训练：XXX（伤害 7 → 10）".
+function upgradeEntry(ctx, id, random) {
+  const diff = ctx.upgradeDiff ? ctx.upgradeDiff(id) : '';
+  return { kind: 'upgrade', id, random: !!random, diff, text: `已${ctx.labels.upgrade}：${ctx.cardName(id)}${diff ? `（${diff}）` : ''}` };
+}
+
 function upgradeRandom(s, n, ctx, out) {
   for (let i = 0; i < n; i++) {
     const pool = s.deck.filter(c => ctx.upgradeable(s, c));
@@ -9846,6 +9904,7 @@ function upgradeRandom(s, n, ctx, out) {
     const c = pool[Math.floor(ctx.rand(s) * pool.length)];
     c.up = true;
     out.push(`${ctx.cardName(c.id)} ${ctx.labels.upgrade}完成`);
+    noteResult(s, upgradeEntry(ctx, c.id, true));
   }
 }
 
@@ -9855,6 +9914,7 @@ function transformCard(s, c, ctx, out) {
   const idx = s.deck.findIndex(x => x.uid === c.uid);
   s.deck.splice(idx, 1, ctx.newCard(s, id, false));
   out.push(`${ctx.cardName(c.id)} 变换为 ${ctx.cardName(id)}`);
+  noteResult(s, { kind: 'transform', id, from: c.id, random: true, text: `已变换：${ctx.cardName(c.id)} → ${ctx.cardName(id)}` });
 }
 
 // Applies ops. `picked` is the chosen deck card for a {pick} op. Returns
@@ -9862,25 +9922,26 @@ function transformCard(s, c, ctx, out) {
 function applyOps(s, ops, ctx, picked = null, out = []) {
   let fight = null;
   for (const op of ops || []) {
-    if (op.money) { s.money = Math.max(0, s.money + op.money); out.push(`${op.money > 0 ? '+' : '−'}${Math.abs(op.money)} ${ctx.labels.money}`); }
-    if (op.hp > 0) { const n = Math.min(op.hp, s.maxHp - s.hp); s.hp += n; out.push(`回复 ${n} ${ctx.labels.hp}`); }
-    if (op.hp < 0) { s.hp = Math.max(1, s.hp + op.hp); out.push(`失去 ${-op.hp} ${ctx.labels.hp}`); }
-    if (op.healPct) { const n = Math.min(Math.ceil(s.maxHp * op.healPct), s.maxHp - s.hp); s.hp += n; out.push(`回复 ${n} ${ctx.labels.hp}`); }
-    if (op.maxHp > 0) { s.maxHp += op.maxHp; s.hp += op.maxHp; out.push(`最大${ctx.labels.hp} +${op.maxHp}`); }
-    if (op.maxHp < 0) { s.maxHp = Math.max(1, s.maxHp + op.maxHp); s.hp = Math.min(s.hp, s.maxHp); out.push(`最大${ctx.labels.hp} −${-op.maxHp}`); }
+    if (op.money) { s.money = Math.max(0, s.money + op.money); out.push(`${op.money > 0 ? '+' : '−'}${Math.abs(op.money)} ${ctx.labels.money}`); noteResult(s, { kind: 'money', text: `${ctx.labels.money} ${op.money > 0 ? '+' : '−'}${Math.abs(op.money)}` }); }
+    if (op.hp > 0) { const n = Math.min(op.hp, s.maxHp - s.hp); s.hp += n; out.push(`回复 ${n} ${ctx.labels.hp}`); noteResult(s, { kind: 'hp', text: `回复 ${n} ${ctx.labels.hp}` }); }
+    if (op.hp < 0) { s.hp = Math.max(1, s.hp + op.hp); out.push(`失去 ${-op.hp} ${ctx.labels.hp}`); noteResult(s, { kind: 'hp', text: `失去 ${-op.hp} ${ctx.labels.hp}` }); }
+    if (op.healPct) { const n = Math.min(Math.ceil(s.maxHp * op.healPct), s.maxHp - s.hp); s.hp += n; out.push(`回复 ${n} ${ctx.labels.hp}`); noteResult(s, { kind: 'hp', text: `回复 ${n} ${ctx.labels.hp}` }); }
+    if (op.maxHp > 0) { s.maxHp += op.maxHp; s.hp += op.maxHp; out.push(`最大${ctx.labels.hp} +${op.maxHp}`); noteResult(s, { kind: 'maxHp', text: `最大${ctx.labels.hp} +${op.maxHp}` }); }
+    if (op.maxHp < 0) { s.maxHp = Math.max(1, s.maxHp + op.maxHp); s.hp = Math.min(s.hp, s.maxHp); out.push(`最大${ctx.labels.hp} −${-op.maxHp}`); noteResult(s, { kind: 'maxHp', text: `最大${ctx.labels.hp} −${-op.maxHp}` }); }
     if (op.equip) {
       const got = ctx.gainEquip(s);
-      if (got) out.push(`获得${ctx.labels.equip}「${got}」`);
-      else { s.money += op.equip.fallback; out.push(`${ctx.labels.equip}已集齐，改为 +${op.equip.fallback} ${ctx.labels.money}`); }
+      if (got) { out.push(`获得${ctx.labels.equip}「${got}」`); noteResult(s, { kind: 'equip', random: true, text: `获得${ctx.labels.equip}：${got}${ctx.equipDesc?.(got) ? `（${ctx.equipDesc(got)}）` : ''}` }); }
+      else { s.money += op.equip.fallback; out.push(`${ctx.labels.equip}已集齐，改为 +${op.equip.fallback} ${ctx.labels.money}`); noteResult(s, { kind: 'money', random: true, text: `${ctx.labels.equip}已集齐，改为 ${ctx.labels.money} +${op.equip.fallback}` }); }
     }
     if (op.curse) {
       const id = op.curse === true ? ctx.curseIds[Math.floor(ctx.rand(s) * ctx.curseIds.length)] : op.curse;
       s.deck.push(ctx.newCard(s, id, false));
       out.push(`加入「${ctx.cardName(id)}」`);
+      noteResult(s, { kind: 'curse', id, random: op.curse === true, text: `加入${ctx.labels.curse}：${ctx.cardName(id)}${ctx.cardText?.(id) ? `（${ctx.cardText(id)}）` : ''}` });
     }
     if (op.card) {
       const id = ctx.randomCard(s, op.card);
-      if (id) { s.deck.push(ctx.newCard(s, id, !!op.up)); out.push(`获得「${ctx.cardName(id)}」${op.up ? '（已' + ctx.labels.upgrade + '）' : ''}`); }
+      if (id) { s.deck.push(ctx.newCard(s, id, !!op.up)); out.push(`获得「${ctx.cardName(id)}」${op.up ? '（已' + ctx.labels.upgrade + '）' : ''}`); noteResult(s, { kind: 'card', id, random: true, text: `获得卡牌：${ctx.cardName(id)}${op.up ? `（已${ctx.labels.upgrade}）` : ''}` }); }
     }
     if (op.upgradeRandom) upgradeRandom(s, op.upgradeRandom, ctx, out);
     if (op.transformRandom) for (let i = 0; i < op.transformRandom; i++) {
@@ -9890,14 +9951,15 @@ function applyOps(s, ops, ctx, picked = null, out = []) {
     if (op.pick) {
       if (!picked) throw Error('需要选择一张牌');
       const c = s.deck.find(x => x.uid === picked.uid);
-      if (op.pick === 'upgrade') { c.up = true; out.push(`${ctx.cardName(c.id)} ${ctx.labels.upgrade}完成`); }
-      else if (op.pick === 'remove' || op.pick === 'cleanse') { s.deck = s.deck.filter(x => x.uid !== c.uid); out.push(`移除「${ctx.cardName(c.id)}」`); }
+      if (op.pick === 'upgrade') { c.up = true; out.push(`${ctx.cardName(c.id)} ${ctx.labels.upgrade}完成`); noteResult(s, upgradeEntry(ctx, c.id, false)); }
+      else if (op.pick === 'remove' || op.pick === 'cleanse') { s.deck = s.deck.filter(x => x.uid !== c.uid); out.push(`移除「${ctx.cardName(c.id)}」`); noteResult(s, { kind: 'remove', id: c.id, text: `已移除：${ctx.cardName(c.id)}` }); }
       else if (op.pick === 'transform') transformCard(s, c, ctx, out);
-      else if (op.pick === 'duplicate') { s.deck.push(ctx.newCard(s, c.id, !!c.up)); out.push(`复制「${ctx.cardName(c.id)}」`); }
+      else if (op.pick === 'duplicate') { s.deck.push(ctx.newCard(s, c.id, !!c.up)); out.push(`复制「${ctx.cardName(c.id)}」`); noteResult(s, { kind: 'duplicate', id: c.id, text: `已复制：${ctx.cardName(c.id)}${c.up ? '（已' + ctx.labels.upgrade + '）' : ''}` }); }
     }
     if (op.gamble) {
       const won = ctx.rand(s) < op.gamble.p;
       out.push(won ? '赌中了' : '没赌中');
+      noteResult(s, { kind: 'gamble', random: true, won, text: won ? `判定成功（成功率 ${Math.round(op.gamble.p * 100)}%）` : `判定失败（成功率 ${Math.round(op.gamble.p * 100)}%）` });
       const r = applyOps(s, won ? op.gamble.win : op.gamble.lose, ctx, picked, out);
       if (r.fight) fight = r.fight;
     }
@@ -9906,7 +9968,7 @@ function applyOps(s, ops, ctx, picked = null, out = []) {
   return { log: out, fight };
 }
 
-return {pickKind,pickCandidates,opsReason,describeOps,applyOps};
+return {pickKind,pickCandidates,opsReason,describeOps,noteResult,setResultTitle,hasRandomResult,upgradeDiffText,upgradeEntry,applyOps};
 })();
 const module6=(()=>{
 // season-map.js
@@ -10537,10 +10599,12 @@ const { SKINS } = module8;
 
 // Runs created with rules >= 1 get traits, the opening, equipment and supplies.
 // Older saves and server records without `rules` replay exactly as before.
-const RULES_VERSION = 3;
+const RULES_VERSION = 4;
 // Rules 3 (2026-09-24): group fights, weak/strong encounter pools, three boss
 // candidates per act, keyword cards. Rules 1 stays accepted so its records replay.
-const RULES_VERSIONS = [1, 3];
+// Rules 4 (2026-09-25): rules 3 with an easier first act (ENEMY_TUNING_V4) after
+// players died before the act-1 boss. Rules 1 and 3 records replay unchanged.
+const RULES_VERSIONS = [1, 3, 4];
 const ROLES = ['决斗','哨位','控场','先锋','自由人'];
 
 // Numbers live here so the engine, PvP and the displayed text never disagree.
@@ -10714,8 +10778,18 @@ const ENEMY_TUNING_V3 = {
  2:{weak:{hp:1.35,dmg:1.25},normal:{hp:1.5,dmg:1.38},elite:{hp:1.5,dmg:1.38},boss:{hp:1.8,dmg:1.5,growth:2}},
  3:{weak:{hp:1.55,dmg:1.4},normal:{hp:1.7,dmg:1.52},elite:{hp:1.7,dmg:1.52},boss:{hp:1.9,dmg:1.6,growth:3}}
 };
+// Rules 4: the first half of act 1 is eased most. `normalEarly` / `eliteEarly`
+// apply to act-1 fights on floors 1–EARLY_STEP (after the weak floors); later
+// act-1 fights, the act-1 boss and acts 2–3 change less. Difficulty levels
+// still multiply on top.
+const EARLY_STEP = 8;
+const ENEMY_TUNING_V4 = {
+ 1:{weak:{hp:1.08,dmg:1.2},normalEarly:{hp:1.12,dmg:1.15},normal:{hp:1.25,dmg:1.3},eliteEarly:{hp:1.1,dmg:1.1},elite:{hp:1.2,dmg:1.2},boss:{hp:1.3,dmg:1.25}},
+ 2:{weak:{hp:1.35,dmg:1.25},normal:{hp:1.5,dmg:1.38},elite:{hp:1.5,dmg:1.38},boss:{hp:1.8,dmg:1.5,growth:2}},
+ 3:{weak:{hp:1.55,dmg:1.4},normal:{hp:1.7,dmg:1.52},elite:{hp:1.7,dmg:1.52},boss:{hp:1.9,dmg:1.6,growth:3}}
+};
 
-return {RULES_VERSION,RULES_VERSIONS,ROLES,TRAIT_TUNING,REGION_TRAITS,ASCENSION_LEVELS,MAX_ASCENSION,OPENING_OPTIONS,OPENING_FREE,OPENING_TRADE,RARITY,GEAR,ECON_VERSION,GEAR_UNLOCKS,SKIP_FUNDS,REROLL_BASE,REROLL_STEP,INVESTMENTS,ENERGY_GEAR,gearName,SUPPLY_RARITY_WEIGHTS,SUPPLIES,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,ENEMY_TUNING,ENEMY_TUNING_V2,ENEMY_TUNING_V3};
+return {RULES_VERSION,RULES_VERSIONS,ROLES,TRAIT_TUNING,REGION_TRAITS,ASCENSION_LEVELS,MAX_ASCENSION,OPENING_OPTIONS,OPENING_FREE,OPENING_TRADE,RARITY,GEAR,ECON_VERSION,GEAR_UNLOCKS,SKIP_FUNDS,REROLL_BASE,REROLL_STEP,INVESTMENTS,ENERGY_GEAR,gearName,SUPPLY_RARITY_WEIGHTS,SUPPLIES,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,ENEMY_TUNING,ENEMY_TUNING_V2,ENEMY_TUNING_V3,EARLY_STEP,ENEMY_TUNING_V4};
 })();
 const module10=(()=>{
 // Generated by tools/assign-card-rarity.mjs from card rules only (cost, effect value,
@@ -11295,15 +11369,15 @@ function awardRun(progress, key, runId, xp) {
 return {UNLOCK_TIERS,UNLOCK_CARDS_PER_TIER,UNLOCK_XP,XP_RULES,planCardUnlocks,unlockedFrom,tierOfId,validTier,tierOfXp,runXp,normalizeProgress,progressTier,progressGearTier,awardRun};
 })();
 const module13=(()=>{
-const { VERSION, CARDS, PLAYER_IDS, SKINS, ENEMIES, START, effects, xEffects, cardName, REGIONS, TACTICS, WA_GROUPS } = module8;
+const { VERSION, CARDS, PLAYER_IDS, SKINS, ENEMIES, START, effects, xEffects, cardName, compactLines, REGIONS, TACTICS, WA_GROUPS } = module8;
 const { buildMap, availableNodes } = module6;
 const { CURSES, CURSE_RULES, EXTRA_STATUS_RULES } = module2;
 const { WA_EVENTS, WA_EVENT_POOLS, WA_CRATE_LOOT } = module11;
-const { opsReason, describeOps, applyOps, pickKind, pickCandidates } = module5;
+const { opsReason, describeOps, applyOps, pickKind, pickCandidates, noteResult, setResultTitle, upgradeEntry, upgradeDiffText } = module5;
 const { freshUnknownOdds, resolveUnknown, blockedUnknownKinds, rollCrateSize } = module4;
 const { routeSteps, CURRENT_MAP_VERSION, MAP_VERSIONS } = module3;
 const { CARD_RARITY, RARITY_ORDER } = module10;
-const { RULES_VERSION, RULES_VERSIONS, ROLES, TRAIT_TUNING, OPENING_FREE, OPENING_TRADE, GEAR, SUPPLIES, ENERGY_GEAR, SUPPLY_RARITY_WEIGHTS, SUPPLY_PRICES, GEAR_PRICES, BASE_SUPPLY_SLOTS, GEAR_SLOTS, GEAR_SELL, MAX_ASCENSION, ENEMY_TUNING, ENEMY_TUNING_V2, ENEMY_TUNING_V3, gearName, ECON_VERSION, GEAR_UNLOCKS, SKIP_FUNDS, REROLL_BASE, REROLL_STEP, INVESTMENTS } = module9;
+const { RULES_VERSION, RULES_VERSIONS, ROLES, TRAIT_TUNING, OPENING_FREE, OPENING_TRADE, GEAR, SUPPLIES, ENERGY_GEAR, SUPPLY_RARITY_WEIGHTS, SUPPLY_PRICES, GEAR_PRICES, BASE_SUPPLY_SLOTS, GEAR_SLOTS, GEAR_SELL, MAX_ASCENSION, ENEMY_TUNING, ENEMY_TUNING_V2, ENEMY_TUNING_V3, ENEMY_TUNING_V4, EARLY_STEP, gearName, ECON_VERSION, GEAR_UNLOCKS, SKIP_FUNDS, REROLL_BASE, REROLL_STEP, INVESTMENTS } = module9;
 const { planCardUnlocks, unlockedFrom, tierOfId, validTier, UNLOCK_TIERS } = module12;
 const clone = x => structuredClone(x);
 const log = (s,text) => s.logs.push({node:s.node,turn:s.battle?.turn||0,text});
@@ -11322,6 +11396,8 @@ const R = s => s?.mode==='season'&&(s.rules||0)>=1;
 // Rules 3: group fights, weak/strong encounter pools, the boss pool and keyword
 // cards (虚无/固有/X 费/成长). Older records keep rules 1 and replay unchanged.
 const R3 = s => s?.mode==='season'&&(s.rules||0)>=3;
+// Rules 4: rules 3 with the eased first act (ENEMY_TUNING_V4).
+const R4 = s => s?.mode==='season'&&(s.rules||0)>=4;
 // The card pool a season recruits from (rules-3 regions swap in keyword cards).
 const poolOf = s => R3(s)?REGIONS[s.region].pool3:REGIONS[s.region].pool;
 // Map version of a season: records without the field were played on the older
@@ -11366,6 +11442,9 @@ function loseHp(s,n){
 }
 function heal(s,n,label){const got=Math.max(0,Math.min(n,s.maxHp-s.hp));s.hp+=got;if(label)log(s,`${label}：回复 ${got} 声望。`);return got;}
 function randomCurse(s){return CURSES[2+Math.floor(random(s)*(CURSES.length-2))];}
+// Result entries for effects the player did not pick (shown after the action).
+function curseEntry(id){return {kind:'curse',id,random:true,text:`加入俱乐部隐患：${CARDS[id]?.name||id}${CURSE_RULES[id]?.text?`（${CURSE_RULES[id].text}）`:''}`};}
+function gearEntry(s,id){return {kind:'equip',id,random:true,text:`获得装备：${gearName(id)}${GEAR[id]?.text?`（${GEAR[id].text}）`:''}${s.gearOffer===id?'，装备槽已满，请替换或放弃':''}`};}
 function pick(s,list){return list.length?list[Math.floor(random(s)*list.length)]:null;}
 function weighted(s,weights){const keys=Object.keys(weights).filter(k=>weights[k]>0),total=keys.reduce((n,k)=>n+weights[k],0);let roll=random(s)*total;for(const k of keys){roll-=weights[k];if(roll<0)return k;}return keys[keys.length-1];}
 function gearPool(s,rarity,exclude=[]){return Object.keys(GEAR).filter(id=>GEAR[id].rarity===rarity&&!s.skins.includes(id)&&!exclude.includes(id)&&!gearLocked(s,id));}
@@ -11490,7 +11569,7 @@ function createSeason(seed='first-season',tutorial=false,region='CN',opts={}) {
   Object.assign(s,{rules,ascension,supplies:[],supplyChance:40,counters:{},flags:{}});
   if(econ)Object.assign(s,{econ,unlockTier,gearTier,invest:[],freeRerolls:0});
   if(ascension>=6)s.hp=Math.round(s.maxHp*.9);
-  if(ascension>=9){const curse=randomCurse(s);s.deck.push(instance(s,curse.id));log(s,`难度 9：牌组加入 ${curse.name}。`);}
+  if(ascension>=9){const curse=randomCurse(s);s.deck.push(instance(s,curse.id));log(s,`难度 9：牌组加入 ${curse.name}。`);noteResult(s,curseEntry(curse.id),'难度 9 开局');}
   if(ascension)log(s,`难度等级 ${ascension}。`);
   createOpening(s);
  }
@@ -11516,7 +11595,7 @@ function startBattle(s,id) {
  if(b.draw.some(c=>CARDS[c.id].innate))b.draw=[...b.draw.filter(c=>CARDS[c.id].innate),...b.draw.filter(c=>!CARDS[c.id].innate)];
  log(s,group?`比赛开始：${group.name}（${group.members.length} 名对手）。`:`比赛开始：${enemy.name}，对手防线 ${b.enemyHp}。`); beginTurn(s);
 }
-function tuningFor(s){return (R3(s)?ENEMY_TUNING_V3:mapVersionOf(s)>=2?ENEMY_TUNING_V2:ENEMY_TUNING)[s.act];}
+function tuningFor(s){return (R4(s)?ENEMY_TUNING_V4:R3(s)?ENEMY_TUNING_V3:mapVersionOf(s)>=2?ENEMY_TUNING_V2:ENEMY_TUNING)[s.act];}
 function setupRulesBattle(s,id){
  const b=s.battle;
  b.rt={temps:0,extraBlock:0,pacNext:'TK01'};b.tt={};
@@ -11530,7 +11609,9 @@ function setupRulesBattle(s,id){
 function setupRulesEnemy(s,id){
  const b=s.battle,kind=enemyKind(s,id),asc=s.ascension||0,node=R3(s)?s.map?.nodes.find(n=>n.key===s.currentNode):null;
  // Rules 3: weak-pool fights on the first floors use their own (lighter) tuning.
- const tune=tuningFor(s)?.[kind==='normal'&&node?.weak?'weak':kind]||{};
+ // Rules 4: act-1 fights on the first EARLY_STEP floors use the lighter *Early tuning.
+ const table=tuningFor(s)||{},early=R4(s)&&node&&node.step<=EARLY_STEP&&table[kind+'Early']?kind+'Early':kind;
+ const tune=table[kind==='normal'&&node?.weak?'weak':early]||{};
  const hpK=(tune.hp??1)*((kind==='normal'?asc>=7:asc>=8)?1.1:1);
  const dmgK=(tune.dmg??1)*(kind==='normal'?(asc>=2?1.1:1):kind==='elite'?(asc>=3?1.15:1):(asc>=4?1.1:1));
  if(hpK!==1){b.enemyMaxHp=Math.round(ENEMIES[id].hp*hpK);b.enemyHp=b.enemyMaxHp;}
@@ -11959,7 +12040,7 @@ function advance(s) {
  else throw Error('无效赛程节点');
 }
 function advanceSeason(s) {
- if(s.eventBonus){const bonus=s.eventBonus;delete s.eventBonus;log(s,`约战额外奖励：${applyOps(s,bonus,WA_CTX).log.join('，')}。`);}
+ if(s.eventBonus){const bonus=s.eventBonus;delete s.eventBonus;log(s,`约战额外奖励：${applyOps(s,bonus,WA_CTX).log.join('，')}。`);setResultTitle(s,'约战额外奖励');}
  if(s.currentNode) {
   if(!s.completed.includes(s.currentNode))s.completed.push(s.currentNode);
 
@@ -12094,10 +12175,10 @@ function performRules(s,a,requirePhase){
   else if(o.id==='remove1'){if(!s.deck.some(c=>!removalReason(s,c.uid)))throw Error('没有可移除的牌');pickPhase('remove',1,true);}
   else if(o.id==='train1'){if(!upgradable(s).length)throw Error('没有可训练的牌');pickPhase('upgrade',1,true);}
   else if(o.id==='recruit23'){if(!o.offers.length)throw Error('没有候选选手');pickPhase('recruit',1,true,o.offers);}
-  else if(o.id==='hpForGear'){const loss=Math.ceil(s.maxHp*.1);s.maxHp-=loss;s.hp=Math.min(s.hp,s.maxHp);log(s,`高强度商业赛：最大声望 -${loss}。`);if(o.gear)gainGear(s,o.gear);finishOpening(s,o.id);}
-  else if(o.id==='curseForStar'){s.deck.push(instance(s,o.curse));s.money+=150;log(s,`豪门注资：资金 +150，加入 ${CARDS[o.curse].name}。`);if(o.offers.length)pickPhase('recruit',1,false,o.offers);else finishOpening(s,o.id);}
+  else if(o.id==='hpForGear'){const loss=Math.ceil(s.maxHp*.1);s.maxHp-=loss;s.hp=Math.min(s.hp,s.maxHp);log(s,`高强度商业赛：最大声望 -${loss}。`);noteResult(s,{kind:'maxHp',text:`最大声望 −${loss}`},'高强度商业赛');if(o.gear){gainGear(s,o.gear);noteResult(s,gearEntry(s,o.gear));}finishOpening(s,o.id);}
+  else if(o.id==='curseForStar'){s.deck.push(instance(s,o.curse));s.money+=150;log(s,`豪门注资：资金 +150，加入 ${CARDS[o.curse].name}。`);noteResult(s,{kind:'money',text:'资金 +150'},'豪门注资');noteResult(s,curseEntry(o.curse));if(o.offers.length)pickPhase('recruit',1,false,o.offers);else finishOpening(s,o.id);}
   else if(o.id==='moneyForTrain'){s.money=0;log(s,'全员加练：资金清零。');const n=Math.min(2,upgradable(s).length);if(n)pickPhase('upgrade',n,false);else finishOpening(s,o.id);}
-  else if(o.id==='trainRandom'){const c=s.deck.find(c=>c.uid===o.uid);if(c&&!c.up){c.up=true;log(s,`常规合同：训练 ${cardName(c)}。`);}finishOpening(s,o.id);}
+  else if(o.id==='trainRandom'){const c=s.deck.find(c=>c.uid===o.uid);if(c&&!c.up){c.up=true;log(s,`常规合同：训练 ${cardName(c)}。`);noteResult(s,upgradeEntry(WA_CTX,c.id,true),'常规合同');}finishOpening(s,o.id);}
   else throw Error('未知签约选项');
   return true;}
  case 'openingPick':{
@@ -12177,7 +12258,7 @@ function useSupply(s,slot){
 }
 function act(state,action) {
  if(action.rev!==undefined&&action.rev!==state.rev)return {state,error:'界面已更新，请使用当前操作'};
- const s=clone(state);try{perform(s,action);}catch(e){return {state,error:e.message};}
+ const s=clone(state);delete s.lastResult;try{perform(s,action);}catch(e){return {state,error:e.message};}
  s.rev++;const clean={...action};delete clean.rev;s.actions.push(clean);return {state:s,error:null};
 }
 function replay(record) {
@@ -12208,6 +12289,9 @@ const WA_CTX={
  rand:s=>random(s),
  newCard:(s,id,up)=>instance(s,id,up),
  cardName:id=>CARDS[id]?.name||id,
+ cardText:id=>CURSE_RULES[id]?.text||'',
+ equipDesc:name=>(Object.values(GEAR).find(g=>g.name===name)||Object.values(SKINS).find(k=>k.name===name))?.text||'',
+ upgradeDiff:id=>upgradeDiffText(compactLines({id,up:false}),compactLines({id,up:true})),
  upgradeable:(s,c)=>!!CARDS[c.id]?.trainable&&!c.up,
  removable:(s,c)=>!removalReason(s,c.uid),
  transformable:(s,c)=>!removalReason(s,c.uid),
@@ -12253,6 +12337,8 @@ function crateSeason(s,a){
   if(!r.skin){r.bonusMoney=loot.bonus;s.money+=loot.bonus;r.upgrade=loot.upgrade&&s.deck.some(c=>WA_CTX.upgradeable(s,c));}
   s.crate.opened=true;s.crate.result=r;
   log(s,`打开补给箱：资金 +${money+r.bonusMoney}${r.skin?`，获得皮肤「${r.skin}」`:''}。`);
+  noteResult(s,{kind:'money',random:true,inline:true,text:`资金 +${money+r.bonusMoney}`},'补给箱');
+  if(r.skin)noteResult(s,{kind:'equip',random:true,inline:true,text:`获得装备：${r.skin}`});
  } else if(a.choice==='leave'){
   if(!s.crate.opened)throw Error('先打开补给箱');
   delete s.crate;advanceSeason(s);
@@ -12301,6 +12387,7 @@ function pickSeasonEvent(s,a){
 }
 function resolveSeasonEvent(s,opt,picked){
  const {log:lines,fight}=applyOps(s,opt.ops,WA_CTX,picked);
+ setResultTitle(s,`${WA_EVENTS[s.eventId].title} · ${opt.title}`);
  log(s,`${WA_EVENTS[s.eventId].title} · ${opt.title}：${lines.join('，')||'无变化'}。`);
  delete s.pendingEvent;
  if(fight){
@@ -12390,7 +12477,7 @@ function observe(s) {
  delete visible.seed;return {...visible,legalActions:legalActions(s)};
 }
 
-return {clone,random,shuffle,instance,SEASON_EVENTS,R,R3,poolOf,mapVersionOf,hasGear,E,hasInvest,regionUnlockPlan,offerPool,gearLocked,rerollPrice,supplySlots,marketPrice,rollGear,gearSellValue,restHeal,restRate,offers,RARITY_ODDS,SHOP_PRICE_RANGE,rarityChances,rarityOffers,shopPrice,createRun,createSeason,startBattle,focusFoe,battleFoes,livingFoes,foeViews,cardTargeted,drawCards,enemyMaxHp,bossGrowth,damage,intent,intentText,incomingDamage,canPlay,removalReason,healAmount,act,replay,preview,describeSeasonEvent,legalActions,observe};
+return {clone,random,shuffle,instance,SEASON_EVENTS,R,R3,R4,poolOf,mapVersionOf,hasGear,E,hasInvest,regionUnlockPlan,offerPool,gearLocked,rerollPrice,supplySlots,marketPrice,rollGear,gearSellValue,restHeal,restRate,offers,RARITY_ODDS,SHOP_PRICE_RANGE,rarityChances,rarityOffers,shopPrice,createRun,createSeason,startBattle,focusFoe,battleFoes,livingFoes,foeViews,cardTargeted,drawCards,enemyMaxHp,bossGrowth,damage,intent,intentText,incomingDamage,canPlay,removalReason,healAmount,act,replay,preview,describeSeasonEvent,legalActions,observe};
 })();
 const module14=(()=>{
 // Presentation-only routing. The underlying seeded game and its replays are unchanged.
@@ -16272,6 +16359,7 @@ function waAct(state, action) {
     if (s.phase !== 'activity') return { state, error: '此操作已失效' };
     if (s.gearOffer) return { state, error: '请先处理新装备：替换一件或放弃' };
     if (s.mode !== 'season') return { state, error: '未知操作' };
+    delete s.lastResult;
     s.maxHp += 6;
     s.hp += 6;
     s.rev++;
@@ -17027,6 +17115,57 @@ function formatDuration(ms) {
 return {HISTORY_CAP,SCORE_RULES,DIFFICULTY_BONUS,computeScore,scoreFormulaText,loadHistory,addHistory,recordRun,SEEN_CATEGORIES,emptyCollection,loadCollection,mergeSeen,markSeen,seenCount,newTracker,trackStep,loadTracker,saveTracker,filterSortCards,SORT_LABELS,COST_FILTERS,formatDuration};
 })();
 const module28=(()=>{
+// Result summary popup, both demos. The engines record every effect the
+// player did not pick (random upgrade, transform, curse, card, equipment…) in
+// state.lastResult = {title, entries:[{kind, text, random}]}; the UI calls
+// showResultSummary after the action resolves so the player sees exactly what
+// happened ("已训练：XXX（伤害 7 → 10）").
+const ICONS = { upgrade: '▲', transform: '⇄', curse: '✖', card: '＋', equip: '◆', money: '¤', hp: '♥', maxHp: '♥', remove: '－', duplicate: '⧉', gamble: '?' };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// Only actions with at least one random (unpicked) effect deserve a popup.
+// Entries marked `inline` are already shown on the room screen (补给箱 loot).
+function resultWorthShowing(result) {
+  return !!result?.entries?.some(e => e.random && !e.inline);
+}
+
+function resultSummaryHtml(result) {
+  const rows = result.entries.filter(e => !e.inline).map(e => `<li class="rs-entry rs-${esc(e.kind)}${e.random ? ' is-random' : ''}"><span class="rs-icon" aria-hidden="true">${ICONS[e.kind] || '•'}</span><span class="rs-text">${esc(e.text)}</span>${e.random ? '<em class="rs-tag">随机</em>' : ''}</li>`).join('');
+  return `<div class="rs-panel" role="dialog" aria-modal="true" aria-labelledby="rs-title"><p class="rs-eyebrow">结果</p><h2 id="rs-title">${esc(result.title || '结果')}</h2><ul class="rs-list">${rows}</ul><button type="button" class="rs-ok">知道了</button></div>`;
+}
+
+let open = null;
+function closeResultSummary() {
+  if (!open) return;
+  const { el, onClose } = open;
+  open = null;
+  el.remove();
+  document.removeEventListener('keydown', onKey, true);
+  onClose?.();
+}
+function onKey(e) {
+  if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); closeResultSummary(); }
+}
+
+// Shows the popup (replacing an open one). Closes on the button, Esc/Enter or a
+// click outside the panel.
+function showResultSummary(result, { onClose } = {}) {
+  if (!resultWorthShowing(result) || typeof document === 'undefined') return false;
+  closeResultSummary();
+  const el = document.createElement('div');
+  el.className = 'rs-overlay';
+  el.innerHTML = resultSummaryHtml(result);
+  el.addEventListener('click', e => { if (e.target === el || e.target.closest('.rs-ok')) closeResultSummary(); });
+  document.body.append(el);
+  open = { el, onClose };
+  document.addEventListener('keydown', onKey, true);
+  el.querySelector('.rs-ok').focus({ preventScroll: true });
+  return true;
+}
+
+return {resultWorthShowing,resultSummaryHtml,closeResultSummary,showResultSummary};
+})();
+const module29=(()=>{
 // Phone feel shared by both demos: long-press card details and the drag hint.
 // Plain ES module with named exports and no imports (bundled into the Wa app.js
 // by tools/build-browser.mjs, imported directly by the new demo).
@@ -17164,7 +17303,7 @@ function touchLift(element, y) {
 
 return {cardSheetOpen,closeCardSheet,openCardSheet,attachCardDetail,showDragHint,hideDragHint,touchLift};
 })();
-const module29=(()=>{
+const module30=(()=>{
 const { cardArtwork, opponentArtwork, artCredit } = module17;
 const { combatEvents } = module18;
 const { clearCombatFx, captureCombatStage, playCombatFx } = module22;
@@ -17178,8 +17317,9 @@ const { createWaSeason, waAct:act, waLegalActions:legalActions } = module23;
 const { syncWaCheckpoint } = module24;
 const { flyCardsFromPile, flyCardsToPile } = module25;
 const { soundToggleHtml } = module19;
-const { attachCardDetail, cardSheetOpen, showDragHint, hideDragHint, touchLift } = module28;
+const { attachCardDetail, cardSheetOpen, showDragHint, hideDragHint, touchLift } = module29;
 const { waJuiceAction, waSlam } = module21;
+const { showResultSummary, resultWorthShowing } = module28;
 const { computeScore, scoreFormulaText, recordRun, loadHistory, markSeen, loadCollection, seenCount, trackStep, loadTracker, saveTracker, newTracker, filterSortCards, SORT_LABELS, COST_FILTERS, formatDuration } = module27;
 const createSeason=(seed,tutorial,region,opts)=>createWaSeason(seed,tutorial,region,crypto.randomUUID(),opts);
 // Difficulty unlocks per region: the highest level the player may pick (0–10).
@@ -17521,7 +17661,7 @@ function crateRoom(){
  const s=state,c=s.crate,r=c.result,names={small:'小型补给箱',medium:'中型补给箱',large:'大型补给箱'};
  const box=`<div class="crate-box crate-${c.size}${c.opened?' is-open':''}" aria-hidden="true"><span class="crate-lid"></span><span class="crate-body"></span></div>`;
  if(!c.opened)return `${heading('补给箱',names[c.size],'赛事物流送来的补给。越大的箱子越少见，资金越多，也越可能装着皮肤。')}${box}<div class="page-footer">${button('打开补给箱',{type:'crate',choice:'open'},'primary')}</div>`;
- const loot=`<div class="crate-loot"><div class="crate-loot-item"><b>+${r.money+r.bonusMoney}</b><span>资金${r.bonusMoney?`（含无皮肤补偿 ${r.bonusMoney}）`:''}</span></div>${r.skin?`<div class="crate-loot-item"><b>${esc(r.skin)}</b><span>${esc(Object.values(SKINS).find(k=>k.name===r.skin)?.text||'')}</span></div>`:`<div class="crate-loot-item"><span>${r.upgrade?'箱里没有皮肤，附赠一次免费训练：选择一张牌升级，或直接离开。':'箱里没有皮肤。'}</span></div>`}</div>`;
+ const loot=`<div class="crate-loot"><div class="crate-loot-item"><b>+${r.money+r.bonusMoney}</b><span>资金${r.bonusMoney?`（含无皮肤补偿 ${r.bonusMoney}）`:''}</span></div>${r.skin?`<div class="crate-loot-item"><b>${esc(r.skin)}</b><span>${esc((Object.values(GEAR).find(k=>k.name===r.skin)||Object.values(SKINS).find(k=>k.name===r.skin))?.text||'')}</span></div>`:`<div class="crate-loot-item"><span>${r.upgrade?'箱里没有皮肤，附赠一次免费训练：选择一张牌升级，或直接离开。':'箱里没有皮肤。'}</span></div>`}</div>`;
  const ups=r.upgrade?`<div class="cards">${s.deck.filter(x=>CARDS[x.id].trainable&&!x.up).map(x=>card(x,{instance:true,upgrade:true,label:'免费训练',action:{type:'crateUpgrade',uid:x.uid}})).join('')}</div>`:'';
  return `${heading('补给箱 · 已打开',names[c.size],'')}${box}${loot}${ups}<div class="page-footer">${button(r.upgrade?'不训练，继续赛程 →':'收好物资，继续赛程 →',{type:'crate',choice:'leave'},r.upgrade?'secondary':'primary')}</div>`;
 }
@@ -17572,17 +17712,24 @@ function commit(action){
   const events=combatEvents(before,r.state,action);
   waJuiceAction(before,r.state,action,played,enemyAt);
   setTimeout(()=>{banner.querySelector('strong').textContent='对手回合';banner.querySelector('span').textContent='攻击结算';playCombatFx(events,stage);globalThis.characterStages?.cueFromTransition('wa',before,r.state,action);},enemyAt);
-  setTimeout(()=>{state=r.state;screen=nextScreen(before,state);selected=null;echo=null;dialog.close();persist();notice(saveError||'');render();if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);const drawn=[...document.querySelectorAll('.hand-fan [data-select]')];flyCardsFromPile(drawn,document.querySelector('.draw-pile')).finally(()=>{turnAnimating=false;});},enemyAt+(reduceMotion()?420:1100));
+  setTimeout(()=>{state=r.state;screen=nextScreen(before,state);selected=null;echo=null;dialog.close();persist();notice(saveError||'');render();presentResult(state);if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);const drawn=[...document.querySelectorAll('.hand-fan [data-select]')];flyCardsFromPile(drawn,document.querySelector('.draw-pile')).finally(()=>{turnAnimating=false;});},enemyAt+(reduceMotion()?420:1100));
   return r;
  }
  waJuiceAction(before,r.state,action,played);
- state=r.state;screen=nextScreen(before,state);selected=null;echo=played||null;dialog.close();persist();notice(saveError||'');render();
+ state=r.state;screen=nextScreen(before,state);selected=null;echo=played||null;dialog.close();persist();notice(saveError||'');render();presentResult(state);
  if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);
  animateResolution(before,state,played,flight,action);
  if(played)waSlam();
  playCombatFx(combatEvents(before,state,action),stage);
  globalThis.characterStages?.cueFromTransition('wa',before,state,action);
  return r;
+}
+// Tells the player exactly what a random effect did (which card was trained,
+// which curse or equipment arrived): a popup outside combat, the notice line in combat.
+function presentResult(s){
+ const r=s?.lastResult;if(!resultWorthShowing(r))return;
+ if(s.phase==='combat'){notice(r.entries.filter(e=>e.random&&!e.inline).map(e=>e.text).join('；'));return;}
+ showResultSummary(r);
 }
 function showModal(title,html){hideCardTip();modal.innerHTML=`<h2 tabindex="-1">${title}</h2>${html}`;if(!dialog.open)dialog.showModal();modal.querySelector('h2').focus({preventScroll:true});dialog.scrollTop=0;}
 function showCards(title,cards,note=''){showModal(title,`${note?`<p>${note}</p>`:''}<div class="cards modal-cards">${cards.map(c=>card(c,{instance:!!c.uid})).join('')}</div>`);}
@@ -17737,7 +17884,7 @@ function start(tutorial,selectedRegion){
  const r=selectedRegion||region;
  const progress=loadUnlocks();
  state=createSeason(seed,tutorial,r,{rules:RULES_VERSION,ascension:chosenAsc(r),econ:ECON_VERSION,unlockTier:progressTier(progress,r),gearTier:progressGearTier(progress)});
- atHome=false;screen=state.phase==='map'?'map':'room';selected=null;echo=null;dialog.close();persist();notice(state.phase==='opening'?'赞助商签约日：选择一份开季合同。':'选择路线图上发亮的节点，开始第一场比赛。');render();
+ atHome=false;screen=state.phase==='map'?'map':'room';selected=null;echo=null;dialog.close();persist();notice(state.phase==='opening'?'赞助商签约日：选择一份开季合同。':'选择路线图上发亮的节点，开始第一场比赛。');render();presentResult(state);
 }
 function startLegacy(tutorial){const seed=`season-${crypto.randomUUID()}`;state=createRun(seed,tutorial);atHome=false;screen='map';selected=null;echo=null;dialog.close();persist();notice('选择路线图上发亮的节点，开始第一场比赛。');render();}
 function handleUI(name){

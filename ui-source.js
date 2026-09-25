@@ -13,6 +13,7 @@ import {flyCardsFromPile,flyCardsToPile} from './shared/card-pile-motion.js';
 import {soundToggleHtml} from './shared/sfx.js';
 import {attachCardDetail,cardSheetOpen,showDragHint,hideDragHint,touchLift} from './shared/touch-feel.js';
 import {waJuiceAction,waSlam} from './wa-juice.js';
+import {showResultSummary,resultWorthShowing} from './shared/result-summary.js';
 import {computeScore,scoreFormulaText,recordRun,loadHistory,markSeen,loadCollection,seenCount,trackStep,loadTracker,saveTracker,newTracker,filterSortCards,SORT_LABELS,COST_FILTERS,formatDuration} from './shared/run-meta.js';
 const createSeason=(seed,tutorial,region,opts)=>createWaSeason(seed,tutorial,region,crypto.randomUUID(),opts);
 // Difficulty unlocks per region: the highest level the player may pick (0–10).
@@ -354,7 +355,7 @@ function crateRoom(){
  const s=state,c=s.crate,r=c.result,names={small:'小型补给箱',medium:'中型补给箱',large:'大型补给箱'};
  const box=`<div class="crate-box crate-${c.size}${c.opened?' is-open':''}" aria-hidden="true"><span class="crate-lid"></span><span class="crate-body"></span></div>`;
  if(!c.opened)return `${heading('补给箱',names[c.size],'赛事物流送来的补给。越大的箱子越少见，资金越多，也越可能装着皮肤。')}${box}<div class="page-footer">${button('打开补给箱',{type:'crate',choice:'open'},'primary')}</div>`;
- const loot=`<div class="crate-loot"><div class="crate-loot-item"><b>+${r.money+r.bonusMoney}</b><span>资金${r.bonusMoney?`（含无皮肤补偿 ${r.bonusMoney}）`:''}</span></div>${r.skin?`<div class="crate-loot-item"><b>${esc(r.skin)}</b><span>${esc(Object.values(SKINS).find(k=>k.name===r.skin)?.text||'')}</span></div>`:`<div class="crate-loot-item"><span>${r.upgrade?'箱里没有皮肤，附赠一次免费训练：选择一张牌升级，或直接离开。':'箱里没有皮肤。'}</span></div>`}</div>`;
+ const loot=`<div class="crate-loot"><div class="crate-loot-item"><b>+${r.money+r.bonusMoney}</b><span>资金${r.bonusMoney?`（含无皮肤补偿 ${r.bonusMoney}）`:''}</span></div>${r.skin?`<div class="crate-loot-item"><b>${esc(r.skin)}</b><span>${esc((Object.values(GEAR).find(k=>k.name===r.skin)||Object.values(SKINS).find(k=>k.name===r.skin))?.text||'')}</span></div>`:`<div class="crate-loot-item"><span>${r.upgrade?'箱里没有皮肤，附赠一次免费训练：选择一张牌升级，或直接离开。':'箱里没有皮肤。'}</span></div>`}</div>`;
  const ups=r.upgrade?`<div class="cards">${s.deck.filter(x=>CARDS[x.id].trainable&&!x.up).map(x=>card(x,{instance:true,upgrade:true,label:'免费训练',action:{type:'crateUpgrade',uid:x.uid}})).join('')}</div>`:'';
  return `${heading('补给箱 · 已打开',names[c.size],'')}${box}${loot}${ups}<div class="page-footer">${button(r.upgrade?'不训练，继续赛程 →':'收好物资，继续赛程 →',{type:'crate',choice:'leave'},r.upgrade?'secondary':'primary')}</div>`;
 }
@@ -405,17 +406,24 @@ function commit(action){
   const events=combatEvents(before,r.state,action);
   waJuiceAction(before,r.state,action,played,enemyAt);
   setTimeout(()=>{banner.querySelector('strong').textContent='对手回合';banner.querySelector('span').textContent='攻击结算';playCombatFx(events,stage);globalThis.characterStages?.cueFromTransition('wa',before,r.state,action);},enemyAt);
-  setTimeout(()=>{state=r.state;screen=nextScreen(before,state);selected=null;echo=null;dialog.close();persist();notice(saveError||'');render();if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);const drawn=[...document.querySelectorAll('.hand-fan [data-select]')];flyCardsFromPile(drawn,document.querySelector('.draw-pile')).finally(()=>{turnAnimating=false;});},enemyAt+(reduceMotion()?420:1100));
+  setTimeout(()=>{state=r.state;screen=nextScreen(before,state);selected=null;echo=null;dialog.close();persist();notice(saveError||'');render();presentResult(state);if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);const drawn=[...document.querySelectorAll('.hand-fan [data-select]')];flyCardsFromPile(drawn,document.querySelector('.draw-pile')).finally(()=>{turnAnimating=false;});},enemyAt+(reduceMotion()?420:1100));
   return r;
  }
  waJuiceAction(before,r.state,action,played);
- state=r.state;screen=nextScreen(before,state);selected=null;echo=played||null;dialog.close();persist();notice(saveError||'');render();
+ state=r.state;screen=nextScreen(before,state);selected=null;echo=played||null;dialog.close();persist();notice(saveError||'');render();presentResult(state);
  if(before.node!==state.node||before.phase!==state.phase||before.act!==state.act)window.scrollTo(0,0);
  animateResolution(before,state,played,flight,action);
  if(played)waSlam();
  playCombatFx(combatEvents(before,state,action),stage);
  globalThis.characterStages?.cueFromTransition('wa',before,state,action);
  return r;
+}
+// Tells the player exactly what a random effect did (which card was trained,
+// which curse or equipment arrived): a popup outside combat, the notice line in combat.
+function presentResult(s){
+ const r=s?.lastResult;if(!resultWorthShowing(r))return;
+ if(s.phase==='combat'){notice(r.entries.filter(e=>e.random&&!e.inline).map(e=>e.text).join('；'));return;}
+ showResultSummary(r);
 }
 function showModal(title,html){hideCardTip();modal.innerHTML=`<h2 tabindex="-1">${title}</h2>${html}`;if(!dialog.open)dialog.showModal();modal.querySelector('h2').focus({preventScroll:true});dialog.scrollTop=0;}
 function showCards(title,cards,note=''){showModal(title,`${note?`<p>${note}</p>`:''}<div class="cards modal-cards">${cards.map(c=>card(c,{instance:!!c.uid})).join('')}</div>`);}
@@ -570,7 +578,7 @@ function start(tutorial,selectedRegion){
  const r=selectedRegion||region;
  const progress=loadUnlocks();
  state=createSeason(seed,tutorial,r,{rules:RULES_VERSION,ascension:chosenAsc(r),econ:ECON_VERSION,unlockTier:progressTier(progress,r),gearTier:progressGearTier(progress)});
- atHome=false;screen=state.phase==='map'?'map':'room';selected=null;echo=null;dialog.close();persist();notice(state.phase==='opening'?'赞助商签约日：选择一份开季合同。':'选择路线图上发亮的节点，开始第一场比赛。');render();
+ atHome=false;screen=state.phase==='map'?'map':'room';selected=null;echo=null;dialog.close();persist();notice(state.phase==='opening'?'赞助商签约日：选择一份开季合同。':'选择路线图上发亮的节点，开始第一场比赛。');render();presentResult(state);
 }
 function startLegacy(tutorial){const seed=`season-${crypto.randomUUID()}`;state=createRun(seed,tutorial);atHome=false;screen='map';selected=null;echo=null;dialog.close();persist();notice('选择路线图上发亮的节点，开始第一场比赛。');render();}
 function handleUI(name){

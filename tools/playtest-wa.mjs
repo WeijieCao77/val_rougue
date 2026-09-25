@@ -5,7 +5,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createWaSeason, waAct, waLegalActions } from '../wa-season.js';
 import { CARDS, REGIONS, effects } from '../content.js';
-import { ENEMY_TUNING_V2, ENEMY_TUNING_V3, TRAIT_TUNING, GEAR, RULES_VERSION } from '../wa-rules.js';
+import { ENEMY_TUNING_V2, ENEMY_TUNING_V3, ENEMY_TUNING_V4, TRAIT_TUNING, GEAR, RULES_VERSION } from '../wa-rules.js';
 import { describeSeasonEvent, battleFoes } from '../engine.js';
 import { WA_EVENTS } from '../wa-events.js';
 
@@ -15,9 +15,9 @@ const SEED_START = Number(args['seed-start'] || 1); // --seed-start N: first see
 const ACTS = Number(args.acts || 3);
 const OUT = args.out || 'reports/playtest/wa.json';
 const RULES = Number(args.rules ?? RULES_VERSION);
-const ENEMY_TUNING = RULES >= 3 ? ENEMY_TUNING_V3 : ENEMY_TUNING_V2;
+const ENEMY_TUNING = RULES >= 4 ? ENEMY_TUNING_V4 : RULES >= 3 ? ENEMY_TUNING_V3 : ENEMY_TUNING_V2;
 // --tune '{"1":{"normal":{"hp":1.2}}}' overrides opponent tuning for balance sweeps.
-if (args.tune) { const t = JSON.parse(args.tune); for (const [act, kinds] of Object.entries(t)) for (const [kind, v] of Object.entries(kinds)) Object.assign(ENEMY_TUNING[act][kind], v); }
+if (args.tune) { const t = JSON.parse(args.tune); for (const [act, kinds] of Object.entries(t)) for (const [kind, v] of Object.entries(kinds)) ENEMY_TUNING[act][kind] = Object.assign(ENEMY_TUNING[act][kind] || {}, v); }
 // --trait '{"PAC":{"every":4}}' overrides region trait numbers for balance sweeps.
 if (args.trait) { const t = JSON.parse(args.trait); for (const [r, v] of Object.entries(t)) Object.assign(TRAIT_TUNING[r], v); }
 const ASC = Number(args.asc || 0);
@@ -54,6 +54,37 @@ function searchTurn(s, budget = 2000) {
   dfs(s, []);
   return best.line;
 }
+// Careless baseline: play affordable cards in hand order.
+function naiveTurn(s) {
+  const line = []; let cur = s;
+  for (let i = 0; i < 40 && cur.phase === 'combat'; i++) {
+    const a = legal(cur).find(x => x.type === 'play');
+    if (!a) break;
+    cur = step(cur, a); line.push(a);
+  }
+  return line;
+}
+// Careless-human proxy: one card of lookahead against the visible intent, no
+// sequence planning and no peeking at the draw order.
+function casualTurn(s) {
+  const line = []; let cur = s;
+  for (let i = 0; i < 40 && cur.phase === 'combat'; i++) {
+    const endNow = evaluate(step(cur, { type: 'end' }));
+    let best = null;
+    for (const a of legal(cur).filter(x => x.type === 'play')) {
+      const next = step(cur, a);
+      const drew = next.phase === 'combat' ? Math.max(0, next.battle.hand.length - cur.battle.hand.length + 1) : 0;
+      const v = (next.phase === 'combat' ? evaluate(step(next, { type: 'end' })) : evaluate(next)) + drew * 3;
+      if (!best || v > best.v) best = { a, v, next };
+    }
+    if (!best || best.v < endNow - 0.5) break;
+    cur = best.next; line.push(best.a);
+  }
+  return line;
+}
+function mulberry(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const POLICIES = (args.policies || 'smart').split(',');
+
 const effValue = e => e.type === 'combo' ? effValue(e.effect) * 0.7 : e.type === 'hit' ? e.n * e.times + (e.ifVuln || e.ifBurn || 0) * 0.5 : e.type === 'block' ? e.n * 0.8 : e.type === 'draw' ? e.n * 3 : e.type === 'weak' || e.type === 'vulnerable' ? e.n * 3 : e.type === 'burn' ? e.n * 2.2 : e.type === 'deploy' ? e.n * e.turns * 0.8 : e.type === 'overload' ? -4 * e.n : e.type === 'strength' ? 5 * e.n : ['burnMultiply', 'detonate', 'bodyslam', 'fireTurrets'].includes(e.type) ? 7 : 2;
 const hitValue = id => {
   const c = CARDS[id]; if (!c) return 0;
@@ -92,9 +123,10 @@ function pickCard(s, kind, uids) {
   return ['remove', 'transform', 'cleanse'].includes(kind) ? sorted[0] : sorted[sorted.length - 1];
 }
 
-function playRun(seed, region) {
+function playRun(seed, region, policy = 'smart') {
   let s = RULES ? createWaSeason(seed, false, region, seed, { rules: RULES, ascension: ASC, ...ECON }) : createWaSeason(seed, false, region, seed);
-  const log = { seed, region, fights: [], result: null, opening: null, gear: [], suppliesUsed: 0 };
+  const log = { seed, region, policy, fights: [], result: null, opening: null, gear: [], suppliesUsed: 0 };
+  const rand = mulberry(seed.length * 7919 + region.length + seed.charCodeAt(seed.length - 1));
   let fight = null, guard = 0;
   while (s.phase !== 'result' && guard++ < 6000) {
     if (s.gearOffer) {
@@ -112,7 +144,7 @@ function playRun(seed, region) {
       const moves = acts.filter(a => a.type === 'chooseNode');
       const nodes = moves.map(a => s.map.nodes.find(n => n.key === a.key));
       const pct = s.hp / s.maxHp;
-      const rank = n => ({ elite: pct > 0.7 ? 5 : -3, rest: pct < 0.5 ? 6 : 1, shop: s.money >= 90 ? 4 : 0, event: 3, crate: 4, battle: 2.5, boss: 9 }[n.kind] ?? 0);
+      const rank = n => ({ elite: pct > 0.7 ? 5 : -3, rest: pct < 0.5 ? 6 : 1, shop: s.money >= 90 ? 4 : 0, event: 3, crate: 4, battle: 2.5, boss: 9 }[n.kind] ?? 0) + (policy === 'casual' ? rand() * 4 : 0);
       const i = nodes.map(rank).reduce((bi, v, j, arr) => (v > arr[bi] ? j : bi), 0);
       s = step(s, moves[i]);
       if (s.phase === 'combat') fight = { act: s.act, enemy: s.battle.group || s.battle.enemy, kind: nodes[i].kind, hp0: s.hp, turns: 0 };
@@ -130,10 +162,10 @@ function playRun(seed, region) {
     if (s.phase === 'bossGear') { const a = acts.find(x => x.id) || acts[0]; s = step(s, a); continue; }
     if (s.phase === 'combat') {
       // Supplies: spend them in elite/boss fights, or when reputation is low.
-      const boss = fight?.kind === 'elite' || fight?.kind === 'boss' || /EL|B0/.test(s.battle.enemy);
-      while ((s.supplies || []).length && s.phase === 'combat' && (boss && s.battle.turn <= 2 || s.hp / s.maxHp < 0.4)) { s = step(s, { type: 'useSupply', slot: 0 }); log.suppliesUsed++; }
+      const boss = policy === 'smart' && (fight?.kind === 'elite' || fight?.kind === 'boss' || /EL|B0/.test(s.battle.enemy));
+      while (policy !== 'naive' && (s.supplies || []).length && s.phase === 'combat' && (boss && s.battle.turn <= 2 || s.hp / s.maxHp < 0.4)) { s = step(s, { type: 'useSupply', slot: 0 }); log.suppliesUsed++; }
       if (s.phase !== 'combat') { fight.turns++; fight.lost = fight.hp0 - s.hp; fight.won = s.phase !== 'result' || s.outcome === 'win'; log.fights.push(fight); continue; }
-      for (const a of searchTurn(s)) { s = step(s, a); if (s.phase !== 'combat') break; }
+      for (const a of policy === 'naive' ? naiveTurn(s) : policy === 'casual' ? casualTurn(s) : searchTurn(s)) { s = step(s, a); if (s.phase !== 'combat') break; }
       if (s.phase === 'combat') s = step(s, { type: 'end' });
       fight.turns++;
       if (s.phase !== 'combat') { fight.lost = fight.hp0 - s.hp; fight.won = s.phase !== 'result' || s.outcome === 'win'; log.fights.push(fight); }
@@ -143,10 +175,15 @@ function playRun(seed, region) {
       const take = acts.find(a => a.type === 'takeSupply' && a.replace === undefined);
       if (take) { s = step(s, take); continue; }
       const offers = acts.filter(a => a.id).sort((x, y) => hitValue(y.id) - hitValue(x.id));
+      // smart takes the best offer if it is good enough; naive always the first
+      // one shown; casual a random one of the decent offers.
+      const fine = offers.filter(a => hitValue(a.id) > 5);
+      const pickOffer = policy === 'naive' ? acts.find(a => a.id) : policy === 'casual' ? (fine.length ? fine[Math.floor(rand() * fine.length)] : null) : (offers[0] && hitValue(offers[0].id) > 6 ? offers[0] : null);
       // Skipping: keep one free market reroll in reserve when funds are healthy, otherwise take the funds.
       const skip = s.econ ? { type: 'recruit', id: null, comp: !s.freeRerolls && s.money >= 80 ? 'reroll' : 'money' } : { type: 'recruit', id: null };
-      if (!(offers[0] && hitValue(offers[0].id) > 6)) (log.skips ||= []).push(skip.comp || 'none');
-      s = step(s, offers[0] && hitValue(offers[0].id) > 6 ? offers[0] : skip);
+      if (!pickOffer) (log.skips ||= []).push(skip.comp || 'none');
+      const takeIt = !!pickOffer;
+      s = step(s, takeIt ? pickOffer : skip);
       continue;
     }
     if (s.phase === 'skin') { s = step(s, acts.find(a => a.id) || acts[0]); continue; }
@@ -209,7 +246,7 @@ function playRun(seed, region) {
 
 const runs = [];
 const REGION_LIST = args.regions ? args.regions.split(',') : Object.keys(REGIONS);
-for (const region of REGION_LIST) for (let i = SEED_START; i < SEED_START + SEEDS; i++) { const t = Date.now(); const r = playRun(`wa-pt-${i}`, region); runs.push(r); console.error(region, i, r.result, r.diedAt || '', ((Date.now() - t) / 1000).toFixed(0) + 's', 'fights', r.fights.length, 'maxTurns', Math.max(0, ...r.fights.map(f => f.turns)), r.opening || '', r.gear.join(',')); }
+for (const policy of POLICIES) for (const region of REGION_LIST) for (let i = SEED_START; i < SEED_START + SEEDS; i++) { const t = Date.now(); const r = playRun(`wa-pt-${i}`, region, policy); runs.push(r); console.error(policy, region, i, r.result, r.diedAt || '', ((Date.now() - t) / 1000).toFixed(0) + 's', 'fights', r.fights.length, 'maxTurns', Math.max(0, ...r.fights.map(f => f.turns)), r.opening || '', r.gear.join(',')); }
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, JSON.stringify(runs, null, 1));
 const by = {};
@@ -225,3 +262,21 @@ if (ECON.econ) {
   const count = list => list.reduce((m, k) => ((m[k] = (m[k] || 0) + 1), m), {});
   console.log('unlock', UNLOCK, 'invest', JSON.stringify(count(runs.flatMap(r => r.invest || []))), 'skips', JSON.stringify(count(runs.flatMap(r => r.skips || []))), 'shop moves', JSON.stringify(count(runs.flatMap(r => r.shopMoves || []))));
 }
+
+// Per-policy run milestones: first fight / act-1 normal fight HP cost, reaching and clearing the act-1 boss, full clear.
+const avg = xs => (xs.length ? +(xs.reduce((x, y) => x + y, 0) / xs.length).toFixed(1) : null);
+const isBoss1 = f => f.act === 1 && (f.kind === 'boss' || /^S_B0\d$|^S_BG\d$/.test(f.enemy));
+const milestones = rs => ({
+  runs: rs.length,
+  firstFightLost: avg(rs.map(r => r.fights[0]).filter(Boolean).map(f => f.lost)),
+  act1NormalLost: avg(rs.flatMap(r => r.fights.filter(f => f.act === 1 && (f.kind === 'battle' || f.kind === 'event') && !f.fromEvent)).map(f => f.lost)),
+  act1EliteLost: avg(rs.flatMap(r => r.fights.filter(f => f.act === 1 && f.kind === 'elite')).map(f => f.lost)),
+  reachBoss1: Math.round(100 * rs.filter(r => r.fights.some(isBoss1)).length / rs.length) + '%',
+  act1Clear: Math.round(100 * rs.filter(r => r.result === 'win' || r.result === 'act-clear' || r.fights.some(f => isBoss1(f) && f.won)).length / rs.length) + '%',
+  act2Clear: Math.round(100 * rs.filter(r => r.result === 'win' || r.fights.some(f => f.act === 3) || (ACTS === 2 && r.result === 'act-clear')).length / rs.length) + '%',
+  fullClear: Math.round(100 * rs.filter(r => r.result === 'win').length / rs.length) + '%'
+});
+console.log('milestones by policy:');
+console.table(Object.fromEntries(POLICIES.map(p => [p, milestones(runs.filter(r => r.policy === p))])));
+console.log('milestones by region and policy:');
+console.table(Object.fromEntries(REGION_LIST.flatMap(g => POLICIES.map(p => [`${g}/${p}`, milestones(runs.filter(r => r.region === g && r.policy === p))]))));

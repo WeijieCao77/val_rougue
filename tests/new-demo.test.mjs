@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, RELICS, SUPPLIES } from '../new-demo/content.js';
+import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, ENEMIES, RELICS, SUPPLIES, EARLY_EASE } from '../new-demo/content.js';
 import * as engine from '../new-demo/engine.js';
 import { createRun, act, legalActions, categoryUpgradeQuote } from '../new-demo/engine.js';
 import { buildMap } from '../new-demo/season-map.js';
@@ -995,7 +995,8 @@ test('赛前准备：各选项效果与后续选牌阶段', () => {
   assert.equal(s.warmup, 3);
   s = act(s, { type: 'enter', key: s.map.starts[0] }).state;
   delete s.battle.enemyHp; const e = s.battle.enemies[0];
-  assert.equal(e.maxHp, Math.round(ENEMIES[e.id].hp * 0.7));
+  // 热身赛 multiplies the (act-1 weak-floor eased) opening HP by 0.7.
+  assert.equal(e.maxHp, Math.round(Math.round(ENEMIES[e.id].hp * EARLY_EASE.weak.hp) * 0.7));
   assert.equal(s.warmup, 2);
 });
 
@@ -1023,6 +1024,8 @@ test('难度等级：0级与原版完全一致，各级规则叠加生效', () =
 test('难度等级：敌人生命与伤害按类别提高，10级决战对手开局3层火力', () => {
   const fight = (asc, enemy, kind) => {
     const run = createRun('asc-fight', 'breach', { ascension: asc });
+    // Act 2 of the run: the act-1 early easing (tested below) stays out of these numbers.
+    run.act = 2;
     run.map = { nodes: [{ key: 'x', kind, enemy, step: 5 }], edges: [], starts: ['x'], bossId: 'x' };
     return act(run, { type: 'enter', key: 'x' }).state.battle.enemies[0];
   };
@@ -1039,6 +1042,25 @@ test('难度等级：敌人生命与伤害按类别提高，10级决战对手开
   assert.equal(b0.statuses.strength || 0, 0);
   assert.equal(b10.statuses.strength, 3);
   assert.equal(fight(3, 'E01', 'battle').maxHp, n0.maxHp, 'elite rules leave normal fights alone');
+});
+
+test('第一幕前半段减压：弱敌层、前 8 层普通战与强敌更轻，后半段略轻，Boss 与其他幕不变', () => {
+  const fight = (actNo, enemy, kind, step) => {
+    const run = createRun('ease-fight', 'breach');
+    run.act = actNo;
+    run.map = { nodes: [{ key: 'x', kind, enemy, step }], edges: [], starts: ['x'], bossId: 'x' };
+    return act(run, { type: 'enter', key: 'x' }).state.battle.enemies[0];
+  };
+  const hp = id => ENEMIES[id].hp;
+  assert.equal(fight(1, 'E01', 'battle', 2).maxHp, Math.round(hp('E01') * EARLY_EASE.weak.hp));
+  assert.equal(fight(1, 'E03', 'battle', 6).maxHp, Math.round(hp('E03') * EARLY_EASE.normal.hp));
+  assert.equal(fight(1, 'E03', 'battle', 12).maxHp, Math.round(hp('E03') * EARLY_EASE.late.hp));
+  assert.equal(fight(1, 'EL01', 'elite', 7).maxHp, Math.round(hp('EL01') * EARLY_EASE.elite.hp));
+  assert.equal(fight(1, 'EL01', 'elite', 12).maxHp, Math.round(hp('EL01') * EARLY_EASE.lateElite.hp));
+  assert.equal(fight(1, 'B01', 'boss', 16).maxHp, hp('B01'));
+  assert.equal(fight(2, 'A2_E03', 'battle', 3).maxHp, hp('A2_E03'));
+  for (const k of ['weak', 'normal', 'elite', 'late', 'lateElite']) assert.ok(EARLY_EASE[k].hp < 1 && EARLY_EASE[k].dmg < 1, k);
+  assert.ok(EARLY_EASE.weak.dmg <= EARLY_EASE.normal.dmg && EARLY_EASE.normal.dmg <= EARLY_EASE.late.dmg, 'first floors eased most');
 });
 
 // ----------------------------- 装备 / 补给品 / 决战奖励 -----------------------------

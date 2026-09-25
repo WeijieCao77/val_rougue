@@ -36,6 +36,7 @@ const modules = [
   'shared/card-pile-motion.js',
   'shared/status-icons.js',
   'shared/run-meta.js',
+  'shared/result-summary.js',
   'shared/touch-feel.js',
   'ui-source.js'
 ];

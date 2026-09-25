@@ -4,7 +4,7 @@ import {createSeason,act,instance,startBattle,legalActions,battleFoes,livingFoes
 import {buildMap,availableNodes} from '../season-map.js';
 import {CARDS,ENEMIES,REGIONS,WA_GROUPS,ENCOUNTER_POOLS,BOSS_POOL,BOSS_INFO,describe,compactLines} from '../content.js';
 import {createMatch,applyCommand} from '../online/duel.mjs';
-import {RULES_VERSION,RULES_VERSIONS} from '../wa-rules.js';
+import {RULES_VERSION,RULES_VERSIONS,ENEMY_TUNING_V3,ENEMY_TUNING_V4,EARLY_STEP} from '../wa-rules.js';
 
 const step=(s,a)=>{const r=act(s,a);assert.equal(r.error,null,JSON.stringify(a)+' '+r.error);return r.state;};
 const r3=(seed='r3',region='CN')=>createSeason(seed,false,region,{rules:3});
@@ -19,8 +19,8 @@ function fightWith(enemy,hand,{region='CN',seed='r3-fight'}={}){
 }
 const uidOf=(s,id)=>s.battle.hand.find(c=>c.id===id).uid;
 
-test('rules 3 is the current ruleset; rules 1 stays accepted for replays, 2 is unknown',()=>{
- assert.equal(RULES_VERSION,3);assert.deepEqual(RULES_VERSIONS,[1,3]);
+test('rules 4 is the current ruleset; rules 1 and 3 stay accepted for replays, 2 is unknown',()=>{
+ assert.equal(RULES_VERSION,4);assert.deepEqual(RULES_VERSIONS,[1,3,4]);
  assert.equal(r3().rules,3);
  assert.equal(createSeason('x',false,'CN',{rules:1}).rules,1);
  assert.throws(()=>createSeason('x',false,'CN',{rules:2}),/规则/);
@@ -168,4 +168,31 @@ test('PvP stays one-on-one and handles keyword cards (X, growth, ethereal, innat
  if(x){const hp=m.players[1-seat].hp;m=applyCommand(m,seat,{type:'play',uid:x.uid});assert.equal(m.players[seat].energy,0);assert.ok(m.players[1-seat].hp<hp);}
  m=applyCommand(m,seat,{type:'end'});
  assert.ok(!m.players[seat].hand.some(c=>c.id==='CNT27'),'ethereal left the hand');
+});
+
+// Rules 4 only changes opponent numbers (ENEMY_TUNING_V4); rules-3 seasons keep
+// ENEMY_TUNING_V3 so their records replay exactly.
+test('rules 4 eases act 1 (weak floors, early floors, elites, boss); rules 3 keeps its numbers',()=>{
+ const hpOf=(rules,pickNode)=>{
+  let s=createSeason('r4-tune',false,'CN',{rules});
+  s=step(s,{type:'opening',choice:'trainRandom'});
+  const node=pickNode(s.map.nodes);
+  s.currentNode=node.key;startBattle(s,node.enemy);
+  const base=ENEMIES[s.battle.enemy]?.hp;
+  return {max:s.battle.enemyMaxHp??base,base,dmgK:s.battle.dmgK||1,node};
+ };
+ const weak=n=>n.find(x=>x.kind==='battle'&&x.weak);
+ const early=n=>n.find(x=>x.kind==='battle'&&!x.weak&&x.step<=EARLY_STEP&&!WA_GROUPS[x.enemy]);
+ const late=n=>n.find(x=>x.kind==='battle'&&x.step>EARLY_STEP&&!WA_GROUPS[x.enemy]);
+ const boss=n=>n.find(x=>x.kind==='boss'&&!WA_GROUPS[x.enemy]);
+ for(const [pick,key] of [[weak,'weak'],[early,'normalEarly'],[late,'normal'],[boss,'boss']]){
+  const three=hpOf(3,pick),four=hpOf(4,pick);
+  if(!three.node)continue;
+  const k3=ENEMY_TUNING_V3[1][key==='normalEarly'?'normal':key],k4=ENEMY_TUNING_V4[1][key];
+  assert.equal(three.max,Math.round(three.base*k3.hp),`rules 3 ${key} hp`);
+  assert.equal(four.max,Math.round(four.base*k4.hp),`rules 4 ${key} hp`);
+  assert.ok(four.max<three.max&&four.dmgK<three.dmgK,`rules 4 ${key} is easier`);
+ }
+ // Acts 2 and 3 stay as they were.
+ assert.deepEqual(ENEMY_TUNING_V4[2],ENEMY_TUNING_V3[2]);assert.deepEqual(ENEMY_TUNING_V4[3],ENEMY_TUNING_V3[3]);
 });

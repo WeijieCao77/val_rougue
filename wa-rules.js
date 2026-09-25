@@ -7,10 +7,12 @@ import {SKINS} from './content.js';
 
 // Runs created with rules >= 1 get traits, the opening, equipment and supplies.
 // Older saves and server records without `rules` replay exactly as before.
-export const RULES_VERSION = 3;
+export const RULES_VERSION = 4;
 // Rules 3 (2026-09-24): group fights, weak/strong encounter pools, three boss
 // candidates per act, keyword cards. Rules 1 stays accepted so its records replay.
-export const RULES_VERSIONS = [1, 3];
+// Rules 4 (2026-09-25): rules 3 with an easier first act (ENEMY_TUNING_V4) after
+// players died before the act-1 boss. Rules 1 and 3 records replay unchanged.
+export const RULES_VERSIONS = [1, 3, 4];
 export const ROLES = ['决斗','哨位','控场','先锋','自由人'];
 
 // Numbers live here so the engine, PvP and the displayed text never disagree.
@@ -181,6 +183,16 @@ export const ENEMY_TUNING_V2 = {
 // Rules 3: tuning for the rules-3 encounter pools, boss pool and group fights.
 export const ENEMY_TUNING_V3 = {
  1:{weak:{hp:1.25,dmg:1.4},normal:{hp:1.32,dmg:1.4},elite:{hp:1.35,dmg:1.35},boss:{hp:1.4,dmg:1.35}},
+ 2:{weak:{hp:1.35,dmg:1.25},normal:{hp:1.5,dmg:1.38},elite:{hp:1.5,dmg:1.38},boss:{hp:1.8,dmg:1.5,growth:2}},
+ 3:{weak:{hp:1.55,dmg:1.4},normal:{hp:1.7,dmg:1.52},elite:{hp:1.7,dmg:1.52},boss:{hp:1.9,dmg:1.6,growth:3}}
+};
+// Rules 4: the first half of act 1 is eased most. `normalEarly` / `eliteEarly`
+// apply to act-1 fights on floors 1–EARLY_STEP (after the weak floors); later
+// act-1 fights, the act-1 boss and acts 2–3 change less. Difficulty levels
+// still multiply on top.
+export const EARLY_STEP = 8;
+export const ENEMY_TUNING_V4 = {
+ 1:{weak:{hp:1.08,dmg:1.2},normalEarly:{hp:1.12,dmg:1.15},normal:{hp:1.25,dmg:1.3},eliteEarly:{hp:1.1,dmg:1.1},elite:{hp:1.2,dmg:1.2},boss:{hp:1.3,dmg:1.25}},
  2:{weak:{hp:1.35,dmg:1.25},normal:{hp:1.5,dmg:1.38},elite:{hp:1.5,dmg:1.38},boss:{hp:1.8,dmg:1.5,growth:2}},
  3:{weak:{hp:1.55,dmg:1.4},normal:{hp:1.7,dmg:1.52},elite:{hp:1.7,dmg:1.52},boss:{hp:1.9,dmg:1.6,growth:3}}
 };

@@ -1,12 +1,12 @@
-import {VERSION,CARDS,PLAYER_IDS,SKINS,ENEMIES,START,effects,xEffects,cardName,REGIONS,TACTICS,WA_GROUPS} from './content.js';
+import {VERSION,CARDS,PLAYER_IDS,SKINS,ENEMIES,START,effects,xEffects,cardName,compactLines,REGIONS,TACTICS,WA_GROUPS} from './content.js';
 import {buildMap,availableNodes} from './season-map.js';
 import {CURSES,CURSE_RULES,EXTRA_STATUS_RULES} from './afflictions.js';
 import {WA_EVENTS,WA_EVENT_POOLS,WA_CRATE_LOOT} from './wa-events.js';
-import {opsReason,describeOps,applyOps,pickKind,pickCandidates} from './shared-event-core.js';
+import {opsReason,describeOps,applyOps,pickKind,pickCandidates,noteResult,setResultTitle,upgradeEntry,upgradeDiffText} from './shared-event-core.js';
 import {freshUnknownOdds,resolveUnknown,blockedUnknownKinds,rollCrateSize} from './shared-unknown-room.js';
 import {routeSteps,CURRENT_MAP_VERSION,MAP_VERSIONS} from './shared-route-generator.js';
 import {CARD_RARITY,RARITY_ORDER} from './card-rarity.js';
-import {RULES_VERSION,RULES_VERSIONS,ROLES,TRAIT_TUNING,OPENING_FREE,OPENING_TRADE,GEAR,SUPPLIES,ENERGY_GEAR,SUPPLY_RARITY_WEIGHTS,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,MAX_ASCENSION,ENEMY_TUNING,ENEMY_TUNING_V2,ENEMY_TUNING_V3,gearName,ECON_VERSION,GEAR_UNLOCKS,SKIP_FUNDS,REROLL_BASE,REROLL_STEP,INVESTMENTS} from './wa-rules.js';
+import {RULES_VERSION,RULES_VERSIONS,ROLES,TRAIT_TUNING,OPENING_FREE,OPENING_TRADE,GEAR,SUPPLIES,ENERGY_GEAR,SUPPLY_RARITY_WEIGHTS,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,MAX_ASCENSION,ENEMY_TUNING,ENEMY_TUNING_V2,ENEMY_TUNING_V3,ENEMY_TUNING_V4,EARLY_STEP,gearName,ECON_VERSION,GEAR_UNLOCKS,SKIP_FUNDS,REROLL_BASE,REROLL_STEP,INVESTMENTS} from './wa-rules.js';
 import {planCardUnlocks,unlockedFrom,tierOfId,validTier,UNLOCK_TIERS} from './shared-unlock.js';
 export const clone = x => structuredClone(x);
 const log = (s,text) => s.logs.push({node:s.node,turn:s.battle?.turn||0,text});
@@ -25,6 +25,8 @@ export const R = s => s?.mode==='season'&&(s.rules||0)>=1;
 // Rules 3: group fights, weak/strong encounter pools, the boss pool and keyword
 // cards (虚无/固有/X 费/成长). Older records keep rules 1 and replay unchanged.
 export const R3 = s => s?.mode==='season'&&(s.rules||0)>=3;
+// Rules 4: rules 3 with the eased first act (ENEMY_TUNING_V4).
+export const R4 = s => s?.mode==='season'&&(s.rules||0)>=4;
 // The card pool a season recruits from (rules-3 regions swap in keyword cards).
 export const poolOf = s => R3(s)?REGIONS[s.region].pool3:REGIONS[s.region].pool;
 // Map version of a season: records without the field were played on the older
@@ -69,6 +71,9 @@ function loseHp(s,n){
 }
 function heal(s,n,label){const got=Math.max(0,Math.min(n,s.maxHp-s.hp));s.hp+=got;if(label)log(s,`${label}：回复 ${got} 声望。`);return got;}
 function randomCurse(s){return CURSES[2+Math.floor(random(s)*(CURSES.length-2))];}
+// Result entries for effects the player did not pick (shown after the action).
+function curseEntry(id){return {kind:'curse',id,random:true,text:`加入俱乐部隐患：${CARDS[id]?.name||id}${CURSE_RULES[id]?.text?`（${CURSE_RULES[id].text}）`:''}`};}
+function gearEntry(s,id){return {kind:'equip',id,random:true,text:`获得装备：${gearName(id)}${GEAR[id]?.text?`（${GEAR[id].text}）`:''}${s.gearOffer===id?'，装备槽已满，请替换或放弃':''}`};}
 function pick(s,list){return list.length?list[Math.floor(random(s)*list.length)]:null;}
 function weighted(s,weights){const keys=Object.keys(weights).filter(k=>weights[k]>0),total=keys.reduce((n,k)=>n+weights[k],0);let roll=random(s)*total;for(const k of keys){roll-=weights[k];if(roll<0)return k;}return keys[keys.length-1];}
 function gearPool(s,rarity,exclude=[]){return Object.keys(GEAR).filter(id=>GEAR[id].rarity===rarity&&!s.skins.includes(id)&&!exclude.includes(id)&&!gearLocked(s,id));}
@@ -193,7 +198,7 @@ export function createSeason(seed='first-season',tutorial=false,region='CN',opts
   Object.assign(s,{rules,ascension,supplies:[],supplyChance:40,counters:{},flags:{}});
   if(econ)Object.assign(s,{econ,unlockTier,gearTier,invest:[],freeRerolls:0});
   if(ascension>=6)s.hp=Math.round(s.maxHp*.9);
-  if(ascension>=9){const curse=randomCurse(s);s.deck.push(instance(s,curse.id));log(s,`难度 9：牌组加入 ${curse.name}。`);}
+  if(ascension>=9){const curse=randomCurse(s);s.deck.push(instance(s,curse.id));log(s,`难度 9：牌组加入 ${curse.name}。`);noteResult(s,curseEntry(curse.id),'难度 9 开局');}
   if(ascension)log(s,`难度等级 ${ascension}。`);
   createOpening(s);
  }
@@ -219,7 +224,7 @@ export function startBattle(s,id) {
  if(b.draw.some(c=>CARDS[c.id].innate))b.draw=[...b.draw.filter(c=>CARDS[c.id].innate),...b.draw.filter(c=>!CARDS[c.id].innate)];
  log(s,group?`比赛开始：${group.name}（${group.members.length} 名对手）。`:`比赛开始：${enemy.name}，对手防线 ${b.enemyHp}。`); beginTurn(s);
 }
-function tuningFor(s){return (R3(s)?ENEMY_TUNING_V3:mapVersionOf(s)>=2?ENEMY_TUNING_V2:ENEMY_TUNING)[s.act];}
+function tuningFor(s){return (R4(s)?ENEMY_TUNING_V4:R3(s)?ENEMY_TUNING_V3:mapVersionOf(s)>=2?ENEMY_TUNING_V2:ENEMY_TUNING)[s.act];}
 function setupRulesBattle(s,id){
  const b=s.battle;
  b.rt={temps:0,extraBlock:0,pacNext:'TK01'};b.tt={};
@@ -233,7 +238,9 @@ function setupRulesBattle(s,id){
 function setupRulesEnemy(s,id){
  const b=s.battle,kind=enemyKind(s,id),asc=s.ascension||0,node=R3(s)?s.map?.nodes.find(n=>n.key===s.currentNode):null;
  // Rules 3: weak-pool fights on the first floors use their own (lighter) tuning.
- const tune=tuningFor(s)?.[kind==='normal'&&node?.weak?'weak':kind]||{};
+ // Rules 4: act-1 fights on the first EARLY_STEP floors use the lighter *Early tuning.
+ const table=tuningFor(s)||{},early=R4(s)&&node&&node.step<=EARLY_STEP&&table[kind+'Early']?kind+'Early':kind;
+ const tune=table[kind==='normal'&&node?.weak?'weak':early]||{};
  const hpK=(tune.hp??1)*((kind==='normal'?asc>=7:asc>=8)?1.1:1);
  const dmgK=(tune.dmg??1)*(kind==='normal'?(asc>=2?1.1:1):kind==='elite'?(asc>=3?1.15:1):(asc>=4?1.1:1));
  if(hpK!==1){b.enemyMaxHp=Math.round(ENEMIES[id].hp*hpK);b.enemyHp=b.enemyMaxHp;}
@@ -662,7 +669,7 @@ function advance(s) {
  else throw Error('无效赛程节点');
 }
 function advanceSeason(s) {
- if(s.eventBonus){const bonus=s.eventBonus;delete s.eventBonus;log(s,`约战额外奖励：${applyOps(s,bonus,WA_CTX).log.join('，')}。`);}
+ if(s.eventBonus){const bonus=s.eventBonus;delete s.eventBonus;log(s,`约战额外奖励：${applyOps(s,bonus,WA_CTX).log.join('，')}。`);setResultTitle(s,'约战额外奖励');}
  if(s.currentNode) {
   if(!s.completed.includes(s.currentNode))s.completed.push(s.currentNode);
 
@@ -797,10 +804,10 @@ function performRules(s,a,requirePhase){
   else if(o.id==='remove1'){if(!s.deck.some(c=>!removalReason(s,c.uid)))throw Error('没有可移除的牌');pickPhase('remove',1,true);}
   else if(o.id==='train1'){if(!upgradable(s).length)throw Error('没有可训练的牌');pickPhase('upgrade',1,true);}
   else if(o.id==='recruit23'){if(!o.offers.length)throw Error('没有候选选手');pickPhase('recruit',1,true,o.offers);}
-  else if(o.id==='hpForGear'){const loss=Math.ceil(s.maxHp*.1);s.maxHp-=loss;s.hp=Math.min(s.hp,s.maxHp);log(s,`高强度商业赛：最大声望 -${loss}。`);if(o.gear)gainGear(s,o.gear);finishOpening(s,o.id);}
-  else if(o.id==='curseForStar'){s.deck.push(instance(s,o.curse));s.money+=150;log(s,`豪门注资：资金 +150，加入 ${CARDS[o.curse].name}。`);if(o.offers.length)pickPhase('recruit',1,false,o.offers);else finishOpening(s,o.id);}
+  else if(o.id==='hpForGear'){const loss=Math.ceil(s.maxHp*.1);s.maxHp-=loss;s.hp=Math.min(s.hp,s.maxHp);log(s,`高强度商业赛：最大声望 -${loss}。`);noteResult(s,{kind:'maxHp',text:`最大声望 −${loss}`},'高强度商业赛');if(o.gear){gainGear(s,o.gear);noteResult(s,gearEntry(s,o.gear));}finishOpening(s,o.id);}
+  else if(o.id==='curseForStar'){s.deck.push(instance(s,o.curse));s.money+=150;log(s,`豪门注资：资金 +150，加入 ${CARDS[o.curse].name}。`);noteResult(s,{kind:'money',text:'资金 +150'},'豪门注资');noteResult(s,curseEntry(o.curse));if(o.offers.length)pickPhase('recruit',1,false,o.offers);else finishOpening(s,o.id);}
   else if(o.id==='moneyForTrain'){s.money=0;log(s,'全员加练：资金清零。');const n=Math.min(2,upgradable(s).length);if(n)pickPhase('upgrade',n,false);else finishOpening(s,o.id);}
-  else if(o.id==='trainRandom'){const c=s.deck.find(c=>c.uid===o.uid);if(c&&!c.up){c.up=true;log(s,`常规合同：训练 ${cardName(c)}。`);}finishOpening(s,o.id);}
+  else if(o.id==='trainRandom'){const c=s.deck.find(c=>c.uid===o.uid);if(c&&!c.up){c.up=true;log(s,`常规合同：训练 ${cardName(c)}。`);noteResult(s,upgradeEntry(WA_CTX,c.id,true),'常规合同');}finishOpening(s,o.id);}
   else throw Error('未知签约选项');
   return true;}
  case 'openingPick':{
@@ -880,7 +887,7 @@ function useSupply(s,slot){
 }
 export function act(state,action) {
  if(action.rev!==undefined&&action.rev!==state.rev)return {state,error:'界面已更新，请使用当前操作'};
- const s=clone(state);try{perform(s,action);}catch(e){return {state,error:e.message};}
+ const s=clone(state);delete s.lastResult;try{perform(s,action);}catch(e){return {state,error:e.message};}
  s.rev++;const clean={...action};delete clean.rev;s.actions.push(clean);return {state:s,error:null};
 }
 export function replay(record) {
@@ -911,6 +918,9 @@ const WA_CTX={
  rand:s=>random(s),
  newCard:(s,id,up)=>instance(s,id,up),
  cardName:id=>CARDS[id]?.name||id,
+ cardText:id=>CURSE_RULES[id]?.text||'',
+ equipDesc:name=>(Object.values(GEAR).find(g=>g.name===name)||Object.values(SKINS).find(k=>k.name===name))?.text||'',
+ upgradeDiff:id=>upgradeDiffText(compactLines({id,up:false}),compactLines({id,up:true})),
  upgradeable:(s,c)=>!!CARDS[c.id]?.trainable&&!c.up,
  removable:(s,c)=>!removalReason(s,c.uid),
  transformable:(s,c)=>!removalReason(s,c.uid),
@@ -956,6 +966,8 @@ function crateSeason(s,a){
   if(!r.skin){r.bonusMoney=loot.bonus;s.money+=loot.bonus;r.upgrade=loot.upgrade&&s.deck.some(c=>WA_CTX.upgradeable(s,c));}
   s.crate.opened=true;s.crate.result=r;
   log(s,`打开补给箱：资金 +${money+r.bonusMoney}${r.skin?`，获得皮肤「${r.skin}」`:''}。`);
+  noteResult(s,{kind:'money',random:true,inline:true,text:`资金 +${money+r.bonusMoney}`},'补给箱');
+  if(r.skin)noteResult(s,{kind:'equip',random:true,inline:true,text:`获得装备：${r.skin}`});
  } else if(a.choice==='leave'){
   if(!s.crate.opened)throw Error('先打开补给箱');
   delete s.crate;advanceSeason(s);
@@ -1004,6 +1016,7 @@ function pickSeasonEvent(s,a){
 }
 function resolveSeasonEvent(s,opt,picked){
  const {log:lines,fight}=applyOps(s,opt.ops,WA_CTX,picked);
+ setResultTitle(s,`${WA_EVENTS[s.eventId].title} · ${opt.title}`);
  log(s,`${WA_EVENTS[s.eventId].title} · ${opt.title}：${lines.join('，')||'无变化'}。`);
  delete s.pendingEvent;
  if(fight){
