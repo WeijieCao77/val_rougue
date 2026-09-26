@@ -16,6 +16,7 @@ const assets = new Map([
   ['/shared/card-gesture.js', ['shared/card-gesture.js', 'text/javascript; charset=utf-8']],
   ['/shared/touch-feel.js', ['shared/touch-feel.js', 'text/javascript; charset=utf-8']],
   ['/shared/tap-play.js', ['shared/tap-play.js', 'text/javascript; charset=utf-8']],
+  ['/shared/coach.js', ['shared/coach.js', 'text/javascript; charset=utf-8']],
   ['/shared/touch-feel.css', ['shared/touch-feel.css', 'text/css; charset=utf-8']],
   ['/shared/card-pile-motion.js', ['shared/card-pile-motion.js', 'text/javascript; charset=utf-8']],
   ['/shared/character-stage.css', ['shared/character-stage.css', 'text/css; charset=utf-8']],

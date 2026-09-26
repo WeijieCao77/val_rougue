@@ -4,6 +4,7 @@ import { CARDS, CARD_IDS, STATUS_CARDS, TEAMS, RELICS, TRAITS, FIELDS, ARCHETYPE
 import { statusBadges, statusBadge, statusIcon, highlightKeywords, keywordRules, STATUS_INFO } from '/shared/status-icons.js';
 import { attachCardDetail, openCardSheet, showDragHint, hideDragHint, trackLayer } from '/shared/touch-feel.js';
 import { tapPlayMode, tapCardAction, watchTapPlay, enforceTextFloor } from '/shared/tap-play.js';
+import { startCoach } from '/shared/coach.js';
 import { showResultSummary, resultWorthShowing } from '/shared/result-summary.js';
 import { ACTS } from './season-map.js';
 import { cardArt, combatArt, relicArt } from './art.js';
@@ -2242,6 +2243,15 @@ function initGlobalTooltip() {
 document.addEventListener('DOMContentLoaded', () => {
   initGlobalTooltip();
   initUpgradePeek();
+  // First fight: a few tips over the first two turns (once per browser).
+  startCoach({ key: 'new-demo-coach-v1', getTurn: () => state?.phase === 'combat' && state.battle ? state.battle.turn : null, steps: [
+  { turn: 1, sel: '.enemy-unit:not(.is-dead) .intent', text: '敌人头上显示它<b>下一步要做什么</b>，数字是它实际会造成的伤害。' },
+  { turn: 1, sel: '.ally-hud .energy-orb', text: '这是<b>能量</b>，每回合重新充满。卡牌角上的数字就是打出它要花的能量。' },
+  { turn: 1, sel: '#hand-area', text: () => tapPlayMode() ? '<b>点一下</b>卡牌选中，<b>再点一下</b>打出；有多个敌人时再点你要打的敌人。<b>长按</b>卡牌可以看详细说明。' : '把卡牌<b>拖到手牌上方松开</b>即可打出，也可以单击选中后再确认。鼠标在牌上<b>停留约 1 秒</b>会显示说明。' },
+  { turn: 1, sel: '#btn-end', text: '出完牌就点<b>结束回合</b>。敌人随后行动，没打出的手牌会被弃掉，下回合重新抽牌。' },
+  { turn: 2, sel: '.rm-incoming|.ally-vitals', text: '这里是本回合预计会受到的伤害。<b>布防</b>可以抵消伤害，布防到你下回合开始时清零。' },
+  { turn: 2, sel: '#pile-draw', text: '点牌堆可以查看里面有哪些牌。抽牌堆抽空后，弃牌堆会重新洗成抽牌堆。指引到此结束，祝你好运。' }
+] });
   // Phone back button closes an open modal (deck, piles, library, history…).
   const modalRoot = document.getElementById('modal-root');
   trackLayer(modalRoot, () => modalRoot.querySelector('.modal-overlay'), () => {

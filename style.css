@@ -2091,6 +2091,7 @@ button.rm-chip:focus-visible{outline:2px solid #e2c27a;outline-offset:2px}
 .rm-peek .tc{width:100%;max-width:none}
 [data-card-id]{-webkit-touch-callout:none}
 #card-tooltip.has-upgrade{width:470px;display:grid;grid-template-columns:minmax(0,1fr) 168px;gap:14px}
+#card-tooltip[hidden],#card-tooltip.has-upgrade[hidden]{display:none!important}
 #card-tooltip .tip-upgrade{border-left:1px solid #93836955;padding-left:12px}
 #card-tooltip .tip-upgrade>small{display:block;color:#b9d99a;letter-spacing:2px;margin-bottom:6px}
 #card-tooltip .tip-upgrade .card{width:156px;filter:none}

@@ -41,6 +41,7 @@ const modules = [
   'wa-achievements.js',
   'shared/touch-feel.js',
   'shared/tap-play.js',
+  'shared/coach.js',
   'ui-source.js'
 ];
 

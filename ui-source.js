@@ -13,6 +13,7 @@ import {flyCardsFromPile,flyCardsToPile} from './shared/card-pile-motion.js';
 import {soundToggleHtml} from './shared/sfx.js';
 import {attachCardDetail,cardSheetOpen,openCardSheet,showDragHint,hideDragHint,touchLift,trackLayer} from './shared/touch-feel.js';
 import {tapPlayMode,tapCardAction,allowCardDrag,watchTapPlay,enforceTextFloor} from './shared/tap-play.js';
+import {startCoach} from './shared/coach.js';
 import {waJuiceAction,waSlam} from './wa-juice.js';
 import {showResultSummary,resultWorthShowing} from './shared/result-summary.js';
 import {waAchieve,waHallHtml,bindWaHall,waAchResultHtml,waTitleHtml} from './wa-achievements.js';
@@ -314,7 +315,7 @@ function openingRoom(){
   return `${heading('赞助商签约日',title,remove?'选择一张牌永久移除。':`选择要训练的牌（还需 ${p.left} 张）。`)}<div class="cards">${list.map(c=>card(c,{instance:true,upgrade:!remove,label:remove?'永久移除':'训练这张牌',action:{type:'openingPick',uid:c.uid},disabled:remove?removalReason(s,c.uid):''})).join('')}</div>${back}`;
  }
  const kinds={free:'免费',trade:'交换',basic:'常规'};
- const detail=x=>x.id==='recruit23'?`候选：${x.offers.map(id=>CARDS[id].name).join('、')}`:x.id==='curseForStar'?`隐患：${CARDS[x.curse].name}；候选：${x.offers.map(id=>CARDS[id].name).join('、')}`:x.id==='hpForGear'&&x.gear?`装备：${gearName(x.gear)}——${GEAR[x.gear].text}`:x.id==='trainRandom'&&x.uid?`训练对象：${cardName(s.deck.find(c=>c.uid===x.uid))}`:'';
+ const detail=x=>x.id==='recruit23'?`候选：${x.offers.map(id=>CARDS[id].name).join('、')}`:x.id==='curseForStar'?`隐患：${CARDS[x.curse].name}；候选：${x.offers.map(id=>CARDS[id].name).join('、')}`:x.id==='hpForGear'&&x.gear?`装备：${gearName(x.gear)}——${GEAR[x.gear].text}`:'';
  const legal=new Set(legalActions(s).filter(a=>a.type==='opening').map(a=>a.choice));
  return `${heading('赞助商签约日','选择一份开季合同','四份合同只能签下一份。签约后进入第一幕路线图。')}<div class="choices opening-choices">${o.options.map(x=>{const d=OPENING_OPTIONS[x.id],det=detail(x);return `<article class="choice opening-${d.kind}"><span class="choice-kind">${kinds[d.kind]}</span><h3>${esc(d.title)}</h3><p>${esc(d.text)}</p>${det?`<p class="choice-detail">${esc(det)}</p>`:''}${button('签下合同',{type:'opening',choice:x.id},'',legal.has(x.id)?'':'当前无法执行')}</article>`;}).join('')}</div>`;
 }
@@ -711,7 +712,7 @@ const aim=document.createElementNS('http://www.w3.org/2000/svg','svg');
 aim.classList.add('aim-guide');aim.innerHTML='<path/><circle r="7"/>';aim.setAttribute('hidden','');document.body.append(aim);
 let tipAnchor=null,tipTimer=null;
 const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
-function hideCardTip(){clearTimeout(tipTimer);if(tipAnchor)tipAnchor.removeAttribute('aria-describedby');tipAnchor=null;if(cardTip.matches(':popover-open'))cardTip.hidePopover();cardTip.hidden=true;}
+function hideCardTip(){clearTimeout(tipTimer);cardTip.classList.remove("has-upgrade");if(tipAnchor)tipAnchor.removeAttribute('aria-describedby');tipAnchor=null;if(cardTip.matches(':popover-open'))cardTip.hidePopover();cardTip.hidden=true;}
 function showCardTip(el){
  clearTimeout(tipTimer);if(!el||!el.isConnected||dragging)return;
  // Phones: no floating tip (it covered the arena and nothing dismissed it);
@@ -883,3 +884,13 @@ watchTapPlay(()=>{hideCardTip();if(!atHome&&state?.phase==='combat')refreshSelec
 enforceTextFloor();
 window.baoDemo={observe:()=>state?observe(state):null,legalActions:()=>state?legalActions(state):[],dispatch:a=>{if(!state)return {error:'No active season'};const r=commit(a);return {error:r.error,observation:observe(state)};}};
 render();
+
+// First fight: a few tips over the first two turns (once per browser).
+startCoach({key:'wa-coach-v1',getTurn:()=>state&&!atHome&&state.phase==='combat'&&state.battle?state.battle.turn:null,steps:[
+  { turn: 1, sel: '.intent-bubble', text: '敌人头上显示它<b>下一步要做什么</b>，数字是它实际会造成的伤害。' },
+  { turn: 1, sel: '.hand-dock .energy-orb', text: '这是<b>能量</b>，每回合重新充满。卡牌角上的数字就是打出它要花的能量。' },
+  { turn: 1, sel: '.hand-fan', text: () => tapPlayMode() ? '<b>点一下</b>卡牌选中，<b>再点一下</b>打出；有多个敌人时再点你要打的敌人。<b>长按</b>卡牌可以看详细说明。' : '把卡牌<b>拖到手牌上方松开</b>即可打出，也可以单击选中后再确认。鼠标在牌上<b>停留约 1 秒</b>会显示说明。' },
+  { turn: 1, sel: '.end-turn', text: '出完牌就点<b>结束回合</b>。敌人随后行动，没打出的手牌会被弃掉，下回合重新抽牌。' },
+  { turn: 2, sel: '.turn-warning', text: '这里是本回合预计会受到的伤害。<b>布防</b>可以抵消伤害，布防到你下回合开始时清零。' },
+  { turn: 2, sel: '.deck-console', text: '点牌堆可以查看里面有哪些牌。抽牌堆抽空后，弃牌堆会重新洗成抽牌堆。指引到此结束，祝你好运。' }
+]});
