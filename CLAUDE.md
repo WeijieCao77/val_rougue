@@ -56,7 +56,7 @@
 
 **瓦 Demo（`/wa/`）**
 - 四赛区，每区 50 张选手牌 + 25 张战术牌；选手牌有稀有度。
-- 184/200 名选手有 vlr.gg 照片，来源记录在 `assets/player-sources.json`。
+- 200/200 名选手都有真人照片（大部分来自 vlr.gg，2026-09-26 补齐的 16 人来自腾讯无畏契约赛事官网 vct.qq.com、Liquipedia 赛事照裁切和 Gen.G 官宣图），来源逐条记录在 `assets/player-sources.json`；统一为 200×200 PNG。
 - 好友 PvP（`online/duel.mjs`）始终一对一，只带赛区特质，不带装备和补给品。
 - 服务端会重放爬塔动作来核验构筑。规则改动用标记区分版本：`rules` 1/3/4、`mapVersion` 1/2、`econ` 1；**旧记录必须仍能按旧规则重放**，改瓦版规则时新增标记并补测试。
 - 教学模式（createRun，旧 E01–B01 敌人）冻结，`tests/fixtures/legacy.json` 必须原样重放。
