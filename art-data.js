@@ -622,10 +622,12 @@ export const CARD_ART={
     "kind": "photo"
   },
   "CN28": {
-    "path": "assets/players/CN28.svg",
+    "path": "assets/players/CN28.png",
+    "profileUrl": "https://www.vlr.gg/player/56260/bud",
     "name": "bud",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000060&playerId=1808",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛 · BLG）"
   },
   "CN29": {
     "path": "assets/players/CN29.png",
@@ -640,10 +642,12 @@ export const CARD_ART={
     "kind": "photo"
   },
   "CN31": {
-    "path": "assets/players/CN31.svg",
+    "path": "assets/players/CN31.png",
+    "profileUrl": "https://www.vlr.gg/player/52904/akeman",
     "name": "Akeman",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000060&playerId=1820",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛 · DRG）"
   },
   "CN32": {
     "path": "assets/players/CN32.png",
@@ -652,10 +656,12 @@ export const CARD_ART={
     "kind": "photo"
   },
   "CN33": {
-    "path": "assets/players/CN33.svg",
+    "path": "assets/players/CN33.png",
+    "profileUrl": "https://www.vlr.gg/player/50025/setrod",
     "name": "Setrod",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=1807",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛 · FPX）"
   },
   "CN34": {
     "path": "assets/players/CN34.png",
@@ -664,10 +670,12 @@ export const CARD_ART={
     "kind": "photo"
   },
   "CN35": {
-    "path": "assets/players/CN35.svg",
+    "path": "assets/players/CN35.png",
+    "profileUrl": "https://www.vlr.gg/player/11527/noman",
     "name": "NoMan",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000074&playerId=1551",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 全球冠军赛 · XLG）"
   },
   "CN36": {
     "path": "assets/players/CN36.png",
@@ -682,10 +690,11 @@ export const CARD_ART={
     "kind": "photo"
   },
   "CN38": {
-    "path": "assets/players/CN38.svg",
+    "path": "assets/players/CN38.png",
+    "profileUrl": "https://www.vlr.gg/player/4712/heybay",
     "name": "HeiB",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoCredit": "VLR 资料照（Ho Shun Hei，曾用名 HeiB）"
   },
   "CN39": {
     "path": "assets/players/CN39.png",
@@ -736,10 +745,12 @@ export const CARD_ART={
     "kind": "photo"
   },
   "CN47": {
-    "path": "assets/players/CN47.svg",
+    "path": "assets/players/CN47.png",
+    "profileUrl": "https://www.vlr.gg/player/55828/kklin",
     "name": "kklin",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000060&playerId=1802",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛 · JDG）"
   },
   "CN48": {
     "path": "assets/players/CN48.png",
@@ -748,10 +759,12 @@ export const CARD_ART={
     "kind": "photo"
   },
   "CN49": {
-    "path": "assets/players/CN49.svg",
+    "path": "assets/players/CN49.png",
+    "profileUrl": "https://www.vlr.gg/player/19292/jowa",
     "name": "jowa",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000065&playerId=2026",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 进化者杯 · WOL）"
   },
   "CN50": {
     "path": "assets/players/CN50.png",
@@ -1006,10 +1019,11 @@ export const CARD_ART={
     "kind": "photo"
   },
   "AM35": {
-    "path": "assets/players/AM35.svg",
+    "path": "assets/players/AM35.png",
+    "profileUrl": "https://www.vlr.gg/player/21661/spike",
     "name": "spikeziN",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoCredit": "VLR 资料照（Leviatán · Rodrigo Lombardi，赛事官网登记名 spikeziN）"
   },
   "AM36": {
     "path": "assets/players/AM36.png",
@@ -1054,10 +1068,13 @@ export const CARD_ART={
     "kind": "photo"
   },
   "AM43": {
-    "path": "assets/players/AM43.svg",
+    "path": "assets/players/AM43.png",
+    "profileUrl": "https://www.vlr.gg/player/34400/bao",
     "name": "bao",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:EG_bao_at_VCT_Americas_2026_Kickoff.jpg",
+    "photoCredit": "Liquipedia · EG bao at VCT Americas 2026 Kickoff（裁切为头像）",
+    "fit": "cover"
   },
   "AM44": {
     "path": "assets/players/AM44.png",
@@ -1090,10 +1107,12 @@ export const CARD_ART={
     "kind": "photo"
   },
   "AM49": {
-    "path": "assets/players/AM49.svg",
+    "path": "assets/players/AM49.png",
+    "profileUrl": "https://www.vlr.gg/player/2172/brawk",
     "name": "brawk",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000074&playerId=1967",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 全球冠军赛 · NRG）"
   },
   "AM50": {
     "path": "assets/players/AM50.png",
@@ -1330,10 +1349,11 @@ export const CARD_ART={
     "kind": "photo"
   },
   "EU32": {
-    "path": "assets/players/EU32.svg",
+    "path": "assets/players/EU32.png",
+    "profileUrl": "https://www.vlr.gg/player/6510/atakaptan",
     "name": "ATA KAPTAN",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoCredit": "VLR 资料照（FUT · Ata Tan）"
   },
   "EU33": {
     "path": "assets/players/EU33.png",
@@ -1360,10 +1380,11 @@ export const CARD_ART={
     "kind": "photo"
   },
   "EU37": {
-    "path": "assets/players/EU37.svg",
+    "path": "assets/players/EU37.png",
+    "profileUrl": "https://www.vlr.gg/player/40935/lovers-rock",
     "name": "umu7",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoCredit": "VLR 资料照（BBL · Umut Pekdoğan，曾用名 umu7）"
   },
   "EU38": {
     "path": "assets/players/EU38.png",
@@ -1408,10 +1429,12 @@ export const CARD_ART={
     "kind": "photo"
   },
   "EU45": {
-    "path": "assets/players/EU45.svg",
+    "path": "assets/players/EU45.png",
+    "profileUrl": "https://www.vlr.gg/player/11332/ara",
     "name": "ara",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000045&playerId=1975",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2025 全球冠军赛 · GX）"
   },
   "EU46": {
     "path": "assets/players/EU46.png",
@@ -1600,10 +1623,13 @@ export const CARD_ART={
     "kind": "photo"
   },
   "PA20": {
-    "path": "assets/players/PA20.svg",
+    "path": "assets/players/PA20.png",
+    "profileUrl": "https://www.vlr.gg/player/17049/hermes",
     "name": "Hermes",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:DRX_Hermes_at_VCT_Pacific_2026_Kickoff.jpg",
+    "photoCredit": "Liquipedia · DRX Hermes at VCT Pacific 2026 Kickoff（裁切为头像）",
+    "fit": "cover"
   },
   "PA21": {
     "path": "assets/players/PA21.png",
@@ -1642,16 +1668,21 @@ export const CARD_ART={
     "kind": "photo"
   },
   "PA27": {
-    "path": "assets/players/PA27.svg",
+    "path": "assets/players/PA27.png",
+    "profileUrl": "https://www.vlr.gg/player/25017/ash",
     "name": "Ash",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000040&playerId=1914",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（多伦多大师赛 · GEN）"
   },
   "PA28": {
-    "path": "assets/players/PA28.svg",
+    "path": "assets/players/PA28.png",
+    "profileUrl": "https://www.vlr.gg/player/51099/zynx",
     "name": "ZynX",
-    "kind": "illustration",
-    "concept": true
+    "kind": "photo",
+    "photoPage": "https://x.com/geng_gold/status/2009143032256598492",
+    "photoCredit": "Gen.G 官宣图 Welcome ZynX（THESPIKE.GG 转载，裁切为头像）",
+    "fit": "cover"
   },
   "PA29": {
     "path": "assets/players/PA29.png",

@@ -23,7 +23,10 @@ test('every card and enemy has a real, local, decodable image format',async()=>{
 
 test('portrait provenance matches player names and art markup cannot become an action',async()=>{
  const sources=JSON.parse(await readFile(new URL('../assets/player-sources.json',import.meta.url),'utf8'));
- for(const a of sources.players){assert.equal(a.status,'ok');assert.equal(a.profileName.toLowerCase(),CARDS[a.id].name.toLowerCase());assert.match(a.profileUrl,/^https:\/\/www\.vlr\.gg\/player\/\d+\//);assert.match(a.sourceUrl,/^https:\/\/(owcdn\.net|wx3\.sinaimg\.cn)\//);}
+ for(const a of sources.players){assert.equal(a.status,'ok');assert.ok([a.profileName,...(a.profileAliases||[])].some(n=>n.toLowerCase()===CARDS[a.id].name.toLowerCase()),a.id);assert.match(a.profileUrl,/^https:\/\/www\.vlr\.gg\/player\/\d+\//);assert.match(a.sourceUrl,/^https:\/\/(owcdn\.net|wx3\.sinaimg\.cn|static\.tjstats\.com|dmstatic\.tjstats\.com|liquipedia\.net\/commons|cdn\.thespike\.gg)\//);}
+ const playerIds=Object.keys(CARDS).filter(id=>CARDS[id].player);
+ assert.equal(playerIds.length,200);
+ for(const id of playerIds){assert.equal(CARD_ART[id].kind,'photo',`${id} needs a real player photo`);assert.ok(sources.players.some(p=>p.id===id),id);assert.match(artCredit(id),/选手照片：<a href="https:/,id);}
  for(const id of Object.keys(CARDS)){const html=cardArtwork(id);assert.match(html,/<img /);assert.doesNotMatch(html,/data-action|onclick|https?:/);assert.match(html,/draggable="false"/);if(CARDS[id].player)assert.match(artCredit(id),CARD_ART[id].kind==='photo'?/照片：/:/概念头像，非选手本人肖像/);}
  for(const id of Object.keys(ENEMIES))assert.match(opponentArtwork(id),/<img /);
 });

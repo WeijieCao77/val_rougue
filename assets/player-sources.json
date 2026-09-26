@@ -1,6 +1,6 @@
 {
-  "checkedOn": "2026-09-24T08:23:40Z",
-  "sourceNote": "71 VLR profile photos and glacier official Wolves announcement reproduced by Sina; 112 further VLR profile photos added 2026-09-24 for expansion-roster players (same vlr.gg/owcdn.net source). Source availability is not a license grant.",
+  "checkedOn": "2026-09-26T00:00:00Z",
+  "sourceNote": "71 VLR profile photos and glacier official Wolves announcement reproduced by Sina; 112 further VLR profile photos added 2026-09-24 for expansion-roster players (same vlr.gg/owcdn.net source). Source availability is not a license grant. 2026-09-26: the last 16 players were filled (VLR profile photos where they exist, otherwise the official VCT CN site vct.qq.com player photos hosted on tjstats.com, Liquipedia event photos cropped to a headshot, or the Gen.G ZynX announcement). profileAliases lists the card handle when the VLR profile now shows a different handle. All 200 player cards have real photos.",
   "players": [
     {
       "id": "AM01",
@@ -1661,6 +1661,193 @@
       "profileName": "xavi8k",
       "sourceUrl": "https://owcdn.net/img/6a1960983a0b5.png",
       "path": "assets/players/PA50.png"
+    },
+    {
+      "id": "AM35",
+      "name": "spikeziN",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/21661/spike",
+      "profileName": "spike",
+      "profileAliases": [
+        "spikeziN"
+      ],
+      "sourceUrl": "https://owcdn.net/img/69234b7d30781.png",
+      "path": "assets/players/AM35.png",
+      "photoCredit": "VLR 资料照（Leviatán · Rodrigo Lombardi，赛事官网登记名 spikeziN）"
+    },
+    {
+      "id": "AM43",
+      "name": "bao",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/34400/bao",
+      "profileName": "bao",
+      "sourceUrl": "https://liquipedia.net/commons/images/f/fc/EG_bao_at_VCT_Americas_2026_Kickoff.jpg",
+      "path": "assets/players/AM43.png",
+      "photoPage": "https://liquipedia.net/valorant/File:EG_bao_at_VCT_Americas_2026_Kickoff.jpg",
+      "photoCredit": "Liquipedia · EG bao at VCT Americas 2026 Kickoff（裁切为头像）",
+      "fit": "cover"
+    },
+    {
+      "id": "AM49",
+      "name": "brawk",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/2172/brawk",
+      "profileName": "brawk",
+      "sourceUrl": "https://static.tjstats.com/admin/c9173af901ddede195e01298dd69d28a.png",
+      "path": "assets/players/AM49.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000074&playerId=1967",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 全球冠军赛 · NRG）"
+    },
+    {
+      "id": "CN28",
+      "name": "bud",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/56260/bud",
+      "profileName": "bud",
+      "sourceUrl": "https://static.tjstats.com/admin/f810732c0bb28ef911933692f40cefec.png",
+      "path": "assets/players/CN28.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000060&playerId=1808",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛 · BLG）"
+    },
+    {
+      "id": "CN31",
+      "name": "Akeman",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/52904/akeman",
+      "profileName": "Akeman",
+      "sourceUrl": "https://dmstatic.tjstats.com/admin/ee0ebb336bbc32649a1934a4f0fcf687.png",
+      "path": "assets/players/CN31.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000060&playerId=1820",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛 · DRG）"
+    },
+    {
+      "id": "CN33",
+      "name": "Setrod",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/50025/setrod",
+      "profileName": "Setrod",
+      "sourceUrl": "https://dmstatic.tjstats.com/admin/07f64bbe418a864b5905b346b932ddcb.png",
+      "path": "assets/players/CN33.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=1807",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛 · FPX）"
+    },
+    {
+      "id": "CN35",
+      "name": "NoMan",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/11527/noman",
+      "profileName": "NoMan",
+      "sourceUrl": "https://static.tjstats.com/admin/9798e5768c85c43f502923463d232100.png",
+      "path": "assets/players/CN35.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000074&playerId=1551",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 全球冠军赛 · XLG）"
+    },
+    {
+      "id": "CN38",
+      "name": "HeiB",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/4712/heybay",
+      "profileName": "heybay",
+      "profileAliases": [
+        "HeiB"
+      ],
+      "sourceUrl": "https://owcdn.net/img/67f0f41c3f3b5.png",
+      "path": "assets/players/CN38.png",
+      "photoCredit": "VLR 资料照（Ho Shun Hei，曾用名 HeiB）"
+    },
+    {
+      "id": "CN47",
+      "name": "kklin",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/55828/kklin",
+      "profileName": "kklin",
+      "sourceUrl": "https://dmstatic.tjstats.com/admin/0ada79c11bdc41b3b1c267aec9fdd4f0.png",
+      "path": "assets/players/CN47.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000060&playerId=1802",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛 · JDG）"
+    },
+    {
+      "id": "CN49",
+      "name": "jowa",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/19292/jowa",
+      "profileName": "jowa",
+      "sourceUrl": "https://dmstatic.tjstats.com/admin/cc92bbd93006a46e7a7b191258254bfc.png",
+      "path": "assets/players/CN49.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000065&playerId=2026",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 进化者杯 · WOL）"
+    },
+    {
+      "id": "EU32",
+      "name": "ATA KAPTAN",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/6510/atakaptan",
+      "profileName": "AtaKaptan",
+      "profileAliases": [
+        "ATA KAPTAN"
+      ],
+      "sourceUrl": "https://owcdn.net/img/65dbdd988fc0f.png",
+      "path": "assets/players/EU32.png",
+      "photoCredit": "VLR 资料照（FUT · Ata Tan）"
+    },
+    {
+      "id": "EU37",
+      "name": "umu7",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/40935/lovers-rock",
+      "profileName": "lovers rock",
+      "profileAliases": [
+        "umu7"
+      ],
+      "sourceUrl": "https://owcdn.net/img/697975c71d41b.png",
+      "path": "assets/players/EU37.png",
+      "photoCredit": "VLR 资料照（BBL · Umut Pekdoğan，曾用名 umu7）"
+    },
+    {
+      "id": "EU45",
+      "name": "ara",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/11332/ara",
+      "profileName": "ara",
+      "sourceUrl": "https://static.tjstats.com/admin/836af33abf95b7653baa2ad0bc3dca4c.png",
+      "path": "assets/players/EU45.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000045&playerId=1975",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2025 全球冠军赛 · GX）"
+    },
+    {
+      "id": "PA20",
+      "name": "Hermes",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/17049/hermes",
+      "profileName": "Hermes",
+      "sourceUrl": "https://liquipedia.net/commons/images/2/21/DRX_Hermes_at_VCT_Pacific_2026_Kickoff.jpg",
+      "path": "assets/players/PA20.png",
+      "photoPage": "https://liquipedia.net/valorant/File:DRX_Hermes_at_VCT_Pacific_2026_Kickoff.jpg",
+      "photoCredit": "Liquipedia · DRX Hermes at VCT Pacific 2026 Kickoff（裁切为头像）",
+      "fit": "cover"
+    },
+    {
+      "id": "PA27",
+      "name": "Ash",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/25017/ash",
+      "profileName": "Ash",
+      "sourceUrl": "https://static.tjstats.com/admin/8f229a11cd68e4913b744f52e9bd554a.png",
+      "path": "assets/players/PA27.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000040&playerId=1914",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（多伦多大师赛 · GEN）"
+    },
+    {
+      "id": "PA28",
+      "name": "ZynX",
+      "status": "ok",
+      "profileUrl": "https://www.vlr.gg/player/51099/zynx",
+      "profileName": "ZynX",
+      "sourceUrl": "https://cdn.thespike.gg/.Sage%2FWelcome%20ZynX%20(1)_1767905577297.jpg",
+      "path": "assets/players/PA28.png",
+      "photoPage": "https://x.com/geng_gold/status/2009143032256598492",
+      "photoCredit": "Gen.G 官宣图 Welcome ZynX（THESPIKE.GG 转载，裁切为头像）",
+      "fit": "cover"
     }
   ]
 }
