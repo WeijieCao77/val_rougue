@@ -92,15 +92,21 @@ function createFx(session, kind, {x, y, text='', className='', scale=1, duration
   const el = document.createElement('div');
   el.className = `new-fx-node ${className}`;
   el.dataset.fxKind = kind;
+  // Every effect is centred on (x, y): the translate is part of each frame so
+  // the animation's own transform can't knock it off (it used to drift up-left).
+  const centre = t => `translate(-50%, -50%) ${t || ''}`.trim();
   el.style.position = 'absolute';
-  el.style.left = (x - 10) + 'px';
-  el.style.top = (y - 10) + 'px';
+  // Floating text stays readable on narrow screens.
+  if (text) x = Math.max(56, Math.min(innerWidth - 56, x));
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  el.style.margin = '0';
   el.style.pointerEvents = 'none';
   el.style.zIndex = '9999';
   if (text) el.textContent = text;
-  if (scale !== 1) el.style.transform = `scale(${scale})`;
+  el.style.transform = centre(scale !== 1 ? `scale(${scale})` : '');
   session.root.appendChild(el);
-  const anim = el.animate(keyframes, { duration, delay, easing, fill: 'forwards' });
+  const anim = el.animate((keyframes || []).map(k => ({ ...k, transform: centre(k.transform) })), { duration, delay, easing, fill: 'forwards' });
   session.animations.push(anim);
 }
 

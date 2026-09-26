@@ -901,6 +901,7 @@ function renderCombat(root) {
   `;
   root.querySelectorAll('[data-discover]').forEach(el => el.addEventListener('click', () => dispatch({ type: 'discover', id: el.dataset.discover })));
   bindGuideStrip(root, 'combat');
+  fitArena();
 
   const needsPick = card => card && living.length > 1 && cardNeedsTarget(card);
   const selectedCard = () => b.hand.find(c => c.uid === selectedCardUid);
@@ -2030,12 +2031,7 @@ async function handleEndTurnTimeline(prev, next, action, capture, reducedMotion)
       const banner = document.createElement('div');
       banner.className = 'enemy-turn-banner';
       banner.innerHTML = '<strong>对手回合</strong><span>对手正在执行战术</span>';
-      battle.appendChild(banner);
-      banner.style.position = 'absolute';
-      banner.style.top = '10%';
-      banner.style.left = '50%';
-      banner.style.transform = 'translateX(-50%)';
-      banner.style.pointerEvents = 'none';
+      // Fixed to the viewport (phone.css): the arena re-renders under it.
       session.root.appendChild(banner);
     }
     await delay(500);
@@ -2150,6 +2146,16 @@ window.newDemo = {
   legalActions: () => legalActions(state),
   dispatch: (action) => dispatch(action)
 };
+
+// Portrait phones: the fight fills exactly the space under the header and run
+// strip (phone.css sizes .battle.arena from --arena-y), so nothing scrolls.
+function fitArena() {
+  const arena = document.querySelector('#game-root .battle.arena');
+  if (!arena) return;
+  if (scrollY) scrollTo(0, 0);
+  document.documentElement.style.setProperty('--arena-y', `${Math.round(arena.getBoundingClientRect().top)}px`);
+}
+addEventListener('resize', fitArena);
 
 function initGlobalTooltip() {
   const tooltip = document.createElement('div');

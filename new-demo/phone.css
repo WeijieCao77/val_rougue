@@ -168,3 +168,40 @@ html.tap-play #game-root .battle .hand-area .hand-card.shared-card.selected{z-in
   #game-root .arena #btn-stance{min-height:44px;font-size:13px!important}
   .stance-name small,.trait-text small{font-size:12px!important}
 }
+
+/* ---------- Portrait phone combat: one fixed screen (2026-09-26) ----------
+   The fight fits the viewport exactly: no page scroll, the tapped card's bar
+   floats over the top of the arena instead of pushing it down, and the whole
+   hand fits the width (cards overlap like a fan instead of scrolling off). */
+@media (max-width:720px) and (orientation:portrait){
+  body:has(#game-root .battle.arena) .guide-strip{display:none!important}
+  #game-root .battle.arena{height:calc(100dvh - var(--arena-y,120px))!important;min-height:0!important;max-height:none!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;position:relative}
+  #game-root .battle.arena>.arena-top{position:relative;flex:0 0 auto;min-height:26px;z-index:40}
+  #game-root .battle.arena>.arena-floor{flex:1 1 0!important;min-height:0!important;overflow:hidden}
+  #game-root .battle.arena>.arena-hud{flex:0 0 auto;margin-top:0}
+  .arena-top .tap-bar{position:absolute;left:6px;right:6px;top:100%;margin:0!important;max-width:none;z-index:45;font-size:13px}
+  .arena-top .tap-bar .tap-bar-text{margin:2px 0 3px;font-size:13px}
+  #game-root .arena .tap-bar .btn{min-height:40px}
+  /* Hand: every card on screen; they overlap more as the hand grows. */
+  #game-root .arena .hand-area{display:flex!important;flex-wrap:nowrap!important;justify-content:center!important;overflow:visible!important;padding:14px 6px max(8px,env(safe-area-inset-bottom))!important;gap:0!important;touch-action:manipulation}
+  #game-root .battle .hand-area .hand-card.shared-card{flex:0 0 104px!important;width:104px!important;min-width:104px!important;height:150px!important;position:relative!important;left:auto!important;bottom:auto!important;transform:none;margin:0}
+  #game-root .battle .hand-area .hand-card.shared-card+.hand-card.shared-card{margin-left:min(4px,calc((100% - var(--slots,5) * 104px) / max(1,var(--slots,5) - 1)))!important}
+  #game-root .battle .hand-area .hand-card.shared-card.selected{transform:translateY(-14px)!important;z-index:20!important}
+  #game-root .battle .hand-area .tc-art{display:none}
+}
+.enemy-turn-banner{position:fixed!important;z-index:90;left:50%!important;top:34%!important;transform:translateX(-50%)!important;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:180px;padding:12px 24px;border:1px solid #e4ab74;border-radius:9px;background:#251d2bef;box-shadow:0 10px 35px #000a,0 0 28px #bd745577;color:#ffe4c2;pointer-events:none;animation:enemy-turn-in .25s ease-out}
+.enemy-turn-banner strong{font-size:20px;letter-spacing:3px}.enemy-turn-banner span{font-size:12px;color:#cbb2ab}
+@media (max-width:720px) and (orientation:portrait){
+  /* Cards in flight look like the hand cards they become. */
+  .card-pile-motion-layer .tc-art{display:none}
+  .card-pile-motion-layer .tc-text,.card-pile-motion-layer .tc-text *{font-size:12px!important;line-height:1.3}
+}
+@media (max-width:720px) and (orientation:portrait){
+  /* Ally panel: orb beside HP/布防, then the incoming line, trait and stance at full width. */
+  #game-root .arena .ally-hud{grid-template-columns:auto minmax(0,1fr)!important;align-content:start}
+  #game-root .arena .ally-hud .ally-vitals{display:contents!important}
+  #game-root .arena .ally-hud .energy-orb{grid-row:span 2}
+  #game-root .arena .ally-hud .hp-line,#game-root .arena .ally-hud .block-value{grid-column:2;min-width:0}
+  #game-root .arena .ally-hud .rm-incoming,#game-root .arena .ally-hud>.trait-chip,#game-root .arena .ally-hud>.stance-chip{grid-column:1 / -1;min-width:0;max-width:100%;box-sizing:border-box}
+  #game-root .arena .ally-hud .hp-line .value{white-space:nowrap}
+}

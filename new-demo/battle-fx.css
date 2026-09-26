@@ -105,3 +105,7 @@
   background-color: #ffd166;
   border-radius: 50%;
 }
+
+/* Effects are positioned by their own left/top (ui.js, fx.js); the old centring
+   margins in presentation.css pushed them up-left, off the phone screen. */
+.new-fx-layer .new-fx-node{margin:0!important}

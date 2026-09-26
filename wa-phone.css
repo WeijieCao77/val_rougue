@@ -175,3 +175,23 @@ body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-ri
 html.tap-play .selection-panel.tap-selection .selection-text{margin:2px 0 3px;font-size:14px;line-height:1.45;color:#f6ecd3;white-space:normal;overflow-wrap:anywhere}
 html.tap-play .selection-panel.tap-selection small{font-size:12px}
 html.tap-play .selection-panel.tap-selection .text-button,html.tap-play .selection-panel.tap-selection button{min-height:44px}
+
+/* ---------- Portrait phone combat: nothing off screen, nothing stacked (2026-09-26) ----------
+   The whole hand fits the width (cards overlap more as it grows, no sideways
+   scroll, so draws and discards never fly in from off screen); the selection
+   panel keeps a fixed height so tapping a card doesn't shift the arena; the
+   enemy turn shows one banner instead of banner + echo + titles on top of each other. */
+@media(max-width:720px) and (orientation:portrait){
+ .hand-dock .hand-fan,.hand-fan{overflow:visible!important;justify-content:center;gap:0!important;padding:16px 6px 6px!important;scroll-snap-type:none;touch-action:manipulation}
+ .hand-card{flex:0 0 104px!important;width:104px!important;min-width:104px!important;height:156px!important;touch-action:manipulation}
+ .hand-card+.hand-card{margin-left:min(4px,calc((100% - var(--slots,5) * 104px) / max(1,var(--slots,5) - 1)))!important}
+ .hand-card.selected{z-index:20!important}
+ .hand-card .card-portrait{height:46px!important;min-height:46px!important}
+ .selection-panel{height:92px;min-height:92px!important;overflow:hidden;align-content:center}
+ .selection-panel .play-selected{white-space:nowrap;min-width:64px;flex:none}
+ .fighter.ally .team-label{display:none}
+ .combat-screen:has(.enemy-turn-banner) .played-echo{visibility:hidden}
+ .cfx-title{display:none!important}
+ .enemy-turn-banner{top:4%}
+ .combat-target .target-caption{z-index:4;font-size:12px}
+}
