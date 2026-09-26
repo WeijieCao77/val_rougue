@@ -741,12 +741,18 @@ document.addEventListener('pointerdown',e=>{
  holdTimer=setTimeout(()=>{if(dragging||cardSheetOpen())return;held=true;showCardTip(el);},450);
 },true);
 document.addEventListener('click',e=>{if(held){held=false;e.preventDefault();e.stopImmediatePropagation();}},true);
-function scheduleTip(el){clearTimeout(tipTimer);if(!el||dragging)return;tipTimer=setTimeout(()=>showCardTip(el),120);}
+// Hover waits ~1s so skimming the hand never covers the cards; the tip closes as soon
+// as the pointer leaves its card or the card is re-rendered away.
+function scheduleTip(el){clearTimeout(tipTimer);if(!el||dragging)return;tipTimer=setTimeout(()=>{if(el.isConnected&&el.matches(':hover'))showCardTip(el);},1000);}
+const tipStale=()=>tipAnchor&&!held&&(!tipAnchor.isConnected||(!tipAnchor.matches(':hover')&&!tipAnchor.matches(':focus-visible')));
+document.addEventListener('pointermove',e=>{if(e.pointerType!=='touch'&&tipStale())hideCardTip();},{passive:true});
+setInterval(()=>{if(tipStale())hideCardTip();},300);
 document.addEventListener('pointerover',e=>{if(e.pointerType==='touch')return;const el=e.target.closest('[data-card-id]');if(el&&!el.contains(e.relatedTarget))scheduleTip(el);});
 document.addEventListener('pointerout',e=>{const el=e.target.closest('[data-card-id]');if(el&&!el.contains(e.relatedTarget)){clearTimeout(tipTimer);if(tipAnchor===el)hideCardTip();}});
-document.addEventListener('focusin',e=>{const el=e.target.closest('[data-card-id]');if(el)showCardTip(el);});
+// Keyboard focus only: a clicked card keeps focus, which used to pin the tip open.
+document.addEventListener('focusin',e=>{const el=e.target.closest('[data-card-id]');if(el&&e.target.matches(':focus-visible'))showCardTip(el);});
 document.addEventListener('focusout',e=>{if(e.target.closest('[data-card-id]'))hideCardTip();});
-document.addEventListener('scroll',()=>{const el=tipAnchor;hideCardTip();if(el&&el.contains(document.activeElement))scheduleTip(el);},true);window.addEventListener('resize',hideCardTip);
+document.addEventListener('scroll',()=>hideCardTip(),true);window.addEventListener('resize',hideCardTip);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')hideCardTip();});
 function clearAim(){aim.setAttribute('hidden','');document.querySelectorAll('.drop-ready').forEach(el=>el.classList.remove('drop-ready'));}
 // One opponent per fight: like Slay the Spire, releasing a dragged card anywhere

@@ -2167,9 +2167,22 @@ function initGlobalTooltip() {
   tooltip.style.display = 'none';
   document.body.appendChild(tooltip);
 
+  // Hover waits ~1s so skimming the hand never pops text over the cards; the tip
+  // follows the pointer's anchor and closes as soon as the pointer leaves it or
+  // the anchor is re-rendered away.
+  const HOVER_DELAY = 1000;
+  let anchor = null, timer = null;
+  function schedule(e) {
+    if (e.pointerType === 'touch') return;
+    const target = e.target.closest('[data-tooltip]');
+    if (!target || target === anchor || target.contains(e.relatedTarget)) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => { if (target.isConnected && target.matches(':hover')) showTooltip({ target }); }, HOVER_DELAY);
+  }
   function showTooltip(e) {
     const target = e.target.closest('[data-tooltip]');
     if (!target) return;
+    anchor = target;
     const text = target.getAttribute('data-tooltip');
     if (!text) return;
     // Phones: no hover tooltips (a tap would leave one stuck over the game);
@@ -2202,14 +2215,21 @@ function initGlobalTooltip() {
   }
 
   function hideTooltip() {
+    clearTimeout(timer);
+    anchor = null;
     tooltip.style.display = 'none';
   }
+  function stale() { return anchor && (!anchor.isConnected || (!anchor.matches(':hover') && !anchor.matches(':focus-visible'))); }
 
-  document.addEventListener('pointerover', showTooltip);
-  document.addEventListener('focusin', showTooltip);
+  document.addEventListener('pointerover', schedule);
+  // Keyboard focus only: a clicked card keeps focus, which used to pin the tip open.
+  document.addEventListener('focusin', (e) => { if (e.target.matches?.(':focus-visible')) showTooltip(e); });
   document.addEventListener('pointerout', (e) => {
-    if (e.target.closest('[data-tooltip]')) hideTooltip();
+    const el = e.target.closest('[data-tooltip]');
+    if (el && !el.contains(e.relatedTarget)) { clearTimeout(timer); if (!anchor || anchor === el) hideTooltip(); }
   });
+  document.addEventListener('pointermove', () => { if (stale()) hideTooltip(); }, { passive: true });
+  setInterval(() => { if (stale()) hideTooltip(); }, 300);
   document.addEventListener('focusout', (e) => {
     if (e.target.closest('[data-tooltip]')) hideTooltip();
   });

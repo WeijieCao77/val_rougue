@@ -286,8 +286,12 @@ export function initUpgradePeek() {
   document.addEventListener('pointerover', e => {
     if (e.pointerType === 'touch') return;
     const el = target(e);
-    if (el && el !== peekFor && !el.closest('.dragging-card')) { clearTimeout(timer); timer = setTimeout(() => el.isConnected && showPeek(el), 140); }
+    if (el && el !== peekFor && !el.closest('.dragging-card')) { clearTimeout(timer); timer = setTimeout(() => el.isConnected && el.matches(':hover') && showPeek(el), 1000); }
   });
+  // Close when the pointer has left the card or the card was re-rendered away.
+  const stalePeek = () => peekFor && !held && (!peekFor.isConnected || !peekFor.matches(':hover'));
+  document.addEventListener('pointermove', e => { if (e.pointerType !== 'touch' && stalePeek()) hidePeek(); }, { passive: true });
+  setInterval(() => { if (stalePeek() && !tapPlayMode()) hidePeek(); }, 300);
   document.addEventListener('pointerout', e => {
     const el = target(e);
     if (el && !el.contains(e.relatedTarget)) { clearTimeout(timer); if (peekFor === el) hidePeek(); }
