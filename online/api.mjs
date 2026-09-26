@@ -278,7 +278,7 @@ async function rebuildSnapshot(run, act) {
   // Economy rules (unlock tiers, skip compensation, investments, rerolls). Records
   // without `econ` replay on the full pools; with it, both tiers must be recorded.
   const validTier = n => Number.isInteger(n) && n >= 0 && n <= 5;
-  if (run.econ !== undefined && (run.econ !== 1 || run.rules !== 1)) throw new HttpError(400, '无效的经济规则版本');
+  if (run.econ !== undefined && (run.econ !== 1 || run.rules === undefined)) throw new HttpError(400, '无效的经济规则版本');
   if (run.econ !== undefined && (!validTier(run.unlockTier) || !validTier(run.gearTier))) throw new HttpError(400, '无效的解锁等级');
   if (run.econ === undefined && (run.unlockTier !== undefined || run.gearTier !== undefined)) throw new HttpError(400, '无效的解锁等级');
   let state;

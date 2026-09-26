@@ -164,6 +164,12 @@ test('server: an economy season replays with its recorded unlock tiers; wrong or
     assert.equal((await request('POST', '/api/archive/claim', { token, body: { run: { ...run, econ: 2 }, act: 1 } })).status, 400);
     const ok = await request('POST', '/api/archive/claim', { token, body: { run, act: 1 } });
     assert.equal(ok.status, 200, JSON.stringify(ok.body));
+    // Current seasons record rules 4 + the 15-floor map + economy; the server used to
+    // accept economy only with rules 1, so every act upload (and PvP) failed.
+    const r4 = JSON.parse(await readFile(new URL('./fixtures/econ-claim-rules4.json', import.meta.url), 'utf8'));
+    assert.equal(r4.rules, 4); assert.equal(r4.econ, 1); assert.equal(r4.mapVersion, 2);
+    const ok4 = await request('POST', '/api/archive/claim', { token, body: { run: r4, act: 1 } });
+    assert.equal(ok4.status, 200, JSON.stringify(ok4.body));
   } finally {
     await store.close();
     await rm(dir, { recursive: true, force: true });
