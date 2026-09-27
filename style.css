@@ -2476,6 +2476,25 @@ html.tap-play .selection-panel.tap-selection .text-button,html.tap-play .selecti
  .combat-target .target-caption{z-index:4;font-size:12px}
 }
 
+/* ---------- Group fights on a portrait phone (2026-09-27) ----------
+   Opponents take the top of the arena and our side sits under them; the arena
+   grows to fit both rows so our panel never covers an opponent's name or life.
+   The battlefield tag wraps onto its own line instead of squeezing to one
+   character per line. */
+@media(max-width:720px) and (orientation:portrait){
+ .combat-screen .arena-top{flex-wrap:wrap;row-gap:4px}
+ .combat-screen .arena-top .battlefield-tag{flex:1 1 100%;order:3;display:block!important;writing-mode:horizontal-tb;white-space:normal;text-align:left;line-height:1.4}
+ .combat-screen .arena-top .battlefield-tag *{display:inline!important;writing-mode:horizontal-tb}
+ .combat-screen:has(.foe-group) .arena{min-height:292px;flex:0 0 auto}
+ .combat-screen .fighter.enemy.foe-group{top:68px!important}
+ /* Our side as one row under the opponents: figure left, name, trait and life right. */
+ .combat-screen:has(.foe-group) .fighter.ally{bottom:4px;top:auto;left:6px;right:6px;width:auto;display:grid;grid-template-columns:96px minmax(0,1fr);column-gap:10px;align-items:center;justify-items:start;text-align:left}
+ .combat-screen:has(.foe-group) .fighter.ally>.combat-target{grid-column:1;grid-row:1 / span 4;width:96px;height:72px;min-width:0}
+ .combat-screen:has(.foe-group) .fighter.ally>:not(.combat-target){grid-column:2;margin:1px 0}
+ .combat-screen:has(.foe-group) .fighter.ally .life-row{justify-content:flex-start}
+ .combat-screen:has(.foe-group) .fighter.ally .active-powers{position:static}
+}
+
 html { scrollbar-gutter:stable; }
 body.home-mode .cover-screen { width:100%; min-width:0; }
 body.home-mode .cover-screen > * { min-width:0; }
