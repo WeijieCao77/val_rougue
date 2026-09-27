@@ -1,5 +1,6 @@
 import { cardName, SKINS } from '/pvp/content.js';
 import { createBattle } from '/pvp/battle.js';
+import { openDeckView } from '/pvp/deck-view.js';
 import { ACTS } from '/pvp/season-map.js';
 import {
   loadAccount, saveAccount, getPendingProofCache, clearPendingProofCache,
@@ -470,18 +471,8 @@ function showJoinDialog() {
 }
 
 function showArchiveDetail(archive) {
-  const deck = archive.snapshot.deck || [];
-  const skins = archive.snapshot.skins || [];
-  const html = `
-    <p>第${archive.snapshot.act}幕 · 最大声望 ${archive.snapshot.maxHp} · 资金 ${archive.snapshot.money}</p>
-    <h4>牌组（${deck.length}张）</h4>
-    <div class="cards modal-cards">${deck.map(c => {
-      const name = cardName(c);
-      return `<article class="mini-card"><strong>${esc(name)}</strong> ${c.up ? '（已训练）' : ''}</article>`;
-    }).join('')}</div>
-    <h4>皮肤（${skins.length}件）</h4>
-    <ul class="skin-list">${skins.map(id => `<li><strong>${esc(SKINS[id]?.name || id)}</strong>：${esc(SKINS[id]?.text || '')}</li>`).join('')}</ul>`;
-  showModal('构筑详情', html);
+  // Full-screen deck viewer; the build dialog stays open underneath.
+  openDeckView(archive);
 }
 
 function showAccountDialog() {
