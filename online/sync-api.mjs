@@ -169,8 +169,8 @@ export function createSyncHandler(store, { now = () => Date.now() } = {}) {
       let packed = null;
       let savedAt = null;
       if (dirty) {
-        const link = store.syncLink(String(body.syncId || ''));
-        packed = packBundle(body.bundle, link?.demo);
+        const link = requireLink(body); // checked again inside the transaction below
+        packed = packBundle(body.bundle, link.demo);
         savedAt = validSavedAt(body.savedAt, nowTime);
       }
       const device = validDevice(body.device);
