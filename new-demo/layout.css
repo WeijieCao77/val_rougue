@@ -1,4 +1,9 @@
-/* DeepSeek draft reviewed against desktop and phone page geometry. */
+/* Keep the flex child from shrink-wrapping to the selected team's text. */
+html { scrollbar-gutter:stable; }
+.new-home { width:100%; min-width:0; }
+.new-home > * { min-width:0; }
+#selected-team-trait { overflow-wrap:anywhere; }
+/* Reviewed against desktop and phone page geometry. */
 .new-home .team-select { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 .new-home .team-card { min-height:76px; padding:12px; text-align:left; }
 .new-home .team-name { font-size:14px; line-height:1.4; white-space:normal; }

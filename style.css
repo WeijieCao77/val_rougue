@@ -2476,6 +2476,9 @@ html.tap-play .selection-panel.tap-selection .text-button,html.tap-play .selecti
  .combat-target .target-caption{z-index:4;font-size:12px}
 }
 
+html { scrollbar-gutter:stable; }
+body.home-mode .cover-screen { width:100%; min-width:0; }
+body.home-mode .cover-screen > * { min-width:0; }
 /* Reviewed layout pass: natural page flow, separated controls, primary modes. */
 body.home-mode .cover-setup { padding:24px; gap:12px; box-sizing:border-box; }
 body.home-mode .region-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
