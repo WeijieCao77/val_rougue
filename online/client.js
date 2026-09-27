@@ -71,18 +71,26 @@ const watchFinished = r => r?.status === 'finished' && !r.members?.find(m => m.s
 
 closeDialog.addEventListener('click', () => { dialog.close(); if (dialogResolve) { dialogResolve(null); dialogResolve = null; } });
 
-function archiveCard(a, selected = false) {
-  const actInfo = ACTS[a.snapshot.act - 1] || { name: `第${a.snapshot.act}赛段` };
-  return `<article class="archive-card ${selected ? 'selected' : ''}" data-archive-id="${a.id}">
-    <h3>${esc(a.name || `构筑 ${a.id.slice(-6)}`)}</h3>
-    <p>第${a.snapshot.act}幕 · ${esc(actInfo.name)}</p>
-    <dl>
-      <dt>最大声望</dt><dd>${a.snapshot.maxHp}</dd>
-      <dt>牌组</dt><dd>${a.snapshot.deck.length} 张</dd>
-      <dt>皮肤</dt><dd>${a.snapshot.skins.length} 件</dd>
-      ${Number.isInteger(a.snapshot.ascension) ? `<dt>难度</dt><dd>${a.snapshot.ascension}</dd>` : ''}
-    </dl>
-  </article>`;
+function archiveRegion(a) {
+  const names = {CN:'中国', AM:'美洲', EMEA:'EMEA', PAC:'太平洋', EU:'EMEA', PA:'太平洋'};
+  const region = a.snapshot.region || a.snapshot.deck.map(c=>c.id.slice(0,2)).find(id=>names[id]);
+  return names[region] || '未记录赛区';
+}
+function archiveTime(a) {
+  const date = new Date(a.createdAt);
+  return a.createdAt && Number.isFinite(date.getTime()) ? date.toLocaleString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}) : '保存时间未记录';
+}
+function archiveInfo(a) {
+  return `<h3>${esc(a.name || `第${a.snapshot.act}幕构筑`)}</h3>
+    <p class="archive-meta"><strong>第${a.snapshot.act}幕</strong><span>${esc(archiveRegion(a))}赛区</span></p>
+    <p class="archive-date">保存于 ${esc(archiveTime(a))}</p>
+    <p class="archive-stats">${a.snapshot.deck.length} 张牌 · ${a.snapshot.maxHp} 最大声望 · ${a.snapshot.skins.length} 件装备${Number.isInteger(a.snapshot.ascension) ? ` · 难度 ${a.snapshot.ascension}` : ''}</p>`;
+}
+function archiveCard(a) {
+  return `<article class="archive-card" data-archive-id="${esc(a.id)}">${archiveInfo(a)}<button type="button" data-view-archive="${esc(a.id)}">查看卡组</button></article>`;
+}
+function archivePickerCard(a, mode) {
+  return `<article class="archive-choice">${archiveInfo(a)}<div class="archive-choice-actions"><button type="button" data-view-archive="${esc(a.id)}">查看卡组</button><button type="button" data-${mode}-archive="${esc(a.id)}" class="primary">${mode==='create'?'使用此构筑创建':'选择此构筑'}</button></div></article>`;
 }
 
 function render() {
@@ -128,6 +136,11 @@ function renderHome() {
         <button class="primary" data-action="start-create">创建房间</button>
         <button data-action="start-join">加入朋友码</button>
         <button data-action="manage-account">账号凭证</button>
+      </section>
+      <section class="home-builds" aria-label="已有构筑">
+        <h2>我的构筑 <small>${account?.archives.length || 0} / 10</small></h2>
+        <p class="muted">查看卡组后，选择构筑创建或加入好友房间。</p>
+        <div class="archive-grid">${account?.archives.length ? account.archives.map(a=>archiveCard(a)).join('') : '<p class="empty">还没有构筑。完成故事模式的一幕并云端保存后，会显示在这里。</p>'}</div>
       </section>
       <section class="hero-tip">
         <p>${accountSummary}。需要先在登峰赛季中完成赛段并云端保存，之后这里可选构筑开局。</p>
@@ -342,9 +355,9 @@ document.addEventListener('click', async e => {
   const btn = e.target.closest('button, a, article[data-archive-id]');
   if (!btn) return;
 
-  if (btn.matches('[data-archive-id]')) {
-    if (screen === 'archives') {
-      const id = btn.dataset.archiveId;
+  if (btn.matches('[data-archive-id], [data-view-archive]')) {
+    if (screen === 'archives' || screen === 'home' || btn.dataset.viewArchive) {
+      const id = btn.dataset.viewArchive || btn.dataset.archiveId;
       const archive = (account?.archives || []).find(a => a.id === id);
       if (archive) showArchiveDetail(archive);
     }
@@ -417,7 +430,7 @@ function showCreateDialog() {
     (groups[a.snapshot.act] = groups[a.snapshot.act] || []).push(a);
   });
   const html = `<p>选择要使用的构筑：</p>` +
-    Object.entries(groups).map(([act, list]) => `<h4>第${act}幕</h4><div class="dialog-options">${list.map(a => `<button data-create-archive="${a.id}">${esc(a.name || '构筑')} · ${a.snapshot.maxHp}声望 · ${a.snapshot.deck.length}张</button>`).join('')}</div>`).join('');
+    Object.entries(groups).map(([act, list]) => `<h4>第${act}幕</h4><div class="dialog-options">${list.map(a => archivePickerCard(a,'create')).join('')}</div>`).join('');
   showModal('创建房间', html);
   modal.querySelectorAll('[data-create-archive]').forEach(btn => btn.addEventListener('click', async () => {
     try {
@@ -445,22 +458,21 @@ function showJoinDialog() {
     <div class="button-row"><button id="join-confirm" class="primary">加入</button></div>`);
   const codeInput = modal.querySelector('#join-code');
   const archiveBox = modal.querySelector('#join-archives');
-  function renderJoinArchives(code) {
-    if (!code) { archiveBox.innerHTML = '<p class="muted">输入朋友码后选择构筑。</p>'; return; }
+  function renderJoinArchives() {
     // We don't know act until joining; show all archives, server will reject mismatch.
-    archiveBox.innerHTML = (account.archives || []).map(a => `<button data-join-archive="${a.id}">${esc(a.name || '构筑')} · 第${a.snapshot.act}幕</button>`).join('');
+    archiveBox.innerHTML = (account.archives || []).map(a => archivePickerCard(a,'join')).join('');
   }
-  codeInput.addEventListener('input', () => renderJoinArchives(codeInput.value));
+  renderJoinArchives();
   archiveBox.addEventListener('click', e => {
     const b = e.target.closest('[data-join-archive]');
     if (b) {
-      archiveBox.querySelectorAll('button').forEach(x => x.classList.remove('selected'));
-      b.classList.add('selected');
+      archiveBox.querySelectorAll('[data-join-archive]').forEach(x => {x.classList.remove('selected');x.setAttribute('aria-pressed','false');});
+      b.classList.add('selected');b.setAttribute('aria-pressed','true');
     }
   });
   modal.querySelector('#join-confirm').addEventListener('click', async () => {
     const code = codeInput.value.trim();
-    const selectedBtn = archiveBox.querySelector('button.selected');
+    const selectedBtn = archiveBox.querySelector('[data-join-archive].selected');
     if (!code || !selectedBtn) { notice('请输入朋友码并选择构筑'); return; }
     try {
       const res = await apiJoinRoom(token, code, selectedBtn.dataset.joinArchive);

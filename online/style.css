@@ -96,3 +96,12 @@ dialog textarea{width:100%;background:#101c22;border:1px solid #3c4d50;color:#c3
 #profile-error{color:#ffa58a;font-size:13px;margin:0;overflow-wrap:anywhere}#profile-error:empty{display:none}.profile-form #profile-save{min-height:48px}
 .member .name{overflow-wrap:anywhere;min-width:0}.member-avatar{grid-row:span 2}.room-members .member{gap:8px;align-items:center}
 @media(max-width:600px){.profile-preview img{width:72px;height:72px}.profile-preview span{font-size:16px}.room-members .member{display:flex;flex-wrap:wrap}.member .name{flex:1;min-width:100px}.member-avatar{width:44px;height:44px}.home-main h1{font-size:32px;letter-spacing:4px}}
+
+/* Cloud builds are visible without opening account/archive management. */
+.home-builds{max-width:1000px;margin:32px auto 0;text-align:left}.home-builds h2{font-size:22px;color:#e7d29f;margin:0 0 8px}.home-builds h2 small{font:14px system-ui;color:var(--muted);margin-left:8px}
+.archive-meta{display:flex;gap:10px;flex-wrap:wrap}.archive-meta strong{color:#e9d39f}.archive-date{font-size:12px!important;color:#a8b5b6!important}.archive-stats{font-size:13px!important;line-height:1.7}.archive-card button{width:100%;min-height:44px;margin-top:8px}.archive-card h3,.archive-choice h3{overflow-wrap:anywhere}
+.archive-choice{border:1px solid #53665f;border-radius:6px;padding:16px;background:#192b30;text-align:left;min-width:0}.archive-choice h3{margin:0 0 8px;color:#e9d39f;font-size:17px}.archive-choice p{margin:6px 0}.archive-choice-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}.archive-choice-actions button{flex:1;min-width:120px;min-height:44px;font-size:13px}.archive-choice-actions .selected{outline:2px solid #b6dfc3;outline-offset:2px}
+.dialog-options:has(.archive-choice){display:grid;grid-template-columns:1fr;gap:12px}.home-builds .archive-grid{margin-top:16px}.home-builds+.hero-tip{margin-top:24px}
+@media(max-width:600px){.home-builds .archive-grid{grid-template-columns:1fr}.home-builds{margin-top:24px}.archive-choice-actions button{min-width:100px}}
+
+#join-code{display:block;width:100%;min-height:44px;margin:12px 0;padding:10px 12px;background:#101b23;border:1px solid #718078;border-radius:6px;color:var(--ink)}

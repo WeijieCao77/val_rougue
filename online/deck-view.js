@@ -58,7 +58,7 @@ export function openDeckView(archive) {
   const skins = snap.skins || [];
   const list = stacks(deck);
   const region = snap.region || deck.map(c => c.id.slice(0, 2)).find(p => ({ CN: 1, AM: 1, EU: 1, PA: 1 })[p]);
-  const regionName = REGION_NAME[region] || REGIONS?.[region]?.name || '';
+  const regionName = REGION_NAME[region] || REGION_NAME[{EU:'EMEA',PA:'PAC'}[region]] || REGIONS?.[region]?.name || '';
   const trainedCount = deck.filter(c => c.up).length;
 
   const root = document.createElement('div');
@@ -67,7 +67,7 @@ export function openDeckView(archive) {
     <header class="dv-head">
       <button type="button" class="dv-back" aria-label="返回">‹ 返回</button>
       <div class="dv-title"><h2>${esc(archive.name || `第${snap.act}幕存档`)}</h2>
-        <p>${regionName ? `${esc(regionName)} · ` : ''}第${snap.act}幕 · 最大声望 ${snap.maxHp} · 资金 ${snap.money}${Number.isInteger(snap.ascension) ? ` · 难度 ${snap.ascension}` : ''}</p></div>
+        <p>${regionName ? `${esc(regionName)} · ` : ''}第${snap.act}幕${archive.createdAt ? ` · ${esc(new Date(archive.createdAt).toLocaleString('zh-CN', {hour12:false}))}` : ''} · 最大声望 ${snap.maxHp} · 资金 ${snap.money}${Number.isInteger(snap.ascension) ? ` · 难度 ${snap.ascension}` : ''}</p></div>
     </header>
     <div class="dv-summary">
       <div class="dv-count"><b>${deck.length}</b><span>张牌</span><small>${trainedCount ? `已训练 ${trainedCount}` : '未训练'}</small></div>
@@ -79,14 +79,16 @@ export function openDeckView(archive) {
       <ol class="dv-list">${list.map((s, i) => { const p = photo(s.card.id); const v = costOf(s.card); return `<li><button type="button" class="dv-row role-${esc(CARDS[s.card.id].player ? CARDS[s.card.id].role : 'tactic')}" data-i="${i}"${p ? ` style="--photo:url('${p}')"` : ''}><span class="dv-gem">${v === null ? '—' : v}</span><span class="dv-name">${esc(cardName(s.card))}</span><span class="dv-rn">${s.n > 1 ? `×${s.n}` : ''}</span></button></li>`; }).join('')}</ol>
     </div>
     <section class="dv-skins"><h3>皮肤 · ${skins.length} 件</h3>${skins.length ? `<ul>${skins.map(id => `<li><strong>${esc(SKINS[id]?.name || id)}</strong><span>${esc(SKINS[id]?.text || '')}</span></li>`).join('')}</ul>` : '<p>这份构筑没有携带皮肤。</p>'}</section>`;
-  document.body.append(root);
+  const previousFocus=document.activeElement;
+  (document.querySelector('dialog[open]') || document.body).append(root);
+  root.querySelector('.dv-back').focus();
   document.body.classList.add('dv-open');
   requestAnimationFrame(() => root.classList.add('in'));
 
   let detail = null;
   const closeDetail = () => { detail?.remove(); detail = null; };
-  const close = () => { closeDetail(); document.body.classList.remove('dv-open'); root.remove(); removeEventListener('keydown', onKey); };
-  const onKey = e => { if (e.key === 'Escape') detail ? closeDetail() : close(); };
+  const close = () => { closeDetail(); document.body.classList.remove('dv-open'); root.remove(); removeEventListener('keydown', onKey); previousFocus?.focus?.(); };
+  const onKey = e => { if (e.key === 'Escape') {e.preventDefault();e.stopPropagation();detail ? closeDetail() : close();} };
   addEventListener('keydown', onKey);
 
   root.addEventListener('click', e => {
