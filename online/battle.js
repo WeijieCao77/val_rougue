@@ -1,3 +1,4 @@
+import { avatarSrc } from '/pvp/avatar.js';
 // PvP battle screen: two players across a tactical table. The opponent sits at the
 // top (card-back fan + hero panel), I sit at the bottom (hero panel + hand fan), the
 // middle is the play mat where both players' cards are shown and laid down.
@@ -155,7 +156,7 @@ export function createBattle(ctx) {
     clockInt = setInterval(() => { tickClock(); if (resultShown) tickRematch(); }, 200);
   }
   function heroSkeleton(s) {
-    return `<div class="emblem"><span class="emb-txt"></span><span class="shield" hidden>${statusIcon('block')}<b></b></span></div>
+    return `<div class="emblem"><img class="hero-avatar" alt="玩家头像" width="50" height="50"><span class="emb-txt"></span><span class="shield" hidden>${statusIcon('block')}<b></b></span></div>
       <div class="hero-body"><div class="hero-line"><b class="hero-name"></b><button type="button" class="trait" data-b="trait-${s}"></button></div>
         <div class="hp"><i class="hp-lag"></i><i class="hp-fill"></i><span class="hp-txt"></span></div>
         <div class="hero-status"></div></div>
@@ -203,6 +204,7 @@ export function createBattle(ctx) {
     // Ignore responses older than what we already hold (a slow poll after an action).
     if (target?.match && r.match.rev < target.match.rev) return;
     room = r; target = r;
+    for (const seat of [0, 1]) renderHero(seat);
     timer = r.timer || null;
     if (resultShown) renderRematch();
     if (r.match.hasHistory === false) { applyView(r.match); return; }
@@ -250,6 +252,9 @@ export function createBattle(ctx) {
     box.dataset.region = region || '';
     box.classList.toggle('active', activeShown === seat);
     box.querySelector('.emb-txt').textContent = REGION_SHORT[region] || '—';
+    const portrait = box.querySelector('.hero-avatar');
+    portrait.src = avatarSrc(room?.members?.find(m => m.seat === seat)?.avatar);
+    portrait.alt = memberName(seat) + '的头像';
     box.querySelector('.hero-name').textContent = seat === mySeat ? `你${memberName(seat) !== '你' ? ' · ' + memberName(seat) : ''}` : memberName(seat);
     const tr = box.querySelector('.trait');
     tr.textContent = h.trait ? `${h.trait.name} ${h.trait.counter}` : '';

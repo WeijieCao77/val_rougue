@@ -18392,13 +18392,18 @@ const module34=(()=>{
 // When shipping something players will notice, add a line to the top entry
 // (or a new entry with the next version and today's date).
 const CHANGELOG = [
+  { version: 'v0.9.6', date: '2026-09-27', title: '你的对战身份', items: [
+    ['pvp', '可以设置昵称、选择猪之家头像或上传图片，房间和牌桌显示双方昵称与头像。'],
+    ['all', '正式名称确定为登峰赛季与战术试炼，统一网页标题、封面及切换入口。']
+  ] },
   {
     version: 'v0.9.5', date: '2026-09-27', title: '界面布局调整',
     items: [
       ['all', '调整电脑与手机的页面宽度、按钮间距和开局选择布局，减少拥挤与多余留白。'],
       ['wa', '好友 PvP 与故事模式并列为首页主入口。'],
-      ['new', '选队页面集中展示所选队伍特质，战斗页面减少固定留白。']
-      ,['all', '加入猪之家原创小猪标志，网页标签页也有了专属图标。']
+      ['new', '选队页面集中展示所选队伍特质，战斗页面减少固定留白。'],
+      ['all', '加入猪之家原创小猪标志，网页标签页也有了专属图标。'],
+      ['all', '移除玩家界面的测试开关，新局按正常进度解锁。']
     ]
   },
   {
@@ -18479,7 +18484,7 @@ const CHANGELOG = [
   }
 ];
 
-const TAG_LABELS = { wa: '瓦 Demo', new: '新 Demo', pvp: '好友 PvP', all: '两个版本' };
+const TAG_LABELS = { wa: '登峰赛季', new: '战术试炼', pvp: '好友 PvP', all: '两个版本' };
 const LATEST_VERSION = CHANGELOG[0].version;
 
 // One demo's log: only its lines, entries without any dropped. PvP lines keep a tag

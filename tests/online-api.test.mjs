@@ -451,3 +451,53 @@ test('15 层地图（mapVersion 2）的爬塔记录按新地图重放核验；�
     await teardown({ dir, store });
   }
 });
+
+
+test('玩家昵称与默认头像：认证、房间同步、持久保存、不泄露凭据', async () => {
+  const ctx = await setup();
+  const {store,handler}=ctx;
+  try {
+    const a=await createAccount(handler), b=await createAccount(handler);
+    assert.equal((await request(handler,{method:'PATCH',path:'/api/account/profile',body:{name:'队长',avatar:'pig-scout'}})).status,401);
+    const saved=await request(handler,{method:'PATCH',path:'/api/account/profile',token:a,body:{name:' 猪之家队长 ',avatar:'pig-guard'}});
+    assert.equal(saved.status,200);assert.equal(saved.body.name,'猪之家队长');assert.equal(saved.body.avatar,'pig-guard');assert.equal(saved.body.profileComplete,true);
+    assert.equal(saved.body.tokenHash,undefined);assert.equal(saved.body.avatarData,undefined);
+    await addArchive(store,a,'profile-a');await addArchive(store,b,'profile-b');
+    const host=await request(handler,{method:'POST',path:'/api/rooms',token:a,body:{archiveId:'profile-a'}});
+    assert.equal(host.status,201);const code=host.body.room.code;
+    await request(handler,{method:'PATCH',path:'/api/account/profile',token:b,body:{name:'朋友队长',avatar:'pig-rush'}});
+    const joined=await request(handler,{method:'POST',path:'/api/rooms/join',token:b,body:{code,archiveId:'profile-b'}});
+    assert.equal(joined.status,200);assert.equal(joined.body.room.members[0].name,'猪之家队长');assert.equal(joined.body.room.members[1].avatar,'pig-rush');
+    await request(handler,{method:'PATCH',path:'/api/account/profile',token:a,body:{name:'换名队长',avatar:'pig-night'}});
+    const view=await request(handler,{path:`/api/rooms/${code}`,token:b});
+    assert.equal(view.body.room.members[0].name,'换名队长');assert.equal(view.body.room.members[0].avatar,'pig-night');
+    await store.close();ctx.store=await openStore({dataDir:ctx.dir});const reopened=createOnlineHandler(ctx.store);
+    const restored=await request(reopened,{path:'/api/account',token:a});assert.equal(restored.body.name,'换名队长');assert.equal(restored.body.avatar,'pig-night');
+  } finally {await teardown(ctx);}
+});
+
+test('资料校验：昵称、远程 URL、SVG、假图片和越权字段不能写入', async () => {
+  const ctx=await setup();try {
+    const token=await createAccount(ctx.handler);
+    for(const body of [{name:'a'},{name:'x'.repeat(17)},{name:'<script>'},{name:'队长\u0000'},{name:'队长',avatar:'https://evil.test/a.png'},{name:'队长',avatar:'data:image/svg+xml;base64,PHN2Zz4='},{name:'队长',avatar:'data:image/png;base64,aGVsbG8='},{name:'队长',tokenHash:'fake'}]){
+      const r=await request(ctx.handler,{method:'PATCH',path:'/api/account/profile',token,body});assert.equal(r.status,400,JSON.stringify(body));
+    }
+    assert.equal((await request(ctx.handler,{path:'/api/account',token})).body.profileComplete,false);
+  }finally{await teardown(ctx);}
+});
+
+test('上传头像经过服务器解码、方形压缩和去元数据，公开图片不泄露账号资料', async () => {
+  const ctx=await setup();try {
+    const sharp=(await import('sharp')).default;
+    const token=await createAccount(ctx.handler);
+    const source=await sharp({create:{width:240,height:120,channels:3,background:'#ec8899'}}).png().toBuffer();
+    const r=await request(ctx.handler,{method:'PATCH',path:'/api/account/profile',token,body:{name:'头像队长',avatar:'data:image/png;base64,'+source.toString('base64')}});
+    assert.equal(r.status,200);assert.match(r.body.avatar,/^\/api\/avatars\/[a-f0-9]{16}\?v=/);assert.equal(r.body.avatarData,undefined);
+    const pic=await request(ctx.handler,{path:r.body.avatar});assert.equal(pic.status,200);
+    // request() JSON helper deliberately cannot parse binary; inspect persisted normalized bytes instead.
+    const stored=ctx.store.tx(t=>t.account(r.body.accountId));
+    const normalized=await sharp(Buffer.from(stored.avatarData,'base64')).metadata();assert.equal(normalized.width,128);assert.equal(normalized.height,128);assert.equal(normalized.format,'jpeg');assert.equal(normalized.exif,undefined);
+    await request(ctx.handler,{method:'PATCH',path:'/api/account/profile',token,body:{name:'头像队长',avatar:'pig-scout'}});
+    assert.equal((await request(ctx.handler,{path:r.body.avatar})).status,404);
+  }finally{await teardown(ctx);}
+});

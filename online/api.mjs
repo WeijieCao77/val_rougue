@@ -3,6 +3,7 @@ import { createMatch, applyCommand, viewFor } from './duel.mjs';
 import { HttpError } from './http-error.mjs';
 import { verifyClaim } from './claim-verify.mjs';
 import { generateToken, generateRoomCode, sha256 } from './store.mjs';
+import { publicProfile, validateName, prepareAvatar } from './profile.mjs';
 import { createSyncHandler } from './sync-api.mjs';
 
 const MAX_BODY_BYTES = 1024 * 1024;
@@ -169,6 +170,7 @@ function generateUniqueRoomCode(t) {
 function cleanAccount(account) {
   return {
     accountId: account.accountId,
+    ...publicProfile(account),
     archives: account.archives.map(archive => ({
       id: archive.id,
       name: archive.name,
@@ -216,6 +218,7 @@ function publicRoomAt(room, forSeat, nowTime = Date.now()) {
     members: room.members.map(m => ({
       seat: m.seat,
       name: m.name || '玩家',
+      avatar: m.avatar || 'pig-scout',
       ready: m.ready,
       left: !!m.left,
       act: m.archiveSnapshot ? m.archiveSnapshot.act : null,
@@ -455,6 +458,16 @@ export function createOnlineHandler(store, options = {}) {
       return true;
     }
 
+    const avatarMatch = pathname.match(/^\/api\/avatars\/([a-f0-9]{16})$/);
+    if (avatarMatch && method === 'GET') {
+      let image;
+      store.tx(t => { image = t.account(avatarMatch[1])?.avatarData; });
+      if (!image) { sendError(res, new HttpError(404, '头像不存在')); return true; }
+      const bytes = Buffer.from(image, 'base64');
+      res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Content-Length': bytes.length, 'Cache-Control': 'public, max-age=300', 'X-Content-Type-Options': 'nosniff' });
+      res.end(bytes); return true;
+    }
+
     // All other /api endpoints require auth
     let authResult;
     try {
@@ -471,6 +484,27 @@ export function createOnlineHandler(store, options = {}) {
     const rateKey = isRead ? `read:${tokenHash}` : `write:${tokenHash}`;
     if (!limiter.check(rateKey, limit)) {
       sendError(res, new HttpError(429, '请求过于频繁'));
+      return true;
+    }
+
+    if (pathname === '/api/account/profile' && method === 'PATCH') {
+      try {
+        const body = await readJsonBody(req);
+        if (Object.keys(body).some(k => !['name', 'avatar'].includes(k))) throw new HttpError(400, '意外的资料字段');
+        const name = validateName(body.name);
+        const avatar = body.avatar === undefined ? null : await prepareAvatar(body.avatar);
+        let result;
+        store.tx(t => {
+          const acct = t.account(account.accountId);
+          acct.name = name;
+          if (avatar) Object.assign(acct, avatar);
+          const currentRoom = getAccountRoom(t, acct);
+          const member = currentRoom?.members.find(m => m.accountId === acct.accountId);
+          if (member) Object.assign(member, publicProfile(acct));
+          result = cleanAccount(acct);
+        });
+        sendJson(res, 200, result);
+      } catch (err) { sendError(res, err); }
       return true;
     }
 
@@ -645,7 +679,7 @@ export function createOnlineHandler(store, options = {}) {
               {
                 seat: 0,
                 accountId: acct.accountId,
-                name: acct.name || '玩家',
+                ...publicProfile(acct),
                 ready: false,
                 archiveId: archive.id,
                 archiveSnapshot: clone(validatedSnapshot),
@@ -709,7 +743,7 @@ export function createOnlineHandler(store, options = {}) {
           room.members.push({
             seat,
             accountId: acct.accountId,
-            name: acct.name || '玩家',
+            ...publicProfile(acct),
             ready: false,
             archiveId: archive.id,
             archiveSnapshot: clone(archive.snapshot),

@@ -323,3 +323,7 @@ body.in-duel{overflow:hidden;overscroll-behavior:none}
 @media (min-width:720px){.rope{left:70px;right:112px}}
 @media (prefers-reduced-motion:reduce){.rope-fire,.rope-fire::before,.rope-fire::after,.end-turn.urgent,.rm-msg.hot{animation:none}}
 @media (prefers-reduced-motion:reduce){.banner.show{animation:bannerIn .4s forwards}.hero.hit,.hero.hit-heavy{animation:none}.res-rays{animation:none}}
+
+.hero-avatar{position:absolute;inset:0;width:100%;height:100%;border-radius:12px;object-fit:cover;border:2px solid var(--side);background:#25323e}
+.hero[data-region] .emblem .emb-txt{position:absolute;inset:auto;bottom:-5px;left:-2px;right:auto;clip-path:none;font-size:9px;padding:1px 4px;border-radius:4px;background:#15202d;color:#e6e9ee;line-height:14px;z-index:2}
+.emblem .shield{z-index:3}.hero-name{max-width:100%;min-width:0}.hero-body{min-width:0}

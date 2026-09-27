@@ -1,3 +1,5 @@
+import { avatarSrc } from '/pvp/avatar.js';
+import { profileEditorHtml, bindProfileEditor } from '/pvp/profile-editor.js';
 import { cardName, SKINS } from '/pvp/content.js';
 import { createBattle } from '/pvp/battle.js';
 import { openDeckView } from '/pvp/deck-view.js';
@@ -111,12 +113,13 @@ function renderHome() {
       <nav>
         <button data-nav="archives">构筑库</button>
         <button data-nav="account">账号</button>
-        <a href="/" class="nav-link">返回登峰赛季</a>
+        <a href="/wa/" class="nav-link">返回登峰赛季</a>
         ${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a href="/new/" class="nav-link">战术试炼</a>` : ''}
       </nav>
     </header>
     <main class="pvp-main home-main">
       <h1>好友真人 PvP</h1>
+      <button class="player-profile" data-action="edit-profile"><img src="${esc(avatarSrc(account?.avatar))}" alt="你的头像" width="56" height="56"><span><b>${esc(account?.name || '设置玩家昵称')}</b><small>修改昵称与头像</small></span><span aria-hidden="true">✎</span></button>
       <p class="subtitle">选择你的同幕构筑，创建房间或加入朋友码。</p>
       ${hasActiveRoom ? `<div class="continue-room"><strong>你有进行中的房间</strong><button data-action="resume-room">继续（${esc(room.code)}）</button></div>` : ''}
       ${serverPending ? `<div class="pending-banner"><strong>云端待处理保存</strong> 第${serverPending.snapshot.act}幕 · ${serverPending.snapshot.maxHp}声望<button data-action="resolve-server-pending">处理</button></div>` : ''}
@@ -164,7 +167,7 @@ function renderLobby() {
       <section class="room-panel">
         <h2>房间 ${esc(room?.code || '')}</h2>
         <div class="room-members">
-          ${room?.members?.map(m => `<div class="member ${m.ready ? 'ready' : ''}"><span class="name">${esc(m.name || '玩家')}</span><span class="act">第${m.act}幕</span><span class="deck">${m.deckCount}张</span><span class="maxhp">${m.maxHp}声望</span><span class="ready">${m.ready ? '已准备' : '未准备'}</span></div>`).join('') || '<p>等待成员加入...</p>'}
+          ${room?.members?.map(m => `<div class="member ${m.ready ? 'ready' : ''}"><img class="member-avatar" src="${esc(avatarSrc(m.avatar))}" alt="${esc(m.name)}的头像" width="48" height="48"><span class="name">${esc(m.name || '玩家')}</span><span class="act">第${m.act}幕</span><span class="deck">${m.deckCount}张</span><span class="maxhp">${m.maxHp}声望</span><span class="ready">${m.ready ? '已准备' : '未准备'}</span></div>`).join('') || '<p>等待成员加入...</p>'}
         </div>
         <p class="hint">构筑在加入时锁定，如需更换请退出房间。</p>
         ${room?.status === 'waiting' ? `<button class="primary" data-action="ready-toggle">${ready ? '取消准备' : '准备'}</button>` : ''}
@@ -191,7 +194,7 @@ function roomKey(r) {
     round: r.round,
     rematch: r.rematch,
     timer: r.timer,
-    members: r.members?.map(m => [m.seat, m.ready, m.deckCount, m.maxHp, m.left]),
+    members: r.members?.map(m => [m.seat, m.ready, m.deckCount, m.maxHp, m.left, m.name, m.avatar]),
     match: r.match ? {
       rev: r.match.rev,
       status: r.match.status,
@@ -331,6 +334,7 @@ async function loadInitial() {
     }
   }
   render();
+  if (account && !account.profileComplete && screen === 'home') showProfileDialog();
 }
 
 // Event delegation for clicks
@@ -357,7 +361,8 @@ document.addEventListener('click', async e => {
 
   if (btn.dataset.action) {
     const action = btn.dataset.action;
-    if (action === 'start-create') showCreateDialog();
+    if (action === 'edit-profile') showProfileDialog();
+    else if (action === 'start-create') showCreateDialog();
     else if (action === 'start-join') showJoinDialog();
     else if (action === 'resume-room') { if (room?.code) { screen = room.status === 'active' ? 'game' : 'lobby'; render(); } }
     else if (action === 'copy-code') { if (room?.code) { navigator.clipboard?.writeText(room.code); notice('已复制房间码'); } }
@@ -473,6 +478,16 @@ function showJoinDialog() {
 function showArchiveDetail(archive) {
   // Full-screen deck viewer; the build dialog stays open underneath.
   openDeckView(archive);
+}
+
+function showProfileDialog() {
+  if (!token || !account) { notice('账号尚未连接，请刷新后重试'); return; }
+  showModal('玩家昵称与头像', profileEditorHtml(account));
+  bindProfileEditor(modal, account, async body => {
+    account = await apiFetch('/api/account/profile', {method:'PATCH', token, body:JSON.stringify(body)});
+    if (room?.code) { const res = await apiGetRoom(token, room.code); room=res.room; latestRoomKey=roomKey(room); }
+    dialog.close(); render(); notice('昵称与头像已保存');
+  });
 }
 
 function showAccountDialog() {
