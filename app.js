@@ -4924,7 +4924,7 @@ const EXPANSION_ROWS = [
         "type": "hit",
         "n": 5,
         "times": 1,
-        "ifWeak": true
+        "ifWeak": 1
       },
       {
         "type": "weak",
@@ -4936,7 +4936,7 @@ const EXPANSION_ROWS = [
         "type": "hit",
         "n": 6,
         "times": 1,
-        "ifWeak": true
+        "ifWeak": 1
       },
       {
         "type": "weak",
@@ -5387,7 +5387,7 @@ const EXPANSION_ROWS = [
         "type": "hit",
         "n": 4,
         "times": 2,
-        "ifWeak": true
+        "ifWeak": 1
       }
     ],
     [
@@ -5395,7 +5395,7 @@ const EXPANSION_ROWS = [
         "type": "hit",
         "n": 5,
         "times": 2,
-        "ifWeak": true
+        "ifWeak": 1
       }
     ],
     "discard"
@@ -6476,7 +6476,7 @@ const EXPANSION_ROWS = [
         "type": "hit",
         "n": 5,
         "times": 1,
-        "ifWeak": true
+        "ifWeak": 1
       },
       {
         "type": "draw",
@@ -6488,7 +6488,7 @@ const EXPANSION_ROWS = [
         "type": "hit",
         "n": 7,
         "times": 1,
-        "ifWeak": true
+        "ifWeak": 1
       },
       {
         "type": "draw",
@@ -6627,7 +6627,7 @@ const EXPANSION_ROWS = [
         "type": "hit",
         "n": 3,
         "times": 2,
-        "ifWeak": true
+        "ifWeak": 1
       }
     ],
     [
@@ -6635,7 +6635,7 @@ const EXPANSION_ROWS = [
         "type": "hit",
         "n": 4,
         "times": 2,
-        "ifWeak": true
+        "ifWeak": 1
       }
     ],
     "discard"
