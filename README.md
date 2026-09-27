@@ -31,7 +31,7 @@ npm start
 3. 配置文件指定 Railpack 构建、`npm run build`、`npm start` 与 `/healthz` 健康检查。
 4. 部署成功后，在服务的 Networking / Public Networking 中生成域名，再分享给内测玩家。
 
-服务器监听 `0.0.0.0`，自动读取 Railway 提供的 `PORT`。好友 PvP 账号与房间数据在生产环境应使用 `DATABASE_URL` 或持久化 `DATA_DIR`。
+服务器监听 `0.0.0.0`，自动读取 Railway 提供的 `PORT`。好友 PvP 账号、房间与进度同步数据存放在 `DATA_DIR` 下的 SQLite 文件 `online.db`（生产环境必须挂载持久卷）。
 
 ## 存档与内测反馈
 

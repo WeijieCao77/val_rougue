@@ -21,4 +21,4 @@
 - 工程评估先参考用户已有噜噜卡（lulu_card）与开瓦包（Val_Manager卡牌模式）的身份、数据库、好友码、服务端操作结算与并发代码，见docs/PEER-PVP-REUSE.md。当前Demo静态/localStorage是版本现状，不是团队能力上限；已经实现好友真人双人房间出牌。
 - 服务端重放核验真实构筑：客户端提交完整 action 序列，服务端用同版本引擎重建运行并提取快照，防止伪造牌组或属性；同幕兼容房间码，双方手动出牌，服务端随机决定先手并隐藏对手手牌。
 - 匿名持有凭证恢复账号：用户持有 256 位随机 token，可随时恢复账号，服务端仅存哈希；不实现完整实名登录、公共匹配或反作弊平台。
-- 新demo存档使用 localStorage 独立存储，不与瓦demo共享；本轮新demo不做 PvP，只做单人爬塔。文件存储已实测，PG适配尚未连接实库验收；Railway发布使用/data持久卷单实例；生产环境必须提供 DATABASE_URL 或挂载持久 volume DATA_DIR 单实例，否则重部署会丢失数据。
+- 新demo存档使用 localStorage 独立存储，不与瓦demo共享；本轮新demo不做 PvP，只做单人爬塔。在线数据自 2026-09-27 起存于 `${DATA_DIR}/online.db`（node:sqlite，WAL），已移除 PG 与整份 JSON 存储；Railway发布使用/data持久卷单实例；生产环境必须挂载持久 volume DATA_DIR 单实例，否则重部署会丢失数据。

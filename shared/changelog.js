@@ -6,6 +6,12 @@
 // (or a new entry with the next version and today's date).
 export const CHANGELOG = [
   {
+    version: 'v0.9.3', date: '2026-09-27', title: '进度同步',
+    items: [
+      ['all', '新增进度同步：用 6 位同步码把手机和电脑的进度连起来，之后自动同步。']
+    ]
+  },
+  {
     version: 'v0.9.2', date: '2026-09-27', title: '解锁进度调整',
     items: [
       ['all', '卡牌与装备解锁由 5 批改为 4 批，每批所需经验 20／30／40／50；已解锁的内容全部保留。']

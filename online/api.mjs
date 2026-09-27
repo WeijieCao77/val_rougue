@@ -3,6 +3,7 @@ import { createMatch, applyCommand, viewFor, validateSnapshot } from './duel.mjs
 import { createWaSeason, waAct, extractCheckpoints } from '../wa-season.js';
 import { RULES_VERSIONS, ECON_VERSIONS, unlockTiersOf } from '../wa-rules.js';
 import { generateToken, generateRoomCode, sha256 } from './store.mjs';
+import { createSyncHandler } from './sync-api.mjs';
 
 const MAX_BODY_BYTES = 1024 * 1024;
 const MAX_ACTIONS = 5000;
@@ -40,14 +41,14 @@ function clone(obj) {
   return obj == null ? obj : structuredClone(obj);
 }
 
-class HttpError extends Error {
+export class HttpError extends Error {
   constructor(status, message) {
     super(message);
     this.status = status;
   }
 }
 
-function sendJson(res, status, obj) {
+export function sendJson(res, status, obj) {
   const body = JSON.stringify(obj);
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
@@ -58,7 +59,7 @@ function sendJson(res, status, obj) {
   res.end(body);
 }
 
-function sendError(res, err) {
+export function sendError(res, err) {
   if (!(err instanceof HttpError)) {
     console.error('API内部错误:', err);
     err = new HttpError(500, '服务器内部错误');
@@ -72,7 +73,21 @@ function getBearerToken(req) {
   return auth.slice(7).trim();
 }
 
-function checkSameOrigin(req) {
+// Behind Railway's edge proxy every request arrives from the proxy's address, so per-IP
+// limits would be shared by all players. On Railway (or with TRUST_PROXY=1) the client
+// address comes from X-Real-IP / the last X-Forwarded-For hop added by the proxy.
+const TRUST_PROXY = process.env.TRUST_PROXY === '1' || !!process.env.RAILWAY_ENVIRONMENT_ID || !!process.env.RAILWAY_SERVICE_NAME;
+export function clientIpOf(req) {
+  if (TRUST_PROXY) {
+    const real = req.headers?.['x-real-ip'];
+    if (typeof real === 'string' && real.trim()) return real.trim().slice(0, 64);
+    const fwd = req.headers?.['x-forwarded-for'];
+    if (typeof fwd === 'string' && fwd.trim()) return fwd.split(',').at(-1).trim().slice(0, 64);
+  }
+  return req.socket?.remoteAddress || 'unknown';
+}
+
+export function checkSameOrigin(req) {
   const origin = req.headers.origin;
   if (!origin) return true;
   const host = req.headers.host;
@@ -85,7 +100,7 @@ function checkSameOrigin(req) {
   }
 }
 
-async function readJsonBody(req) {
+export async function readJsonBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
     let size = 0;
@@ -122,43 +137,36 @@ async function readJsonBody(req) {
   });
 }
 
-function findAccount(data, tokenHash) {
-  for (const accountId of Object.keys(data.accounts)) {
-    const account = data.accounts[accountId];
-    if (account.tokenHash === tokenHash) return account;
-  }
-  return null;
-}
+// Storage: `store` is the SQLite store (online/sqlite-store.mjs). Each request runs
+// short synchronous units of work `store.tx(t => …)` that load only the rows they need
+// (t.account / t.room / t.checkpoint / t.request) and write back only what changed.
 
-async function requireAccount(store, req) {
+function requireAccount(store, req) {
   const token = getBearerToken(req);
   if (!token) throw new HttpError(401, '缺少Bearer令牌');
   const tokenHash = sha256(token);
-  let account;
-  await store.transaction(async (data) => {
-    account = findAccount(data, tokenHash);
-    if (!account) throw new HttpError(401, '令牌无效');
-  });
+  const account = store.getAccountByTokenHash(tokenHash);
+  if (!account) throw new HttpError(401, '令牌无效');
   return { account, tokenHash };
 }
 
-function findRoomByCode(data, code) {
-  return data.rooms[code] || null;
+function findRoomByCode(t, code) {
+  return t.room(code) || null;
 }
 
-function getAccountRoom(data, account) {
+function getAccountRoom(t, account) {
   if (!account.roomCode) return null;
-  return data.rooms[account.roomCode] || null;
+  return t.room(account.roomCode) || null;
 }
 
 function getSeatInRoom(room, accountId) {
   return room.members.findIndex(m => m.accountId === accountId);
 }
 
-function generateUniqueRoomCode(data) {
+function generateUniqueRoomCode(t) {
   for (let i = 0; i < 100; i++) {
     const code = generateRoomCode();
-    if (!data.rooms[code]) return code;
+    if (!t.roomExists(code)) return code;
   }
   throw new HttpError(500, '无法生成房间码');
 }
@@ -223,7 +231,7 @@ function publicRoomAt(room, forSeat, nowTime = Date.now()) {
   };
 }
 
-class RateLimiter {
+export class RateLimiter {
   constructor() {
     this.map = new Map();
     this.timer = setInterval(() => this.cleanup(), RATE_LIMIT_CLEANUP_INTERVAL);
@@ -469,15 +477,12 @@ function markLeftFinishedRoom(room, accountId, nowTime) {
   if (room.rematch?.status === 'pending') room.rematch = { status: 'left', from: room.rematch.from, by: m.seat, at: nowTime };
 }
 
-function isCheckpointProcessed(account, checkpointId) {
-  return account.processedCheckpoints && account.processedCheckpoints[checkpointId];
+function isCheckpointProcessed(t, account, checkpointId) {
+  return t.checkpoint(account.accountId, checkpointId);
 }
 
-function markCheckpointProcessed(account, checkpointId, decision) {
-  if (!account.processedCheckpoints) {
-    account.processedCheckpoints = Object.create(null);
-  }
-  account.processedCheckpoints[checkpointId] = { decision, at: now() };
+function markCheckpointProcessed(t, account, checkpointId, decision) {
+  t.setCheckpoint(account.accountId, checkpointId, decision, now());
 }
 
 function findArchiveById(account, archiveId) {
@@ -495,6 +500,8 @@ export function createOnlineHandler(store, options = {}) {
   const turnMs = Number.isInteger(options.turnMs) && options.turnMs > 0 ? options.turnMs : DEFAULT_TURN_MS;
   const cleanRoomTimeouts = (room, nowTime) => cleanRoomTimeoutsAt(room, nowTime, turnMs);
   const publicRoom = (room, seat) => publicRoomAt(room, seat, now());
+  // Progress sync between devices (no PvP account needed): /api/sync/*
+  const syncHandler = createSyncHandler(store, { now });
 
   return async function onlineHandler(req, res, url) {
     if (!url.pathname.startsWith('/api/')) {
@@ -506,7 +513,11 @@ export function createOnlineHandler(store, options = {}) {
       return true;
     }
 
-    const clientIp = req.socket.remoteAddress || 'unknown';
+    if (url.pathname.startsWith('/api/sync/')) {
+      return syncHandler(req, res, url);
+    }
+
+    const clientIp = clientIpOf(req);
     const pathname = url.pathname;
     const method = req.method;
 
@@ -522,16 +533,15 @@ export function createOnlineHandler(store, options = {}) {
         const token = generateToken();
         const tokenHash = sha256(token);
         const accountId = sha256(tokenHash).slice(0, 16);
-        await store.transaction(async (data) => {
-          data.accounts[accountId] = {
+        store.tx((t) => {
+          t.createAccount({
             accountId,
             tokenHash,
             archives: [],
             pending: null,
-            processedCheckpoints: Object.create(null),
             roomCode: null,
             createdAt: now(),
-          };
+          });
         });
         sendJson(res, 201, { token });
       } catch (err) {
@@ -543,7 +553,7 @@ export function createOnlineHandler(store, options = {}) {
     // All other /api endpoints require auth
     let authResult;
     try {
-      authResult = await requireAccount(store, req);
+      authResult = requireAccount(store, req);
     } catch (err) {
       sendError(res, err);
       return true;
@@ -562,8 +572,8 @@ export function createOnlineHandler(store, options = {}) {
     if (pathname === '/api/account' && method === 'GET') {
       try {
         let accountData;
-        await store.transaction(async (data) => {
-          const freshAccount = data.accounts[account.accountId];
+        store.tx((t) => {
+          const freshAccount = t.account(account.accountId);
           if (!freshAccount) throw new HttpError(401, '令牌无效');
           accountData = cleanAccount(freshAccount);
         });
@@ -584,12 +594,13 @@ export function createOnlineHandler(store, options = {}) {
         const archiveId = `${validated.runId}:${validated.act}`;
 
         let resultStatus;
-        await store.transaction(async (data) => {
-          const acct = data.accounts[account.accountId];
+        store.tx((t) => {
+          const acct = t.account(account.accountId);
           if (!acct) throw new HttpError(401, '令牌无效');
 
-          if (isCheckpointProcessed(acct, archiveId)) {
-            const decision = acct.processedCheckpoints[archiveId].decision;
+          const processed = isCheckpointProcessed(t, acct, archiveId);
+          if (processed) {
+            const decision = processed.decision;
             resultStatus = decision;
             return;
           }
@@ -601,12 +612,12 @@ export function createOnlineHandler(store, options = {}) {
               createdAt: now(),
               snapshot: validated,
             });
-            markCheckpointProcessed(acct, archiveId, 'saved');
+            markCheckpointProcessed(t, acct, archiveId, 'saved');
             resultStatus = 'saved';
           } else {
             if (acct.pending) {
               if (acct.pending.id === archiveId) {
-                markCheckpointProcessed(acct, archiveId, 'pending');
+                markCheckpointProcessed(t, acct, archiveId, 'pending');
                 resultStatus = 'pending';
                 return;
               }
@@ -618,7 +629,7 @@ export function createOnlineHandler(store, options = {}) {
               createdAt: now(),
               snapshot: validated,
             };
-            markCheckpointProcessed(acct, archiveId, 'pending');
+            markCheckpointProcessed(t, acct, archiveId, 'pending');
             resultStatus = 'pending';
           }
         });
@@ -635,8 +646,8 @@ export function createOnlineHandler(store, options = {}) {
         const body = await readJsonBody(req);
         const { decision, archiveId, expectedPendingId } = body;
 
-        await store.transaction(async (data) => {
-          const acct = data.accounts[account.accountId];
+        store.tx((t) => {
+          const acct = t.account(account.accountId);
           if (!acct) throw new HttpError(401, '令牌无效');
           if (!acct.pending) throw new HttpError(409, '没有待处理的存档');
           if (!expectedPendingId || acct.pending.id !== expectedPendingId) {
@@ -645,7 +656,7 @@ export function createOnlineHandler(store, options = {}) {
 
           if (decision === 'discard') {
             acct.pending = null;
-            markCheckpointProcessed(acct, expectedPendingId, 'discarded');
+            markCheckpointProcessed(t, acct, expectedPendingId, 'discarded');
           } else if (decision === 'replace') {
             if (!archiveId) throw new HttpError(400, '缺少archiveId');
             const targetIndex = acct.archives.findIndex(a => a.id === archiveId);
@@ -658,7 +669,7 @@ export function createOnlineHandler(store, options = {}) {
               snapshot: acct.pending.snapshot,
             };
             acct.pending = null;
-            markCheckpointProcessed(acct, expectedPendingId, 'replaced');
+            markCheckpointProcessed(t, acct, expectedPendingId, 'replaced');
           } else {
             throw new HttpError(400, '无效的决策');
           }
@@ -679,8 +690,8 @@ export function createOnlineHandler(store, options = {}) {
           throw new HttpError(400, '无效的archiveId或name');
         }
 
-        await store.transaction(async (data) => {
-          const acct = data.accounts[account.accountId];
+        store.tx((t) => {
+          const acct = t.account(account.accountId);
           if (!acct) throw new HttpError(401, '令牌无效');
           const archive = findArchiveById(acct, archiveId);
           if (!archive) throw new HttpError(404, '存档未找到');
@@ -701,10 +712,10 @@ export function createOnlineHandler(store, options = {}) {
         if (!archiveId) throw new HttpError(400, '缺少archiveId');
 
         let roomResult;
-        await store.transaction(async (data) => {
-          const acct = data.accounts[account.accountId];
+        store.tx((t) => {
+          const acct = t.account(account.accountId);
           if (!acct) throw new HttpError(401, '令牌无效');
-          const existingRoom = getAccountRoom(data, acct);
+          const existingRoom = getAccountRoom(t, acct);
           if (existingRoom) {
             cleanRoomTimeouts(existingRoom, now());
             if (existingRoom.status !== 'finished' && existingRoom.status !== 'closed') {
@@ -719,7 +730,7 @@ export function createOnlineHandler(store, options = {}) {
           if (!archive) throw new HttpError(404, '存档未找到');
           if (isArchiveLockedInRoom(archive.id)) throw new HttpError(409, '存档锁定中');
 
-          const code = generateUniqueRoomCode(data);
+          const code = generateUniqueRoomCode(t);
           const validatedSnapshot = archive.snapshot;
           const room = {
             code,
@@ -738,9 +749,8 @@ export function createOnlineHandler(store, options = {}) {
             ],
             match: null,
             seed: null,
-            requests: Object.create(null),
           };
-          data.rooms[code] = room;
+          t.insertRoom(room);
           acct.roomCode = code;
           roomResult = publicRoom(room, 0);
         });
@@ -759,10 +769,10 @@ export function createOnlineHandler(store, options = {}) {
         if (!code || !archiveId) throw new HttpError(400, '缺少code或archiveId');
 
         let roomResult;
-        await store.transaction(async (data) => {
-          const acct = data.accounts[account.accountId];
+        store.tx((t) => {
+          const acct = t.account(account.accountId);
           if (!acct) throw new HttpError(401, '令牌无效');
-          const existingRoom = getAccountRoom(data, acct);
+          const existingRoom = getAccountRoom(t, acct);
           if (existingRoom) {
             cleanRoomTimeouts(existingRoom, now());
             if (existingRoom.status !== 'finished' && existingRoom.status !== 'closed') {
@@ -773,7 +783,7 @@ export function createOnlineHandler(store, options = {}) {
               acct.roomCode = null;
             }
           }
-          const room = findRoomByCode(data, code);
+          const room = findRoomByCode(t, code);
           if (!room) throw new HttpError(404, '房间未找到');
           cleanRoomTimeouts(room, now());
           if (room.status !== 'waiting') throw new HttpError(409, '房间不在等待中');
@@ -817,8 +827,8 @@ export function createOnlineHandler(store, options = {}) {
       const code = roomMatch[1];
       try {
         let roomResponse;
-        await store.transaction(async (data) => {
-          const room = findRoomByCode(data, code);
+        store.tx((t) => {
+          const room = findRoomByCode(t, code);
           if (!room) throw new HttpError(404, '房间未找到');
           const seat = getSeatInRoom(room, account.accountId);
           if (seat === -1) throw new HttpError(403, '非房间成员');
@@ -848,8 +858,8 @@ export function createOnlineHandler(store, options = {}) {
           if (typeof ready !== 'boolean') throw new HttpError(400, '无效的ready值');
 
           // Pre-clean target room in its own transaction so cleanup persists if later action fails
-          await store.transaction(async (data) => {
-            const room = findRoomByCode(data, code);
+          store.tx((t) => {
+            const room = findRoomByCode(t, code);
             if (room) {
               cleanRoomTimeouts(room, now());
             }
@@ -857,8 +867,8 @@ export function createOnlineHandler(store, options = {}) {
 
           let roomResponse;
           let errorResponse = null;
-          await store.transaction(async (data) => {
-            const room = findRoomByCode(data, code);
+          store.tx((t) => {
+            const room = findRoomByCode(t, code);
             if (!room) throw new HttpError(404, '房间未找到');
             const seat = getSeatInRoom(room, account.accountId);
             if (seat === -1) throw new HttpError(403, '非房间成员');
@@ -894,8 +904,8 @@ export function createOnlineHandler(store, options = {}) {
           const { requestId, expectedRev, command } = body;
 
           // Pre-clean target room to persist cleanup even if action fails
-          await store.transaction(async (data) => {
-            const room = findRoomByCode(data, code);
+          store.tx((t) => {
+            const room = findRoomByCode(t, code);
             if (room) {
               cleanRoomTimeouts(room, now());
             }
@@ -914,8 +924,8 @@ export function createOnlineHandler(store, options = {}) {
           }
 
           let roomResponse;
-          await store.transaction(async (data) => {
-            const room = findRoomByCode(data, code);
+          store.tx((t) => {
+            const room = findRoomByCode(t, code);
             if (!room) throw new HttpError(404, '房间未找到');
             const seat = getSeatInRoom(room, account.accountId);
             if (seat === -1) throw new HttpError(403, '非房间成员');
@@ -924,8 +934,9 @@ export function createOnlineHandler(store, options = {}) {
             cleanRoomTimeouts(room, now());
 
             const requestKey = `${account.accountId}:${seat}:${requestId}`;
-            if (room.requests[requestKey]) {
-              if (JSON.stringify(room.requests[requestKey].command) !== JSON.stringify(command)) {
+            const previous = t.request(code, requestKey);
+            if (previous) {
+              if (JSON.stringify(previous.command) !== JSON.stringify(command)) {
                 throw new HttpError(409, '请求ID已被使用');
               }
               roomResponse = publicRoom(room, seat);
@@ -957,7 +968,7 @@ export function createOnlineHandler(store, options = {}) {
               throw new HttpError(400, err.message || '无效的操作');
             }
             room.match = newMatch;
-            room.requests[requestKey] = { command: clone(command), rev: newMatch.rev };
+            t.putRequest(code, requestKey, { command: clone(command), rev: newMatch.rev });
             room.lastActionAt = now();
             // Acting yourself clears your run of auto-ended turns.
             if (room.timer?.afk) room.timer.afk[seat] = 0;
@@ -977,8 +988,8 @@ export function createOnlineHandler(store, options = {}) {
           if (!['request', 'accept', 'decline', 'cancel'].includes(op)) throw new HttpError(400, '无效的再来一局操作');
           if (round !== undefined && (!Number.isInteger(round) || round < 1)) throw new HttpError(400, '无效的局数');
           let roomResponse;
-          await store.transaction(async (data) => {
-            const room = findRoomByCode(data, code);
+          store.tx((t) => {
+            const room = findRoomByCode(t, code);
             if (!room) throw new HttpError(404, '房间未找到');
             const seat = getSeatInRoom(room, account.accountId);
             if (seat === -1) throw new HttpError(403, '非房间成员');
@@ -1003,7 +1014,7 @@ export function createOnlineHandler(store, options = {}) {
             }
             // request / accept
             if (room.members.length !== 2 || !other) throw new HttpError(409, '对手已离开房间');
-            const accounts = room.members.map(m => data.accounts[m.accountId]);
+            const accounts = room.members.map(m => t.account(m.accountId));
             if (me.left || !accounts[seat] || accounts[seat].roomCode !== room.code) throw new HttpError(409, '你已离开这个房间');
             if (other.left || !accounts[1 - seat] || accounts[1 - seat].roomCode !== room.code) throw new HttpError(409, '对手已离开房间');
             room.members.forEach((m, i) => {
@@ -1015,7 +1026,7 @@ export function createOnlineHandler(store, options = {}) {
               const first = 1 - firstSeatOf(room);
               startRoomMatch(room, nowTime, turnMs, first);
               room.round = current + 1;
-              room.requests = Object.create(null);
+              t.clearRequests(code);
               roomResponse = publicRoom(room, seat);
               return;
             }
@@ -1029,20 +1040,20 @@ export function createOnlineHandler(store, options = {}) {
 
         if (action === 'leave') {
           // Pre-clean target room to persist cleanup even if leave fails
-          await store.transaction(async (data) => {
-            const room = findRoomByCode(data, code);
+          store.tx((t) => {
+            const room = findRoomByCode(t, code);
             if (room) {
               cleanRoomTimeouts(room, now());
             }
           });
 
           let roomResponse;
-          await store.transaction(async (data) => {
-            const room = findRoomByCode(data, code);
+          store.tx((t) => {
+            const room = findRoomByCode(t, code);
             if (!room) throw new HttpError(404, '房间未找到');
             const seat = getSeatInRoom(room, account.accountId);
             if (seat === -1) throw new HttpError(403, '非房间成员');
-            const acct = data.accounts[account.accountId];
+            const acct = t.account(account.accountId);
             if (!acct) throw new HttpError(401, '令牌无效');
 
             if (room.status === 'waiting') {
@@ -1050,7 +1061,7 @@ export function createOnlineHandler(store, options = {}) {
               room.members.forEach((m, idx) => { m.seat = idx; });
               acct.roomCode = null;
               if (room.members.length === 0) {
-                delete data.rooms[code];
+                t.deleteRoom(code);
                 roomResponse = null;
               } else {
                 roomResponse = publicRoom(room, room.members[0].seat);

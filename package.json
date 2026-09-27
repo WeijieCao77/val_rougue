@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "esbuild": "^0.28.2",
-    "postgres": "^3.4.4",
     "three": "^0.186.0"
   }
 }

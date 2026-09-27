@@ -2,13 +2,13 @@
 
 ## 环境要求
 - Node.js 24.x
-- 持久化存储：PostgreSQL（生产推荐）或本地文件（仅开发，生产需真实挂载卷）
+- 持久化存储：Node 24 自带的 SQLite（`node:sqlite`），数据库文件 `${DATA_DIR}/online.db`（WAL 模式，另有 `-wal`、`-shm` 两个伴随文件）。2026-09-27 起不再使用 PostgreSQL 和整份 JSON 文件存储，详见 `docs/SCALING-2026-09-27.md`。
 
 ## 环境变量
 | 变量 | 必需 | 说明 |
 |------|------|------|
-| `DATABASE_URL` | 生产必需（若未提供 DATA_DIR） | PostgreSQL 连接串，格式 `postgres://user:pass@host/db` |
-| `DATA_DIR` | 生产无 DATABASE_URL 时必需 | 文件存储目录，必须为真实挂载的持久卷（单实例） |
+| `DATA_DIR` | 生产必需 | 数据目录，必须为真实挂载的持久卷（单实例）。本地不设时用 `.local-data/` |
+| `DATABASE_URL` | 否 | 已不再使用；设置了也只会在启动日志里提示一次 |
 | `PORT` | 否 | 服务端口，默认 4177 |
 | `NODE_ENV` | 否 | 生产环境设为 `production` |
 
@@ -20,8 +20,9 @@ npm start
 ```
 
 ## 生产部署
-- 必须提供 `DATABASE_URL` 或 `DATA_DIR`，否则启动失败。
-- 使用 `DATA_DIR` 时，必须挂载真实持久卷；服务仅支持单实例运行，不支持多进程共享文件存储。需要多实例或高可用请使用 PostgreSQL。
+- 必须提供 `DATA_DIR`，否则启动失败。
+- `DATA_DIR` 必须挂载真实持久卷；服务只支持单实例运行（一个进程持有 SQLite 连接）。
+- 首次用新版本启动时，若 `DATA_DIR` 里有旧的 `online-data.json`，会在一个事务里整体导入 SQLite、核对条数，然后把原文件改名为 `online-data.migrated-<时间>.json` 保留（不删除）。回滚步骤见 `docs/SCALING-2026-09-27.md`。
 - 用户已授权瓦demo与PvP发布至main及现有Railway。生产使用`val_rougue-volume`挂载`/data`、`DATA_DIR=/data`、`NODE_ENV=production`，单实例。
 - 新demo仅本地4180/new/可玩。生产强制返回404，不能用ENABLE_NEW_DEMO覆盖；本地可设ENABLE_NEW_DEMO=false关闭。
 - `/runtime-config.js`提供无敏感信息的入口开关，两个主界面不显示线上新demo入口。
@@ -54,6 +55,15 @@ npm start
 - 匿名创建账户：按 IP 限流 30 次/分钟。
 - 已认证请求：按 Bearer Token 限流，读 600 次/分钟，写 120 次/分钟。
 - 同一 IP 的多个玩家不会互相影响。
+- 在 Railway 上（或设 `TRUST_PROXY=1`）按 `X-Real-IP` / `X-Forwarded-For` 最后一跳取玩家 IP；否则所有请求都来自代理地址，按 IP 的限流会被全体玩家共用。
+- 进度同步 `/api/sync/*`：生成同步码 10 次/分钟/IP，兑换 20 次/分钟/IP，同步 120 次/分钟/IP 且每个同步组 60 次/分钟。
+
+## 进度同步（2026-09-27）
+- `POST /api/sync/code` 上传本机进度并生成 6 位同步码（10 分钟、一次性）；`/redeem` 用码换取进度与本机密钥；`/sync` 自动上传/拉取；`/restore` 用备份替换当前进度。
+- 瓦 Demo 与新 Demo 分开（`demo: 'wa' | 'new'`）。进度包上限 512 KB（未压缩），服务端 gzip 后存入 `sync_links`；只保存各设备密钥的 sha256。
+- 两台设备都改过时，保存时间较晚的一份成为当前进度，另一份存为单槽备份。180 天无人使用的同步组、过期同步码自动清理。
 
 ## 数据恢复
-服务端重启后自动从持久化存储加载状态，active 房间可继续对战。
+服务端重启后自动从持久化存储加载状态，active 房间可继续对战。结束超过 7 天的房间、两天无人操作的等待中／对战中房间每小时清理一次。
+
+需要把 SQLite 数据导回旧的 JSON 格式（回滚到旧版本时）：`node tools/export-online-json.mjs <DATA_DIR> <输出文件>`。
