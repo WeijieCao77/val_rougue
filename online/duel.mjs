@@ -53,15 +53,23 @@ function addToken(state, seat, id, label) {
   note('tokens', id);
   return true;
 }
-function traitCounter(p) {
-  const T = TRAIT_TUNING[p.region], tt = p.tt || {};
+function traitCounter(p, tt = p.tt || {}) {
+  const T = TRAIT_TUNING[p.region];
   if (p.region === 'CN') return tt.cnDone ? '✓' : `${(tt.roles || []).length}/${T.roles}`;
   if (p.region === 'AM') return (tt.dmg || 0) >= T.nth ? '✓' : `${tt.dmg || 0}/${T.nth}`;
   if (p.region === 'EMEA') return tt.emeaDrew ? '抽牌已用' : '抽牌可用';
   if (p.region === 'PAC') return `${(p.temps || 0) % T.every}/${T.every}`;
   return '';
 }
-const traitView = p => p.region && REGION_TRAITS[p.region] ? { region: p.region, name: REGION_TRAITS[p.region].name, text: REGION_TRAITS[p.region].text, counter: traitCounter(p), roles: (p.tt?.roles || []).length, cnDone: !!p.tt?.cnDone, dmg: p.tt?.dmg || 0, emeaDrew: !!p.tt?.emeaDrew, temps: p.temps || 0, pacNext: p.pacNext || 'TK01' } : null;
+// The per-turn trait counters (roles / dmg / cnDone / emeaDrew) are reset by beginTurn.
+// While a seat is waiting for its next turn (`idle`), show them as they will be when
+// that turn starts instead of last turn's leftovers. Display only: rules are unchanged.
+const freshTurnTraits = () => ({ roles: [], dmg: 0, cnDone: false, emeaDrew: false });
+const traitView = (p, idle = false) => {
+  if (!p.region || !REGION_TRAITS[p.region]) return null;
+  const tt = idle ? freshTurnTraits() : (p.tt || {});
+  return { region: p.region, name: REGION_TRAITS[p.region].name, text: REGION_TRAITS[p.region].text, counter: traitCounter(p, tt), roles: (tt.roles || []).length, cnDone: !!tt.cnDone, dmg: tt.dmg || 0, emeaDrew: !!tt.emeaDrew, temps: p.temps || 0, pacNext: p.pacNext || 'TK01' };
+};
 
 function deepCopy(obj) {
   return JSON.parse(JSON.stringify(obj));
@@ -489,9 +497,10 @@ function beginTurn(state, seat) {
   }
 }
 
-function endTurn(state, seat) {
+// extra: { auto: true, afk: n } when the server ended the turn because its time ran out.
+function endTurn(state, seat, extra = {}) {
   const player = state.players[seat];
-  openEntry(state, { seat, kind: 'end' });
+  openEntry(state, { seat, kind: 'end', ...extra });
   for (const card of player.hand.filter(c => c.id === 'CU02')) {
     bump('selfDamage', Math.min(player.hp, 2));
     player.hp = Math.max(0, player.hp - 2);
@@ -574,7 +583,8 @@ export function createMatch(snapshotA, snapshotB, seed, options = {}) {
     ...(options.earlyDraw === false ? {} : { earlyDraw: true })
   };
   const rng = createRng(matchSeed + '|first');
-  state.active = rng.next() < 0.5 ? 0 : 1;
+  // options.first forces who opens (a rematch hands the first turn to the other player).
+  state.active = options.first === 0 || options.first === 1 ? options.first : rng.next() < 0.5 ? 0 : 1;
   state.turn = 1;
   try {
     // Both seats start holding their opening hand, so the second player can plan
@@ -614,7 +624,8 @@ export function applyCommand(match, seat, command) {
       if (!command.uid) throw new Error('uid required');
       playCard(state, seat, command.uid);
     } else if (command.type === 'end') {
-      endTurn(state, seat);
+      // Only the server sets auto (turn timer ran out); see online/api.mjs.
+      endTurn(state, seat, command.auto === true ? { auto: true, ...(Number.isInteger(command.afk) ? { afk: command.afk } : {}) } : {});
       if (state.status === 'active') {
         startNextTurn(state);
       }
@@ -692,7 +703,7 @@ export function viewFor(match, seat) {
       roleCounts: { ...me.roleCounts },
       skinZeroUsed: me.skinZeroUsed,
       turnsTaken: me.turnsTaken,
-      trait: traitView(me)
+      trait: traitView(me, match.status === 'active' && match.active !== seat)
     },
     opponent: {
       hp: opp.hp,
@@ -714,7 +725,7 @@ export function viewFor(match, seat) {
       roleCounts: { ...opp.roleCounts },
       skinZeroUsed: opp.skinZeroUsed,
       turnsTaken: opp.turnsTaken,
-      trait: traitView(opp)
+      trait: traitView(opp, match.status === 'active' && match.active === seat)
     },
     log: [...match.log],
     history: (match.history || []).map(e => publicEntry(e, seat)),

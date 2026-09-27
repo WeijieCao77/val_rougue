@@ -4,7 +4,7 @@
 
 export const SFX_STORAGE_KEY = 'val-sfx-v1';
 export const SFX_DEFAULT_VOLUME = 0.5;
-export const SFX_NAMES = ['click', 'draw', 'shuffle', 'cardAttack', 'cardSkill', 'cardPower', 'hit', 'hitHeavy', 'multiHit', 'block', 'debuff', 'enemyDeath', 'hurt', 'heal', 'turnEnd', 'reward', 'coin', 'victory', 'defeat', 'achieve'];
+export const SFX_NAMES = ['click', 'draw', 'shuffle', 'cardAttack', 'cardSkill', 'cardPower', 'hit', 'hitHeavy', 'multiHit', 'block', 'debuff', 'enemyDeath', 'hurt', 'heal', 'turnEnd', 'reward', 'coin', 'victory', 'defeat', 'achieve', 'tick'];
 
 export function clampVolume(value) {
   const n = Number(value);
@@ -166,6 +166,8 @@ const RECIPES = {
   victory: t => { [392, 523, 659, 784].forEach((f, i) => tone(t + i * 0.09, { freq: f, type: 'triangle', dur: 0.16, gain: 0.1 })); [523, 659, 784].forEach(f => tone(t + 0.36, { freq: f, type: 'sine', dur: 0.6, gain: 0.06, attack: 0.02 })); },
   // Achievement unlock: a bright rising arpeggio with a soft shimmer.
   achieve: t => { [659, 880, 1175, 1568].forEach((f, i) => tone(t + i * 0.06, { freq: f, type: 'triangle', dur: 0.18, gain: 0.07 })); tone(t + 0.26, { freq: 1760, to: 1975, type: 'sine', dur: 0.5, gain: 0.04, attack: 0.03 }); noise(t + 0.24, { dur: 0.3, gain: 0.03, filter: 'highpass', freq: 6000 }); },
+  // Turn-timer tick for the last seconds of a PvP turn: a dry clock click.
+  tick: t => { tone(t, { freq: 1900, to: 1500, type: 'square', dur: 0.03, gain: 0.05 }); noise(t, { dur: 0.025, gain: 0.08, filter: 'highpass', freq: 3500 }); },
   defeat: t => { [392, 330, 262, 196].forEach((f, i) => tone(t + i * 0.16, { freq: f, to: f * 0.97, type: 'triangle', dur: 0.3, gain: 0.1, attack: 0.01 })); },
 };
 
