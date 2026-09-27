@@ -4,21 +4,22 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { UNLOCK_TIERS, UNLOCK_XP, tierOfXp, awardRun, normalizeProgress, progressTier, progressGearTier, runXp } from '../shared-unlock.js';
+import { UNLOCK_TIERS, UNLOCK_XP, LEGACY_UNLOCK_TIERS, LEGACY_UNLOCK_XP, tierOfXp, awardRun, normalizeProgress, progressTier, progressGearTier, runXp, validTier } from '../shared-unlock.js';
 import * as wa from '../engine.js';
 import { REGIONS, TACTICS } from '../content.js';
 import { CARD_RARITY } from '../card-rarity.js';
-import { GEAR_UNLOCKS, INVESTMENTS, SKIP_FUNDS } from '../wa-rules.js';
+import { GEAR_UNLOCKS, GEAR_UNLOCKS_V1, INVESTMENTS, SKIP_FUNDS, RULES_VERSION, ECON_VERSION } from '../wa-rules.js';
 import * as nd from '../new-demo/engine.js';
 import { TEAMS, CARDS as ND_CARDS, ARCHETYPES, REGION_CARD_IDS } from '../new-demo/content.js';
 import { openStore } from '../online/store.mjs';
 import { createOnlineHandler } from '../online/api.mjs';
 
-test('unlock plan: five batches of 8 cards, starters and every rarity stay in the base pool, at most half of a direction locked', () => {
+test('unlock plan: four batches of 10 cards, starters and every rarity stay in the base pool, at most half of a direction locked', () => {
+  assert.equal(UNLOCK_TIERS, 4); assert.deepEqual(UNLOCK_XP, [20, 30, 40, 50]);
   for (const region of Object.keys(REGIONS)) {
     const plan = wa.regionUnlockPlan(region), pool = REGIONS[region].pool;
     assert.equal(plan.tiers.length, UNLOCK_TIERS);
-    for (const t of plan.tiers) assert.equal(t.length, 8);
+    for (const t of plan.tiers) assert.equal(t.length, 10);
     assert.equal(plan.base.length + 40, pool.length);
     for (const id of REGIONS[region].start) assert.ok(plan.base.includes(id));
     for (const r of ['common', 'uncommon', 'rare']) assert.ok(plan.base.filter(id => CARD_RARITY[id] === r).length >= 2, `${region} base ${r}`);
@@ -30,10 +31,76 @@ test('unlock plan: five batches of 8 cards, starters and every rarity stay in th
   }
   for (const team of Object.keys(TEAMS)) {
     const plan = nd.teamUnlockPlan(team);
+    assert.equal(plan.tiers.length, UNLOCK_TIERS);
     assert.equal(plan.tiers.flat().length, 40);
     assert.equal(plan.base.length, 35);
     for (const id of plan.tiers.flat()) assert.ok(REGION_CARD_IDS[TEAMS[team].region].includes(id));
   }
+});
+
+// Legacy (econ 1) tier N must be contained in current tier min(N, 4), for cards and equipment.
+const contains = (big, small) => small.every(id => big.includes(id));
+const prefix = (tiers, n) => tiers.slice(0, n).flat();
+test('legacy 5-batch partitions are kept for econ 1 and nest inside the 4-batch ones', () => {
+  for (const r3 of [false, true]) for (const region of Object.keys(REGIONS)) {
+    const now = wa.regionUnlockPlan(region, r3, 2), old = wa.regionUnlockPlan(region, r3, 1);
+    assert.equal(old.tiers.length, LEGACY_UNLOCK_TIERS);
+    assert.deepEqual(old.base, now.base);
+    for (let n = 0; n <= LEGACY_UNLOCK_TIERS; n++) assert.ok(contains(prefix(now.tiers, Math.min(n, UNLOCK_TIERS)), prefix(old.tiers, n)), `${region} ${r3} ${n}`);
+  }
+  for (const team of Object.keys(TEAMS)) {
+    const now = nd.teamUnlockPlan(team, 2), old = nd.teamUnlockPlan(team, 1);
+    assert.equal(old.tiers.length, LEGACY_UNLOCK_TIERS); assert.deepEqual(old.base, now.base);
+    for (let n = 0; n <= LEGACY_UNLOCK_TIERS; n++) assert.ok(contains(prefix(now.tiers, Math.min(n, UNLOCK_TIERS)), prefix(old.tiers, n)), `${team} ${n}`);
+  }
+  for (const [now, old] of [[GEAR_UNLOCKS, GEAR_UNLOCKS_V1], [nd.RELIC_UNLOCKS, nd.RELIC_UNLOCKS_V1]]) {
+    assert.equal(now.length, UNLOCK_TIERS); assert.equal(old.length, LEGACY_UNLOCK_TIERS);
+    assert.deepEqual([...now.flat()].sort(), [...old.flat()].sort());
+    for (let n = 0; n <= LEGACY_UNLOCK_TIERS; n++) assert.ok(contains(prefix(now, Math.min(n, UNLOCK_TIERS)), prefix(old, n)), `gear ${n}`);
+  }
+  // Econ-1 seasons still get the legacy pools; econ-2 seasons the new ones.
+  const s1 = wa.createSeason('legacy-pool', false, 'CN', { rules: RULES_VERSION, econ: 1, unlockTier: 1, gearTier: 1 });
+  const s2 = wa.createSeason('legacy-pool', false, 'CN', { rules: RULES_VERSION, econ: 2, unlockTier: 1, gearTier: 1 });
+  assert.equal(wa.offerPool(s1).length, wa.offerPool(s2).length - 2);
+  assert.ok(wa.gearLocked(s1, GEAR_UNLOCKS[0][3]) && !wa.gearLocked(s2, GEAR_UNLOCKS[0][3]));
+  assert.equal(wa.createSeason('x', false, 'CN', { rules: RULES_VERSION, econ: 1 }).unlockTier, LEGACY_UNLOCK_TIERS);
+  assert.equal(wa.createSeason('x', false, 'CN', { rules: RULES_VERSION, econ: 2 }).unlockTier, UNLOCK_TIERS);
+  assert.throws(() => wa.createSeason('x', false, 'CN', { rules: RULES_VERSION, econ: 2, unlockTier: 5 }), /解锁等级/);
+  assert.throws(() => wa.createSeason('x', false, 'CN', { rules: RULES_VERSION, econ: 3 }), /经济规则/);
+  assert.equal(ECON_VERSION, 2);
+  assert.ok(validTier(5, LEGACY_UNLOCK_TIERS) && !validTier(5));
+  // New-demo saved runs with econ 1 keep their legacy pools.
+  const n1 = nd.createRun('nd-legacy', 'breach', { econ: 1, unlockTier: 5, gearTier: 5 });
+  assert.equal(n1.econ, 1); assert.equal(n1.unlockTier, 5);
+  assert.ok(!nd.relicLocked(n1, 'R49'));
+  const n2 = nd.createRun('nd-now', 'breach', { econ: true, unlockTier: 5, gearTier: 3 });
+  assert.equal(n2.econ, 2); assert.equal(n2.unlockTier, UNLOCK_TIERS);
+  assert.ok(nd.relicLocked(n2, nd.RELIC_UNLOCKS[3][0]));
+});
+
+test('saved progress migration: legacy experience never loses an unlocked card or equipment piece', () => {
+  const legacyTier = xp => tierOfXp(xp, LEGACY_UNLOCK_XP).tier;
+  for (let xp = 0; xp <= 200; xp++) {
+    const p = normalizeProgress({ v: 1, xp: { CN: xp, AM: 3 }, awarded: { r: 5 }, all: false });
+    assert.equal(p.v, 2);
+    assert.ok(p.xp.CN >= xp, `xp ${xp} lowered`);
+    const oldT = legacyTier(xp), newT = progressTier(p, 'CN');
+    assert.ok(newT >= Math.min(oldT, UNLOCK_TIERS), `xp ${xp}: legacy ${oldT} -> ${newT}`);
+    if (xp >= 150) assert.equal(newT, UNLOCK_TIERS);
+    assert.ok(progressGearTier(p) >= Math.min(oldT, UNLOCK_TIERS));
+    for (const region of Object.keys(REGIONS)) {
+      const old = wa.regionUnlockPlan(region, true, 1), now = wa.regionUnlockPlan(region, true, 2);
+      assert.ok(contains(prefix(now.tiers, newT), prefix(old.tiers, oldT)));
+    }
+    assert.ok(contains(prefix(GEAR_UNLOCKS, progressGearTier(p)), prefix(GEAR_UNLOCKS_V1, oldT)));
+    // Migrating twice changes nothing; a v2 save is never re-migrated.
+    assert.deepEqual(normalizeProgress(p), p);
+  }
+  assert.deepEqual(normalizeProgress({ v: 1, xp: { CN: 46, EMEA: 112, PAC: 80, AM: 12 } }).xp, { CN: 50, EMEA: 140, PAC: 90, AM: 12 });
+  assert.deepEqual(normalizeProgress({ xp: { CN: 150 } }).xp, { CN: 150 });
+  assert.deepEqual(normalizeProgress({ v: 2, xp: { CN: 46 } }).xp, { CN: 46 });
+  assert.equal(progressTier(normalizeProgress({ v: 1, xp: {}, all: true }), 'CN'), UNLOCK_TIERS);
+  assert.equal(normalizeProgress({ v: 1, all: true }).all, true);
 });
 
 test('unlock experience: tiers, per-run awards counted once, all-unlock toggle', () => {
@@ -82,6 +149,28 @@ test('Wa: a base-tier season only offers base cards and equipment, and replays e
   assert.throws(() => wa.createSeason('x', false, 'AM', { econ: 1 }), /经济规则/);
   assert.throws(() => wa.createSeason('x', false, 'AM', { rules: 1, econ: 1, unlockTier: 6 }), /解锁等级/);
   assert.equal(wa.offerPool(wa.createSeason('x', false, 'AM', { rules: 1 })).length, 75);
+});
+
+test('Wa: an econ-2 season at tier 2 offers only its 4-batch pools and replays exactly', () => {
+  const plan = wa.regionUnlockPlan('EMEA', true, 2), open = new Set([...plan.base, ...prefix(plan.tiers, 2)]);
+  const lockedGear = new Set(prefix(GEAR_UNLOCKS, 4).filter(id => !prefix(GEAR_UNLOCKS, 2).includes(id)));
+  let s = wa.createSeason('econ2-t2', false, 'EMEA', { rules: RULES_VERSION, econ: 2, unlockTier: 2, gearTier: 2 });
+  assert.equal(s.econ, 2);
+  const seen = new Set(), gear = new Set();
+  s = playWa(s, (st, acts) => {
+    if (st.reward?.offers) st.reward.offers.forEach(id => id && seen.add(id));
+    if (st.shop?.slots) st.shop.slots.forEach(id => id && seen.add(id));
+    (st.shop?.gear || []).forEach(id => id && gear.add(id));
+    (st.reward?.bossGear || []).forEach(id => gear.add(id));
+    return acts.find(a => a.type === 'rerollShop') || acts[0];
+  });
+  assert.ok(seen.size > 5);
+  const pool3 = new Set(REGIONS.EMEA.pool3);
+  for (const id of seen) if (pool3.has(id)) assert.ok(open.has(id), id);
+  for (const id of gear) assert.ok(!lockedGear.has(id), id);
+  const again = wa.replay({ version: s.version, seed: s.seed, region: s.region, rules: s.rules, ascension: s.ascension, econ: 2, unlockTier: 2, gearTier: 2, mapVersion: s.mapVersion, actions: s.actions });
+  assert.deepEqual(again.deck, s.deck);
+  assert.equal(again.hp, s.hp);
 });
 
 // Drives a season to its first shop / reward phase with the first legal action.
@@ -161,7 +250,10 @@ test('server: an economy season replays with its recorded unlock tiers; wrong or
     assert.equal((await request('POST', '/api/archive/claim', { token, body: { run: noEcon, act: 1 } })).status, 400);
     assert.equal((await request('POST', '/api/archive/claim', { token, body: { run: { ...run, unlockTier: 5, gearTier: 5 }, act: 1 } })).status, 400);
     assert.equal((await request('POST', '/api/archive/claim', { token, body: { run: { ...run, unlockTier: 9 }, act: 1 } })).status, 400);
-    assert.equal((await request('POST', '/api/archive/claim', { token, body: { run: { ...run, econ: 2 }, act: 1 } })).status, 400);
+    assert.equal((await request('POST', '/api/archive/claim', { token, body: { run: { ...run, econ: 3 }, act: 1 } })).status, 400);
+    // econ 2 (4 batches): tiers 0..4 only; tier 5 exists only under econ 1.
+    assert.equal((await request('POST', '/api/archive/claim', { token, body: { run: { ...run, econ: 2, unlockTier: 5, gearTier: 0 }, act: 1 } })).status, 400);
+    assert.equal((await request('POST', '/api/archive/claim', { token, body: { run: { ...run, econ: 2, unlockTier: 0, gearTier: 5 }, act: 1 } })).status, 400);
     const ok = await request('POST', '/api/archive/claim', { token, body: { run, act: 1 } });
     assert.equal(ok.status, 200, JSON.stringify(ok.body));
     // Current seasons record rules 4 + the 15-floor map + economy; the server used to
@@ -170,6 +262,10 @@ test('server: an economy season replays with its recorded unlock tiers; wrong or
     assert.equal(r4.rules, 4); assert.equal(r4.econ, 1); assert.equal(r4.mapVersion, 2);
     const ok4 = await request('POST', '/api/archive/claim', { token, body: { run: r4, act: 1 } });
     assert.equal(ok4.status, 200, JSON.stringify(ok4.body));
+    // An econ-2 record (base tiers are the same cards under both partitions) replays too.
+    const e2 = { ...r4, econ: 2, runId: r4.runId + '-e2' };
+    const ok2 = await request('POST', '/api/archive/claim', { token, body: { run: e2, act: 1 } });
+    assert.equal(ok2.status, 200, JSON.stringify(ok2.body));
   } finally {
     await store.close();
     await rm(dir, { recursive: true, force: true });

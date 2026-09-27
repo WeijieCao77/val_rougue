@@ -10632,12 +10632,183 @@ function describe(card) {
 return {VERSION,CARDS,PLAYER_IDS,TACTICS,displayText,SKINS,TRAITS,FIELDS,ENEMIES,ROUTE,START,effects,xEffects,cardName,compactLines,cardKeywords,describe,REGIONS,CURSE_RULES,WA_GROUPS,ENCOUNTER_POOLS,BOSS_POOL,BOSS_INFO};
 })();
 const module9=(()=>{
+// Unlock progression shared by both demos. Pure functions only: each UI keeps
+// its own progress object in localStorage, and each engine records the tier a
+// run was created with, so a run's card and equipment pools never change midway
+// (and the Wa server replays the exact pool from the recorded tier).
+//
+// A first run starts from a reduced but complete pool: every rarity, and at least
+// half of each build direction, stays in the base pool. Finishing runs grants
+// experience; every tier adds one batch of cards to that team/region and one
+// batch of equipment (equipment batches follow the highest tier of any team).
+//
+// Current progression (Wa econ 2, new-demo econ 2): 4 batches, 20/30/40/50 XP.
+// The legacy progression (econ 1 runs and server records) used 5 batches of the
+// same 40 locked cards with 20/25/30/35/40 XP; its partition is still built for
+// replay. Both split the same ordered list of locked ids into consecutive chunks,
+// so legacy tiers 1..N are always contained in current tiers 1..min(N, 4).
+const UNLOCK_TIERS = 4;
+const LEGACY_UNLOCK_TIERS = 5;
+// Locked cards per team/region (the same for both partitions).
+const UNLOCK_LOCKED_CARDS = 40;
+const UNLOCK_CARDS_PER_TIER = UNLOCK_LOCKED_CARDS / UNLOCK_TIERS;
+// Experience needed for each next tier (tier 1..4).
+const UNLOCK_XP = [20, 30, 40, 50];
+const LEGACY_UNLOCK_XP = [20, 25, 30, 35, 40];
+// Progress objects saved under the legacy progression carry v:1 (or nothing).
+const PROGRESS_VERSION = 2;
+// Experience from one run: every battle won, plus each act boss beaten, plus a full clear.
+const XP_RULES = { perWin: 1, perBoss: 10, fullClear: 10 };
+
+const RARITIES = ['common', 'uncommon', 'rare'];
+const MIN_BASE = { common: 6, uncommon: 4, rare: 2 };
+
+function hash(text) {
+  let h = 2166136261 >>> 0;
+  for (const ch of String(text)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+  return h;
+}
+
+// ids: the full regular pool of one team/region. start: its starting-deck ids
+// (never locked). rarityOf(id) -> common|uncommon|rare. groupOf(id) -> build
+// direction or null; at most half of each direction is locked.
+// tierCount: number of batches (UNLOCK_TIERS, or LEGACY_UNLOCK_TIERS for econ 1).
+// Returns { base: [...ids], tiers: [[...ids] x tierCount] }, deterministic. The
+// locked set and its order do not depend on tierCount.
+function planCardUnlocks(ids, { start = [], rarityOf, groupOf = () => null, salt = '', tierCount = UNLOCK_TIERS } = {}) {
+  const fixed = new Set(start);
+  const candidates = [...new Set(ids)].filter(id => !fixed.has(id));
+  const byRarity = Object.fromEntries(RARITIES.map(r => [r, candidates.filter(id => rarityOf(id) === r).sort((a, b) => hash(salt + a) - hash(salt + b) || (a < b ? -1 : 1))]));
+  const total = Math.min(UNLOCK_LOCKED_CARDS, Math.max(0, candidates.length - 12));
+  const n = candidates.length || 1;
+  const want = Object.fromEntries(RARITIES.map(r => [r, Math.max(0, Math.min(Math.round(total * byRarity[r].length / n), byRarity[r].length - MIN_BASE[r]))]));
+  // Fix rounding so the locked count is exactly `total` when capacity allows.
+  let diff = total - RARITIES.reduce((s, r) => s + want[r], 0);
+  for (let guard = 0; diff !== 0 && guard < 100; guard++) {
+    const r = RARITIES[guard % 3];
+    if (diff > 0 && want[r] < byRarity[r].length - MIN_BASE[r]) { want[r]++; diff--; }
+    else if (diff < 0 && want[r] > 0) { want[r]--; diff++; }
+  }
+  const groupSize = {}, groupLocked = {};
+  for (const id of candidates) { const g = groupOf(id); if (g) groupSize[g] = (groupSize[g] || 0) + 1; }
+  const locked = [];
+  for (const r of RARITIES) {
+    const picked = [];
+    const tryPick = strict => {
+      for (const id of byRarity[r]) {
+        if (picked.length >= want[r]) return;
+        if (picked.includes(id)) continue;
+        const g = groupOf(id);
+        if (strict && g && (groupLocked[g] || 0) >= Math.floor(groupSize[g] / 2)) continue;
+        picked.push(id);
+        if (g) groupLocked[g] = (groupLocked[g] || 0) + 1;
+      }
+    };
+    tryPick(true);
+    tryPick(false);
+    // Spread each rarity evenly over the tiers.
+    picked.forEach((id, i) => locked.push({ id, at: (i + 0.5) / picked.length, r: RARITIES.indexOf(r) }));
+  }
+  locked.sort((a, b) => a.at - b.at || a.r - b.r);
+  const tiers = splitBatches(locked.map(x => x.id), tierCount);
+  const lockedSet = new Set(locked.map(x => x.id));
+  return { base: ids.filter(id => !lockedSet.has(id)), tiers };
+}
+
+// Splits an ordered list into `count` consecutive chunks of ceil(n / count).
+function splitBatches(list, count) {
+  const per = Math.ceil(list.length / count) || 0;
+  return Array.from({ length: count }, (_, t) => list.slice(t * per, (t + 1) * per));
+}
+
+// Ids available at `tier` (0 = base pool, tiers.length = everything), in pool order.
+function unlockedFrom(plan, ids, tier) {
+  const open = new Set(plan.base);
+  for (let t = 0; t < Math.min(tier, plan.tiers.length); t++) for (const id of plan.tiers[t]) open.add(id);
+  return ids.filter(id => open.has(id));
+}
+
+// Tier of an id in a batch list (0 = base / not listed).
+function tierOfId(tiers, id) {
+  for (let t = 0; t < tiers.length; t++) if (tiers[t].includes(id)) return t + 1;
+  return 0;
+}
+
+function validTier(n, max = UNLOCK_TIERS) {
+  return Number.isInteger(n) && n >= 0 && n <= max;
+}
+
+// { tier, into, need }: `into` experience collected toward the next tier out of `need`
+// (need 0 once every tier is open).
+function tierOfXp(xp, table = UNLOCK_XP) {
+  let left = Math.max(0, Math.floor(Number(xp) || 0));
+  for (let t = 0; t < table.length; t++) {
+    if (left < table[t]) return { tier: t, into: left, need: table[t] };
+    left -= table[t];
+  }
+  return { tier: table.length, into: 0, need: 0 };
+}
+
+// Experience at which `tier` opens under the current progression.
+function xpForTier(tier) {
+  return UNLOCK_XP.slice(0, Math.max(0, Math.min(tier, UNLOCK_TIERS))).reduce((a, b) => a + b, 0);
+}
+
+// Legacy (5-batch) experience -> current experience. A player at legacy tier N
+// had the first N legacy batches; current tiers 1..min(N, 4) cover all of them,
+// so experience is raised to that tier's threshold when it is below it (never lowered).
+function migrateLegacyXp(xp) {
+  const n = Math.max(0, Math.floor(Number(xp) || 0));
+  return Math.max(n, xpForTier(Math.min(tierOfXp(n, LEGACY_UNLOCK_XP).tier, UNLOCK_TIERS)));
+}
+
+function runXp({ wins = 0, bosses = 0, cleared = false }) {
+  return wins * XP_RULES.perWin + bosses * XP_RULES.perBoss + (cleared ? XP_RULES.fullClear : 0);
+}
+
+// ---- progress object helpers: { v:2, xp:{[key]:n}, awarded:{[runId]:n}, all:bool } ----
+// A save without v:2 was earned under the legacy 5-batch progression and is
+// migrated once (see migrateLegacyXp); the result is saved back as v:2.
+function normalizeProgress(raw) {
+  const p = raw && typeof raw === 'object' ? raw : {};
+  const legacy = p.v !== PROGRESS_VERSION;
+  const xp = {}, awarded = {};
+  for (const [k, v] of Object.entries(p.xp || {})) if (Number.isFinite(v) && v >= 0) xp[k] = legacy ? migrateLegacyXp(v) : Math.floor(v);
+  for (const [k, v] of Object.entries(p.awarded || {})) if (Number.isFinite(v) && v >= 0) awarded[k] = Math.floor(v);
+  return { v: PROGRESS_VERSION, xp, awarded, all: p.all === true };
+}
+function progressTier(progress, key) {
+  return progress.all ? UNLOCK_TIERS : tierOfXp(progress.xp[key] || 0).tier;
+}
+function progressGearTier(progress) {
+  if (progress.all) return UNLOCK_TIERS;
+  return Math.max(0, ...Object.values(progress.xp).map(x => tierOfXp(x).tier));
+}
+// Adds the run's experience not yet awarded. Returns { progress, gained, key, fromTier, toTier, fromGear, toGear }.
+function awardRun(progress, key, runId, xp) {
+  const next = normalizeProgress(progress);
+  const before = next.awarded[runId] || 0;
+  const gained = Math.max(0, Math.floor(xp) - before);
+  const fromTier = tierOfXp(next.xp[key] || 0).tier, fromGear = progressGearTier({ ...next, all: false });
+  if (gained) {
+    next.xp[key] = (next.xp[key] || 0) + gained;
+    next.awarded[runId] = before + gained;
+    const ids = Object.keys(next.awarded);
+    if (ids.length > 30) for (const id of ids.slice(0, ids.length - 30)) delete next.awarded[id];
+  }
+  return { progress: next, gained, key, fromTier, toTier: tierOfXp(next.xp[key] || 0).tier, fromGear, toGear: progressGearTier({ ...next, all: false }) };
+}
+
+return {UNLOCK_TIERS,LEGACY_UNLOCK_TIERS,UNLOCK_LOCKED_CARDS,UNLOCK_CARDS_PER_TIER,UNLOCK_XP,LEGACY_UNLOCK_XP,PROGRESS_VERSION,XP_RULES,planCardUnlocks,splitBatches,unlockedFrom,tierOfId,validTier,tierOfXp,xpForTier,migrateLegacyXp,runXp,normalizeProgress,progressTier,progressGearTier,awardRun};
+})();
+const module10=(()=>{
 // Season "rules 1" catalog for the Wa demo: region traits, the sponsor signing day
 // (opening choice), difficulty levels, club equipment and tactical supplies.
 // Pure data + text. The engine implements every effect; texts describe what happens,
 // never how to build. Designed after the *ideas* behind Slay the Spire's starter
 // relics, Neow, Ascension, relics and potions — not copies of their effects or numbers.
 const { SKINS } = module8;
+const { splitBatches, UNLOCK_TIERS, LEGACY_UNLOCK_TIERS } = module9;
 
 // Runs created with rules >= 1 get traits, the opening, equipment and supplies.
 // Older saves and server records without `rules` replay exactly as before.
@@ -10744,17 +10915,25 @@ const GEAR = {
  BX10:{name:'战术预判系统',rarity:'boss',icon:'retain',text:'回合结束时不再弃置手牌（比赛干扰与俱乐部隐患除外）。'},
  BX11:{name:'深度数据库',rarity:'boss',icon:'draw',text:'每回合多抽 2 张牌。每回合结束时直接失去 1 声望。'}
 };
-// ---- Economy rules 1 (s.econ): unlock tiers, skip compensation, club investments,
+// ---- Economy rules (s.econ): unlock tiers, skip compensation, club investments,
 // market rerolls. Seasons without `econ` (older saves and server records) replay as before.
-const ECON_VERSION = 1;
-// Equipment batches opened by unlock tiers 1–5 (everything else is in the base pool).
-const GEAR_UNLOCKS = [
+// econ 1: 5 unlock batches (tiers 0..5). econ 2: the same cards and equipment in
+// 4 batches (tiers 0..4). Everything else is identical between the two.
+const ECON_VERSION = 2;
+const ECON_VERSIONS = [1, 2];
+const unlockTiersOf = econ => (econ === 1 ? LEGACY_UNLOCK_TIERS : UNLOCK_TIERS);
+// Equipment batches opened by econ-1 unlock tiers 1–5 (everything else is in the base pool).
+const GEAR_UNLOCKS_V1 = [
  ['GR09','GR23','GR41'],
  ['GR10','GR24','GR63'],
  ['GR11','GR22','GR44'],
  ['GR05','GR21','BX10'],
  ['GR46','GR40','BX11']
 ];
+// econ 2: the same 15 pieces in order, split into 4 batches (4/4/4/3), so the
+// first N legacy batches are always inside the first min(N, 4) new ones.
+const GEAR_UNLOCKS = splitBatches(GEAR_UNLOCKS_V1.flat(), UNLOCK_TIERS);
+const gearUnlocksOf = econ => (econ === 1 ? GEAR_UNLOCKS_V1 : GEAR_UNLOCKS);
 // Skipping a recruit: 15 funds, or one free reroll of a later market's transfer list.
 const SKIP_FUNDS = 15;
 const REROLL_BASE = 20;
@@ -10841,9 +11020,9 @@ const ENEMY_TUNING_V5 = {
  3:{...ENEMY_TUNING_V4[3]}
 };
 
-return {RULES_VERSION,RULES_VERSIONS,ROLES,TRAIT_TUNING,REGION_TRAITS,ASCENSION_LEVELS,MAX_ASCENSION,OPENING_OPTIONS,OPENING_FREE,OPENING_TRADE,RARITY,GEAR,ECON_VERSION,GEAR_UNLOCKS,SKIP_FUNDS,REROLL_BASE,REROLL_STEP,INVESTMENTS,ENERGY_GEAR,gearName,SUPPLY_RARITY_WEIGHTS,SUPPLIES,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,ENEMY_TUNING,ENEMY_TUNING_V2,ENEMY_TUNING_V3,EARLY_STEP,ENEMY_TUNING_V4,ENEMY_TUNING_V5};
+return {RULES_VERSION,RULES_VERSIONS,ROLES,TRAIT_TUNING,REGION_TRAITS,ASCENSION_LEVELS,MAX_ASCENSION,OPENING_OPTIONS,OPENING_FREE,OPENING_TRADE,RARITY,GEAR,ECON_VERSION,ECON_VERSIONS,unlockTiersOf,GEAR_UNLOCKS_V1,GEAR_UNLOCKS,gearUnlocksOf,SKIP_FUNDS,REROLL_BASE,REROLL_STEP,INVESTMENTS,ENERGY_GEAR,gearName,SUPPLY_RARITY_WEIGHTS,SUPPLIES,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,ENEMY_TUNING,ENEMY_TUNING_V2,ENEMY_TUNING_V3,EARLY_STEP,ENEMY_TUNING_V4,ENEMY_TUNING_V5};
 })();
-const module10=(()=>{
+const module11=(()=>{
 // Generated by tools/assign-card-rarity.mjs from card rules only (cost, effect value,
 // power/build complexity). Rarity = how often a card is offered as a reward or in
 // the shop. It is not a grade of the real player shown on the card.
@@ -11158,7 +11337,7 @@ function rarityOf(id){return CARD_RARITY[id]||null;}
 
 return {RARITY_ORDER,RARITY_LABELS,CARD_RARITY,rarityOf};
 })();
-const module11=(()=>{
+const module12=(()=>{
 // wa-events.js — original club-life event scenes for the Wa demo. All people,
 // teams and situations are fictional. Numbers are this game's own tuning; the
 // option effects are data ("ops", see shared-event-core.js), so the text on
@@ -11285,152 +11464,17 @@ const WA_CRATE_LOOT = {
 
 return {WA_EVENT_POOLS,WA_EVENTS,WA_CRATE_LOOT};
 })();
-const module12=(()=>{
-// Unlock progression shared by both demos. Pure functions only: each UI keeps
-// its own progress object in localStorage, and each engine records the tier a
-// run was created with, so a run's card and equipment pools never change midway
-// (and the Wa server replays the exact pool from the recorded tier).
-//
-// A first run starts from a reduced but complete pool: every rarity, and at least
-// half of each build direction, stays in the base pool. Finishing runs grants
-// experience; every tier adds one batch of cards to that team/region and one
-// batch of equipment (equipment batches follow the highest tier of any team).
-const UNLOCK_TIERS = 5;
-const UNLOCK_CARDS_PER_TIER = 8;
-// Experience needed for each next tier (tier 1..5).
-const UNLOCK_XP = [20, 25, 30, 35, 40];
-// Experience from one run: every battle won, plus each act boss beaten, plus a full clear.
-const XP_RULES = { perWin: 1, perBoss: 10, fullClear: 10 };
-
-const RARITIES = ['common', 'uncommon', 'rare'];
-const MIN_BASE = { common: 6, uncommon: 4, rare: 2 };
-
-function hash(text) {
-  let h = 2166136261 >>> 0;
-  for (const ch of String(text)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
-  return h;
-}
-
-// ids: the full regular pool of one team/region. start: its starting-deck ids
-// (never locked). rarityOf(id) -> common|uncommon|rare. groupOf(id) -> build
-// direction or null; at most half of each direction is locked.
-// Returns { base: [...ids], tiers: [[...8 ids], ... x5] }, deterministic.
-function planCardUnlocks(ids, { start = [], rarityOf, groupOf = () => null, salt = '' } = {}) {
-  const fixed = new Set(start);
-  const candidates = [...new Set(ids)].filter(id => !fixed.has(id));
-  const byRarity = Object.fromEntries(RARITIES.map(r => [r, candidates.filter(id => rarityOf(id) === r).sort((a, b) => hash(salt + a) - hash(salt + b) || (a < b ? -1 : 1))]));
-  const total = Math.min(UNLOCK_TIERS * UNLOCK_CARDS_PER_TIER, Math.max(0, candidates.length - 12));
-  const n = candidates.length || 1;
-  const want = Object.fromEntries(RARITIES.map(r => [r, Math.max(0, Math.min(Math.round(total * byRarity[r].length / n), byRarity[r].length - MIN_BASE[r]))]));
-  // Fix rounding so the locked count is exactly `total` when capacity allows.
-  let diff = total - RARITIES.reduce((s, r) => s + want[r], 0);
-  for (let guard = 0; diff !== 0 && guard < 100; guard++) {
-    const r = RARITIES[guard % 3];
-    if (diff > 0 && want[r] < byRarity[r].length - MIN_BASE[r]) { want[r]++; diff--; }
-    else if (diff < 0 && want[r] > 0) { want[r]--; diff++; }
-  }
-  const groupSize = {}, groupLocked = {};
-  for (const id of candidates) { const g = groupOf(id); if (g) groupSize[g] = (groupSize[g] || 0) + 1; }
-  const locked = [];
-  for (const r of RARITIES) {
-    const picked = [];
-    const tryPick = strict => {
-      for (const id of byRarity[r]) {
-        if (picked.length >= want[r]) return;
-        if (picked.includes(id)) continue;
-        const g = groupOf(id);
-        if (strict && g && (groupLocked[g] || 0) >= Math.floor(groupSize[g] / 2)) continue;
-        picked.push(id);
-        if (g) groupLocked[g] = (groupLocked[g] || 0) + 1;
-      }
-    };
-    tryPick(true);
-    tryPick(false);
-    // Spread each rarity evenly over the tiers.
-    picked.forEach((id, i) => locked.push({ id, at: (i + 0.5) / picked.length, r: RARITIES.indexOf(r) }));
-  }
-  locked.sort((a, b) => a.at - b.at || a.r - b.r);
-  const per = Math.ceil(locked.length / UNLOCK_TIERS) || 0;
-  const tiers = Array.from({ length: UNLOCK_TIERS }, (_, t) => locked.slice(t * per, (t + 1) * per).map(x => x.id));
-  const lockedSet = new Set(locked.map(x => x.id));
-  return { base: ids.filter(id => !lockedSet.has(id)), tiers };
-}
-
-// Ids available at `tier` (0 = base pool, 5 = everything), in pool order.
-function unlockedFrom(plan, ids, tier) {
-  const open = new Set(plan.base);
-  for (let t = 0; t < Math.min(tier, plan.tiers.length); t++) for (const id of plan.tiers[t]) open.add(id);
-  return ids.filter(id => open.has(id));
-}
-
-// Tier of an id in a batch list (0 = base / not listed).
-function tierOfId(tiers, id) {
-  for (let t = 0; t < tiers.length; t++) if (tiers[t].includes(id)) return t + 1;
-  return 0;
-}
-
-function validTier(n) {
-  return Number.isInteger(n) && n >= 0 && n <= UNLOCK_TIERS;
-}
-
-// { tier, into, need }: `into` experience collected toward the next tier out of `need`
-// (need 0 once every tier is open).
-function tierOfXp(xp) {
-  let left = Math.max(0, Math.floor(Number(xp) || 0));
-  for (let t = 0; t < UNLOCK_TIERS; t++) {
-    if (left < UNLOCK_XP[t]) return { tier: t, into: left, need: UNLOCK_XP[t] };
-    left -= UNLOCK_XP[t];
-  }
-  return { tier: UNLOCK_TIERS, into: 0, need: 0 };
-}
-
-function runXp({ wins = 0, bosses = 0, cleared = false }) {
-  return wins * XP_RULES.perWin + bosses * XP_RULES.perBoss + (cleared ? XP_RULES.fullClear : 0);
-}
-
-// ---- progress object helpers: { v:1, xp:{[key]:n}, awarded:{[runId]:n}, all:bool } ----
-function normalizeProgress(raw) {
-  const p = raw && typeof raw === 'object' ? raw : {};
-  const xp = {}, awarded = {};
-  for (const [k, v] of Object.entries(p.xp || {})) if (Number.isFinite(v) && v >= 0) xp[k] = Math.floor(v);
-  for (const [k, v] of Object.entries(p.awarded || {})) if (Number.isFinite(v) && v >= 0) awarded[k] = Math.floor(v);
-  return { v: 1, xp, awarded, all: p.all === true };
-}
-function progressTier(progress, key) {
-  return progress.all ? UNLOCK_TIERS : tierOfXp(progress.xp[key] || 0).tier;
-}
-function progressGearTier(progress) {
-  if (progress.all) return UNLOCK_TIERS;
-  return Math.max(0, ...Object.values(progress.xp).map(x => tierOfXp(x).tier));
-}
-// Adds the run's experience not yet awarded. Returns { progress, gained, key, fromTier, toTier, fromGear, toGear }.
-function awardRun(progress, key, runId, xp) {
-  const next = normalizeProgress(progress);
-  const before = next.awarded[runId] || 0;
-  const gained = Math.max(0, Math.floor(xp) - before);
-  const fromTier = tierOfXp(next.xp[key] || 0).tier, fromGear = progressGearTier({ ...next, all: false });
-  if (gained) {
-    next.xp[key] = (next.xp[key] || 0) + gained;
-    next.awarded[runId] = before + gained;
-    const ids = Object.keys(next.awarded);
-    if (ids.length > 30) for (const id of ids.slice(0, ids.length - 30)) delete next.awarded[id];
-  }
-  return { progress: next, gained, key, fromTier, toTier: tierOfXp(next.xp[key] || 0).tier, fromGear, toGear: progressGearTier({ ...next, all: false }) };
-}
-
-return {UNLOCK_TIERS,UNLOCK_CARDS_PER_TIER,UNLOCK_XP,XP_RULES,planCardUnlocks,unlockedFrom,tierOfId,validTier,tierOfXp,runXp,normalizeProgress,progressTier,progressGearTier,awardRun};
-})();
 const module13=(()=>{
 const { VERSION, CARDS, PLAYER_IDS, SKINS, ENEMIES, START, effects, xEffects, cardName, compactLines, REGIONS, TACTICS, WA_GROUPS } = module8;
 const { buildMap, availableNodes } = module6;
 const { CURSES, CURSE_RULES, EXTRA_STATUS_RULES } = module2;
-const { WA_EVENTS, WA_EVENT_POOLS, WA_CRATE_LOOT } = module11;
+const { WA_EVENTS, WA_EVENT_POOLS, WA_CRATE_LOOT } = module12;
 const { opsReason, describeOps, applyOps, pickKind, pickCandidates, noteResult, setResultTitle, upgradeEntry, upgradeDiffText } = module5;
 const { freshUnknownOdds, resolveUnknown, blockedUnknownKinds, rollCrateSize } = module4;
 const { routeSteps, CURRENT_MAP_VERSION, MAP_VERSIONS } = module3;
-const { CARD_RARITY, RARITY_ORDER } = module10;
-const { RULES_VERSION, RULES_VERSIONS, ROLES, TRAIT_TUNING, OPENING_FREE, OPENING_TRADE, GEAR, SUPPLIES, ENERGY_GEAR, SUPPLY_RARITY_WEIGHTS, SUPPLY_PRICES, GEAR_PRICES, BASE_SUPPLY_SLOTS, GEAR_SLOTS, GEAR_SELL, MAX_ASCENSION, ENEMY_TUNING, ENEMY_TUNING_V2, ENEMY_TUNING_V3, ENEMY_TUNING_V4, ENEMY_TUNING_V5, EARLY_STEP, gearName, ECON_VERSION, GEAR_UNLOCKS, SKIP_FUNDS, REROLL_BASE, REROLL_STEP, INVESTMENTS } = module9;
-const { planCardUnlocks, unlockedFrom, tierOfId, validTier, UNLOCK_TIERS } = module12;
+const { CARD_RARITY, RARITY_ORDER } = module11;
+const { RULES_VERSION, RULES_VERSIONS, ROLES, TRAIT_TUNING, OPENING_FREE, OPENING_TRADE, GEAR, SUPPLIES, ENERGY_GEAR, SUPPLY_RARITY_WEIGHTS, SUPPLY_PRICES, GEAR_PRICES, BASE_SUPPLY_SLOTS, GEAR_SLOTS, GEAR_SELL, MAX_ASCENSION, ENEMY_TUNING, ENEMY_TUNING_V2, ENEMY_TUNING_V3, ENEMY_TUNING_V4, ENEMY_TUNING_V5, EARLY_STEP, gearName, ECON_VERSIONS, unlockTiersOf, gearUnlocksOf, SKIP_FUNDS, REROLL_BASE, REROLL_STEP, INVESTMENTS } = module10;
+const { planCardUnlocks, unlockedFrom, tierOfId, validTier } = module9;
 const clone = x => structuredClone(x);
 const log = (s,text) => s.logs.push({node:s.node,turn:s.battle?.turn||0,text});
 function random(s) { let x=s.rng; x^=x<<13; x^=x>>>17; x^=x<<5; s.rng=x>>>0; return s.rng/4294967296; }
@@ -11459,25 +11503,27 @@ const poolOf = s => R3(s)?REGIONS[s.region].pool3:REGIONS[s.region].pool;
 const mapVersionOf = s => s?.mapVersion||1;
 const hasGear = (s,id) => R(s)&&s.skins.includes(id);
 const has = hasGear;
-// ---- Economy rules 1 (unlock tiers, skip compensation, investments, market rerolls) ----
+// ---- Economy rules (unlock tiers, skip compensation, investments, market rerolls) ----
+// econ 1 = 5 unlock batches (legacy records), econ 2 = the same content in 4 batches.
 // Gated by s.econ and recorded with the tiers the season was created with, so the
 // online server replays the same pools; seasons without `econ` keep the full pools.
 const E = s => R(s)&&(s.econ||0)>=1;
 const hasInvest = (s,id) => E(s)&&!!s.invest?.includes(id);
 const planCache={},poolCache={};
-function regionUnlockPlan(region,r3=false){
- const pool=r3?REGIONS[region].pool3:REGIONS[region].pool;
- return planCache[region+(r3?':3':'')]||=planCardUnlocks(pool,{start:REGIONS[region].start,rarityOf:id=>CARD_RARITY[id],groupOf:id=>TACTICS[id]?.archetype||null,salt:region});
+// econ 1 seasons use the 5-batch partition, later ones the 4-batch one (same locked cards).
+function regionUnlockPlan(region,r3=false,econ=ECON_VERSIONS.at(-1)){
+ const pool=r3?REGIONS[region].pool3:REGIONS[region].pool,tierCount=unlockTiersOf(econ);
+ return planCache[region+(r3?':3':'')+':'+tierCount]||=planCardUnlocks(pool,{start:REGIONS[region].start,rarityOf:id=>CARD_RARITY[id],groupOf:id=>TACTICS[id]?.archetype||null,salt:region,tierCount});
 }
 // Cards that rewards, markets, events and the opening may offer in this season
 // (the rules-3 pool when the season uses rules 3, then the unlock tier).
 function offerPool(s){
  const base=poolOf(s);
  if(!E(s))return base;
- const r3=R3(s),k=`${s.region}:${r3?3:1}:${s.unlockTier}`;
- return poolCache[k]||=unlockedFrom(regionUnlockPlan(s.region,r3),base,s.unlockTier);
+ const r3=R3(s),k=`${s.region}:${r3?3:1}:${s.econ}:${s.unlockTier}`;
+ return poolCache[k]||=unlockedFrom(regionUnlockPlan(s.region,r3,s.econ),base,s.unlockTier);
 }
-const gearLocked = (s,id) => E(s)&&tierOfId(GEAR_UNLOCKS,id)>s.gearTier;
+const gearLocked = (s,id) => E(s)&&tierOfId(gearUnlocksOf(s.econ),id)>s.gearTier;
 const rerollPrice = s => s.freeRerolls>0?0:marketPrice(s,REROLL_BASE+REROLL_STEP*(s.shop?.rerolls||0));
 const supplySlots = s => BASE_SUPPLY_SLOTS+(has(s,'GR61')?2:0);
 // Market discount (会员积分卡). Card slot prices come from shopPrice(s,slot) below.
@@ -11612,9 +11658,9 @@ function createSeason(seed='first-season',tutorial=false,region='CN',opts={}) {
  if(!MAP_VERSIONS.includes(mapVersion))throw Error('未知地图版本');
  if(!Number.isInteger(ascension)||ascension<0||ascension>MAX_ASCENSION||(!rules&&ascension))throw Error('无效难度等级');
  const econ=opts?.econ===undefined||opts?.econ===null?0:opts.econ;
- if(![0,ECON_VERSION].includes(econ)||(econ&&!rules))throw Error('未知经济规则版本');
- const unlockTier=opts?.unlockTier??UNLOCK_TIERS,gearTier=opts?.gearTier??UNLOCK_TIERS;
- if(econ&&(!validTier(unlockTier)||!validTier(gearTier)))throw Error('无效解锁等级');
+ if(![0,...ECON_VERSIONS].includes(econ)||(econ&&!rules))throw Error('未知经济规则版本');
+ const maxTier=unlockTiersOf(econ),unlockTier=opts?.unlockTier??maxTier,gearTier=opts?.gearTier??maxTier;
+ if(econ&&(!validTier(unlockTier,maxTier)||!validTier(gearTier,maxTier)))throw Error('无效解锁等级');
  const s={version:SEASON_VERSION,mode:'season',region,seed:String(seed),tutorial,rng:seedHash(seed),rev:0,nextId:1,act:1,map:buildMap(seed,1,rules?ascension:0,mapVersion,{r3:rules>=3}),currentNode:null,completed:[],node:0,phase:'map',hp:80,maxHp:80,money:60,deck:[],skins:[],logs:[],actions:[],wins:0,battle:null,seenEvents:[]};
  if(mapVersion>=2)s.mapVersion=mapVersion;
  s.deck=REGIONS[region].start.map(id=>instance(s,id));
@@ -17682,7 +17728,7 @@ const module30=(()=>{
 const { achStep, loadBook, saveBook, seedCareer, evaluateCareer, showAchToasts, hallHtml, bindHall, runAchievementsHtml, titleBadgeHtml, wonKind, wonBoss, costAtLeast, actMemory } = module29;
 const { CARDS, effects, ENEMIES, REGIONS, BOSS_INFO } = module8;
 const { R, battleFoes, enemyMaxHp, supplySlots } = module13;
-const { GEAR_SLOTS } = module9;
+const { GEAR_SLOTS } = module10;
 
 const WA_ACH_KEY='wa-achievements-v1';
 const WA_ACH_RUN_KEY='wa-ach-run-v1';
@@ -18347,6 +18393,12 @@ const module34=(()=>{
 // (or a new entry with the next version and today's date).
 const CHANGELOG = [
   {
+    version: 'v0.9.2', date: '2026-09-27', title: '解锁进度调整',
+    items: [
+      ['all', '卡牌与装备解锁由 5 批改为 4 批，每批所需经验 20／30／40／50；已解锁的内容全部保留。']
+    ]
+  },
+  {
     version: 'v0.9.1', date: '2026-09-27', title: { wa: '选手照片更新', new: '封面更新日志' },
     items: [
       ['wa', '26 名选手换上 2026 赛季现役队服照片（中国赛区为官方定妆照）。'],
@@ -18503,9 +18555,9 @@ const { clearCombatFx, captureCombatStage, playCombatFx } = module22;
 const { VERSION, CARDS, SKINS, ENEMIES, describe, cardName, effects, TACTICS, displayText, compactLines, cardKeywords, REGIONS, CURSE_RULES, TRAITS, FIELDS } = module8;
 const { statusBadges, statusIcon, highlightKeywords } = module26;
 const { createRun, canPlay, preview, intent, intentText, incomingDamage, healAmount, removalReason, observe, shopPrice, R, hasGear, supplySlots, marketPrice, restHeal, enemyMaxHp, gearSellValue, describeSeasonEvent, E, rerollPrice, restRate, regionUnlockPlan, foeViews, livingFoes, cardTargeted, bossGrowth, R3 } = module13;
-const { UNLOCK_TIERS, tierOfXp, runXp, normalizeProgress, progressTier, progressGearTier, awardRun } = module12;
-const { CARD_RARITY, RARITY_LABELS } = module10;
-const { REGION_TRAITS, TRAIT_TUNING, ASCENSION_LEVELS, MAX_ASCENSION, OPENING_OPTIONS, GEAR, SUPPLIES, RARITY, SUPPLY_PRICES, GEAR_PRICES, GEAR_SLOTS, gearName, RULES_VERSION, ECON_VERSION, GEAR_UNLOCKS, SKIP_FUNDS, INVESTMENTS } = module9;
+const { UNLOCK_TIERS, tierOfXp, runXp, normalizeProgress, progressTier, progressGearTier, awardRun } = module9;
+const { CARD_RARITY, RARITY_LABELS } = module11;
+const { REGION_TRAITS, TRAIT_TUNING, ASCENSION_LEVELS, MAX_ASCENSION, OPENING_OPTIONS, GEAR, SUPPLIES, RARITY, SUPPLY_PRICES, GEAR_PRICES, GEAR_SLOTS, gearName, RULES_VERSION, ECON_VERSION, GEAR_UNLOCKS, SKIP_FUNDS, INVESTMENTS } = module10;
 const { createWaSeason, waAct:act, waLegalActions:legalActions } = module23;
 const { syncWaCheckpoint } = module24;
 const { flyCardsFromPile, flyCardsToPile } = module25;
@@ -19196,7 +19248,7 @@ function handleUI(name){
  }
  if(name==='hide-hints'){hints=false;try{localStorage.setItem(HINTS,'off');}catch{}render();return;}
  if(name==='rules'){
-  showModal('赛季规则',`<div class="rules"><p><strong>目标：</strong>对手防线降到 0 就赢得比赛；自己的声望降到 0，赛季失败。</p><p><strong>每回合：</strong>3 行动点、抽 5 张。按费用出牌，结束回合后对手按公开意图行动。资金与行动点是两种资源。</p><p><strong>布防：</strong>绊线、减速、墙体与掩护的共同收益；每点抵消 1 点攻击伤害。先抵消攻击，下个自己的回合开始清空。对手布防在对手下次行动开始时清空。</p><p><strong>牌堆：</strong>打出的普通牌进入弃牌堆；结束回合时，所有未打出的手牌也进入弃牌堆，不留到下回合。注明回合末消耗的牌改入消耗区。下回合重新抽 5 张，并结算额外抽牌能力；需要抽牌而抽牌堆为空时，将弃牌堆洗成新的抽牌堆。手牌最多 10 张。</p><p><strong>消耗：</strong>写着“打出后消耗”的牌，效果结算后进入消耗区，不进入弃牌堆，本场不再抽到；未打出时仍正常弃置，除非另写“回合末消耗”。消耗不等于永久删除，赛季牌组中的原牌下场恢复。临时牌和比赛干扰在赛后消失。</p><p><strong>能力：</strong>自由人牌打出后持续本场，不再洗回；多张可叠加，只影响之后的触发。</p><p><strong>压制：</strong>攻击伤害 ×0.75。<strong>易伤：</strong>受到攻击 ×1.5。每段伤害分别向下取整；回合数在受影响一方行动结束后减少。</p><p><strong>战术场景：</strong>卡上的特工技能转译成上述卡牌规则。腐坏逼退以压制结算，闪光接枪窗口以易伤结算；不另加持续伤害、硬控或隐藏触发。选牌后点“详解”可看说明。</p><p><strong>五个位置：</strong>决斗进攻，哨位布防，控场压制，先锋配合与抽牌，自由人建立持续能力。</p><p><strong>俱乐部活动：</strong>粉丝见面会恢复最大声望的 30%（向上取整、至多满声望）；训练升级一张选手或战术牌；团建移除一张隐患。每节点只能选一项。</p><p><strong>招募：</strong>可跳过。相同选手最多三张，升级前后合并计算。</p><p><strong>登峰赛季：</strong>四个赛区、三个赛段。每赛段 15 站，第 16 层为决赛，包含分支路线：第 1–2 站固定为比赛，第 7 站转会市场，第 9 站补给箱，第 15 站俱乐部活动；前 5 站不会出现强敌。前两幕 Boss 胜利各奖励 50 资金与 Boss 装备三选一（旧存档仍为皮肤选择，集齐后改得 20 资金）。之后晋级宣传恢复最大声望的 30%。冠军赛获胜即为赛季胜利。</p><h3>赛区特质</h3>${Object.entries(REGION_TRAITS).map(([id,t])=>`<p><strong>${esc(REGIONS[id].name)} · ${esc(t.name)}：</strong>${esc(t.text)}</p>`).join('')}<p>特质只在新规则赛季与好友 PvP 中生效，战斗界面左侧显示当前计数。</p><h3>赞助商签约日</h3><p>选择赛区后、进入路线图前，从 4 份合同中签下 1 份：两份免费的小奖励、一份有代价的交换、一份常规合同。选项由赛季种子决定。</p><h3>装备</h3><p>装备在本赛季持续生效，不进入抽牌堆，分普通、罕见、稀有、Boss 专属与市场专属。战胜强敌必得 1 件（普通／罕见／稀有约 50%／33%／17%，不重复）；Boss 胜利后可从 3 件 Boss 专属装备中选 1 件或放弃；转会市场出售 2 件装备与 1 件市场专属装备。原有三件皮肤归入普通装备。最多装备 6 件（Boss 专属装备与皮肤同样占槽）：槽满时获得新装备，需替换一件（被替换的按品级折算资金：普通 15、罕见 25、稀有 40、Boss 专属 50、市场专属 30）或放弃；任何时候都可在装备栏出售一件换同样资金。转会市场在槽满时不能购入装备。</p><h3>补给品</h3><p>一次性道具，默认 3 个栏位，比赛中点击使用，任何时候都可以丢弃。普通与强敌比赛胜利后按掉落率获得：初始 40%，掉落一次 -10%，未掉落 +10%。转会市场出售 3 个补给品；栏位满时需先丢弃或替换。</p><h3>解锁、跳过补偿与俱乐部投资</h3><p>每个赛区初次游玩时牌池较小（35 张），装备也少 15 件。比赛胜利 +1 解锁经验，每击败一幕 Boss +10，赛季冠军再 +10；每升一级为该赛区加入 8 张牌，并开放 3 件装备（装备按各赛区中最高的解锁等级开放），共 5 级。解锁从下个赛季起生效。跳过招募时，可选 ${SKIP_FUNDS} 资金，或 1 次免费刷新转会名单（可留到之后的市场）。转会名单可付费刷新：每个市场第一次 20 资金，之后每次 +10。每个市场提供 1 项俱乐部投资（150–220 资金），买下后整赛季生效，同一项只能买一次。</p><h3>难度等级</h3><ol>${ASCENSION_LEVELS.filter(l=>l.level).map(l=>`<li>${esc(l.text)}</li>`).join('')}</ol><p>难度逐级叠加。每个赛区单独解锁：在当前最高难度赢下完整三幕赛季，解锁下一级。好友 PvP 只显示难度，不改变对局规则；装备与补给品不带入 PvP。</p><p>选手头像暂用占位图。游玩无需联网，也不消耗模型额度。</p></div>`);return;
+  showModal('赛季规则',`<div class="rules"><p><strong>目标：</strong>对手防线降到 0 就赢得比赛；自己的声望降到 0，赛季失败。</p><p><strong>每回合：</strong>3 行动点、抽 5 张。按费用出牌，结束回合后对手按公开意图行动。资金与行动点是两种资源。</p><p><strong>布防：</strong>绊线、减速、墙体与掩护的共同收益；每点抵消 1 点攻击伤害。先抵消攻击，下个自己的回合开始清空。对手布防在对手下次行动开始时清空。</p><p><strong>牌堆：</strong>打出的普通牌进入弃牌堆；结束回合时，所有未打出的手牌也进入弃牌堆，不留到下回合。注明回合末消耗的牌改入消耗区。下回合重新抽 5 张，并结算额外抽牌能力；需要抽牌而抽牌堆为空时，将弃牌堆洗成新的抽牌堆。手牌最多 10 张。</p><p><strong>消耗：</strong>写着“打出后消耗”的牌，效果结算后进入消耗区，不进入弃牌堆，本场不再抽到；未打出时仍正常弃置，除非另写“回合末消耗”。消耗不等于永久删除，赛季牌组中的原牌下场恢复。临时牌和比赛干扰在赛后消失。</p><p><strong>能力：</strong>自由人牌打出后持续本场，不再洗回；多张可叠加，只影响之后的触发。</p><p><strong>压制：</strong>攻击伤害 ×0.75。<strong>易伤：</strong>受到攻击 ×1.5。每段伤害分别向下取整；回合数在受影响一方行动结束后减少。</p><p><strong>战术场景：</strong>卡上的特工技能转译成上述卡牌规则。腐坏逼退以压制结算，闪光接枪窗口以易伤结算；不另加持续伤害、硬控或隐藏触发。选牌后点“详解”可看说明。</p><p><strong>五个位置：</strong>决斗进攻，哨位布防，控场压制，先锋配合与抽牌，自由人建立持续能力。</p><p><strong>俱乐部活动：</strong>粉丝见面会恢复最大声望的 30%（向上取整、至多满声望）；训练升级一张选手或战术牌；团建移除一张隐患。每节点只能选一项。</p><p><strong>招募：</strong>可跳过。相同选手最多三张，升级前后合并计算。</p><p><strong>登峰赛季：</strong>四个赛区、三个赛段。每赛段 15 站，第 16 层为决赛，包含分支路线：第 1–2 站固定为比赛，第 7 站转会市场，第 9 站补给箱，第 15 站俱乐部活动；前 5 站不会出现强敌。前两幕 Boss 胜利各奖励 50 资金与 Boss 装备三选一（旧存档仍为皮肤选择，集齐后改得 20 资金）。之后晋级宣传恢复最大声望的 30%。冠军赛获胜即为赛季胜利。</p><h3>赛区特质</h3>${Object.entries(REGION_TRAITS).map(([id,t])=>`<p><strong>${esc(REGIONS[id].name)} · ${esc(t.name)}：</strong>${esc(t.text)}</p>`).join('')}<p>特质只在新规则赛季与好友 PvP 中生效，战斗界面左侧显示当前计数。</p><h3>赞助商签约日</h3><p>选择赛区后、进入路线图前，从 4 份合同中签下 1 份：两份免费的小奖励、一份有代价的交换、一份常规合同。选项由赛季种子决定。</p><h3>装备</h3><p>装备在本赛季持续生效，不进入抽牌堆，分普通、罕见、稀有、Boss 专属与市场专属。战胜强敌必得 1 件（普通／罕见／稀有约 50%／33%／17%，不重复）；Boss 胜利后可从 3 件 Boss 专属装备中选 1 件或放弃；转会市场出售 2 件装备与 1 件市场专属装备。原有三件皮肤归入普通装备。最多装备 6 件（Boss 专属装备与皮肤同样占槽）：槽满时获得新装备，需替换一件（被替换的按品级折算资金：普通 15、罕见 25、稀有 40、Boss 专属 50、市场专属 30）或放弃；任何时候都可在装备栏出售一件换同样资金。转会市场在槽满时不能购入装备。</p><h3>补给品</h3><p>一次性道具，默认 3 个栏位，比赛中点击使用，任何时候都可以丢弃。普通与强敌比赛胜利后按掉落率获得：初始 40%，掉落一次 -10%，未掉落 +10%。转会市场出售 3 个补给品；栏位满时需先丢弃或替换。</p><h3>解锁、跳过补偿与俱乐部投资</h3><p>每个赛区初次游玩时牌池较小（35 张），装备也少 15 件。比赛胜利 +1 解锁经验，每击败一幕 Boss +10，赛季冠军再 +10；解锁分 4 批，所需经验依次为 20／30／40／50；每批为该赛区加入约 10 张牌，并开放 3–4 件装备（装备按各赛区中最高的解锁等级开放）。解锁从下个赛季起生效。跳过招募时，可选 ${SKIP_FUNDS} 资金，或 1 次免费刷新转会名单（可留到之后的市场）。转会名单可付费刷新：每个市场第一次 20 资金，之后每次 +10。每个市场提供 1 项俱乐部投资（150–220 资金），买下后整赛季生效，同一项只能买一次。</p><h3>难度等级</h3><ol>${ASCENSION_LEVELS.filter(l=>l.level).map(l=>`<li>${esc(l.text)}</li>`).join('')}</ol><p>难度逐级叠加。每个赛区单独解锁：在当前最高难度赢下完整三幕赛季，解锁下一级。好友 PvP 只显示难度，不改变对局规则；装备与补给品不带入 PvP。</p><p>选手头像暂用占位图。游玩无需联网，也不消耗模型额度。</p></div>`);return;
  }
  if(name==='menu'){
   showModal('赛季菜单',`<p>当前种子：${esc(state.seed)} · ${state.mode==='season'?'D0.2.0':VERSION}${state.mode==='season'?' · '+esc(state.region):''}${R(state)?' · 难度 '+(state.ascension||0):''}</p><div class="stack">${R(state)?ui(`查看装备（${state.skins.length}）`,'gear')+ui(`补给品（${state.supplies.length}/${supplySlots(state)}）`,'supplies'):''}${ui('比赛记录','logs')}${ui('赛季规则','rules')}${ui('导出本局记录','export')}${ui('返回开始页（保留进度）','home')}<a class="secondary menu-link" href="/pvp/">好友PvP</a>${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="secondary menu-link" href="/new/">新demo</a>` : ''}${state.phase!=='result'?ui('放弃本次赛季…','abandon','danger-button'):''}</div>${investList(state)}${unlockTestToggle()}`);return;

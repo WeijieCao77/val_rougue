@@ -5,6 +5,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createRun, legalActions, act, battleEnemies, describeEvent } from '../new-demo/engine.js';
 import { EVENTS } from '../new-demo/events.js';
+import { UNLOCK_TIERS } from '../shared-unlock.js';
 import { CARDS, TEAMS, SUPPLIES, RELICS, EARLY_EASE } from '../new-demo/content.js';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, v, i, all) => (v.startsWith('--') ? [...acc, [v.slice(2), all[i + 1]]] : acc), []));
@@ -20,7 +21,7 @@ const ASCENSION = Number(args.ascension || 0);
 // --unlock full|base|N: economy rules (skip compensation, 战术投资, rerolls) at that unlock
 // tier for cards and equipment; --unlock off plays without economy rules.
 const UNLOCK = args.unlock ?? 'full';
-const tierArg = UNLOCK === 'full' ? 5 : UNLOCK === 'base' ? 0 : Number(UNLOCK);
+const tierArg = UNLOCK === 'full' ? UNLOCK_TIERS : UNLOCK === 'base' ? 0 : Number(UNLOCK);
 const ECON = UNLOCK !== 'off' ? { econ: true, unlockTier: tierArg, gearTier: tierArg } : {};
 const INVEST_ORDER = ['IN04', 'IN01', 'IN02', 'IN05', 'IN03'];
 

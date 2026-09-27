@@ -6,7 +6,7 @@ import { EVENTS, EVENT_POOLS, CRATE_LOOT } from './events.js';
 import { opsReason, describeOps, applyOps, pickKind, pickCandidates, noteResult, setResultTitle, upgradeEntry, upgradeDiffText } from '../shared-event-core.js';
 import { freshUnknownOdds, resolveUnknown, blockedUnknownKinds, rollCrateSize } from '../shared-unknown-room.js';
 import { ROUTE_STEPS } from '../shared-route-generator.js';
-import { planCardUnlocks, unlockedFrom, tierOfId, validTier, UNLOCK_TIERS } from '../shared-unlock.js';
+import { planCardUnlocks, unlockedFrom, tierOfId, validTier, splitBatches, UNLOCK_TIERS, LEGACY_UNLOCK_TIERS } from '../shared-unlock.js';
 
 const VERSION = 'new-1';
 const MAX_HAND = 10;
@@ -92,33 +92,41 @@ export const INVESTMENTS = {
   IN04: { name: '战前简报室', price: 220, icon: 'draw', desc: '每场战斗第一回合多抽 1 张牌。' },
   IN05: { name: '后勤车队', price: 150, icon: 'supply', desc: '精英战胜利后，多进行一次补给品掉落判定。' }
 };
-// Equipment batches opened by unlock tiers 1–5; everything else is in the base pool.
-export const RELIC_UNLOCKS = [
+// econ 1 runs (older saves): 5 unlock batches, tiers 0..5. econ 2 (new runs): the
+// same cards and equipment in 4 batches, tiers 0..4.
+export const ECON_VERSION = 2;
+export const unlockTiersOf = econ => (econ === 1 ? LEGACY_UNLOCK_TIERS : UNLOCK_TIERS);
+// Equipment batches opened by econ-1 unlock tiers 1–5; everything else is in the base pool.
+export const RELIC_UNLOCKS_V1 = [
   ['R16', 'R23', 'R33'],
   ['R17', 'R24', 'R37'],
   ['R19', 'R26', 'R30'],
   ['R20', 'R27', 'R46'],
   ['R29', 'R35', 'R49']
 ];
+// econ 2: the same 15 pieces in order, split 4/4/4/3 (legacy batches 1..N stay inside new 1..min(N, 4)).
+export const RELIC_UNLOCKS = splitBatches(RELIC_UNLOCKS_V1.flat(), UNLOCK_TIERS);
+const relicUnlocksOf = econ => (econ === 1 ? RELIC_UNLOCKS_V1 : RELIC_UNLOCKS);
 export const econOn = state => (state?.econ || 0) >= 1;
 export function hasInvest(state, id) {
   return econOn(state) && !!state.invest?.includes(id);
 }
 const planCache = {}, poolCache = {};
-// Team cards split into a base pool and five unlock batches (shared cards are always open).
-export function teamUnlockPlan(team) {
+// Team cards split into a base pool and unlock batches (shared cards are always open).
+export function teamUnlockPlan(team, econ = ECON_VERSION) {
   const def = TEAMS[team] || TEAMS.breach;
   const ids = REGION_CARD_IDS[def.region] || REGION_CARD_IDS.AM;
-  return planCache[team] ||= planCardUnlocks(ids, { start: def.startingDeck.map(([id]) => id), rarityOf: id => CARDS[id].rarity, groupOf: id => (ARCHETYPES[CARDS[id].tag] ? CARDS[id].tag : null), salt: team });
+  const tierCount = unlockTiersOf(econ);
+  return planCache[`${team}:${tierCount}`] ||= planCardUnlocks(ids, { start: def.startingDeck.map(([id]) => id), rarityOf: id => CARDS[id].rarity, groupOf: id => (ARCHETYPES[CARDS[id].tag] ? CARDS[id].tag : null), salt: team, tierCount });
 }
 function teamCardIds(state) {
   const ids = REGION_CARD_IDS[TEAMS[state.team]?.region] || REGION_CARD_IDS.AM;
   if (!econOn(state)) return ids;
-  const key = `${state.team}:${state.unlockTier}`;
-  return poolCache[key] ||= unlockedFrom(teamUnlockPlan(state.team), ids, state.unlockTier);
+  const key = `${state.team}:${state.econ}:${state.unlockTier}`;
+  return poolCache[key] ||= unlockedFrom(teamUnlockPlan(state.team, state.econ), ids, state.unlockTier);
 }
 export function relicLocked(state, id) {
-  return econOn(state) && tierOfId(RELIC_UNLOCKS, id) > (state.gearTier ?? UNLOCK_TIERS);
+  return econOn(state) && tierOfId(relicUnlocksOf(state.econ), id) > (state.gearTier ?? unlockTiersOf(state.econ));
 }
 export function rerollPrice(state) {
   return (state.freeRerolls || 0) > 0 ? 0 : discounted(state, REROLL_BASE + REROLL_STEP * (state.shop?.rerolls || 0));
@@ -190,8 +198,10 @@ export function createRun(seed = String(Date.now()), team = 'breach', options = 
     playedCount: 0
   };
   if (options.econ) {
-    const tier = n => (validTier(n) ? n : UNLOCK_TIERS);
-    Object.assign(state, { econ: 1, unlockTier: tier(options.unlockTier), gearTier: tier(options.gearTier), invest: [], freeRerolls: 0, fightsWon: 0 });
+    // econ: 1 only recreates a legacy 5-batch run (tests); every new run uses econ 2.
+    const econ = options.econ === 1 ? 1 : ECON_VERSION, max = unlockTiersOf(econ);
+    const tier = n => (validTier(n, max) ? n : max);
+    Object.assign(state, { econ, unlockTier: tier(options.unlockTier), gearTier: tier(options.gearTier), invest: [], freeRerolls: 0, fightsWon: 0 });
   }
   state.map = buildMap(seed, 1, ascension);
   if (ascension >= 6) state.hp = state.maxHp - Math.floor(state.maxHp * 0.1);

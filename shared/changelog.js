@@ -6,6 +6,12 @@
 // (or a new entry with the next version and today's date).
 export const CHANGELOG = [
   {
+    version: 'v0.9.2', date: '2026-09-27', title: '解锁进度调整',
+    items: [
+      ['all', '卡牌与装备解锁由 5 批改为 4 批，每批所需经验 20／30／40／50；已解锁的内容全部保留。']
+    ]
+  },
+  {
     version: 'v0.9.1', date: '2026-09-27', title: { wa: '选手照片更新', new: '封面更新日志' },
     items: [
       ['wa', '26 名选手换上 2026 赛季现役队服照片（中国赛区为官方定妆照）。'],

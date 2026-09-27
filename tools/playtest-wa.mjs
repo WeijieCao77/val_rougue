@@ -5,7 +5,8 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createWaSeason, waAct, waLegalActions } from '../wa-season.js';
 import { CARDS, REGIONS, effects } from '../content.js';
-import { ENEMY_TUNING_V2, ENEMY_TUNING_V3, ENEMY_TUNING_V4, ENEMY_TUNING_V5, TRAIT_TUNING, GEAR, RULES_VERSION } from '../wa-rules.js';
+import { ENEMY_TUNING_V2, ENEMY_TUNING_V3, ENEMY_TUNING_V4, ENEMY_TUNING_V5, TRAIT_TUNING, GEAR, RULES_VERSION, ECON_VERSION } from '../wa-rules.js';
+import { UNLOCK_TIERS } from '../shared-unlock.js';
 import { describeSeasonEvent, battleFoes } from '../engine.js';
 import { WA_EVENTS } from '../wa-events.js';
 
@@ -24,7 +25,7 @@ const ASC = Number(args.asc || 0);
 // --unlock full|base|N: economy rules (skip compensation, investments, rerolls) with that
 // unlock tier for cards and equipment; --unlock off plays without economy rules.
 const UNLOCK = args.unlock ?? 'full';
-const ECON = RULES && UNLOCK !== 'off' ? { econ: 1, unlockTier: UNLOCK === 'full' ? 5 : UNLOCK === 'base' ? 0 : Number(UNLOCK), gearTier: UNLOCK === 'full' ? 5 : UNLOCK === 'base' ? 0 : Number(UNLOCK) } : {};
+const ECON = RULES && UNLOCK !== 'off' ? { econ: ECON_VERSION, unlockTier: UNLOCK === 'full' ? UNLOCK_TIERS : UNLOCK === 'base' ? 0 : Number(UNLOCK), gearTier: UNLOCK === 'full' ? UNLOCK_TIERS : UNLOCK === 'base' ? 0 : Number(UNLOCK) } : {};
 const INVEST_ORDER = ['IV04', 'IV01', 'IV02', 'IV05', 'IV03'];
 const SKIP_EVENTS = args.events === 'skip'; // --events skip: always decline events (A/B against older runs)
 

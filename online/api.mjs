@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { createMatch, applyCommand, viewFor, validateSnapshot } from './duel.mjs';
 import { createWaSeason, waAct, extractCheckpoints } from '../wa-season.js';
-import { RULES_VERSIONS } from '../wa-rules.js';
+import { RULES_VERSIONS, ECON_VERSIONS, unlockTiersOf } from '../wa-rules.js';
 import { generateToken, generateRoomCode, sha256 } from './store.mjs';
 
 const MAX_BODY_BYTES = 1024 * 1024;
@@ -311,8 +311,9 @@ async function rebuildSnapshot(run, act) {
   if (run.mapVersion !== undefined && run.mapVersion !== 2) throw new HttpError(400, '无效的地图版本：请用当前版本重新完成这一幕');
   // Economy rules (unlock tiers, skip compensation, investments, rerolls). Records
   // without `econ` replay on the full pools; with it, both tiers must be recorded.
-  const validTier = n => Number.isInteger(n) && n >= 0 && n <= 5;
-  if (run.econ !== undefined && (run.econ !== 1 || run.rules === undefined)) throw new HttpError(400, '无效的经济规则版本');
+  // econ 1: 5 unlock batches (tiers 0..5); econ 2: 4 batches (tiers 0..4).
+  const validTier = n => Number.isInteger(n) && n >= 0 && n <= unlockTiersOf(run.econ);
+  if (run.econ !== undefined && (!ECON_VERSIONS.includes(run.econ) || run.rules === undefined)) throw new HttpError(400, '无效的经济规则版本');
   if (run.econ !== undefined && (!validTier(run.unlockTier) || !validTier(run.gearTier))) throw new HttpError(400, '无效的解锁等级');
   if (run.econ === undefined && (run.unlockTier !== undefined || run.gearTier !== undefined)) throw new HttpError(400, '无效的解锁等级');
   let state;
