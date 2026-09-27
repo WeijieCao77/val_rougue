@@ -295,36 +295,40 @@ test('服务器重启恢复active房间和账户', async () => {
   }
 });
 
-test('写失败原子性：交易回滚且文件不变', async () => {
+test('写失败原子性：交易回滚且数据不变', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'wa-test-'));
   const store = await openStore({ dataDir: dir });
   const handler = createOnlineHandler(store);
   let token;
   try {
     token = await createAccount(handler);
-    const filePath = path.join(dir, 'online-data.json');
-    const beforeData = await readFile(filePath, 'utf8');
+    await addArchive(store, token, 'arc1');
+    const beforeData = JSON.stringify(store.loadAll());
 
-    const originalWrite = store._fileStore._writeFile;
-    let failNextWrite = true;
-    store._fileStore._writeFile = async (filePath, data, options) => {
-      if (failNextWrite) {
-        failNextWrite = false;
-        throw new Error('simulated write failure');
-      }
-      return originalWrite(filePath, data, options);
+    // The commit itself fails after every row was written: nothing may stick.
+    store._testHooks.beforeCommit = () => {
+      store._testHooks.beforeCommit = null;
+      throw new Error('simulated write failure');
     };
-
     await assert.rejects(
       store.transaction(async (data) => {
         const account = Object.values(data.accounts)[0];
-        account.createdAt = Date.now();
+        account.createdAt = 1;
+        account.archives = [];
+        account.roomCode = 'ZZZZZZZZ';
       }),
       /simulated write failure/
     );
+    // A request unit of work that throws half way leaves no trace either.
+    const tokenHash = sha256(token);
+    const accountId = store.getAccountByTokenHash(tokenHash).accountId;
+    assert.throws(() => store.tx(t => {
+      t.account(accountId).archives.push({ id: 'x' });
+      t.setCheckpoint(accountId, 'cp', 'saved', 1);
+      throw new Error('boom');
+    }), /boom/);
 
-    const afterData = await readFile(filePath, 'utf8');
-    assert.equal(afterData, beforeData);
+    assert.equal(JSON.stringify(store.loadAll()), beforeData);
 
     const accountRes = await request(handler, { method: 'GET', path: '/api/account', token });
     assert.equal(accountRes.status, 200);

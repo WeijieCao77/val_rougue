@@ -1,20 +1,18 @@
 import { randomBytes, createHash } from 'node:crypto';
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { mkdirSync, existsSync, readFileSync, renameSync } from 'node:fs';
 import path from 'node:path';
-import postgres from 'postgres';
+import { SqliteStore } from './sqlite-store.mjs';
 
-const DATA_VERSION = 1;
+// Storage: a single SQLite file `${DATA_DIR}/online.db` (node:sqlite, WAL mode).
+// Production (Railway) sets DATA_DIR to a persistent volume. Without DATA_DIR a
+// development server uses `.local-data/online.db`; tests pass their own temp dir or
+// `filename: ':memory:'`. The old whole-document stores (online-data.json FileStore and
+// the single-row PostgreSQL store behind DATABASE_URL) were removed; a legacy
+// online-data.json found in the data directory is imported once on boot (see
+// migrateLegacyJson) and kept on disk as online-data.migrated-<timestamp>.json.
 
-function createEmptyData() {
-  return { version: DATA_VERSION, accounts: {}, rooms: {} };
-}
-
-function normalizeData(data) {
-  if (!data || typeof data !== 'object' || Array.isArray(data)) return createEmptyData();
-  const accounts = data.accounts && typeof data.accounts === 'object' && !Array.isArray(data.accounts) ? data.accounts : {};
-  const rooms = data.rooms && typeof data.rooms === 'object' && !Array.isArray(data.rooms) ? data.rooms : {};
-  return { version: DATA_VERSION, accounts, rooms };
-}
+export const DB_FILE = 'online.db';
+export const LEGACY_JSON_FILE = 'online-data.json';
 
 export function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
@@ -33,121 +31,117 @@ export function generateRoomCode() {
   return code;
 }
 
-class FileStore {
-  constructor(dataDir, fsWrite = writeFile) {
-    this.dataDir = dataDir;
-    this.filePath = path.join(dataDir, 'online-data.json');
-    this.mutex = Promise.resolve();
-    this._writeFile = fsWrite;
-  }
-
-  async init() {
-    await mkdir(this.dataDir, { recursive: true });
-    try {
-      this.current = normalizeData(JSON.parse(await readFile(this.filePath, 'utf8')));
-    } catch (err) {
-      if (err.code === 'ENOENT') {
-        this.current = createEmptyData();
-        await this.persist(this.current);
-      } else {
-        throw err;
-      }
-    }
-  }
-
-  async persist(nextData) {
-    const tmpPath = `${this.filePath}.${process.pid}.${Date.now()}.tmp`;
-    await this._writeFile(tmpPath, JSON.stringify(nextData), 'utf8');
-    await rename(tmpPath, this.filePath);
-  }
-
-  async transaction(fn) {
-    const run = async () => {
-      const before = JSON.stringify(this.current);
-      const data = normalizeData(JSON.parse(before));
-      const result = await fn(data);
-      const normalized = normalizeData(data);
-      const after = JSON.stringify(normalized);
-      if (after !== before) {
-        await this.persist(normalized);
-        this.current = normalized;
-      }
-      return result;
-    };
-    const p = this.mutex.then(run, run);
-    this.mutex = p.catch(() => {});
-    return p;
-  }
-
-  async close() {}
+function normalizeLegacy(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('旧数据文件格式无效');
+  const obj = v => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
+  return { accounts: obj(data.accounts), rooms: obj(data.rooms) };
 }
 
-class PgStore {
-  constructor(databaseUrl) {
-    this.databaseUrl = databaseUrl;
-    this.sql = postgres(databaseUrl, { max: 10 });
-  }
+function expectedCounts(data) {
+  const accounts = Object.values(data.accounts).filter(a => a && typeof a === 'object');
+  return {
+    accounts: accounts.length,
+    archives: accounts.reduce((n, a) => n + (Array.isArray(a.archives) ? a.archives.length : 0), 0),
+    checkpoints: accounts.reduce((n, a) => n + Object.keys(a.processedCheckpoints || {}).length, 0),
+    rooms: Object.values(data.rooms).filter(r => r && typeof r === 'object').length,
+    roomRequests: Object.values(data.rooms).reduce((n, r) => n + Object.keys(r?.requests || {}).length, 0),
+  };
+}
 
-  async init() {
-    await this.sql`CREATE TABLE IF NOT EXISTS online_state (
-      id BOOLEAN PRIMARY KEY DEFAULT TRUE CHECK (id),
-      data JSONB NOT NULL,
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )`;
-    await this.sql`INSERT INTO online_state (id, data) VALUES (TRUE, ${this.sql.json(createEmptyData())}) ON CONFLICT (id) DO NOTHING`;
+// One-time import of the legacy whole-document JSON. Idempotent:
+// - the import is one SQLite transaction (all or nothing) and records the file's
+//   sha256 in `meta`;
+// - after the counts are verified the JSON is renamed (never deleted) to
+//   online-data.migrated-<timestamp>.json;
+// - a crash between commit and rename is finished on the next boot (same sha256 →
+//   rename only, no second import);
+// - a different online-data.json appearing after a completed migration is left alone
+//   with a warning instead of being merged over newer data.
+export function migrateLegacyJson(store, dataDir, { log = console } = {}) {
+  const jsonPath = path.join(dataDir, LEGACY_JSON_FILE);
+  if (!existsSync(jsonPath)) return { status: 'none' };
+  const raw = readFileSync(jsonPath);
+  const hash = sha256(raw);
+  const doneHash = store.getMeta('legacy_json_sha256');
+  const keepPath = path.join(dataDir, `online-data.migrated-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
+  if (doneHash === hash) {
+    renameSync(jsonPath, keepPath);
+    return { status: 'renamed', keptAs: keepPath };
   }
+  if (doneHash) {
+    log.warn?.(`发现新的 ${LEGACY_JSON_FILE}，但数据库已完成过迁移；未导入，文件保持原样。`);
+    return { status: 'skipped' };
+  }
+  const data = normalizeLegacy(JSON.parse(raw.toString('utf8')));
+  const want = expectedCounts(data);
+  const before = store.counts();
+  store.importLegacy(data);
+  const after = store.counts();
+  for (const key of Object.keys(want)) {
+    // Rows that already existed (same ids) are updated in place, so the database holds
+    // at least what the file held and never more than the file plus prior rows.
+    if (after[key] < want[key] || after[key] > want[key] + before[key]) {
+      throw new Error(`迁移核对失败：${key} 期望 ${want[key]}，实际 ${after[key]}`);
+    }
+  }
+  store.tx(() => {
+    store.setMeta('legacy_json_sha256', hash);
+    store.setMeta('legacy_json_migrated_at', new Date().toISOString());
+    store.setMeta('legacy_json_counts', JSON.stringify(want));
+  });
+  renameSync(jsonPath, keepPath);
+  log.log?.(`已把 ${LEGACY_JSON_FILE} 导入 SQLite（${want.accounts} 个账户、${want.archives} 个存档、${want.rooms} 个房间），原文件保留为 ${path.basename(keepPath)}`);
+  return { status: 'migrated', counts: want, keptAs: keepPath };
+}
 
-  async transaction(fn) {
-    return this.sql.begin(async (sql) => {
-      const rows = await sql`SELECT data FROM online_state WHERE id = TRUE FOR UPDATE`;
-      const data = normalizeData(rows[0]?.data);
-      const result = await fn(data);
-      const normalized = normalizeData(data);
-      await sql`UPDATE online_state SET data = ${sql.json(normalized)}, updated_at = NOW() WHERE id = TRUE`;
-      return result;
-    });
-  }
-
-  async close() {
-    await this.sql.end({ timeout: 5 });
-  }
+// The inverse of the migration, for rolling back to a build that still reads
+// online-data.json (tools/export-online-json.mjs). Sync data has no legacy form.
+export function exportLegacyJson(store) {
+  const data = store.loadAll();
+  return JSON.stringify({ version: 1, accounts: data.accounts, rooms: data.rooms });
 }
 
 export async function openStore({
-  databaseUrl = process.env.DATABASE_URL,
   dataDir = process.env.DATA_DIR,
-  _fsWrite,
+  filename,
+  log = console,
+  housekeeping = true,
 } = {}) {
   const isProduction = process.env.NODE_ENV === 'production' ||
     process.env.RAILWAY_ENVIRONMENT_ID ||
     process.env.RAILWAY_PROJECT_ID ||
     process.env.RAILWAY_SERVICE_NAME;
 
-  if (databaseUrl) {
-    const store = new PgStore(databaseUrl);
-    await store.init();
-    return {
-      transaction: store.transaction.bind(store),
-      close: store.close.bind(store),
-      isPostgres: true,
-    };
-  }
+  if (filename === ':memory:') return wrap(new SqliteStore(':memory:'), null, housekeeping);
 
   const explicitDataDir = dataDir !== undefined && dataDir !== '';
-  if (isProduction && !explicitDataDir) {
-    throw new Error('生产环境必须配置 DATABASE_URL 或 DATA_DIR 持久卷');
+  if (isProduction && !explicitDataDir && !filename) {
+    throw new Error('生产环境必须配置 DATA_DIR 持久卷');
   }
+  if (process.env.DATABASE_URL) {
+    log.warn?.('DATABASE_URL 已不再使用：在线数据存放在 DATA_DIR 下的 SQLite 文件中。');
+  }
+  const finalDataDir = explicitDataDir ? dataDir : (filename ? path.dirname(filename) : '.local-data');
+  mkdirSync(finalDataDir, { recursive: true });
+  const store = new SqliteStore(filename || path.join(finalDataDir, DB_FILE));
+  try {
+    const migration = migrateLegacyJson(store, finalDataDir, { log });
+    const wrapped = wrap(store, finalDataDir, housekeeping);
+    wrapped.migration = migration;
+    return wrapped;
+  } catch (err) {
+    store.close();
+    throw err;
+  }
+}
 
-  const finalDataDir = explicitDataDir ? dataDir : '.local-data';
-  const store = new FileStore(finalDataDir, _fsWrite);
-  await store.init();
-  if (!isProduction) {
-    console.warn('使用文件存储（仅限单进程开发）。生产环境请配置 DATABASE_URL 或 DATA_DIR。');
-  }
-  return {
-    transaction: store.transaction.bind(store),
-    close: store.close.bind(store),
-    isPostgres: false,
-    _fileStore: store,
-  };
+function wrap(store, dataDir, housekeeping) {
+  // Hourly housekeeping: drop long-finished / abandoned rooms.
+  const purge = () => { try { store.purgeRooms(Date.now()); } catch (err) { console.error('清理房间失败:', err); } };
+  const timer = housekeeping ? setInterval(purge, 60 * 60 * 1000) : null;
+  if (timer) { purge(); timer.unref?.(); }
+  store.dataDir = dataDir;
+  const originalClose = store.close.bind(store);
+  store.close = async () => { clearInterval(timer); originalClose(); };
+  return store;
 }
