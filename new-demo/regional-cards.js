@@ -1090,7 +1090,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "CNT37",
-    "name": "清除虚弱",
+    "name": "清除压制",
     "cost": 0,
     "type": "skill",
     "tag": "response",
@@ -1114,7 +1114,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "CNT38",
-    "name": "解除脆弱",
+    "name": "解除易伤",
     "cost": 0,
     "type": "skill",
     "tag": "response",
@@ -1180,7 +1180,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "CNT40",
-    "name": "破防闪光",
+    "name": "破防强光",
     "cost": 1,
     "type": "skill",
     "tag": "response",
@@ -1212,7 +1212,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "CNT41",
-    "name": "紧急调度",
+    "name": "紧急调配",
     "cost": 0,
     "type": "skill",
     "tag": "response",
@@ -1268,7 +1268,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "CNT43",
-    "name": "战术笔记",
+    "name": "战术手记",
     "cost": 1,
     "type": "skill",
     "tag": "response",
@@ -1724,7 +1724,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "CNT57",
-    "name": "全息诱饵",
+    "name": "全息假目标",
     "cost": 1,
     "type": "skill",
     "tag": "utility",
@@ -1746,7 +1746,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "CNT58",
-    "name": "破片手雷",
+    "name": "破片雷",
     "cost": 1,
     "type": "attack",
     "tag": "damage",
@@ -2030,7 +2030,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "CNT68",
-    "name": "闪光掩护",
+    "name": "闪光遮护",
     "cost": 1,
     "type": "skill",
     "tag": "utility",
@@ -3016,7 +3016,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "AMT25",
-    "name": "蓄势待发",
+    "name": "蓄力待命",
     "cost": 1,
     "type": "skill",
     "tag": "utility",
@@ -3266,7 +3266,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "AMT33",
-    "name": "战术换弹",
+    "name": "换弹射击",
     "cost": 1,
     "type": "attack",
     "tag": "hybrid",
@@ -4746,7 +4746,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "AMT74",
-    "name": "战术统筹",
+    "name": "战术筹划",
     "cost": 1,
     "type": "skill",
     "tag": "core",
@@ -7524,7 +7524,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "PACT08",
-    "name": "疲惫打击+",
+    "name": "疲惫打击",
     "cost": 1,
     "type": "attack",
     "tag": "damage",
@@ -7769,7 +7769,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "PACT18",
-    "name": "破片手雷EX",
+    "name": "重型破片手雷",
     "cost": 2,
     "type": "attack",
     "tag": "damage",
@@ -7799,7 +7799,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "PACT19",
-    "name": "战术翻滚+",
+    "name": "翻滚掩护",
     "cost": 1,
     "type": "skill",
     "tag": "response",
@@ -7859,7 +7859,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "PACT21",
-    "name": "破甲射击+",
+    "name": "破甲重击",
     "cost": 2,
     "type": "attack",
     "tag": "damage",
@@ -7927,7 +7927,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "PACT24",
-    "name": "致盲闪光+",
+    "name": "强光致盲",
     "cost": 1,
     "type": "skill",
     "tag": "utility",
@@ -8023,7 +8023,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "PACT28",
-    "name": "区域封锁Ⅱ",
+    "name": "扩展封锁",
     "cost": 2,
     "type": "skill",
     "tag": "utility",
@@ -8053,7 +8053,7 @@ export const REGIONAL_CARDS = [
   },
   {
     "id": "PACT29",
-    "name": "诱饵陷阱",
+    "name": "诱饵绊雷",
     "cost": 1,
     "type": "skill",
     "tag": "utility",

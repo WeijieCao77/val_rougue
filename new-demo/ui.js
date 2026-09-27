@@ -34,7 +34,7 @@ let presentationBusy = false;
 
 const typeMap = { attack: '攻击', skill: '技能', power: '能力', status: '状态' };
 const rarityMap = { common: '普通', uncommon: '罕见', rare: '稀有' };
-const tagMap = { basic: '基础通用', damage: '交火输出', utility: '战术道具', stance: '掩护前压', core: '构筑核心', hybrid: '混搭连接', response: '应对调度', status: '特殊', burn: '燃烧', deploy: '部署', combo: '连击', fortify: '布防', overload: '过载', execute: '处决', discover: '发现' };
+const tagMap = { basic: '基础通用', damage: '交火输出', utility: '战术道具', stance: '掩护前压', core: '强化调度', hybrid: '攻守混合', response: '应对调度', status: '特殊', burn: '燃烧', deploy: '部署', combo: '连击', fortify: '布防', overload: '过载', execute: '处决', discover: '发现' };
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -1468,7 +1468,7 @@ function renderLibraryModal() {
       count = statusCards.length;
       html = statusCards.map(c => {
         if (!seen.cards.has(c.id)) return unseenTileHtml('card');
-        const tooltip = `${escapeHtml(c.name)} [${c.curse?'诅咒':'状态'}]\n${escapeHtml(c.text)}`;
+        const tooltip = `${escapeHtml(c.name)} [${c.curse?'隐患':'状态'}]\n${escapeHtml(c.text)}`;
         return `<div class="library-card status-card" data-tooltip="${tooltip}" tabindex="0">
           <div class="card-art">${cardArt(c.id)}</div>
           <div class="name">${escapeHtml(c.name)}</div>

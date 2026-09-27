@@ -1,7 +1,7 @@
 // new-demo/content.js
 // Tactical action pool with all effects described from structured data.
 import { REGIONAL_CARDS } from './regional-cards.js';
-import { CURSES, EXTRA_STATUSES } from '../afflictions.js';
+import { CURSES, EXTRA_STATUSES, newDemoAfflictionText } from '../afflictions.js';
 
 export const CARDS = {};
 export const CARD_IDS = [];
@@ -57,7 +57,17 @@ const xLabel = plus => (plus ? `(X+${plus})` : 'X');
 export function formatEffects(effects) {
   if (!effects || effects.length === 0) return '';
   const parts = [];
+  const afterIf = new Set(); // a clause after a conditional starts with '；' so it does not read as conditional too
+  // Text only: back-to-back identical heals or turret volleys read as one clause.
+  const list = [];
   for (const eff of effects) {
+    const prev = list[list.length - 1];
+    if (prev && eff.type === 'heal' && prev.type === 'heal') { list[list.length - 1] = { ...prev, n: prev.n + eff.n }; continue; }
+    if (prev && eff.type === 'fireTurrets' && prev.type === 'fireTurrets') { list[list.length - 1] = { ...prev, volleys: (prev.volleys || 1) + 1 }; continue; }
+    list.push(eff);
+  }
+  for (const [idx, eff] of list.entries()) {
+    if (idx && list[idx - 1].type === 'conditional') afterIf.add(parts.length);
     if (eff.type === 'xRepeat') {
       const inner = formatEffects([eff.effect]);
       parts.push(`${inner}，共${xLabel(eff.plus)}次`);
@@ -134,13 +144,13 @@ export function formatEffects(effects) {
         parts.push(eff.kind === 'turret' ? `部署哨戒炮：回合结束时造成${eff.n}点伤害，持续${eff.turns}回合` : `部署屏障无人机：回合结束时获得${eff.n}点布防，持续${eff.turns}回合`);
         break;
       case 'fireTurrets':
-        parts.push('所有哨戒炮立即开火一次');
+        parts.push(eff.volleys > 1 ? `所有哨戒炮立即开火${eff.volleys}次` : '所有哨戒炮立即开火一次');
         break;
       case 'attackFromBlock':
         parts.push(eff.mult > 1 ? `造成等同于布防×${eff.mult}的伤害` : '造成等同于当前布防的伤害');
         break;
       case 'discover':
-        parts.push(`发现一张${{ attack: '攻击', skill: '技能', any: '' }[eff.pool] || ''}牌（本回合0费，打出后消耗）`);
+        parts.push(`发现一张${{ attack: '攻击', skill: '技能', any: '' }[eff.pool] || ''}牌（本回合0费，打出或回合结束时消耗）`);
         break;
       case 'strength':
         parts.push(`本场获得${eff.n}层火力`);
@@ -159,12 +169,12 @@ export function formatEffects(effects) {
         break;
       case 'purgePlayerStatus': {
         const name = { weak: '压制', vuln: '易伤', smoke: '烟雾', flash: '闪光' }[eff.id] || eff.id;
-        parts.push(`清除自身${eff.n}层${name}`);
+        parts.push(eff.n >= 99 ? `清除自身全部${name}` : `清除自身${eff.n}层${name}`);
         break;
       }
       case 'purgeEnemyStatus': {
         const name = { weak: '压制', vuln: '易伤', smoke: '烟雾', flash: '闪光', block: '布防' }[eff.id] || eff.id;
-        parts.push(`移除敌人${eff.n}${eff.id === 'block' ? '点' : '层'}${name}`);
+        parts.push(eff.n >= 99 ? `移除敌人全部${name}` : `移除敌人${eff.n}${eff.id === 'block' ? '点' : '层'}${name}`);
         break;
       }
       case 'upgradeRandomInHand':
@@ -174,13 +184,13 @@ export function formatEffects(effects) {
         parts.push('本场升级其余全部手牌');
         break;
       case 'upgradeAllInCombatDeck':
-        parts.push('本场升级全部战术牌');
+        parts.push('本场升级抽牌堆、弃牌堆和手牌中的全部牌');
         break;
       case 'attackScaledByUpgradedHand':
-        parts.push(`伤害${eff.base}；其余每张升级手牌+${eff.per}（最多${eff.cap}张）`);
+        parts.push(`造成${eff.base}点伤害，手牌中每有1张已升级的牌，伤害+${eff.per}（最多计${eff.cap}张）`);
         break;
       case 'conditional':
-        parts.push(`若${conditionText(eff.condition)}，${formatEffects([eff.effect])}`);
+        parts.push(`若${conditionText(eff.condition)}，${list.slice(0, idx).some(p => p.type === eff.effect.type) ? '再' : ''}${formatEffects([eff.effect])}`);
         break;
       case 'repeat':
         parts.push(`${formatEffects([eff.effect])}重复${eff.times}次`);
@@ -189,7 +199,7 @@ export function formatEffects(effects) {
         parts.push(eff.type);
     }
   }
-  return parts.join('，');
+  return parts.map((p, i) => (i ? (afterIf.has(i) ? '；' : '，') : '') + p).join('');
 }
 
 function conditionText(cond) {
@@ -200,7 +210,7 @@ function conditionText(cond) {
     enemy_smoke_or_flash: '敌人有烟雾或闪光',
     prev_played_attack: '本回合已打出攻击牌',
     first_attack_this_turn: '本回合尚未打出攻击牌',
-    first_block_this_turn: '本回合尚未打出技能牌',
+    first_block_this_turn: '本回合尚未打出获得布防的牌',
     stance_cover: '处于掩护姿态',
     stance_push: '处于前压姿态',
     stance_changed_this_turn: '本回合切换过姿态',
@@ -502,11 +512,11 @@ export const SHARED_CARD_IDS = defs.map(card => card.id);
 export const ARCHETYPES = { burn:'燃烧', deploy:'部署', combo:'连击', fortify:'布防反击', overload:'过载爆发', execute:'易伤处决', discover:'发现' };
 
 // ----------------------------- Status cards -----------------------------
-def({ id:'ST01', name:'失误', cost:0, type:'status', tag:'status', rarity:'common', text:'不可打出。弃掉时受到1点伤害', effects:[] });
-def({ id:'ST02', name:'犹豫', cost:0, type:'status', tag:'status', rarity:'common', text:'不可打出。弃掉时受到2点伤害', effects:[] });
-def({ id:'ST03', name:'暴露', cost:0, type:'status', tag:'status', rarity:'common', text:'不可打出。弃掉时受到3点伤害', effects:[] });
-for(const status of EXTRA_STATUSES)def({id:status.id,name:status.name,cost:0,type:'status',tag:'status',rarity:'common',text:status.text,effects:[]});
-for(const curse of CURSES)def({id:curse.id,name:curse.name,cost:0,type:'status',tag:'curse',rarity:'common',curse:true,text:curse.text+' 跨比赛保留，直到永久移除。',effects:[]});
+def({ id:'ST01', name:'失误', cost:0, type:'status', tag:'status', rarity:'common', text:'不能打出。回合结束时仍在手中：失去1点生命。', effects:[] });
+def({ id:'ST02', name:'犹豫', cost:0, type:'status', tag:'status', rarity:'common', text:'不能打出。回合结束时仍在手中：失去2点生命。', effects:[] });
+def({ id:'ST03', name:'暴露', cost:0, type:'status', tag:'status', rarity:'common', text:'不能打出。回合结束时仍在手中：失去3点生命。', effects:[] });
+for(const status of EXTRA_STATUSES)def({id:status.id,name:status.name,cost:0,type:'status',tag:'status',rarity:'common',text:'不能打出。'+newDemoAfflictionText(status.text),effects:[]});
+for(const curse of CURSES)def({id:curse.id,name:curse.name,cost:0,type:'status',tag:'curse',rarity:'common',curse:true,text:('不能打出。'+newDemoAfflictionText(curse.text)).replace('不能打出。不能打出。','不能打出。')+'跨比赛保留，直到永久移除。',effects:[]});
 
 // ----------------------------- Teams -----------------------------
 export const TEAMS = {

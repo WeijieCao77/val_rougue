@@ -130,7 +130,7 @@ export const NEW_ACHIEVEMENTS = [
   { key: 'power3', cat: 'deck', name: '三件套', desc: '一场战斗中打出 3 张能力牌', test: ctx => (F(ctx)?.types?.power || 0) >= 3 },
   { key: 'same5', cat: 'deck', name: '如出一辙', desc: '牌组中同一张非基础牌达到 5 张', test: ctx => { const n = {}; for (const c of deck(ctx)) if (!c.basic && !c.curse && c.type !== 'status') n[c.id] = (n[c.id] || 0) + 1; return Object.values(n).some(v => v >= 5); } },
   { key: 'arch6', cat: 'deck', name: '专精', desc: '牌组中带同一流派标签（燃烧、部署、连击、布防、过载、处决、发现）的牌达到 6 张', test: ctx => { const tags = new Set(['burn', 'deploy', 'combo', 'fortify', 'overload', 'execute', 'discover']); const n = {}; for (const c of deck(ctx)) if (tags.has(c.tag)) n[c.tag] = (n[c.tag] || 0) + 1; return Object.values(n).some(v => v >= 6); } },
-  { key: 'cursed_boss', cat: 'deck', secret: true, name: '带病上阵', desc: '牌组里带着 3 张及以上诅咒击败幕末决战', reward: { title: '百毒不侵' }, test: ctx => lastBossWin(ctx) && deck(ctx).filter(c => c.curse).length >= 3 },
+  { key: 'cursed_boss', cat: 'deck', secret: true, name: '带病上阵', desc: '牌组里带着 3 张及以上隐患击败幕末决战', reward: { title: '百毒不侵' }, test: ctx => lastBossWin(ctx) && deck(ctx).filter(c => c.curse).length >= 3 },
 
   // ---- 强敌与决战
   { key: 'first_elite', cat: 'boss', name: '第一个强敌', desc: '击败一场强敌', test: ctx => wonKind(ctx, 'elite') },

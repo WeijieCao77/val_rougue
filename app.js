@@ -1890,7 +1890,7 @@ const REGIONAL_TACTICS={
     "verbs": {
       "duel": "建立交叉枪线"
     },
-    "note": "自由人持续战术，只增强每回合第一张决斗牌的第一段攻击。"
+    "note": "持续战术，只增强每回合第一张决斗牌的第一段攻击。"
   },
   "PA17": {
     "title": "轮转指挥",
@@ -6130,7 +6130,7 @@ const EXPANSION_ROWS = [
   ],
   [
     "EUT15",
-    "虚弱诅咒",
+    "持续压制",
     "战术",
     1,
     [
@@ -8152,7 +8152,7 @@ const EXPANSION_TACTICS = {
   },
   "CN33": {
     "title": "战利品",
-    "scene": "攻击后获得护甲",
+    "scene": "攻击后留出一次临时布防",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8248,7 +8248,7 @@ const EXPANSION_TACTICS = {
   },
   "CN49": {
     "title": "乘虚而入",
-    "scene": "对手虚弱时造成额外伤害",
+    "scene": "对手被压制时造成额外伤害",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8298,7 +8298,7 @@ const EXPANSION_TACTICS = {
   },
   "CNT07": {
     "title": "装备升级",
-    "scene": "获得护甲并补充防御",
+    "scene": "备好一次临时布防",
     "origin": "赛区战术",
     "note": "赛区战术牌；不代表任何真实选手。"
   },
@@ -8420,13 +8420,13 @@ const EXPANSION_TACTICS = {
   },
   "AM19": {
     "title": "节奏调度",
-    "scene": "对局中快速调整资源。",
+    "scene": "压住对手节奏并稳住阵脚。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "AM20": {
     "title": "侦察突袭",
-    "scene": "获取信息后迅速开火。",
+    "scene": "获取信息后标出对手破绽。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8437,8 +8437,8 @@ const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "AM22": {
-    "title": "先手压制",
-    "scene": "开局限制对手行动。",
+    "title": "先手架点",
+    "scene": "先一步架好掩体。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8474,13 +8474,13 @@ const EXPANSION_TACTICS = {
   },
   "AM28": {
     "title": "区域封锁",
-    "scene": "大范围限制并保护自己。",
+    "scene": "限制对手并保护自己。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "AM29": {
     "title": "游走打击",
-    "scene": "灵活移动并补充手牌。",
+    "scene": "游走中开一枪，再压住对手。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8522,13 +8522,13 @@ const EXPANSION_TACTICS = {
   },
   "AM36": {
     "title": "战术破绽",
-    "scene": "寻找破绽并补给。",
+    "scene": "寻找破绽并补充手牌。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "AM37": {
     "title": "情报勘探",
-    "scene": "收集信息并建立防线。",
+    "scene": "收集信息并压制对手。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8546,7 +8546,7 @@ const EXPANSION_TACTICS = {
   },
   "AM40": {
     "title": "先手优势",
-    "scene": "获得初始行动力。",
+    "scene": "先锋打开局面后，队伍跟上布防。",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8702,7 +8702,7 @@ const EXPANSION_TACTICS = {
   },
   "AMT15": {
     "title": "资源优化",
-    "scene": "提升后续能量收益。",
+    "scene": "提升之后每回合的行动点。",
     "origin": "赛区战术",
     "note": "赛区战术牌；不代表任何真实选手。"
   },
@@ -8715,7 +8715,7 @@ const EXPANSION_TACTICS = {
   },
   "AMT17": {
     "title": "弱点标记",
-    "scene": "大范围揭示弱点。",
+    "scene": "揭示弱点并补充手牌。",
     "origin": "赛区战术",
     "note": "赛区战术牌；不代表任何真实选手。"
   },
@@ -8765,8 +8765,8 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；数值与机制为本作原创设定，不代表任何真实选手或原作技能数据。"
   },
   "AMT25": {
-    "title": "能量回收",
-    "scene": "提升能量并抽牌。",
+    "title": "节奏回收",
+    "scene": "提升行动点并抽牌。",
     "origin": "赛区战术",
     "note": "赛区战术牌；不代表任何真实选手。"
   },
@@ -8784,13 +8784,13 @@ const EXPANSION_TACTICS = {
   },
   "EU21": {
     "title": "防线构筑",
-    "scene": "巩固防守并补充手牌资源",
+    "scene": "巩固防守并压制对手",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "EU22": {
     "title": "快速布防",
-    "scene": "短暂格挡并稳定阵型",
+    "scene": "短暂布防并稳定阵型",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8838,7 +8838,7 @@ const EXPANSION_TACTICS = {
   },
   "EU30": {
     "title": "坚壁清野",
-    "scene": "巩固防御并削弱敌方",
+    "scene": "巩固防御并留出一次临时布防",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8850,7 +8850,7 @@ const EXPANSION_TACTICS = {
   },
   "EU32": {
     "title": "先发制人",
-    "scene": "开局即削弱敌人",
+    "scene": "先手削弱敌人并补充手牌",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8862,7 +8862,7 @@ const EXPANSION_TACTICS = {
   },
   "EU34": {
     "title": "侦察补给",
-    "scene": "获得更多手牌并建立防御",
+    "scene": "获得手牌并顺手开一枪",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8874,7 +8874,7 @@ const EXPANSION_TACTICS = {
   },
   "EU36": {
     "title": "精准剥析",
-    "scene": "若目标虚弱则造成额外连击",
+    "scene": "目标被压制时，每一段伤害都更高",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8903,8 +8903,8 @@ const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "EU41": {
-    "title": "能量涌动",
-    "scene": "提升能量并补充手牌",
+    "title": "节奏涌动",
+    "scene": "提升行动点并补充手牌",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -8951,7 +8951,7 @@ const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "EU49": {
-    "title": "应急格挡",
+    "title": "应急布防",
     "scene": "低费高效防御",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
@@ -9014,7 +9014,7 @@ const EXPANSION_TACTICS = {
   },
   "EUT09": {
     "title": "能量管理",
-    "scene": "获得额外能量",
+    "scene": "每回合获得额外行动点",
     "origin": "赛区战术",
     "note": "赛区战术牌；不代表任何真实选手。"
   },
@@ -9052,7 +9052,7 @@ const EXPANSION_TACTICS = {
     "note": "赛区战术牌；不代表任何真实选手。"
   },
   "EUT15": {
-    "title": "虚弱诅咒",
+    "title": "持续压制",
     "scene": "强力削弱敌人",
     "origin": "赛区战术",
     "note": "赛区战术牌；不代表任何真实选手。"
@@ -9189,7 +9189,7 @@ const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "PA30": {
-    "title": "应急格挡",
+    "title": "应急布防",
     "scene": "快速防御",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
@@ -9285,7 +9285,7 @@ const EXPANSION_TACTICS = {
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
   "PA46": {
-    "title": "森林之咒",
+    "title": "丛林封锁",
     "scene": "全面削弱敌人",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
@@ -9298,7 +9298,7 @@ const EXPANSION_TACTICS = {
   },
   "PA48": {
     "title": "狂战核心",
-    "scene": "能量激发",
+    "scene": "激发队伍节奏",
     "origin": "赛区战术 · 游戏化设定",
     "note": "选手位置与卡牌效果仅是游戏设计，不对应其真实特工池或比赛表现。"
   },
@@ -9354,7 +9354,7 @@ const EXPANSION_TACTICS = {
   },
   "PAT07": {
     "title": "防线加固",
-    "scene": "防守并反击",
+    "scene": "防守并压住对手",
     "origin": "赛区战术",
     "note": "赛区战术牌；不代表任何真实选手。"
   },
@@ -9393,7 +9393,7 @@ const EXPANSION_TACTICS = {
   },
   "PAT13": {
     "title": "能量汲取",
-    "scene": "获取能量并防御",
+    "scene": "每回合多一个行动点",
     "origin": "赛区战术",
     "note": "赛区战术牌；不代表任何真实选手。"
   },
@@ -9483,28 +9483,35 @@ const module2=(()=>{
 // not a claim that Slay the Spire uses these exact effects or acquisition rates.
 const CURSES = [
  {id:'CU01',name:'磨合不足',trigger:'unplayable',n:0,text:'不能打出。占用抽牌与牌组空间。'},
- {id:'CU02',name:'舆论压力',trigger:'endTurnLoseHp',n:2,text:'回合末仍在手中：失去 2 声望／生命。'},
- {id:'CU03',name:'赞助干预',trigger:'onDrawLoseEnergy',n:1,text:'抽到时失去 1 行动点／能量。'},
+ {id:'CU02',name:'舆论压力',trigger:'endTurnLoseHp',n:2,text:'回合末仍在手中：失去 2 声望。'},
+ {id:'CU03',name:'赞助干预',trigger:'onDrawLoseEnergy',n:1,text:'抽到时失去 1 行动点。'},
  {id:'CU04',name:'合同纠纷',trigger:'onDrawDiscard',n:1,text:'抽到时随机弃掉另一张手牌。'},
  {id:'CU05',name:'媒体围堵',trigger:'onDrawWeak',n:1,text:'抽到时自身获得 1 回合压制。'},
- {id:'CU06',name:'赛程重压',trigger:'onDrawLoseHp',n:2,text:'抽到时直接失去 2 声望／生命。'},
+ {id:'CU06',name:'赛程重压',trigger:'onDrawLoseHp',n:2,text:'抽到时直接失去 2 声望。'},
  {id:'CU07',name:'信息暴露',trigger:'onDrawVuln',n:1,text:'抽到时自身获得 1 回合易伤。'},
  {id:'CU08',name:'战术泄露',trigger:'unplayable',n:0,text:'不能打出。占用抽牌与牌组空间。'},
- {id:'CU09',name:'心理阴影',trigger:'onPlayLoseHp',n:1,text:'留在手中时，每打出另一张牌失去 1 声望／生命。'},
- {id:'CU10',name:'疲劳复发',trigger:'endTurnLoseHp',n:1,text:'回合末仍在手中：失去 1 声望／生命。'},
- {id:'CU11',name:'设备故障',trigger:'onDrawLoseEnergy',n:1,text:'抽到时失去 1 行动点／能量。'},
+ {id:'CU09',name:'心理阴影',trigger:'onPlayLoseHp',n:1,text:'留在手中时，每打出另一张牌失去 1 声望。'},
+ {id:'CU10',name:'疲劳复发',trigger:'endTurnLoseHp',n:1,text:'回合末仍在手中：失去 1 声望。'},
+ {id:'CU11',name:'设备故障',trigger:'onDrawLoseEnergy',n:1,text:'抽到时失去 1 行动点。'},
  {id:'CU12',name:'队内分歧',trigger:'onDrawDiscard',n:2,text:'抽到时随机弃掉至多 2 张其他手牌。'},
  {id:'CU13',name:'训练失序',trigger:'onDrawWeak',n:2,text:'抽到时自身获得 2 回合压制。'},
- {id:'CU14',name:'禁赛风险',trigger:'onDrawLoseHp',n:4,text:'抽到时直接失去 4 声望／生命。'}
+ {id:'CU14',name:'禁赛风险',trigger:'onDrawLoseHp',n:4,text:'抽到时直接失去 4 声望。'}
 ];
 const CURSE_RULES=Object.fromEntries(CURSES.map(c=>[c.id,c]));
 const EXTRA_STATUSES=[
- {id:'ST04',name:'能量泄漏',trigger:'onDrawLoseEnergy',n:1,text:'抽到时失去 1 行动点／能量；本场临时。'},
- {id:'ST05',name:'干扰脉冲',trigger:'onDrawDiscard',n:1,text:'抽到时随机弃掉另一张手牌；本场临时。'}
+ {id:'ST04',name:'能量泄漏',trigger:'onDrawLoseEnergy',n:1,text:'抽到时失去 1 行动点。回合结束时消耗。'},
+ {id:'ST05',name:'干扰脉冲',trigger:'onDrawDiscard',n:1,text:'抽到时随机弃掉另一张手牌。赛后移除。'}
 ];
 const EXTRA_STATUS_RULES=Object.fromEntries(EXTRA_STATUSES.map(c=>[c.id,c]));
 
-return {CURSES,CURSE_RULES,EXTRA_STATUSES,EXTRA_STATUS_RULES};
+// The texts above use the Wa demo's words (声望, 行动点, 回合压制). The new demo
+// counts 生命, 能量 and status 层 and writes numbers without spaces.
+function newDemoAfflictionText(text){
+ return String(text).replace('回合末仍在手中','回合结束时仍在手中').replace(/ (\d+) 声望/g,'$1点生命').replace(/ (\d+) 行动点/g,'$1点能量')
+  .replace(/ (\d+) 回合(压制|易伤)/g,'$1层$2').replace(/ (\d+) 张/g,'$1张').replace('回合结束时消耗。','战斗结束后移除。').replace('赛后移除。','战斗结束后移除。');
+}
+
+return {CURSES,CURSE_RULES,EXTRA_STATUSES,EXTRA_STATUS_RULES,newDemoAfflictionText};
 })();
 const module3=(()=>{
 // Seeded, seven-lane route topology shared by both demos. Room weights are this
@@ -10368,7 +10375,7 @@ const TACTICS = {
  CU01:{title:'沟通错拍',scene:'一声进、一声退，五个人没踩上同一拍。',origin:'俱乐部 · 磨合隐患',note:'这是虚构俱乐部情境，不评价任何真实选手。跨比赛保留，直到永久移除。'},
  CU02:{title:'赛后风波',scene:'上一场的讨论还没平息，压力又回到赛场。',origin:'俱乐部 · 舆论隐患',note:'这是虚构俱乐部情境。声望损失不属于攻击，布防不能抵消。'},
  TK01:{title:'紧跟补枪',scene:'沿着队友打开的枪线，把这次机会接住。',origin:'配合 · 临时接枪',verbs:{hit:'跟进补枪'},note:'只有打出才造成伤害；打出或回合末消耗。'},
- TK02:{title:'续投减速',scene:'第二颗减速球落下，继续拖住入口的脚步。',origin:'贤者 · 后续减速球',verbs:{block:'续投减速封路'},note:'来自冰域拖延的临时行动；打出才增加布防，未用则在回合末消耗。',source:'https://playvalorant.com/en-us/agents/sage/'},
+ TK02:{title:'续投减速',scene:'第二颗减速球落下，继续拖住入口的脚步。',origin:'贤者 · 后续减速球',verbs:{block:'续投减速封路'},note:'由会生成临时部署的牌加入手牌；打出才增加布防，未用则在回合末消耗。',source:'https://playvalorant.com/en-us/agents/sage/'},
 };
 const displayText = text => String(text).replaceAll('格挡','布防').replaceAll('虚弱','压制');
 const SKINS = {
@@ -10485,29 +10492,46 @@ function xEffects(list,x){
 }
 const xLabel=e=>e.xPlus?`(X+${e.xPlus})`:'X';
 function cardName(card) { return CARDS[card.id].name + (card.up?' +':''); }
+// Temporary cards a card can put into hand: their own name and what they do.
+const tokenName=id=>CARDS[id].name;
+const tokenValue=id=>CARDS[id].effects.map(e=>e.type==='hit'?`${e.n} 伤害`:e.type==='block'?`${e.n} 布防`:'').filter(Boolean).join('，');
+// Text only: consecutive copies of one token (or turret volley) read as one line.
+function textEffects(list){
+ const out=[];
+ for(const e of list||[]){
+  const p=out[out.length-1];
+  if(p&&e.type==='token'&&p.type==='token'&&p.id===e.id&&!e.perX&&!p.perX){out[out.length-1]={...p,count:(p.count??1)+(e.count??1)};continue;}
+  if(p&&e.type==='fireTurrets'&&p.type==='fireTurrets'){out[out.length-1]={...p,volleys:(p.volleys||1)+1};continue;}
+  out.push(e);
+ }
+ return out;
+}
+// Afflictions: shared rule text minus the leading "不能打出。" (the face prints it once).
+const afflictionLine=text=>String(text).replace(/^不能打出。/,'').replace(/。$/,'');
 // Short face text and full hover text use the same effects, including upgrades.
 function compactLines(card) {
- if(CURSE_RULES[card.id])return ['不能打出',CURSE_RULES[card.id].text];
- if(EXTRA_STATUS_RULES[card.id])return ['不能打出',EXTRA_STATUS_RULES[card.id].text];
- const special={ST01:['不能打出'],ST02:['打出以清除此牌'],ST03:['不能打出','本场循环'],CU01:['不能打出','跨比赛保留'],CU02:['不能打出','留手至回合末：','直接失去 2 声望']};
+ const rule=CURSE_RULES[card.id]||EXTRA_STATUS_RULES[card.id];
+ if(rule)return ['不能打出',...afflictionLine(rule.text).split('。').filter(Boolean)].slice(0,3);
+ const special={ST01:['不能打出','回合末消耗'],ST02:['打出以清除此牌'],ST03:['不能打出','本场循环'],CU01:['不能打出','跨比赛保留'],CU02:['不能打出','留手至回合末：','直接失去 2 声望']};
  if(special[card.id])return special[card.id];
- const lines=effects(card).flatMap(function line(e){
+ const list=textEffects(effects(card)),t=CARDS[card.id];
+ // A power-only card keeps the two-line "trigger: bonus" form; mixed cards use one line per effect.
+ const onlyPowers=list.every(e=>e.type==='power');
+ const headed=onlyPowers&&(list.length===1||list.every(e=>['energy','extraDraw'].includes(e.key)));
+ const lines=list.flatMap(function line(e){
   if(e.type==='combo')return line(e.effect).map((l,i)=>i?l:`连击：${l}`);
-  if(e.type==='hit'&&(e.ifVuln||e.ifBurn))return [`伤害 ${e.n}${e.times>1?` × ${e.times}`:''}`,e.ifVuln?`对手易伤：+${e.ifVuln}`:`对手燃烧：+${e.ifBurn}`];
-  if(e.type==='burn')return [`${e.all?'全体':''}燃烧 ${e.n}${e.perX?` × ${xLabel(e)}`:''}`];
-  if(e.type==='burnMultiply')return [`燃烧层数 ×${e.n}`];
-  if(e.type==='detonate')return [`引爆：燃烧×${e.per}伤害`];
-  if(e.type==='deploy')return [e.kind==='turret'?`部署哨戒炮 ${e.n}×${e.turns}回合`:`部署屏障 ${e.n}布防×${e.turns}回合`];
-  if(e.type==='fireTurrets')return ['哨戒炮立即开火'];
-  if(e.type==='bodyslam')return ['伤害=当前布防'];
+  if(e.type==='hit'&&(e.ifVuln||e.ifBurn))return [`伤害 ${e.n}${e.times>1?` × ${e.times}`:''}`,e.ifVuln?`对手有易伤：基础伤害 +${e.ifVuln}`:`对手有燃烧：基础伤害 +${e.ifBurn}`];
+  if(e.type==='burn')return [`${e.all?'全体':'对手'}燃烧 ${e.n}${e.perX?` × ${xLabel(e)}`:''}`];
+  if(e.type==='burnMultiply')return [`对手燃烧层数 ×${e.n}`];
+  if(e.type==='detonate')return [`引爆：燃烧 × ${e.per} 伤害`];
+  if(e.type==='deploy')return e.kind==='turret'?[`部署哨戒炮 ${e.turns} 回合`,`回合末 ${e.n} 伤害`]:[`部署屏障 ${e.turns} 回合`,`回合末 ${e.n} 布防`];
+  if(e.type==='fireTurrets')return [`哨戒炮立即开火${e.volleys>1?` ×${e.volleys}`:''}`];
+  if(e.type==='bodyslam')return ['伤害 = 当前布防'];
   if(e.type==='strength')return [`本场火力 +${e.n}`];
   if(e.type==='overload')return [`过载 ${e.n}`];
-  if(e.key==='knife')return ['本场飞刀：',`伤害 +${e.n}`];
-  if(e.key==='comboAtk')return ['每回合第3张起：',`攻击 +${e.n}`];
-  if(e.key==='burnTick')return ['每回合开始：',`燃烧 ${e.n}`];
   if(e.type==='hit'&&(e.xTimes||e.grow||e.all))return [`${e.all?'全体':''}伤害 ${e.n}${e.xTimes?` × ${xLabel(e)}`:e.times>1?` × ${e.times}`:''}`,...(e.grow?[`成长：每次打出 +${e.grow}`]:[])];
   if(e.type==='block'&&(e.perX||e.grow))return [`布防 ${e.n}${e.perX?` × ${xLabel(e)}`:''}`,...(e.grow?[`成长：每次打出 +${e.grow}`]:[])];
-  if(e.type==='token'&&e.perX)return [`生成 ${e.id==='TK01'?'补枪':e.id==='TK03'?'飞刀':'续投减速'} × ${xLabel(e)}`];
+  if(e.type==='token')return [`生成 ${e.perX?xLabel(e):e.count??1} 张${tokenName(e.id)}`];
   if(e.all&&e.type==='weak')return [`全体压制 ${e.n} 回合`];
   if(e.all&&e.type==='vulnerable')return [`全体易伤 ${e.n} 回合`];
   if(e.type==='hit')return [`伤害 ${e.n}${e.times>1?` × ${e.times}`:''}`,...(e.ifWeak?[`对手有压制：基础伤害 +${e.ifWeak}`]:[])];
@@ -10515,29 +10539,34 @@ function compactLines(card) {
   if(e.type==='weak')return [`对手压制 ${e.n} 回合`];
   if(e.type==='vulnerable')return [`对手易伤 ${e.n} 回合`];
   if(e.type==='draw')return [`抽 ${e.n} 张牌`];
-  if(e.type==='token')return [`生成 ${e.id==='TK01'?'补枪':e.id==='TK03'?'飞刀':'续投减速'} ×1`];
-  if(e.key==='duel')return ['每回合首张决斗：',`首段伤害 +${e.n}`];
-  if(e.key==='init')return ['每回合首张先锋后：',`布防 +${e.n}`];
-  if(e.key==='energy')return ['下回合起，每回合：',`行动点 +${e.n}`];
-  if(e.key==='extraDraw')return [`额外抽 ${e.n} 张`];
-  return [];
+  if(headed)return ({
+   knife:['本场飞刀：',`伤害 +${e.n}`],comboAtk:['每回合第 3 张起：',`攻击 +${e.n}`],burnTick:['每回合开始：',`对手燃烧 ${e.n}`],
+   duel:['每回合首张决斗：',`首段伤害 +${e.n}`],init:['每回合首张先锋后：',`布防 +${e.n}`],
+   energy:['下回合起，每回合：',`行动点 +${e.n}`],
+   extraDraw:list[0]===e?['下回合起，每回合：',`额外抽 ${e.n} 张`]:[`额外抽 ${e.n} 张`]
+  })[e.key]||[];
+  return ({
+   knife:[`本场飞刀伤害 +${e.n}`],comboAtk:[`每回合第 3 张起攻击 +${e.n}`],burnTick:[`每回合开始燃烧 ${e.n}`],
+   duel:[`每回合首张决斗 +${e.n}`],init:[`首张先锋后布防 +${e.n}`],
+   energy:[`每回合行动点 +${e.n}`],extraDraw:[`每回合额外抽 ${e.n} 张`]
+  })[e.key]||[];
  });
- if(CARDS[card.id].zone==='retain')lines.push('保留');
- const t=CARDS[card.id],tags=[t.innate&&'固有',t.ethereal&&'虚无'].filter(Boolean);
+ if(t.zone==='retain')lines.push('保留');
+ const tags=[t.innate&&'固有',t.ethereal&&'虚无'].filter(Boolean);
  if(tags.length)lines.unshift(tags.join(' · '));
  return lines.length<=3?lines:[lines[0],lines[1],lines.slice(2).join(' · ')];
 }
 function cardKeywords(card) {
  const t=CARDS[card.id],list=[],es=effects(card)||[];
- if(es.some(e=>e.type==='block'||e.key==='init'))list.push(['布防','每点抵消 1 点攻击伤害；下次己方回合开始清空。']);
- if(es.some(e=>e.type==='weak'||e.ifWeak))list.push(['压制','攻击伤害降低 25%；每段向下取整，受影响一方行动结束后减少 1 回合。']);
- if(es.some(e=>e.type==='vulnerable'))list.push(['易伤','受到攻击伤害增加 50%；每段向下取整，对手行动结束后减少 1 回合。']);
- if(es.some(e=>e.type==='token')){const e=es.find(e=>e.type==='token');list.push([e.id==='TK01'?'补枪':'续投减速',`生成到手中的 0 费临时牌：${e.id==='TK01'?'造成 3 伤害':'获得 3 布防'}。打出或回合末消耗，手牌满时不生成。`]);}
+ const flat=es.flatMap(e=>e.type==='combo'?[e,e.effect]:[e]);
+ if(flat.some(e=>e.type==='block'||e.key==='init'||e.type==='bodyslam'||(e.type==='deploy'&&e.kind!=='turret')))list.push(['布防','每点抵消 1 点攻击伤害；下次己方回合开始清空。']);
+ if(flat.some(e=>e.type==='weak'||e.ifWeak))list.push(['压制','攻击伤害降低 25%；每段向下取整，受影响一方行动结束后减少 1 回合。']);
+ if(flat.some(e=>e.type==='vulnerable'||e.ifVuln))list.push(['易伤','受到攻击伤害增加 50%；每段向下取整，对手行动结束后减少 1 回合。']);
+ for(const id of [...new Set(flat.filter(e=>e.type==='token').map(e=>e.id))])list.push([tokenName(id),`生成到手中的 0 费临时牌：${CARDS[id].effects.map(e=>e.type==='hit'?`造成 ${e.n} 伤害`:`获得 ${e.n} 布防`).join('，')}。打出或回合末消耗，手牌满时不生成。`]);
  if(t.zone==='power')list.push(['持续能力','打出后本场持续生效，不再洗回；多张可叠加，只影响之后的触发。']);
  if(t.zone==='exhaust')list.push(['消耗','打出后进入消耗区，本场不再抽到。没打出时正常弃置；赛季牌组中的原牌下场恢复。']);
  if(t.zone==='temporary')list.push(['临时','打出或回合末进入消耗区，本场不再抽到；不加入赛季牌组。']);
  if(t.zone==='exhaustEnd')list.push(['回合末消耗','留在手中到回合结束时，进入消耗区，而不是弃牌堆。']);
- const flat=es.flatMap(e=>e.type==='combo'?[e,e.effect]:[e]);
  if(flat.some(e=>e.type==='combo'))list.push(['连击','本回合已经打出过其他牌时，才会触发“连击：”后面的效果。']);
  if(flat.some(e=>['burn','burnMultiply','detonate'].includes(e.type)||e.key==='burnTick'||e.ifBurn))list.push(['燃烧','对手回合开始前失去等同层数的防线（无视布防），然后 -1 层。']);
  if(flat.some(e=>['deploy','fireTurrets'].includes(e.type)))list.push(['部署','哨戒炮在你的回合结束时自动开火；屏障在回合结束时提供布防。持续指定回合数。']);
@@ -10552,27 +10581,34 @@ function cardKeywords(card) {
  if(t.id.startsWith('CU'))list.push(['俱乐部隐患','跨比赛保留。可在俱乐部团建等节点永久移除；直接失去声望不能用布防抵消。']);
  return list;
 }
+const POWER_TEXT={
+ knife:n=>`你的飞刀伤害 +${n}`,comboAtk:n=>`每回合第 3 张及之后的牌，攻击伤害 +${n}`,burnTick:n=>`每回合开始时给予对手 ${n} 层燃烧`,
+ duel:n=>`每回合第一张决斗牌的第一段攻击 +${n}`,init:n=>`每回合第一张先锋牌打出后，获得 ${n} 布防`,
+ energy:n=>`从下一回合起，每回合行动点 +${n}`,extraDraw:n=>`从下一回合起，每回合额外抽 ${n} 张`
+};
 function describe(card) {
  const t=CARDS[card.id];
- if(CURSE_RULES[card.id])return CURSE_RULES[card.id].text+' 跨比赛保留，直到永久移除。';
- if(EXTRA_STATUS_RULES[card.id])return EXTRA_STATUS_RULES[card.id].text;
+ if(CURSE_RULES[card.id])return '不能打出。'+afflictionLine(CURSE_RULES[card.id].text)+'。跨比赛保留，直到永久移除。';
+ if(EXTRA_STATUS_RULES[card.id])return '不能打出。'+afflictionLine(EXTRA_STATUS_RULES[card.id].text)+'。';
  const special={ST01:'不能打出。占用抽牌；回合结束时消耗。',ST02:'打出以调整身位，然后消耗。未打出则进入弃牌堆。',ST03:'不能打出。弃掉后继续参与本场洗牌。赛后移除。',CU01:'不能打出。跨比赛留在牌组，直到永久移除。',CU02:'不能打出。回合末仍在手中：直接失去 2 声望，布防无效。跨比赛保留。'};
  if(special[card.id]) return special[card.id];
- const text=effects(card).map(function part(e){
+ const growth=[];
+ const part=function part(e){
+  if(e.grow)growth.push(e.type==='block'?`此牌布防 +${e.grow}`:`此牌每段伤害 +${e.grow}`);
   if(e.type==='combo') return `连击：${part(e.effect)}`;
-  if(e.type==='hit'&&e.xTimes) return `${e.all?'对所有对手':''}造成 ${e.n} 伤害 ${xLabel(e)} 次${e.grow?`；成长：本场每打出一次，此牌伤害 +${e.grow}`:''}`;
-  if(e.type==='hit'&&(e.all||e.grow)) return `${e.all?'对所有对手':''}造成 ${e.n} 伤害${e.times>1?` × ${e.times} 次`:''}${e.grow?`；成长：本场每打出一次，此牌每段伤害 +${e.grow}`:''}`;
-  if(e.type==='block'&&(e.perX||e.grow)) return `获得 ${e.n}${e.perX?` × ${xLabel(e)}`:''} 布防${e.grow?`；成长：本场每打出一次，此牌布防 +${e.grow}`:''}`;
+  if(e.type==='hit'&&e.xTimes) return `${e.all?'对所有对手':''}造成 ${e.n} 伤害 ${xLabel(e)} 次`;
+  if(e.type==='hit'&&(e.all||e.grow)) return `${e.all?'对所有对手':''}造成 ${e.n} 伤害${e.times>1?` × ${e.times} 次`:''}`;
+  if(e.type==='block'&&(e.perX||e.grow)) return `获得 ${e.n}${e.perX?` × ${xLabel(e)}`:''} 布防`;
   if(e.type==='burn'&&(e.perX||e.all)) return `给予${e.all?'所有对手':'对手'} ${e.n}${e.perX?` × ${xLabel(e)}`:''} 层燃烧`;
-  if(e.type==='token'&&e.perX) return `生成 ${xLabel(e)} 张${CARDS[e.id].name}（0 费，${e.id==='TK01'?'3 伤害':e.id==='TK03'?'4 伤害':'3 布防'}，临时）`;
+  if(e.type==='token') return `生成 ${e.perX?xLabel(e):e.count??1} 张${tokenName(e.id)}（0 费，${tokenValue(e.id)}，临时）`;
   if(e.type==='weak'&&e.all) return `所有对手压制 ${e.n} 回合（攻击 −25%）`;
   if(e.type==='vulnerable'&&e.all) return `所有对手易伤 ${e.n} 回合（受到攻击 +50%）`;
-  if(e.type==='hit') return `造成 ${e.n} 伤害${e.times>1?` × ${e.times} 次`:''}${e.ifWeak?`；对手有压制时基础伤害 +${e.ifWeak}`:''}${e.ifVuln?`；对手易伤时基础伤害 +${e.ifVuln}`:''}${e.ifBurn?`；对手燃烧时基础伤害 +${e.ifBurn}`:''}`;
+  if(e.type==='hit') return `造成 ${e.n} 伤害${e.times>1?` × ${e.times} 次`:''}${e.ifWeak?`；对手有压制时基础伤害 +${e.ifWeak}`:''}${e.ifVuln?`；对手有易伤时基础伤害 +${e.ifVuln}`:''}${e.ifBurn?`；对手有燃烧时基础伤害 +${e.ifBurn}`:''}`;
   if(e.type==='burn') return `给予对手 ${e.n} 层燃烧`;
   if(e.type==='burnMultiply') return `对手燃烧层数 ×${e.n}`;
   if(e.type==='detonate') return `引爆：造成燃烧层数 ×${e.per} 的伤害并清空燃烧`;
   if(e.type==='deploy') return e.kind==='turret'?`部署哨戒炮：回合结束时造成 ${e.n} 伤害，持续 ${e.turns} 回合`:`部署屏障无人机：回合结束时获得 ${e.n} 布防，持续 ${e.turns} 回合`;
-  if(e.type==='fireTurrets') return '所有哨戒炮立即开火一次';
+  if(e.type==='fireTurrets') return `所有哨戒炮立即开火${e.volleys>1?` ${e.volleys} 次`:'一次'}`;
   if(e.type==='bodyslam') return '造成等同于当前布防的伤害';
   if(e.type==='strength') return `本场获得 ${e.n} 层火力`;
   if(e.type==='overload') return `过载 ${e.n}（下回合行动点 -${e.n}）`;
@@ -10580,11 +10616,17 @@ function describe(card) {
   if(e.type==='weak') return `对手压制 ${e.n} 回合（攻击 −25%）`;
   if(e.type==='vulnerable') return `对手易伤 ${e.n} 回合（受到攻击 +50%）`;
   if(e.type==='draw') return `抽 ${e.n} 张牌`;
-  if(e.type==='token') return `生成 1 张${CARDS[e.id].name}·${TACTICS[e.id].title}（0 费，${e.id==='TK01'?'3 伤害':e.id==='TK03'?'4 伤害':'3 布防'}，临时）`;
-  return ({knife:`本场你的飞刀伤害 +${e.n}`,comboAtk:`本场每回合第 3 张及之后的牌，攻击伤害 +${e.n}`,burnTick:`本场每回合开始时给予对手 ${e.n} 层燃烧`,duel:`本场每回合第一张决斗牌的第一段攻击 +${e.n}`,init:`本场每回合第一张先锋打出后，获得 ${e.n} 布防`,energy:`从下一回合起，每回合行动点 +${e.n}`,extraDraw:`从下一回合起，每回合额外抽 ${e.n} 张`})[e.key];
- }).join('；');
- const pre=[t.x&&'X 费：花掉全部行动点',t.innate&&'固有',t.ethereal&&'虚无'].filter(Boolean).join('。');
- return (pre?pre+'。':'') + text + (t.zone==='exhaust'?'。打出后消耗。':t.zone==='temporary'?'。打出或回合末消耗。':t.zone==='power'?'。能力：本场持续生效，不再洗回。':t.zone==='retain'?'。保留：回合末不弃置。':'。');
+  return POWER_TEXT[e.key]?.(e.n)||'';
+ };
+ const list=textEffects(effects(card));
+ const now=list.filter(e=>e.type!=='power').map(part);
+ // Powers: 行动点 and 额外抽牌 from the same card read as one clause.
+ const pw=list.filter(e=>e.type==='power'),en=pw.find(e=>e.key==='energy'),ex=pw.find(e=>e.key==='extraDraw');
+ const later=pw.filter(e=>!(en&&ex&&e===ex)).map(e=>e===en&&ex?`从下一回合起，每回合行动点 +${en.n}、额外抽 ${ex.n} 张`:part(e));
+ const grow=growth.length?`成长：本场每打出一次，${growth.join('，')}。`:'';
+ const pre=[t.x&&'X 费：花掉全部行动点',t.innate&&'固有',t.ethereal&&'虚无'].filter(Boolean).map(s=>s+'。').join('');
+ const body=(now.length?now.join('；')+'。':'')+(later.length?`能力：${later.join('；')}。`:'');
+ return pre+body+grow+(t.zone==='exhaust'?'打出后消耗。':t.zone==='temporary'?'打出或回合末消耗。':t.zone==='power'?'本场持续生效，不再洗回。':t.zone==='retain'?'保留：回合末不弃置。':'');
 }
 
 return {VERSION,CARDS,PLAYER_IDS,TACTICS,displayText,SKINS,TRAITS,FIELDS,ENEMIES,ROUTE,START,effects,xEffects,cardName,compactLines,cardKeywords,describe,REGIONS,CURSE_RULES,WA_GROUPS,ENCOUNTER_POOLS,BOSS_POOL,BOSS_INFO};
@@ -14111,7 +14153,7 @@ const CARD_ART={
   },
   "EUT15": {
     "path": "assets/special/EUT15.svg",
-    "name": "虚弱诅咒",
+    "name": "持续压制",
     "kind": "illustration",
     "concept": false
   },
@@ -16896,11 +16938,11 @@ const STATUS_INFO = {
   aim: { label: '瞄准', color: '#ff4d8d', rule: '瞄准：下回合将打出致命狙击；让它失去瞄准或做好布防。' },
   enrage: { label: '狂热', color: '#ff7043', rule: '狂热：你每打出一张技能牌，它获得等量火力。' },
   sentry: { label: '哨戒', color: '#5fd3c6', rule: '哨戒炮：回合结束时自动开火。' },
-  overload: { label: '过载', color: '#8fd3ff', rule: '过载：本回合行动点已被上回合的爆发扣减等量。' },
+  overload: { label: '过载', color: '#8fd3ff', rule: '过载：下回合开始时，可用的费用点数减少等量。' },
   damage: { label: '伤害', color: '#ff5d4a', rule: '伤害：先扣布防，再扣生命／防线。' },
   burn: { label: '燃烧', color: '#ff7a1a', rule: '燃烧：敌方回合开始时失去等同层数的生命（无视布防），然后 -1 层。' },
   retain: { label: '保留', color: '#9fd8ff', rule: '保留：回合结束时不会被弃掉，留在手中。' },
-  discover: { label: '发现', color: '#f5d76e', rule: '发现：从三张随机牌中选一张加入手牌，本回合 0 费，打出后消耗。' },
+  discover: { label: '发现', color: '#f5d76e', rule: '发现：从三张随机牌中选一张加入手牌，本回合 0 费，打出或回合结束时消耗。' },
   combo: { label: '连击', color: '#ff9ecf', rule: '连击：本回合已打出过其他牌时触发额外效果。' },
   exhaust: { label: '消耗', color: '#ffb36b', rule: '消耗：打出后本场移出牌组循环。' },
   draw: { label: '抽牌', color: '#9fe3a0', rule: '抽牌：从抽牌堆抽取卡牌。' },
@@ -17151,7 +17193,7 @@ function filterSortCards(cards, opts = {}, info = {}) {
 }
 
 const SORT_LABELS = { acquired: '获得顺序', cost: '费用', type: '类型', name: '名称' };
-const COST_FILTERS = [['', '全部费用'], ['0', '0 费'], ['1', '1 费'], ['2', '2 费'], ['3+', '3 费及以上'], ['x', '不可打出']];
+const COST_FILTERS = [['', '全部费用'], ['0', '0 费'], ['1', '1 费'], ['2', '2 费'], ['3+', '3 费及以上'], ['x', '不能打出']];
 
 function formatDuration(ms) {
   const s = Math.max(0, Math.round((Number(ms) || 0) / 1000));

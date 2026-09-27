@@ -181,7 +181,7 @@ export function filterSortCards(cards, opts = {}, info = {}) {
 }
 
 export const SORT_LABELS = { acquired: '获得顺序', cost: '费用', type: '类型', name: '名称' };
-export const COST_FILTERS = [['', '全部费用'], ['0', '0 费'], ['1', '1 费'], ['2', '2 费'], ['3+', '3 费及以上'], ['x', '不可打出']];
+export const COST_FILTERS = [['', '全部费用'], ['0', '0 费'], ['1', '1 费'], ['2', '2 费'], ['3+', '3 费及以上'], ['x', '不能打出']];
 
 export function formatDuration(ms) {
   const s = Math.max(0, Math.round((Number(ms) || 0) / 1000));

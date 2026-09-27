@@ -1552,7 +1552,7 @@ export const CARD_ART={
   },
   "EUT15": {
     "path": "assets/special/EUT15.svg",
-    "name": "虚弱诅咒",
+    "name": "持续压制",
     "kind": "illustration",
     "concept": false
   },
