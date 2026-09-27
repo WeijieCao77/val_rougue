@@ -19143,7 +19143,6 @@ function home(){
      ${ui('图鉴','library','text-button')}
      ${ui('战绩','history','text-button')}
      ${ui('成就','achievements','text-button')}
-     <a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a>
      <a class="text-button" href="/">选择版本</a>
    </div>
    <p class="title-note">四大赛区 · 300 张赛区牌 · 三幕 × 15 站 + 决赛</p>
