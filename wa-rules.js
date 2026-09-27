@@ -4,6 +4,7 @@
 // never how to build. Designed after the *ideas* behind Slay the Spire's starter
 // relics, Neow, Ascension, relics and potions — not copies of their effects or numbers.
 import {SKINS} from './content.js';
+import {splitBatches,UNLOCK_TIERS,LEGACY_UNLOCK_TIERS} from './shared-unlock.js';
 
 // Runs created with rules >= 1 get traits, the opening, equipment and supplies.
 // Older saves and server records without `rules` replay exactly as before.
@@ -110,17 +111,25 @@ export const GEAR = {
  BX10:{name:'战术预判系统',rarity:'boss',icon:'retain',text:'回合结束时不再弃置手牌（比赛干扰与俱乐部隐患除外）。'},
  BX11:{name:'深度数据库',rarity:'boss',icon:'draw',text:'每回合多抽 2 张牌。每回合结束时直接失去 1 声望。'}
 };
-// ---- Economy rules 1 (s.econ): unlock tiers, skip compensation, club investments,
+// ---- Economy rules (s.econ): unlock tiers, skip compensation, club investments,
 // market rerolls. Seasons without `econ` (older saves and server records) replay as before.
-export const ECON_VERSION = 1;
-// Equipment batches opened by unlock tiers 1–5 (everything else is in the base pool).
-export const GEAR_UNLOCKS = [
+// econ 1: 5 unlock batches (tiers 0..5). econ 2: the same cards and equipment in
+// 4 batches (tiers 0..4). Everything else is identical between the two.
+export const ECON_VERSION = 2;
+export const ECON_VERSIONS = [1, 2];
+export const unlockTiersOf = econ => (econ === 1 ? LEGACY_UNLOCK_TIERS : UNLOCK_TIERS);
+// Equipment batches opened by econ-1 unlock tiers 1–5 (everything else is in the base pool).
+export const GEAR_UNLOCKS_V1 = [
  ['GR09','GR23','GR41'],
  ['GR10','GR24','GR63'],
  ['GR11','GR22','GR44'],
  ['GR05','GR21','BX10'],
  ['GR46','GR40','BX11']
 ];
+// econ 2: the same 15 pieces in order, split into 4 batches (4/4/4/3), so the
+// first N legacy batches are always inside the first min(N, 4) new ones.
+export const GEAR_UNLOCKS = splitBatches(GEAR_UNLOCKS_V1.flat(), UNLOCK_TIERS);
+export const gearUnlocksOf = econ => (econ === 1 ? GEAR_UNLOCKS_V1 : GEAR_UNLOCKS);
 // Skipping a recruit: 15 funds, or one free reroll of a later market's transfer list.
 export const SKIP_FUNDS = 15;
 export const REROLL_BASE = 20;

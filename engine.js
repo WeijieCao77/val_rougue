@@ -6,8 +6,8 @@ import {opsReason,describeOps,applyOps,pickKind,pickCandidates,noteResult,setRes
 import {freshUnknownOdds,resolveUnknown,blockedUnknownKinds,rollCrateSize} from './shared-unknown-room.js';
 import {routeSteps,CURRENT_MAP_VERSION,MAP_VERSIONS} from './shared-route-generator.js';
 import {CARD_RARITY,RARITY_ORDER} from './card-rarity.js';
-import {RULES_VERSION,RULES_VERSIONS,ROLES,TRAIT_TUNING,OPENING_FREE,OPENING_TRADE,GEAR,SUPPLIES,ENERGY_GEAR,SUPPLY_RARITY_WEIGHTS,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,MAX_ASCENSION,ENEMY_TUNING,ENEMY_TUNING_V2,ENEMY_TUNING_V3,ENEMY_TUNING_V4,ENEMY_TUNING_V5,EARLY_STEP,gearName,ECON_VERSION,GEAR_UNLOCKS,SKIP_FUNDS,REROLL_BASE,REROLL_STEP,INVESTMENTS} from './wa-rules.js';
-import {planCardUnlocks,unlockedFrom,tierOfId,validTier,UNLOCK_TIERS} from './shared-unlock.js';
+import {RULES_VERSION,RULES_VERSIONS,ROLES,TRAIT_TUNING,OPENING_FREE,OPENING_TRADE,GEAR,SUPPLIES,ENERGY_GEAR,SUPPLY_RARITY_WEIGHTS,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,MAX_ASCENSION,ENEMY_TUNING,ENEMY_TUNING_V2,ENEMY_TUNING_V3,ENEMY_TUNING_V4,ENEMY_TUNING_V5,EARLY_STEP,gearName,ECON_VERSIONS,unlockTiersOf,gearUnlocksOf,SKIP_FUNDS,REROLL_BASE,REROLL_STEP,INVESTMENTS} from './wa-rules.js';
+import {planCardUnlocks,unlockedFrom,tierOfId,validTier} from './shared-unlock.js';
 export const clone = x => structuredClone(x);
 const log = (s,text) => s.logs.push({node:s.node,turn:s.battle?.turn||0,text});
 export function random(s) { let x=s.rng; x^=x<<13; x^=x>>>17; x^=x<<5; s.rng=x>>>0; return s.rng/4294967296; }
@@ -36,25 +36,27 @@ export const poolOf = s => R3(s)?REGIONS[s.region].pool3:REGIONS[s.region].pool;
 export const mapVersionOf = s => s?.mapVersion||1;
 export const hasGear = (s,id) => R(s)&&s.skins.includes(id);
 const has = hasGear;
-// ---- Economy rules 1 (unlock tiers, skip compensation, investments, market rerolls) ----
+// ---- Economy rules (unlock tiers, skip compensation, investments, market rerolls) ----
+// econ 1 = 5 unlock batches (legacy records), econ 2 = the same content in 4 batches.
 // Gated by s.econ and recorded with the tiers the season was created with, so the
 // online server replays the same pools; seasons without `econ` keep the full pools.
 export const E = s => R(s)&&(s.econ||0)>=1;
 export const hasInvest = (s,id) => E(s)&&!!s.invest?.includes(id);
 const planCache={},poolCache={};
-export function regionUnlockPlan(region,r3=false){
- const pool=r3?REGIONS[region].pool3:REGIONS[region].pool;
- return planCache[region+(r3?':3':'')]||=planCardUnlocks(pool,{start:REGIONS[region].start,rarityOf:id=>CARD_RARITY[id],groupOf:id=>TACTICS[id]?.archetype||null,salt:region});
+// econ 1 seasons use the 5-batch partition, later ones the 4-batch one (same locked cards).
+export function regionUnlockPlan(region,r3=false,econ=ECON_VERSIONS.at(-1)){
+ const pool=r3?REGIONS[region].pool3:REGIONS[region].pool,tierCount=unlockTiersOf(econ);
+ return planCache[region+(r3?':3':'')+':'+tierCount]||=planCardUnlocks(pool,{start:REGIONS[region].start,rarityOf:id=>CARD_RARITY[id],groupOf:id=>TACTICS[id]?.archetype||null,salt:region,tierCount});
 }
 // Cards that rewards, markets, events and the opening may offer in this season
 // (the rules-3 pool when the season uses rules 3, then the unlock tier).
 export function offerPool(s){
  const base=poolOf(s);
  if(!E(s))return base;
- const r3=R3(s),k=`${s.region}:${r3?3:1}:${s.unlockTier}`;
- return poolCache[k]||=unlockedFrom(regionUnlockPlan(s.region,r3),base,s.unlockTier);
+ const r3=R3(s),k=`${s.region}:${r3?3:1}:${s.econ}:${s.unlockTier}`;
+ return poolCache[k]||=unlockedFrom(regionUnlockPlan(s.region,r3,s.econ),base,s.unlockTier);
 }
-export const gearLocked = (s,id) => E(s)&&tierOfId(GEAR_UNLOCKS,id)>s.gearTier;
+export const gearLocked = (s,id) => E(s)&&tierOfId(gearUnlocksOf(s.econ),id)>s.gearTier;
 export const rerollPrice = s => s.freeRerolls>0?0:marketPrice(s,REROLL_BASE+REROLL_STEP*(s.shop?.rerolls||0));
 export const supplySlots = s => BASE_SUPPLY_SLOTS+(has(s,'GR61')?2:0);
 // Market discount (会员积分卡). Card slot prices come from shopPrice(s,slot) below.
@@ -189,9 +191,9 @@ export function createSeason(seed='first-season',tutorial=false,region='CN',opts
  if(!MAP_VERSIONS.includes(mapVersion))throw Error('未知地图版本');
  if(!Number.isInteger(ascension)||ascension<0||ascension>MAX_ASCENSION||(!rules&&ascension))throw Error('无效难度等级');
  const econ=opts?.econ===undefined||opts?.econ===null?0:opts.econ;
- if(![0,ECON_VERSION].includes(econ)||(econ&&!rules))throw Error('未知经济规则版本');
- const unlockTier=opts?.unlockTier??UNLOCK_TIERS,gearTier=opts?.gearTier??UNLOCK_TIERS;
- if(econ&&(!validTier(unlockTier)||!validTier(gearTier)))throw Error('无效解锁等级');
+ if(![0,...ECON_VERSIONS].includes(econ)||(econ&&!rules))throw Error('未知经济规则版本');
+ const maxTier=unlockTiersOf(econ),unlockTier=opts?.unlockTier??maxTier,gearTier=opts?.gearTier??maxTier;
+ if(econ&&(!validTier(unlockTier,maxTier)||!validTier(gearTier,maxTier)))throw Error('无效解锁等级');
  const s={version:SEASON_VERSION,mode:'season',region,seed:String(seed),tutorial,rng:seedHash(seed),rev:0,nextId:1,act:1,map:buildMap(seed,1,rules?ascension:0,mapVersion,{r3:rules>=3}),currentNode:null,completed:[],node:0,phase:'map',hp:80,maxHp:80,money:60,deck:[],skins:[],logs:[],actions:[],wins:0,battle:null,seenEvents:[]};
  if(mapVersion>=2)s.mapVersion=mapVersion;
  s.deck=REGIONS[region].start.map(id=>instance(s,id));
