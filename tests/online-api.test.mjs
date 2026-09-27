@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { openStore, sha256 } from '../online/store.mjs';
 import { createOnlineHandler } from '../online/api.mjs';
+import { createWaSeason, waAct } from '../wa-season.js';
 
 const CN_SNAPSHOT = {
   version: 'wa-pvp-1',
@@ -383,6 +384,43 @@ test('规则 3（多敌人战斗、遭遇池、Boss 候选、关键词牌）的�
     assert.equal(asRules1.status, 400);
     const badRules = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run: { ...run, rules: 2 }, act: 1 } });
     assert.equal(badRules.status, 400);
+    const res = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run, act: 1 } });
+    assert.equal(res.status, 200, JSON.stringify(res.body));
+    const account = await request(handler, { method: 'GET', path: '/api/account', token });
+    assert.equal(account.body.archives[0].snapshot.region, run.region);
+  } finally {
+    await teardown({ dir, store });
+  }
+});
+
+test('规则 4（第一幕减压）的爬塔记录在规则 5 上线后仍按 rules 4 重放：对手数值不变，服务端核验通过', async () => {
+  const run = JSON.parse(await readFile(new URL('./fixtures/rules4-claim.json', import.meta.url), 'utf8'));
+  assert.equal(run.rules, 4);
+  assert.equal(run.econ, 1);
+  // Opponent max HP of every fight, replaying the recorded actions under a ruleset.
+  const trace = rules => {
+    let s = createWaSeason(run.seed, false, run.region, run.runId, { rules, ascension: run.ascension, mapVersion: run.mapVersion, econ: run.econ, unlockTier: run.unlockTier, gearTier: run.gearTier });
+    const seen = [];
+    for (const a of run.actions) {
+      const r = waAct(s, a);
+      assert.equal(r.error, null, JSON.stringify(a));
+      s = r.state;
+      const key = s.battle?.enemyMaxHp && `${s.battle.enemy}:${s.battle.enemyMaxHp}`;
+      if (key && seen.at(-1) !== key) seen.push(key);
+    }
+    return seen;
+  };
+  const four = trace(4), five = trace(5);
+  // Recorded under rules 4 before rules 5 existed: these numbers must never move.
+  assert.deepEqual(four.slice(0, 4), ['S_E03:50', 'S_E01:43', 'S_E05:48', 'S_EL01:79']);
+  // Rules 5 plays the same act with sturdier act-1 opponents.
+  assert.notDeepEqual(five, four);
+  assert.ok(five.every((k, i) => Number(k.split(':')[1]) >= Number(four[i].split(':')[1])));
+  const { store, handler, dir } = await setup();
+  try {
+    const token = await createAccount(handler);
+    const bad = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run: { ...run, rules: 6 }, act: 1 } });
+    assert.equal(bad.status, 400);
     const res = await request(handler, { method: 'POST', path: '/api/archive/claim', token, body: { run, act: 1 } });
     assert.equal(res.status, 200, JSON.stringify(res.body));
     const account = await request(handler, { method: 'GET', path: '/api/account', token });

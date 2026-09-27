@@ -6,7 +6,7 @@ import {opsReason,describeOps,applyOps,pickKind,pickCandidates,noteResult,setRes
 import {freshUnknownOdds,resolveUnknown,blockedUnknownKinds,rollCrateSize} from './shared-unknown-room.js';
 import {routeSteps,CURRENT_MAP_VERSION,MAP_VERSIONS} from './shared-route-generator.js';
 import {CARD_RARITY,RARITY_ORDER} from './card-rarity.js';
-import {RULES_VERSION,RULES_VERSIONS,ROLES,TRAIT_TUNING,OPENING_FREE,OPENING_TRADE,GEAR,SUPPLIES,ENERGY_GEAR,SUPPLY_RARITY_WEIGHTS,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,MAX_ASCENSION,ENEMY_TUNING,ENEMY_TUNING_V2,ENEMY_TUNING_V3,ENEMY_TUNING_V4,EARLY_STEP,gearName,ECON_VERSION,GEAR_UNLOCKS,SKIP_FUNDS,REROLL_BASE,REROLL_STEP,INVESTMENTS} from './wa-rules.js';
+import {RULES_VERSION,RULES_VERSIONS,ROLES,TRAIT_TUNING,OPENING_FREE,OPENING_TRADE,GEAR,SUPPLIES,ENERGY_GEAR,SUPPLY_RARITY_WEIGHTS,SUPPLY_PRICES,GEAR_PRICES,BASE_SUPPLY_SLOTS,GEAR_SLOTS,GEAR_SELL,MAX_ASCENSION,ENEMY_TUNING,ENEMY_TUNING_V2,ENEMY_TUNING_V3,ENEMY_TUNING_V4,ENEMY_TUNING_V5,EARLY_STEP,gearName,ECON_VERSION,GEAR_UNLOCKS,SKIP_FUNDS,REROLL_BASE,REROLL_STEP,INVESTMENTS} from './wa-rules.js';
 import {planCardUnlocks,unlockedFrom,tierOfId,validTier,UNLOCK_TIERS} from './shared-unlock.js';
 export const clone = x => structuredClone(x);
 const log = (s,text) => s.logs.push({node:s.node,turn:s.battle?.turn||0,text});
@@ -27,6 +27,8 @@ export const R = s => s?.mode==='season'&&(s.rules||0)>=1;
 export const R3 = s => s?.mode==='season'&&(s.rules||0)>=3;
 // Rules 4: rules 3 with the eased first act (ENEMY_TUNING_V4).
 export const R4 = s => s?.mode==='season'&&(s.rules||0)>=4;
+// Rules 5: rules 4 with act 1 a little harder again (ENEMY_TUNING_V5).
+export const R5 = s => s?.mode==='season'&&(s.rules||0)>=5;
 // The card pool a season recruits from (rules-3 regions swap in keyword cards).
 export const poolOf = s => R3(s)?REGIONS[s.region].pool3:REGIONS[s.region].pool;
 // Map version of a season: records without the field were played on the older
@@ -224,7 +226,7 @@ export function startBattle(s,id) {
  if(b.draw.some(c=>CARDS[c.id].innate))b.draw=[...b.draw.filter(c=>CARDS[c.id].innate),...b.draw.filter(c=>!CARDS[c.id].innate)];
  log(s,group?`比赛开始：${group.name}（${group.members.length} 名对手）。`:`比赛开始：${enemy.name}，对手防线 ${b.enemyHp}。`); beginTurn(s);
 }
-function tuningFor(s){return (R4(s)?ENEMY_TUNING_V4:R3(s)?ENEMY_TUNING_V3:mapVersionOf(s)>=2?ENEMY_TUNING_V2:ENEMY_TUNING)[s.act];}
+function tuningFor(s){return (R5(s)?ENEMY_TUNING_V5:R4(s)?ENEMY_TUNING_V4:R3(s)?ENEMY_TUNING_V3:mapVersionOf(s)>=2?ENEMY_TUNING_V2:ENEMY_TUNING)[s.act];}
 function setupRulesBattle(s,id){
  const b=s.battle;
  b.rt={temps:0,extraBlock:0,pacNext:'TK01'};b.tt={};
