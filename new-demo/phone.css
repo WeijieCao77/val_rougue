@@ -182,10 +182,10 @@ html.tap-play #game-root .battle .hand-area .hand-card.shared-card.selected{z-in
   .arena-top .tap-bar{position:absolute;left:6px;right:6px;top:100%;margin:0!important;max-width:none;z-index:45;font-size:13px}
   .arena-top .tap-bar .tap-bar-text{margin:2px 0 3px;font-size:13px}
   #game-root .arena .tap-bar .btn{min-height:40px}
-  /* Hand: every card on screen; they overlap more as the hand grows. */
-  #game-root .arena .hand-area{display:flex!important;flex-wrap:nowrap!important;justify-content:center!important;overflow:visible!important;padding:14px 6px max(8px,env(safe-area-inset-bottom))!important;gap:0!important;touch-action:manipulation}
+  /* Readable cards in a scrolling row; never squeeze a growing hand into overlaps. */
+  #game-root .arena .hand-area{display:flex!important;flex-wrap:nowrap!important;justify-content:flex-start!important;overflow-x:auto!important;overflow-y:hidden!important;padding:18px 8px max(10px,env(safe-area-inset-bottom))!important;gap:8px!important;touch-action:pan-x}
   #game-root .battle .hand-area .hand-card.shared-card{flex:0 0 104px!important;width:104px!important;min-width:104px!important;height:150px!important;position:relative!important;left:auto!important;bottom:auto!important;transform:none;margin:0}
-  #game-root .battle .hand-area .hand-card.shared-card+.hand-card.shared-card{margin-left:min(4px,calc((100% - var(--slots,5) * 104px) / max(1,var(--slots,5) - 1)))!important}
+  #game-root .battle .hand-area .hand-card.shared-card+.hand-card.shared-card{margin-left:0!important}
   #game-root .battle .hand-area .hand-card.shared-card.selected{transform:translateY(-14px)!important;z-index:20!important}
   #game-root .battle .hand-area .tc-art{display:none}
 }

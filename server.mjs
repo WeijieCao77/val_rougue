@@ -98,6 +98,9 @@ const assets = new Map([
   ['/new/economy.js', ['new-demo/economy.js', 'text/javascript; charset=utf-8']],
   ['/new/economy.css', ['new-demo/economy.css', 'text/css; charset=utf-8']],
   ['/new/phone.css', ['new-demo/phone.css', 'text/css; charset=utf-8']],
+  ['/new/layout.css', ['new-demo/layout.css', 'text/css; charset=utf-8']],
+  ['/shared/pig-house.svg', ['shared/pig-house.svg', 'image/svg+xml']],
+  ['/shared/brand.css', ['shared/brand.css', 'text/css; charset=utf-8']],
   ['/new/run-screens.js', ['new-demo/run-screens.js', 'text/javascript; charset=utf-8']],
   ['/new/achievements.js', ['new-demo/achievements.js', 'text/javascript; charset=utf-8']],
 ]);

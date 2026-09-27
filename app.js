@@ -18393,6 +18393,15 @@ const module34=(()=>{
 // (or a new entry with the next version and today's date).
 const CHANGELOG = [
   {
+    version: 'v0.9.5', date: '2026-09-27', title: '界面布局调整',
+    items: [
+      ['all', '调整电脑与手机的页面宽度、按钮间距和开局选择布局，减少拥挤与多余留白。'],
+      ['wa', '好友 PvP 与故事模式并列为首页主入口。'],
+      ['new', '选队页面集中展示所选队伍特质，战斗页面减少固定留白。']
+      ,['all', '加入猪之家原创小猪标志，网页标签页也有了专属图标。']
+    ]
+  },
+  {
     version: 'v0.9.4', date: '2026-09-27', title: '服务器优化',
     items: [
       ['all', '页面加载更快、更省流量。'],
@@ -19004,7 +19013,7 @@ function recordAscensionWin(s){
 }
 // Unlock progression per region (cards) with equipment batches following the best region.
 const UNLOCK_KEY='wa-unlocks-v1';
-function loadUnlocks(){try{return normalizeProgress(JSON.parse(localStorage.getItem(UNLOCK_KEY)||'{}'));}catch{return normalizeProgress({});}}
+function loadUnlocks(){try{return normalizeProgress({...JSON.parse(localStorage.getItem(UNLOCK_KEY)||'{}'),all:false});}catch{return normalizeProgress({});}}
 function saveUnlocks(p){try{localStorage.setItem(UNLOCK_KEY,JSON.stringify(p));}catch{}}
 function seasonXp(s){const bosses=(s.act-1)+(s.phase==='intermission'||s.phase==='bossGear'||s.outcome==='win'?1:0);return runXp({wins:s.wins,bosses,cleared:s.outcome==='win'});}
 // Grants the season's new experience when an act is cleared or the season ends.
@@ -19028,7 +19037,6 @@ function unlockNoticeHtml(s){
  const list=[...n.cards.map(id=>`<li>${esc(CARDS[id].name)}<small>${CARDS[id].player?'选手':'战术'}</small></li>`),...n.gear.map(id=>`<li>${esc(GEAR[id].name)}<small>装备</small></li>`)].join('');
  return `<section class="unlock-result"><p class="unlock-gain">本局累计获得 <b>${n.total??n.gained}</b> 解锁经验${(n.total??n.gained)!==n.gained?`（本次结算 +${n.gained}）`:''}</p>${unlockBar(s.region)}${list?`<div class="unlock-new"><h4>新解锁 · 下个赛季起出现在奖励与市场中</h4><ul>${list}</ul></div>`:''}</section>`;
 }
-function unlockTestToggle(){const on=loadUnlocks().all;return `<details class="unlock-test"><summary>测试选项</summary>${ui(on?'全部解锁：已开启（点击关闭）':'全部解锁：已关闭（点击开启）','toggle-unlock-all','text-button')}<small>只影响之后新开的赛季。</small></details>`;}
 function investList(s){
  if(!E(s))return '';
  const own=s.invest.map(id=>`<li><b>${esc(INVESTMENTS[id].name)}</b> ${esc(INVESTMENTS[id].text)}</li>`).join('');
@@ -19123,20 +19131,19 @@ function home(){
      <p class="region-note">${esc(regions.find(r=>r.id===region).tagline)} / 50 名选手 · 25 张战术 / 三幕征程</p>
    </div>
    <div class="region-extra">${regionExtra()}</div>
-   <div class="setup-start">${ui('确认开赛','start-season','primary')}</div>
+   <div class="setup-start" aria-label="选择游戏模式">${ui('故事模式 · 开赛','start-season','primary')}<a class="primary" href="/pvp/">好友 PvP · 对战</a></div>
    <div class="button-row">
      ${ui('游戏规则','rules','text-button')}
      ${ui('图鉴','library','text-button')}
      ${ui('战绩','history','text-button')}
      ${ui('成就','achievements','text-button')}
      <a class="text-button" href="/art-gallery.html" target="_blank" rel="noopener noreferrer">配图图鉴</a>
-     <a class="text-button" href="/pvp/">好友PvP</a>
      <a class="text-button" href="/">选择版本</a>
-     ${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="text-button" href="/new/">新demo</a>` : ''}
+     ${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="text-button" href="/new/">战术试炼</a>` : ''}
    </div>
    <p class="title-note">四大赛区 · 300 张赛区牌 · 三幕 × 15 站 + 决赛</p>
    ${saveError?`<p class="warning">${esc(saveError)}</p>`:''}
-   <footer class="cover-footer">猪之家出品</footer>
+   <footer class="cover-footer brand-credit"><img src="/shared/pig-house.svg" alt="猪之家标志">猪之家出品</footer>
  </section>
 </main>`;
 }
@@ -19155,13 +19162,13 @@ function regionExtra(){
  const rules=ASCENSION_LEVELS.filter(l=>l.level>=1&&l.level<=pick).map(l=>`<li><b>${l.level}</b>${esc(l.text)}</li>`).join('');
  return `<div class="region-trait">${statusIcon(t.icon)}<div><b>赛区特质 · ${esc(t.name)}</b><p>${esc(t.text)}</p></div></div>
  <div class="asc-picker"><div class="asc-head"><b>难度等级</b><small>已解锁 0–${max} · 在当前最高难度赢下完整赛季，解锁下一级</small></div><div class="asc-levels" role="group" aria-label="难度等级">${levels}</div>${pick?`<ol class="asc-rules">${rules}</ol>`:`<p class="asc-zero">${esc(ASCENSION_LEVELS[0].text)}</p>`}</div>
- ${unlockBar(region)}${unlockTestToggle()}`;
+ ${unlockBar(region)}`;
 }
 function header(){
  const actInfo=state.mode==='season'?ACTS[state.act-1]:null;
  const label=state.mode==='season'?`${actInfo?actInfo.name:'赛段'} · ${state.region}${R(state)&&state.ascension?` · 难度 ${state.ascension}`:''}`:'第一幕 · 大师赛征程';
  const extra=R(state)?`${gearSlotsStrip(state)}${ui(`补给 ${state.supplies.length}/${supplySlots(state)}`,'supplies','hud-link')}${E(state)?ui(`投资 ${state.invest.length}`,'invest','hud-link',`title="${esc(state.invest.map(id=>INVESTMENTS[id].name).join('、')||'尚未投资')}"`):''}`:'';
- return `<header class="game-hud"><div class="brand">登峰赛季 <span>${esc(label)}</span></div><span class="header-links"><a href="/pvp/">好友PvP</a>${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a href="/new/">新demo</a>` : ''}</span><div class="hud-resources"><span class="hud-hp">${icon('shield')} <b>${state.hp}</b> / ${state.maxHp}</span><span class="hud-money">${icon('coin')} <b>${state.money}</b></span>${ui(`牌组 ${state.deck.length}`,'deck','hud-link')}${extra}</div><div class="hud-tools">${ui(screen==='map'?'路线图':'查看路线','map','hud-link')}${ui('记录','logs','hud-link')}${ui('规则','rules','hud-link')}${ui('菜单','menu','hud-link')}${soundToggleHtml()}</div></header>`;
+ return `<header class="game-hud"><div class="brand"><img class="brand-pig" src="/shared/pig-house.svg" alt="猪之家">登峰赛季 <span>${esc(label)}</span></div><span class="header-links"><a href="/pvp/">好友PvP</a>${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a href="/new/">战术试炼</a>` : ''}</span><div class="hud-resources"><span class="hud-hp">${icon('shield')} <b>${state.hp}</b> / ${state.maxHp}</span><span class="hud-money">${icon('coin')} <b>${state.money}</b></span>${ui(`牌组 ${state.deck.length}`,'deck','hud-link')}${extra}</div><div class="hud-tools">${ui(screen==='map'?'路线图':'查看路线','map','hud-link')}${ui('记录','logs','hud-link')}${ui('规则','rules','hud-link')}${ui('菜单','menu','hud-link')}${soundToggleHtml()}</div></header>`;
 }
 function route(){
  if(state.mode==='season')return seasonRoute();
@@ -19581,7 +19588,6 @@ function startLegacy(tutorial){const seed=`season-${crypto.randomUUID()}`;state=
 function handleUI(name){
  if(name.startsWith('set-region-')){region=name.slice('set-region-'.length);document.querySelectorAll('.region-tab').forEach(el=>el.classList.toggle('active',el.dataset.ui===name));const note=document.querySelector('.region-note');if(note)note.textContent=`${REGIONS[region].tagline} / 50 名选手 · 25 张战术 / 三幕征程`;const ex=document.querySelector('.region-extra');if(ex)ex.innerHTML=regionExtra();return;}
  if(name.startsWith('set-asc-')){const n=Number(name.slice('set-asc-'.length));if(Number.isInteger(n)&&n<=ascUnlocked(region)){ascChoice[region]=n;const ex=document.querySelector('.region-extra');if(ex)ex.innerHTML=regionExtra();}return;}
- if(name==='toggle-unlock-all'){const p=loadUnlocks();p.all=!p.all;saveUnlocks(p);notice(p.all?'测试：之后新开的赛季全部解锁。':'已恢复正常解锁进度。');if(atHome){const ex=document.querySelector('.region-extra');if(ex)ex.innerHTML=regionExtra();}else handleUI('menu');return;}
  if(name==='invest'){showModal('俱乐部投资',investList(state));return;}
  if(name==='gear'){showModal(`俱乐部装备 ${state.skins.length}/${R(state)?GEAR_SLOTS:3}`,state.skins.length?`${R(state)?'<p>最多 6 件装备。可随时出售一件：普通 15、罕见 25、稀有 40、Boss 专属 50、市场专属 30 资金。</p>':''}<div class="gear-list">${state.skins.map((id,i)=>{const g=GEAR[id]||{name:SKINS[id]?.name,text:SKINS[id]?.text,rarity:'common',icon:'block'};return `<article class="gear-entry rarity-${g.rarity}">${statusIcon(g.icon)}<div><h3>${esc(g.name)} <small>${RARITY[g.rarity]}</small></h3><p>${esc(g.text)}</p>${id==='GR21'?`<p class="muted">当前累计 ${(state.counters?.cards||0)}/10</p>`:''}${id==='GR43'&&state.flags?.GR43?'<p class="muted">已触发</p>':''}${R(state)&&state.phase!=='result'&&!state.gearOffer?button(`出售（+${gearSellValue(id)} 资金）`,{type:'sellGear',slot:i},'text-button'):''}</div></article>`;}).join('')}</div>`:'<p>暂无装备。强敌胜利必得 1 件，Boss 胜利可三选一，转会市场也有出售。</p>');return;}
  if(name==='supplies'){showModal('补给品',`<p>栏位 ${state.supplies.length}/${supplySlots(state)}。补给品在比赛中点击使用，一次性；也可以随时丢弃。</p>${state.supplies.length?`<div class="gear-list">${state.supplies.map((id,i)=>{const p=SUPPLIES[id];return `<article class="gear-entry">${statusIcon(p.icon)}<div><h3>${esc(p.name)} <small>${RARITY[p.rarity]}</small></h3><p>${esc(p.text)}</p>${state.phase==='result'?'':button('丢弃',{type:'discardSupply',slot:i},'text-button')}</div></article>`;}).join('')}</div>`:'<p class="muted">当前没有补给品。</p>'}`);return;}
@@ -19676,7 +19682,7 @@ function handleUI(name){
   showModal('赛季规则',`<div class="rules"><p><strong>目标：</strong>对手防线降到 0 就赢得比赛；自己的声望降到 0，赛季失败。</p><p><strong>每回合：</strong>3 行动点、抽 5 张。按费用出牌，结束回合后对手按公开意图行动。资金与行动点是两种资源。</p><p><strong>布防：</strong>绊线、减速、墙体与掩护的共同收益；每点抵消 1 点攻击伤害。先抵消攻击，下个自己的回合开始清空。对手布防在对手下次行动开始时清空。</p><p><strong>牌堆：</strong>打出的普通牌进入弃牌堆；结束回合时，所有未打出的手牌也进入弃牌堆，不留到下回合。注明回合末消耗的牌改入消耗区。下回合重新抽 5 张，并结算额外抽牌能力；需要抽牌而抽牌堆为空时，将弃牌堆洗成新的抽牌堆。手牌最多 10 张。</p><p><strong>消耗：</strong>写着“打出后消耗”的牌，效果结算后进入消耗区，不进入弃牌堆，本场不再抽到；未打出时仍正常弃置，除非另写“回合末消耗”。消耗不等于永久删除，赛季牌组中的原牌下场恢复。临时牌和比赛干扰在赛后消失。</p><p><strong>能力：</strong>自由人牌打出后持续本场，不再洗回；多张可叠加，只影响之后的触发。</p><p><strong>压制：</strong>攻击伤害 ×0.75。<strong>易伤：</strong>受到攻击 ×1.5。每段伤害分别向下取整；回合数在受影响一方行动结束后减少。</p><p><strong>战术场景：</strong>卡上的特工技能转译成上述卡牌规则。腐坏逼退以压制结算，闪光接枪窗口以易伤结算；不另加持续伤害、硬控或隐藏触发。选牌后点“详解”可看说明。</p><p><strong>五个位置：</strong>决斗进攻，哨位布防，控场压制，先锋配合与抽牌，自由人建立持续能力。</p><p><strong>俱乐部活动：</strong>粉丝见面会恢复最大声望的 30%（向上取整、至多满声望）；训练升级一张选手或战术牌；团建移除一张隐患。每节点只能选一项。</p><p><strong>招募：</strong>可跳过。相同选手最多三张，升级前后合并计算。</p><p><strong>登峰赛季：</strong>四个赛区、三个赛段。每赛段 15 站，第 16 层为决赛，包含分支路线：第 1–2 站固定为比赛，第 7 站转会市场，第 9 站补给箱，第 15 站俱乐部活动；前 5 站不会出现强敌。前两幕 Boss 胜利各奖励 50 资金与 Boss 装备三选一（旧存档仍为皮肤选择，集齐后改得 20 资金）。之后晋级宣传恢复最大声望的 30%。冠军赛获胜即为赛季胜利。</p><h3>赛区特质</h3>${Object.entries(REGION_TRAITS).map(([id,t])=>`<p><strong>${esc(REGIONS[id].name)} · ${esc(t.name)}：</strong>${esc(t.text)}</p>`).join('')}<p>特质只在新规则赛季与好友 PvP 中生效，战斗界面左侧显示当前计数。</p><h3>赞助商签约日</h3><p>选择赛区后、进入路线图前，从 4 份合同中签下 1 份：两份免费的小奖励、一份有代价的交换、一份常规合同。选项由赛季种子决定。</p><h3>装备</h3><p>装备在本赛季持续生效，不进入抽牌堆，分普通、罕见、稀有、Boss 专属与市场专属。战胜强敌必得 1 件（普通／罕见／稀有约 50%／33%／17%，不重复）；Boss 胜利后可从 3 件 Boss 专属装备中选 1 件或放弃；转会市场出售 2 件装备与 1 件市场专属装备。原有三件皮肤归入普通装备。最多装备 6 件（Boss 专属装备与皮肤同样占槽）：槽满时获得新装备，需替换一件（被替换的按品级折算资金：普通 15、罕见 25、稀有 40、Boss 专属 50、市场专属 30）或放弃；任何时候都可在装备栏出售一件换同样资金。转会市场在槽满时不能购入装备。</p><h3>补给品</h3><p>一次性道具，默认 3 个栏位，比赛中点击使用，任何时候都可以丢弃。普通与强敌比赛胜利后按掉落率获得：初始 40%，掉落一次 -10%，未掉落 +10%。转会市场出售 3 个补给品；栏位满时需先丢弃或替换。</p><h3>解锁、跳过补偿与俱乐部投资</h3><p>每个赛区初次游玩时牌池较小（35 张），装备也少 15 件。比赛胜利 +1 解锁经验，每击败一幕 Boss +10，赛季冠军再 +10；解锁分 4 批，所需经验依次为 20／30／40／50；每批为该赛区加入约 10 张牌，并开放 3–4 件装备（装备按各赛区中最高的解锁等级开放）。解锁从下个赛季起生效。跳过招募时，可选 ${SKIP_FUNDS} 资金，或 1 次免费刷新转会名单（可留到之后的市场）。转会名单可付费刷新：每个市场第一次 20 资金，之后每次 +10。每个市场提供 1 项俱乐部投资（150–220 资金），买下后整赛季生效，同一项只能买一次。</p><h3>难度等级</h3><ol>${ASCENSION_LEVELS.filter(l=>l.level).map(l=>`<li>${esc(l.text)}</li>`).join('')}</ol><p>难度逐级叠加。每个赛区单独解锁：在当前最高难度赢下完整三幕赛季，解锁下一级。好友 PvP 只显示难度，不改变对局规则；装备与补给品不带入 PvP。</p><p>选手头像暂用占位图。游玩无需联网，也不消耗模型额度。</p></div>`);return;
  }
  if(name==='menu'){
-  showModal('赛季菜单',`<p>当前种子：${esc(state.seed)} · ${state.mode==='season'?'D0.2.0':VERSION}${state.mode==='season'?' · '+esc(state.region):''}${R(state)?' · 难度 '+(state.ascension||0):''}</p><div class="stack">${R(state)?ui(`查看装备（${state.skins.length}）`,'gear')+ui(`补给品（${state.supplies.length}/${supplySlots(state)}）`,'supplies'):''}${ui('比赛记录','logs')}${ui('赛季规则','rules')}${ui('导出本局记录','export')}${ui('返回开始页（保留进度）','home')}<a class="secondary menu-link" href="/pvp/">好友PvP</a>${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="secondary menu-link" href="/new/">新demo</a>` : ''}${state.phase!=='result'?ui('放弃本次赛季…','abandon','danger-button'):''}</div>${investList(state)}${unlockTestToggle()}`);return;
+  showModal('赛季菜单',`<p>当前种子：${esc(state.seed)} · ${state.mode==='season'?'D0.2.0':VERSION}${state.mode==='season'?' · '+esc(state.region):''}${R(state)?' · 难度 '+(state.ascension||0):''}</p><div class="stack">${R(state)?ui(`查看装备（${state.skins.length}）`,'gear')+ui(`补给品（${state.supplies.length}/${supplySlots(state)}）`,'supplies'):''}${ui('比赛记录','logs')}${ui('赛季规则','rules')}${ui('导出本局记录','export')}${ui('返回开始页（保留进度）','home')}<a class="secondary menu-link" href="/pvp/">好友PvP</a>${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a class="secondary menu-link" href="/new/">战术试炼</a>` : ''}${state.phase!=='result'?ui('放弃本次赛季…','abandon','danger-button'):''}</div>${investList(state)}`);return;
  }
  if(name==='abandon'){showModal('放弃本次赛季',`<p>本次将记录为主动放弃，不算声望耗尽。之后可以重新开始。</p>${button('确认放弃',{type:'abandon'},'danger-button')}`);return;}
  if(name==='export'){

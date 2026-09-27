@@ -10,7 +10,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const teamName = team => (TEAMS[team]?.name || '').split(' · ')[0];
 
 export function loadUnlocks() {
-  try { return normalizeProgress(JSON.parse(localStorage.getItem(KEY) || '{}')); } catch { return normalizeProgress({}); }
+  try { return normalizeProgress({ ...JSON.parse(localStorage.getItem(KEY) || '{}'), all: false }); } catch { return normalizeProgress({}); }
 }
 function saveUnlocks(p) { try { localStorage.setItem(KEY, JSON.stringify(p)); } catch {} }
 

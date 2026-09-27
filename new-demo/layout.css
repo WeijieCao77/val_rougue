@@ -1,0 +1,62 @@
+/* DeepSeek draft reviewed against desktop and phone page geometry. */
+.new-home .team-select { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.new-home .team-card { min-height:76px; padding:12px; text-align:left; }
+.new-home .team-name { font-size:14px; line-height:1.4; white-space:normal; }
+.new-home .team-desc { font-size:12px; line-height:1.5; }
+#selected-team-trait { width:100%; text-align:left; }
+#selected-team-trait .team-trait { margin:0; padding:12px; border:1px solid #425751; background:#17262a; }
+#selected-team-trait .team-trait b { font-size:14px; }
+#selected-team-trait .team-trait small { font-size:12px; line-height:1.6; }
+.new-home .home-section { gap:16px; padding:24px; box-sizing:border-box; }
+.new-home .home-actions { gap:12px; width:100%; }
+.new-home .home-actions .btn { min-height:52px; font-size:16px; }
+.new-home .nav-links { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); width:100%; gap:8px; }
+.new-home .nav-links .hero-link,.new-home .nav-links .cl-btn,.new-home .nav-links .ps-btn,.new-home .nav-links>a { min-height:44px; display:flex; justify-content:center; align-items:center; padding:8px; box-sizing:border-box; border:1px solid #46565d; background:#18232a; font-size:14px; text-decoration:none; }
+.new-home .setup-hint { font-size:12px; line-height:1.5; }
+.app-header .app-buttons { flex-wrap:wrap; gap:8px; }
+.app-header .app-buttons .btn { min-height:44px; }
+#game-root>.phase-container { flex:0 0 auto; justify-content:flex-start; width:100%; max-width:1100px; margin:0 auto; padding:32px 24px 48px; box-sizing:border-box; gap:16px; }
+.opening-screen .opening-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.opening-screen .opening-option { min-height:0; height:auto; padding:20px; gap:12px; }
+.phase-container .event-options,.phase-container .crate-loot { gap:12px; }
+.phase-container .btn { min-height:44px; }
+.phase-container .reward-cards { gap:20px; }
+#modal-root .modal-header { gap:16px; }
+#modal-root .modal-header .btn { min-height:44px; }
+#modal-root .filter-row { gap:12px; }
+@media(min-width:1000px) {
+ .new-home { grid-template-columns:40% minmax(0,1fr); grid-template-rows:auto; max-width:1500px; margin:auto; padding:24px; gap:24px; box-sizing:border-box; }
+ .new-home .hero-cover { min-height:600px; height:100%; display:flex; align-items:center; justify-content:center; border-radius:8px; }
+ .new-home .hero-content { position:relative; left:auto; bottom:auto; padding:24px; max-width:100%; text-align:center; }
+ .new-home .hero-title { font-size:clamp(40px,4.3vw,64px); }
+ .new-home .home-section { padding:16px 8px; justify-content:flex-start; }
+}
+@media(max-width:720px) {
+ .new-home .hero-cover { min-height:220px; }
+ .new-home .home-section { padding:20px 16px; }
+ .new-home .nav-links { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ #game-root>.phase-container { padding:20px 16px 32px; }
+ .opening-screen .opening-options { grid-template-columns:1fr; gap:12px; }
+ .opening-screen .opening-option { padding:16px; }
+ .app-header .app-buttons { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+ .app-header .app-buttons .btn { width:100%; padding:0 8px!important; }
+ .app-header .app-buttons .sfx-toggle { width:44px; height:44px; justify-self:end; }
+ #library-overlay .modal { padding:16px; width:calc(100vw - 24px); max-height:calc(100dvh - 24px); }
+ #library-overlay .library-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+ #library-overlay .library-tab { min-height:44px; padding:8px 4px; font-size:12px; }
+ #library-overlay .filter-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+ #library-overlay .filter-select { width:100%; min-width:0; min-height:44px; font-size:12px; }
+ #library-overlay .library-grid:not(.grouped) { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+ #library-overlay .library-grid .tc { min-width:0; height:260px; }
+ #library-overlay .library-grid .tc-art { height:64px; min-height:64px; flex:0 0 64px; }
+ #library-overlay .library-grid .tc-name { font-size:14px; }
+ #library-overlay .library-grid .tc-text { font-size:12px; }
+}
+@media(max-width:720px) and (orientation:portrait) {
+ #game-root .battle.arena { display:flex!important; flex-direction:column; height:auto!important; min-height:0!important; overflow:visible!important; padding-bottom:12px!important; }
+ #game-root .battle.arena>.arena-floor { flex:0 0 auto!important; padding-top:16px; }
+ #game-root .battle.arena>.arena-hud { margin-top:12px!important; flex:0 0 auto; }
+ #game-root .battle.arena .arena-hud { gap:12px; }
+ #game-root .battle.arena .ops-actions { gap:8px; }
+ #game-root .battle.arena .hand-area .hand-card.shared-card { margin:0!important; }
+}

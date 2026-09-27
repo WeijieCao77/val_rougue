@@ -107,12 +107,12 @@ function renderHome() {
   const accountSummary = account ? `${account.archives.length}/10 个构筑` : '未连接';
   app.innerHTML = `
     <header class="pvp-header">
-      <div class="brand">瓦demo · 登峰赛季 <span>好友 PvP</span></div>
+      <div class="brand">登峰赛季 <span>好友 PvP</span></div>
       <nav>
         <button data-nav="archives">构筑库</button>
         <button data-nav="account">账号</button>
-        <a href="/" class="nav-link">返回瓦demo</a>
-        ${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a href="/new/" class="nav-link">新demo</a>` : ''}
+        <a href="/" class="nav-link">返回登峰赛季</a>
+        ${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a href="/new/" class="nav-link">战术试炼</a>` : ''}
       </nav>
     </header>
     <main class="pvp-main home-main">
@@ -127,7 +127,7 @@ function renderHome() {
         <button data-action="manage-account">账号凭证</button>
       </section>
       <section class="hero-tip">
-        <p>${accountSummary}。需要先在瓦demo中完成赛段并云端保存，之后这里可选构筑开局。</p>
+        <p>${accountSummary}。需要先在登峰赛季中完成赛段并云端保存，之后这里可选构筑开局。</p>
         <p>同幕、同版本才能对战；PvP 胜负不改存档。</p>
       </section>
     </main>`;
@@ -138,7 +138,7 @@ function renderArchives() {
   const offlinePending = getPendingProofCache();
   app.innerHTML = `
     <header class="pvp-header">
-      <div class="brand">瓦demo · 登峰赛季 <span>构筑库</span></div>
+      <div class="brand">登峰赛季 <span>构筑库</span></div>
       <button data-nav="home">返回</button>
     </header>
     <main class="pvp-main">
@@ -146,7 +146,7 @@ function renderArchives() {
       ${serverPending ? `<div class="pending-banner"><strong>云端待处理保存</strong> 第${serverPending.snapshot.act}幕 · ${serverPending.snapshot.maxHp}声望<button data-action="resolve-server-pending">处理</button></div>` : ''}
       ${offlinePending ? `<div class="pending-banner"><strong>离线保存待处理</strong> 第${offlinePending.act}幕 · ${offlinePending.checkpoint.maxHp}声望<button data-action="offline-proof">处理</button></div>` : ''}
       <div class="archive-grid">
-        ${(account?.archives || []).length ? account.archives.map(a => archiveCard(a)).join('') : '<p class="empty">暂无云端构筑。去瓦demo完成赛段后自动保存。</p>'}
+        ${(account?.archives || []).length ? account.archives.map(a => archiveCard(a)).join('') : '<p class="empty">暂无云端构筑。去登峰赛季完成赛段后自动保存。</p>'}
       </div>
     </main>`;
 }
@@ -404,7 +404,7 @@ async function handleReadyToggle() {
 function showCreateDialog() {
   const archives = account?.archives || [];
   if (!archives.length) {
-    showModal('无法创建', '<p>你没有云端构筑。请先在瓦demo中完成赛段并保存。</p>');
+    showModal('无法创建', '<p>你没有云端构筑。请先在登峰赛季中完成赛段并保存。</p>');
     return;
   }
   const groups = {};
@@ -430,7 +430,7 @@ function showCreateDialog() {
 
 function showJoinDialog() {
   if (!(account?.archives || []).length) {
-    showModal('无法加入', '<p>你没有云端构筑。请先在瓦demo中完成赛段并保存。</p>');
+    showModal('无法加入', '<p>你没有云端构筑。请先在登峰赛季中完成赛段并保存。</p>');
     return;
   }
   showModal('加入房间', `

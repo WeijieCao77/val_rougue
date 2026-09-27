@@ -176,15 +176,11 @@ html.tap-play .selection-panel.tap-selection .selection-text{margin:2px 0 3px;fo
 html.tap-play .selection-panel.tap-selection small{font-size:12px}
 html.tap-play .selection-panel.tap-selection .text-button,html.tap-play .selection-panel.tap-selection button{min-height:44px}
 
-/* ---------- Portrait phone combat: nothing off screen, nothing stacked (2026-09-26) ----------
-   The whole hand fits the width (cards overlap more as it grows, no sideways
-   scroll, so draws and discards never fly in from off screen); the selection
-   panel keeps a fixed height so tapping a card doesn't shift the arena; the
-   enemy turn shows one banner instead of banner + echo + titles on top of each other. */
+/* Portrait phone combat: readable scrolling hand and one enemy-turn banner. */
 @media(max-width:720px) and (orientation:portrait){
- .hand-dock .hand-fan,.hand-fan{overflow:visible!important;justify-content:center;gap:0!important;padding:16px 6px 6px!important;scroll-snap-type:none;touch-action:manipulation}
+ .hand-dock .hand-fan,.hand-fan{overflow-x:auto!important;overflow-y:hidden!important;justify-content:flex-start;gap:8px!important;padding:18px 8px 10px!important;scroll-snap-type:x proximity;touch-action:pan-x}
  .hand-card{flex:0 0 104px!important;width:104px!important;min-width:104px!important;height:156px!important;touch-action:manipulation}
- .hand-card+.hand-card{margin-left:min(4px,calc((100% - var(--slots,5) * 104px) / max(1,var(--slots,5) - 1)))!important}
+ .hand-card+.hand-card{margin-left:0!important}
  .hand-card.selected{z-index:20!important}
  .hand-card .card-portrait{height:46px!important;min-height:46px!important}
  .selection-panel{height:92px;min-height:92px!important;overflow:hidden;align-content:center}

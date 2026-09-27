@@ -19,7 +19,7 @@ import { flyCardsFromPile, flyCardsToPile } from '/shared/card-pile-motion.js';
 import { soundToggleHtml } from '/shared/sfx.js';
 import { juiceAction, juiceImpact, juiceSlam } from './juice-hooks.js';
 import { restHealRate, econOn } from './engine.js';
-import { unlockRunOptions, recordUnlockProgress, recordAbandonedRun, unlockBarHtml, unlockTestHtml, toggleAllUnlocks, unlockNoticeHtml, skipOptionsHtml, rerollButtonHtml, investOfferHtml, investChipHtml, investListHtml } from './economy.js';
+import { unlockRunOptions, recordUnlockProgress, recordAbandonedRun, unlockBarHtml, unlockNoticeHtml, skipOptionsHtml, rerollButtonHtml, investOfferHtml, investChipHtml, investListHtml } from './economy.js';
 import { achieveNew, openNewAchievements, newAchResultHtml, newTitleHtml } from './achievements.js';
 import { openModal, trackNewRun, recordNewAbandon, entryFor, resultPageHtml, openHistory, openDeckViewer, collection, foundText, unseenTileHtml, enemyTileHtml, gearTile, tagCard, initUpgradePeek, ALL_ENEMIES } from './run-screens.js';
 
@@ -233,7 +233,6 @@ function renderHome() {
       <div class="team-art">${combatArt(t.id, 'ally')}</div>
       <div class="team-name">${escapeHtml(t.name)}</div>
       <div class="team-desc">${escapeHtml(t.desc)}</div>
-      ${traitTagHtml(t.id)}
     </div>
   `).join('');
   const unlocks = loadAscensionUnlocks();
@@ -259,8 +258,9 @@ function renderHome() {
       <div class="team-select" role="radiogroup" aria-label="选择初始队伍">
         ${teamsHtml}
       </div>
+      <div id="selected-team-trait" aria-live="polite">${traitTagHtml(selectedTeam)}</div>
       <div id="ascension-picker">${ascensionPickerHtml(unlocks)}</div>
-      <div id="unlock-progress">${unlockBarHtml(selectedTeam)}${unlockTestHtml()}</div>
+      <div id="unlock-progress">${unlockBarHtml(selectedTeam)}</div>
       <div class="home-actions">
         <button class="btn primary" id="btn-new-secondary">确认开赛</button>
         <button class="btn" id="btn-continue" ${continueDisabled ? 'disabled' : ''}>继续上局</button>
@@ -274,7 +274,7 @@ function renderHome() {
         ${syncButtonHtml(ND_SYNC)}
         <a href="/">选择版本</a>
       </nav>
-      <footer class="credit">猪之家出品</footer>
+      <footer class="credit brand-credit"><img src="/shared/pig-house.svg" alt="猪之家标志">猪之家出品</footer>
     </section>
     </main>
   `;
@@ -294,6 +294,7 @@ function renderHome() {
 
   function selectTeam(id) {
     selectedTeam = id;
+    document.getElementById('selected-team-trait').innerHTML = traitTagHtml(id);
     document.querySelectorAll('.team-card').forEach(card => {
       const active = card.dataset.team === id;
       card.classList.toggle('selected', active);
@@ -308,13 +309,8 @@ function renderHome() {
   function renderUnlockProgress() {
     const host = document.getElementById('unlock-progress');
     if (!host) return;
-    host.innerHTML = unlockBarHtml(selectedTeam) + unlockTestHtml();
-    host.querySelector('#btn-unlock-all')?.addEventListener('click', () => {
-      const on = toggleAllUnlocks();
-      showNotice(on ? '测试：之后新开的对局全部解锁。' : '已恢复正常解锁进度。');
-      renderUnlockProgress();
-      host.querySelector('.unlock-test')?.setAttribute('open', '');
-    });
+    host.innerHTML = unlockBarHtml(selectedTeam);
+
   }
   renderUnlockProgress();
   function bindAscensionPicker() {
@@ -572,7 +568,7 @@ function renderGame() {
   const app = document.getElementById('app');
   app.innerHTML = `
     <header class="app-header">
-      <div class="app-title">新demo · 战术试炼</div>
+      <div class="app-title"><img class="brand-pig" src="/shared/pig-house.svg" alt="猪之家">战术试炼</div>
         <div class="app-buttons">
         <button class="btn" id="btn-deck">牌组 ${state.deck.length}</button>
         <button class="btn" id="btn-library">图鉴</button>
@@ -1539,7 +1535,7 @@ function renderLibraryModal() {
     });
     const filterRow = document.getElementById('filter-row');
     if (filterRow) {
-      filterRow.style.display = tab === 'tactical' ? 'flex' : 'none';
+      filterRow.style.display = tab === 'tactical' ? '' : 'none';
     }
     renderContent();
   }

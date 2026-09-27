@@ -2460,15 +2460,11 @@ html.tap-play .selection-panel.tap-selection .selection-text{margin:2px 0 3px;fo
 html.tap-play .selection-panel.tap-selection small{font-size:12px}
 html.tap-play .selection-panel.tap-selection .text-button,html.tap-play .selection-panel.tap-selection button{min-height:44px}
 
-/* ---------- Portrait phone combat: nothing off screen, nothing stacked (2026-09-26) ----------
-   The whole hand fits the width (cards overlap more as it grows, no sideways
-   scroll, so draws and discards never fly in from off screen); the selection
-   panel keeps a fixed height so tapping a card doesn't shift the arena; the
-   enemy turn shows one banner instead of banner + echo + titles on top of each other. */
+/* Portrait phone combat: readable scrolling hand and one enemy-turn banner. */
 @media(max-width:720px) and (orientation:portrait){
- .hand-dock .hand-fan,.hand-fan{overflow:visible!important;justify-content:center;gap:0!important;padding:16px 6px 6px!important;scroll-snap-type:none;touch-action:manipulation}
+ .hand-dock .hand-fan,.hand-fan{overflow-x:auto!important;overflow-y:hidden!important;justify-content:flex-start;gap:8px!important;padding:18px 8px 10px!important;scroll-snap-type:x proximity;touch-action:pan-x}
  .hand-card{flex:0 0 104px!important;width:104px!important;min-width:104px!important;height:156px!important;touch-action:manipulation}
- .hand-card+.hand-card{margin-left:min(4px,calc((100% - var(--slots,5) * 104px) / max(1,var(--slots,5) - 1)))!important}
+ .hand-card+.hand-card{margin-left:0!important}
  .hand-card.selected{z-index:20!important}
  .hand-card .card-portrait{height:46px!important;min-height:46px!important}
  .selection-panel{height:92px;min-height:92px!important;overflow:hidden;align-content:center}
@@ -2478,4 +2474,51 @@ html.tap-play .selection-panel.tap-selection .text-button,html.tap-play .selecti
  .cfx-title{display:none!important}
  .enemy-turn-banner{top:4%}
  .combat-target .target-caption{z-index:4;font-size:12px}
+}
+
+/* Reviewed layout pass: natural page flow, separated controls, primary modes. */
+body.home-mode .cover-setup { padding:24px; gap:12px; box-sizing:border-box; }
+body.home-mode .region-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+body.home-mode .region-tab { min-width:0; min-height:56px; font-size:14px; }
+body.home-mode .region-tab small { font-size:12px; white-space:normal; }
+body.home-mode .region-picker { margin:0; }
+body.home-mode .region-extra { width:min(100%,600px); margin:0; }
+body.home-mode .setup-start { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; width:min(100%,600px); max-width:600px; margin:8px 0; }
+body.home-mode .setup-start .primary { min-height:64px; padding:14px 10px; font-size:16px; display:flex; align-items:center; justify-content:center; text-align:center; text-decoration:none; box-sizing:border-box; }
+body.home-mode .button-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; width:min(100%,600px); margin:0; }
+body.home-mode .button-row .text-button { min-height:44px; display:flex; align-items:center; justify-content:center; padding:8px; border:1px solid #45534e; border-radius:4px; background:#18232a; font-size:14px; box-sizing:border-box; }
+body.home-mode .cover-log { display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin-top:16px; }
+body.home-mode .title-note,body.home-mode .cover-footer { margin:4px 0; }
+.game-hud { height:auto; min-height:56px; flex-wrap:wrap; gap:8px 16px; padding:8px 20px; }
+.game-hud .header-links { display:flex; flex-shrink:0; flex-wrap:nowrap; gap:12px; white-space:nowrap; }
+.game-hud .hud-tools { gap:8px; }
+.room-screen { max-width:1100px; margin:0 auto; padding:32px 24px 48px; box-sizing:border-box; }
+.room-screen .choices { flex-wrap:wrap; gap:16px; }
+.room-screen .opening-choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:stretch; max-width:900px; margin:auto; }
+.room-screen .opening-choices .choice { width:100%; max-width:none; min-height:0; height:auto; padding:20px; box-sizing:border-box; }
+.room-screen .opening-choices .choice p { margin:12px 0; }
+.room-screen .opening-choices .choice button { position:static; margin-top:12px; min-height:44px; }
+.room-screen .page-footer { display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin-top:24px; }
+@media(min-width:1000px) {
+ body.home-mode .cover-screen { display:grid; grid-template-columns:40% minmax(0,1fr); align-items:stretch; max-width:1500px; margin:auto; padding:24px; gap:24px; box-sizing:border-box; }
+ body.home-mode .cover-hero { min-height:600px; height:100%; border-radius:8px; }
+ body.home-mode .cover-content h1 { font-size:clamp(40px,4.3vw,64px); letter-spacing:4px; }
+ body.home-mode .cover-content { max-width:100%; }
+ body.home-mode .cover-setup { padding:16px 8px; justify-content:flex-start; }
+}
+@media(max-width:720px) {
+ body.home-mode .cover-hero { min-height:280px; }
+ body.home-mode .cover-setup { padding:20px 16px; }
+ body.home-mode .button-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .room-screen { padding:20px 16px 32px; }
+ .room-screen .opening-choices { grid-template-columns:1fr; }
+ .room-screen .opening-choices .choice { max-width:none; }
+ .room-screen .choice button,.room-screen .page-footer button { min-height:44px; }
+ .game-hud { height:auto; min-height:56px; flex-wrap:wrap; padding:8px 12px; gap:8px 12px; }
+ .game-hud .hud-tools { margin-left:auto; }
+}
+@media(max-width:720px) and (orientation:portrait) {
+ .combat-screen { height:auto; min-height:0; }
+ .combat-screen>.arena { min-height:280px; flex:0 0 auto; }
+ .combat-controls { height:auto; min-height:0; gap:12px; padding:12px; }
 }
