@@ -1,12 +1,11 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { createMatch, applyCommand, viewFor, validateSnapshot } from './duel.mjs';
-import { createWaSeason, waAct, extractCheckpoints } from '../wa-season.js';
-import { RULES_VERSIONS, ECON_VERSIONS, unlockTiersOf } from '../wa-rules.js';
+import { createMatch, applyCommand, viewFor } from './duel.mjs';
+import { HttpError } from './http-error.mjs';
+import { verifyClaim } from './claim-verify.mjs';
 import { generateToken, generateRoomCode, sha256 } from './store.mjs';
 import { createSyncHandler } from './sync-api.mjs';
 
 const MAX_BODY_BYTES = 1024 * 1024;
-const MAX_ACTIONS = 5000;
 const MAX_ARCHIVES = 10;
 const ROOM_WAIT_TIMEOUT_MS = 30 * 60 * 1000;
 const ROOM_ACTIVE_TIMEOUT_MS = 10 * 60 * 1000;
@@ -41,20 +40,16 @@ function clone(obj) {
   return obj == null ? obj : structuredClone(obj);
 }
 
-export class HttpError extends Error {
-  constructor(status, message) {
-    super(message);
-    this.status = status;
-  }
-}
+export { HttpError };
 
-export function sendJson(res, status, obj) {
+export function sendJson(res, status, obj, extraHeaders) {
   const body = JSON.stringify(obj);
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
     'Content-Length': Buffer.byteLength(body),
     'Cache-Control': 'no-store',
     'X-Content-Type-Options': 'nosniff',
+    ...extraHeaders,
   });
   res.end(body);
 }
@@ -64,7 +59,7 @@ export function sendError(res, err) {
     console.error('API内部错误:', err);
     err = new HttpError(500, '服务器内部错误');
   }
-  sendJson(res, err.status, { error: err.message });
+  sendJson(res, err.status, { error: err.message }, err.headers);
 }
 
 function getBearerToken(req) {
@@ -270,100 +265,6 @@ export class RateLimiter {
   }
 }
 
-function validateRunId(runId) {
-  if (typeof runId !== 'string' || runId.length < 1 || runId.length > 100) {
-    throw new HttpError(400, '无效的runId');
-  }
-}
-
-function validateSeed(seed) {
-  if (typeof seed !== 'string' || seed.length < 1 || seed.length > 100) {
-    throw new HttpError(400, '无效的seed');
-  }
-}
-
-function validateRegion(region) {
-  if (typeof region !== 'string' || region.length < 1 || region.length > 20) {
-    throw new HttpError(400, '无效的region');
-  }
-}
-
-async function yieldToEventLoop() {
-  await new Promise(resolve => setImmediate(resolve));
-}
-
-async function rebuildSnapshot(run, act) {
-  if (!run || typeof run !== 'object') throw new HttpError(400, '无效的运行数据');
-  validateRunId(run.runId);
-  validateSeed(run.seed);
-  validateRegion(run.region);
-  if (!Array.isArray(run.actions) || run.actions.length > MAX_ACTIONS) {
-    throw new HttpError(400, '无效的行动列表');
-  }
-  for (const action of run.actions) {
-    if (!action || typeof action !== 'object' || typeof action.type !== 'string') {
-      throw new HttpError(400, '无效的行动');
-    }
-    if (action.type === 'tutorial') {
-      throw new HttpError(400, '教程行动不被允许');
-    }
-  }
-
-  // Rules 1 records replay unchanged; rules 3 adds group fights, encounter/boss pools and keyword cards.
-  if (run.rules !== undefined && !RULES_VERSIONS.includes(run.rules)) throw new HttpError(400, '无效的规则版本');
-  if (run.ascension !== undefined && (!Number.isInteger(run.ascension) || run.ascension < 0 || run.ascension > 10 || !run.rules)) {
-    throw new HttpError(400, '无效的难度等级');
-  }
-  // Runs recorded before the 15-floor acts carry no mapVersion and replay on the
-  // 12-step map (version 1) with that version's opponent tuning.
-  if (run.mapVersion !== undefined && run.mapVersion !== 2) throw new HttpError(400, '无效的地图版本：请用当前版本重新完成这一幕');
-  // Economy rules (unlock tiers, skip compensation, investments, rerolls). Records
-  // without `econ` replay on the full pools; with it, both tiers must be recorded.
-  // econ 1: 5 unlock batches (tiers 0..5); econ 2: 4 batches (tiers 0..4).
-  const validTier = n => Number.isInteger(n) && n >= 0 && n <= unlockTiersOf(run.econ);
-  if (run.econ !== undefined && (!ECON_VERSIONS.includes(run.econ) || run.rules === undefined)) throw new HttpError(400, '无效的经济规则版本');
-  if (run.econ !== undefined && (!validTier(run.unlockTier) || !validTier(run.gearTier))) throw new HttpError(400, '无效的解锁等级');
-  if (run.econ === undefined && (run.unlockTier !== undefined || run.gearTier !== undefined)) throw new HttpError(400, '无效的解锁等级');
-  let state;
-  try {
-    state = createWaSeason(run.seed, false, run.region, run.runId, { rules: run.rules, ascension: run.ascension, mapVersion: run.mapVersion ?? 1, ...(run.econ !== undefined ? { econ: run.econ, unlockTier: run.unlockTier, gearTier: run.gearTier } : {}) });
-  } catch {
-    throw new HttpError(400, '无效的运行数据');
-  }
-
-  for (let i = 0; i < run.actions.length; i++) {
-    if (i % 100 === 0) await yieldToEventLoop();
-    const action = run.actions[i];
-    try {
-      const result = waAct(state, action);
-      if (result.error) {
-        throw new HttpError(400, '无效的行动序列');
-      }
-      state = result.state;
-    } catch (err) {
-      if (err instanceof HttpError) throw err;
-      throw new HttpError(400, '无效的行动序列');
-    }
-  }
-
-  const checkpoints = extractCheckpoints(state);
-  const checkpoint = checkpoints.find(cp => cp.act === act);
-  if (!checkpoint) {
-    throw new HttpError(400, '未找到指定幕的检查点');
-  }
-  return checkpoint;
-}
-
-function validateArchiveSnapshot(snapshot) {
-  try {
-    const validated = validateSnapshot(snapshot);
-    validated.deckCount = validated.deck.length;
-    return validated;
-  } catch {
-    throw new HttpError(400, '快照无效');
-  }
-}
-
 // Start (or keep) the clock for the match's current turn. `at` is when the turn began.
 function syncTimer(room, at, limit) {
   const m = room.match;
@@ -495,6 +396,10 @@ function isArchiveLockedInRoom() {
 
 export function createOnlineHandler(store, options = {}) {
   const limiter = new RateLimiter();
+  // Claim verification (full replay of a Wa season act, ~0.4 s CPU). server.mjs injects
+  // the worker pool (online/replay-pool.mjs) so the replay never blocks this thread;
+  // without one (tests) it runs in-process, yielding every 100 actions.
+  const verify = typeof options.verifyClaim === 'function' ? options.verifyClaim : (run, act) => verifyClaim(run, act);
   // Injected clock / turn length for tests; production uses Date.now and PVP_TURN_MS.
   const now = typeof options.now === 'function' ? options.now : () => Date.now();
   const turnMs = Number.isInteger(options.turnMs) && options.turnMs > 0 ? options.turnMs : DEFAULT_TURN_MS;
@@ -589,8 +494,7 @@ export function createOnlineHandler(store, options = {}) {
         const body = await readJsonBody(req);
         const { run, act } = body;
         if (!run || !act) throw new HttpError(400, '缺少run或act');
-        const snapshot = await rebuildSnapshot(run, act);
-        const validated = validateArchiveSnapshot(snapshot);
+        const validated = await verify(run, act);
         const archiveId = `${validated.runId}:${validated.act}`;
 
         let resultStatus;

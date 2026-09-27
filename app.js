@@ -18393,6 +18393,13 @@ const module34=(()=>{
 // (or a new entry with the next version and today's date).
 const CHANGELOG = [
   {
+    version: 'v0.9.4', date: '2026-09-27', title: '服务器优化',
+    items: [
+      ['all', '页面加载更快、更省流量。'],
+      ['wa', '多人同时上传构筑时服务器不再卡顿。']
+    ]
+  },
+  {
     version: 'v0.9.3', date: '2026-09-27', title: '进度同步',
     items: [
       ['all', '新增进度同步：用 6 位同步码把手机和电脑的进度连起来，之后自动同步。']

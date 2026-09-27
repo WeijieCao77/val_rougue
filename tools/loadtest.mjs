@@ -5,6 +5,12 @@
 //   node tools/loadtest.mjs [--players 1000] [--claims 300] [--matches 100]
 //                           [--syncers 300] [--duration 120] [--port 4196]
 //                           [--server server.mjs] [--label new] [--out report.json]
+//                           [--steady-claims 5] [--claim-burst-on 10] [--claim-burst-off 10]
+//
+// --steady-claims N keeps issuing verified claims at N/s (at most 16 in flight) during the
+// steady phase, in bursts of --claim-burst-on seconds followed by --claim-burst-off quiet
+// seconds, while the PvP matches poll. Polls made during a burst are also reported
+// separately as "GET /api/rooms/:code (burst)".
 //
 // --server may point at another server entry (e.g. a pre-SQLite build) that prints
 // "http://0.0.0.0:<port>" when listening; routes it does not know are skipped with
@@ -35,6 +41,9 @@ const opt = {
   out: args.out,
   syncMin: Number(args['sync-min-kb'] ?? 100) * 1024,
   syncMax: Number(args['sync-max-kb'] ?? 250) * 1024,
+  steadyClaims: Number(args['steady-claims'] ?? 0),
+  burstOn: Number(args['claim-burst-on'] ?? 10),
+  burstOff: Number(args['claim-burst-off'] ?? 10),
 };
 if (opt.claims < opt.matches * 2) throw new Error('--claims must be at least 2 × --matches (every duelist needs a verified archive)');
 if (opt.players < opt.claims || opt.players < opt.syncers) throw new Error('--players must cover --claims and --syncers');
@@ -85,8 +94,9 @@ async function call(route, method, url, { token, ip, body, expected } = {}) {
     status = res.status;
     json = await res.json().catch(() => null);
   } catch { status = 599; }
-  record(route, performance.now() - t, status, expected);
-  return { status, json };
+  const ms = performance.now() - t;
+  record(route, ms, status, expected);
+  return { status, json, ms };
 }
 async function pool(items, concurrency, fn) {
   let i = 0;
@@ -165,14 +175,32 @@ function makeBundle(bytes, salt) {
 
 phase = 'steady'; t = Date.now();
 const until = Date.now() + opt.duration * 1000;
-let actions = 0, syncPushes = 0;
+let actions = 0, syncPushes = 0, steadyClaims = 0, claimInFlight = 0;
+const inBurst = () => opt.steadyClaims > 0 && ((Date.now() - t) / 1000) % (opt.burstOn + opt.burstOff) < opt.burstOn;
+async function claimBurster() {
+  if (!opt.steadyClaims) return;
+  const claimersPool = players.slice(0, opt.claims);
+  let k = 0;
+  while (Date.now() < until) {
+    if (inBurst() && claimInFlight < 16) {
+      const p = claimersPool[k++ % claimersPool.length];
+      claimInFlight++; steadyClaims++;
+      // Same run again: the server replays it in full before seeing it was already claimed.
+      call('POST /api/archive/claim (steady)', 'POST', '/api/archive/claim', { token: p.token, ip: p.ip, body: { run: claimRun, act: 1 }, expected: [503] })
+        .finally(() => { claimInFlight--; });
+    }
+    await sleep(1000 / opt.steadyClaims);
+  }
+}
 async function duelist(room, seat) {
   const p = room.players[seat];
   let lastAct = 0;
   await sleep(Math.random() * 1000);
   while (Date.now() < until) {
     const started = Date.now();
+    const burst = inBurst();
     const r = await call('GET /api/rooms/:code', 'GET', `/api/rooms/${room.code}`, { token: p.token, ip: p.ip });
+    if (burst) record('GET /api/rooms/:code (burst)', r.ms, r.status);
     const v = r.json?.room;
     if (v?.status === 'active' && v.match.active === v.seat && Date.now() - lastAct > 2500) {
       lastAct = Date.now();
@@ -202,11 +230,13 @@ async function syncer(p, k) {
   }
 }
 await Promise.all([
+  claimBurster(),
   ...rooms.flatMap(room => [duelist(room, 0), duelist(room, 1)]),
   ...players.slice(opt.players - opt.syncers).map((p, k) => syncer(p, k)),
 ]);
 phaseTimes.steady = Date.now() - t;
-log(`steady: ${actions} actions, ${syncPushes} sync pushes`);
+log(`steady: ${actions} actions, ${syncPushes} sync pushes, ${steadyClaims} steady claims`);
+while (claimInFlight > 0) await sleep(100);
 phase = 'done';
 await sleep(1200);
 
@@ -229,7 +259,7 @@ const report = {
   label: opt.label, options: { ...opt, server: path.relative(ROOT, opt.server) || opt.server }, phaseTimes,
   claimsPerSecond: +(opt.claims / (phaseTimes.claims / 1000)).toFixed(2),
   steadyRequestsPerSecond: +(steadyReqs / (phaseTimes.steady / 1000)).toFixed(1),
-  activeRooms: rooms.length, pvpActions: actions, syncPushes,
+  activeRooms: rooms.length, pvpActions: actions, syncPushes, steadyClaims,
   server: { all: summary(samples), claims: summary(inPhase('claims')), steady: summary(inPhase('steady')) },
   dbBytes, dbMB: +(dbBytes / 2 ** 20).toFixed(2), routes,
   serverStderr: serverErr.split('\n').filter(l => l && !/ExperimentalWarning|trace-warnings/.test(l)).slice(-5),

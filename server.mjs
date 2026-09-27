@@ -1,7 +1,9 @@
 import http from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { openStore } from './online/store.mjs';
 import { createOnlineHandler } from './online/api.mjs';
+import { createReplayPool } from './online/replay-pool.mjs';
+import { createStaticCache } from './static-cache.mjs';
 
 const assets = new Map([
   ['/', ['landing.html', 'text/html; charset=utf-8']],
@@ -107,10 +109,13 @@ if (!Number.isInteger(port) || port < 0 || port > 65535) throw Error('Invalid PO
 
 let store;
 let onlineHandler;
+// Claim replays run on worker threads so they never stall other requests.
+const replayPool = createReplayPool();
+const staticCache = createStaticCache();
 
 try {
   store = await openStore();
-  onlineHandler = createOnlineHandler(store);
+  onlineHandler = createOnlineHandler(store, { verifyClaim: replayPool.verify });
 } catch (err) {
   console.error('存储初始化失败:', err.message);
   process.exit(1);
@@ -170,7 +175,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
-    send(200, await readFile(new URL(asset[0], import.meta.url)), asset[1]);
+    await staticCache.serve(req, res, fileURLToPath(new URL(asset[0], import.meta.url)), asset[1], { 'X-Content-Type-Options': 'nosniff' });
   } catch (error) {
     send(imagePath && error.code === 'ENOENT' ? 404 : 500, 'Unable to read game file');
   }
@@ -178,11 +183,23 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, '0.0.0.0', () => {
   console.log(`登峰赛季: http://0.0.0.0:${server.address().port}`);
+  // Pre-compress the text files in the background so the first visitor is not waiting.
+  staticCache.warm([...new Map([...assets.values()].map(([file, type]) => [fileURLToPath(new URL(file, import.meta.url)), type]))]);
 });
 
+let shuttingDown = false;
 async function shutdown() {
+  if (shuttingDown) return;
+  shuttingDown = true;
   console.log('正在关闭服务器...');
+  // Stop accepting connections; claims already in flight finish, then the replay
+  // workers are terminated (anything still queued answers 503 and the client retries).
   server.close(async () => {
+    try {
+      await replayPool.close();
+    } catch (err) {
+      console.error('核验线程关闭失败:', err);
+    }
     if (store) {
       try {
         await store.close();
