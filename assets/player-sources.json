@@ -1,6 +1,6 @@
 {
   "checkedOn": "2026-09-26T00:00:00Z",
-  "sourceNote": "71 VLR profile photos and glacier official Wolves announcement reproduced by Sina; 112 further VLR profile photos added 2026-09-24 for expansion-roster players (same vlr.gg/owcdn.net source). Source availability is not a license grant. 2026-09-26: the last 16 players were filled (VLR profile photos where they exist, otherwise the official VCT CN site vct.qq.com player photos hosted on tjstats.com, Liquipedia event photos cropped to a headshot, or the Gen.G ZynX announcement). profileAliases lists the card handle when the VLR profile now shows a different handle. All 200 player cards have real photos.",
+  "sourceNote": "71 VLR profile photos and glacier official Wolves announcement reproduced by Sina; 112 further VLR profile photos added 2026-09-24 for expansion-roster players (same vlr.gg/owcdn.net source). Source availability is not a license grant. 2026-09-26: the last 16 players were filled (VLR profile photos where they exist, otherwise the official VCT CN site vct.qq.com player photos hosted on tjstats.com, Liquipedia event photos cropped to a headshot, or the Gen.G ZynX announcement). profileAliases lists the card handle when the VLR profile now shows a different handle. All 200 player cards have real photos. 2026-09-26 (jersey refresh): 26 players whose photo showed a former team's jersey were switched to 2026 photos in their current team's jersey (CN: official vct.qq.com 2026 CN league player photos hosted on esports.val.qq.com; others: Liquipedia 2026 event photos cropped to a headshot); these entries carry photoUpdatedOn and photoNote.",
   "players": [
     {
       "id": "AM01",
@@ -80,8 +80,13 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/2170/babybay",
       "profileName": "BABYBAY",
-      "sourceUrl": "https://owcdn.net/img/6224a67aabf26.png",
-      "path": "assets/players/AM09.png"
+      "sourceUrl": "https://liquipedia.net/commons/images/9/99/G2_babybay_at_VCT_2026_Americas_Stage_2.jpg",
+      "path": "assets/players/AM09.png",
+      "photoPage": "https://liquipedia.net/valorant/File:G2_babybay_at_VCT_2026_Americas_Stage_2.jpg",
+      "photoCredit": "Liquipedia · G2 babybay at VCT 2026 Americas Stage 2（裁切为头像）",
+      "fit": "cover",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（G2）队服照，替换旧战队队服照"
     },
     {
       "id": "AM10",
@@ -125,8 +130,13 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/10885/davih",
       "profileName": "DaviH",
-      "sourceUrl": "https://owcdn.net/img/69a8be6cb643d.png",
-      "path": "assets/players/AM14.png"
+      "sourceUrl": "https://liquipedia.net/commons/images/b/b7/LOUD_DaviH_at_VCT_2026_Americas_Stage_2.jpg",
+      "path": "assets/players/AM14.png",
+      "photoPage": "https://liquipedia.net/valorant/File:LOUD_DaviH_at_VCT_2026_Americas_Stage_2.jpg",
+      "photoCredit": "Liquipedia · LOUD DaviH at VCT 2026 Americas Stage 2（裁切为头像）",
+      "fit": "cover",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（LOUD）队服照，替换旧战队队服照"
     },
     {
       "id": "AM15",
@@ -152,8 +162,13 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/729/zellsis",
       "profileName": "Zellsis",
-      "sourceUrl": "https://owcdn.net/img/671b20fca8019.png",
-      "path": "assets/players/AM17.png"
+      "sourceUrl": "https://liquipedia.net/commons/images/f/f3/C9_Zellsis_at_VCT_2026_Americas_Stage_2.jpg",
+      "path": "assets/players/AM17.png",
+      "photoPage": "https://liquipedia.net/valorant/File:C9_Zellsis_at_VCT_2026_Americas_Stage_2.jpg",
+      "photoCredit": "Liquipedia · C9 Zellsis at VCT 2026 Americas Stage 2（裁切为头像）",
+      "fit": "cover",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（C9）队服照，替换旧战队队服照"
     },
     {
       "id": "AM18",
@@ -201,8 +216,12 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/3028/life",
       "profileName": "Life",
-      "sourceUrl": "https://owcdn.net/img/6780cc893eb8f.png",
-      "path": "assets/players/CN04.png"
+      "sourceUrl": "https://esports.val.qq.com/val/gen/player/Life3d0334c9f90e88b202874c1be1a08343.png",
+      "path": "assets/players/CN04.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=10",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · DRG）",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（DRG）队服照，替换旧战队队服照"
     },
     {
       "id": "CN05",
@@ -228,8 +247,12 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/6022/yosemite",
       "profileName": "yosemite",
-      "sourceUrl": "https://owcdn.net/img/6780cc7ef001a.png",
-      "path": "assets/players/CN07.png"
+      "sourceUrl": "https://esports.val.qq.com/val/gen/player/yosemite2be602db85243a11852a74ffdc1d1a9f.png",
+      "path": "assets/players/CN07.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=23",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · WOL）",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（WOL）队服照，替换旧战队队服照"
     },
     {
       "id": "CN08",
@@ -237,8 +260,12 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/11218/yuicaw",
       "profileName": "Yuicaw",
-      "sourceUrl": "https://owcdn.net/img/677d1d79e76fc.png",
-      "path": "assets/players/CN08.png"
+      "sourceUrl": "https://esports.val.qq.com/val/gen/player/Yuicaw3969648b45060a478705207ba5e1b528.png",
+      "path": "assets/players/CN08.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=44",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · JDG）",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（JDG）队服照，替换旧战队队服照"
     },
     {
       "id": "CN09",
@@ -282,8 +309,12 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/7857/berlin",
       "profileName": "BerLIN",
-      "sourceUrl": "https://owcdn.net/img/6780cc73ecfb7.png",
-      "path": "assets/players/CN13.png"
+      "sourceUrl": "https://esports.val.qq.com/val/gen/player/BerLIN01f6eda89efeeaf9093b4b6e5ef27b7d.png",
+      "path": "assets/players/CN13.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=45",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · JDG）",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（JDG）队服照，替换旧战队队服照"
     },
     {
       "id": "CN14",
@@ -300,8 +331,12 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/7849/siufatbb",
       "profileName": "SiuFatBB",
-      "sourceUrl": "https://owcdn.net/img/677d1d70cab8d.png",
-      "path": "assets/players/CN15.png"
+      "sourceUrl": "https://esports.val.qq.com/val/gen/player/SiuFatBB5998e062fa23d66822c77fd574a13a8b.png",
+      "path": "assets/players/CN15.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=263",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · TYL）",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（TYL）队服照，替换旧战队队服照"
     },
     {
       "id": "CN16",
@@ -372,8 +407,13 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/20144/lewn",
       "profileName": "LewN",
-      "sourceUrl": "https://owcdn.net/img/680a9297edd81.png",
-      "path": "assets/players/EU05.png"
+      "sourceUrl": "https://liquipedia.net/commons/images/5/5a/Karmine_Corp_L%C3%AAwN_at_VCT_2026_EMEA_Stage_2.jpg",
+      "path": "assets/players/EU05.png",
+      "photoPage": "https://liquipedia.net/valorant/File:Karmine_Corp_L%C3%AAwN_at_VCT_2026_EMEA_Stage_2.jpg",
+      "photoCredit": "Liquipedia · Karmine Corp LêwN at VCT 2026 EMEA Stage 2（裁切为头像）",
+      "fit": "cover",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（KC）队服照，替换旧战队队服照"
     },
     {
       "id": "EU06",
@@ -687,8 +727,12 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/36415/viva",
       "profileName": "Viva",
-      "sourceUrl": "https://owcdn.net/img/6782527d74487.png",
-      "path": "assets/players/CN22.png"
+      "sourceUrl": "https://esports.val.qq.com/val/gen/player/Vivaed73fb46acf202a43468427057baa4e8.png",
+      "path": "assets/players/CN22.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000060&playerId=153",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第一赛段 · TE）",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（TE）队服照，替换旧战队队服照"
     },
     {
       "id": "CN23",
@@ -696,8 +740,12 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/10821/delb",
       "profileName": "deLb",
-      "sourceUrl": "https://owcdn.net/img/677fbe994eb91.png",
-      "path": "assets/players/CN23.png"
+      "sourceUrl": "https://esports.val.qq.com/val/gen/player/DeLbda31aaa1b06ab341d94657c5fe7cf011.png",
+      "path": "assets/players/CN23.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=1439",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · TE）",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（TE）队服照，替换旧战队队服照"
     },
     {
       "id": "CN24",
@@ -777,8 +825,12 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/37489/lysoar",
       "profileName": "Lysoar",
-      "sourceUrl": "https://owcdn.net/img/677d1df2d375a.png",
-      "path": "assets/players/CN36.png"
+      "sourceUrl": "https://esports.val.qq.com/val/gen/player/Lysoare98285f76e11869443a7c2461b00cdb7.png",
+      "path": "assets/players/CN36.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=50",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · XLG）",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（XLG）队服照，替换旧战队队服照"
     },
     {
       "id": "CN37",
@@ -786,8 +838,12 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/24308/wsleo",
       "profileName": "WsLeo",
-      "sourceUrl": "https://owcdn.net/img/6585b7ad2cb28.png",
-      "path": "assets/players/CN37.png"
+      "sourceUrl": "https://esports.val.qq.com/val/gen/player/WsLeo5ad7c361c5cbe784d46941bcc1a03f47.png",
+      "path": "assets/players/CN37.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=1222",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · XLG）",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（XLG）队服照，替换旧战队队服照"
     },
     {
       "id": "CN39",
@@ -822,8 +878,12 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/34181/green",
       "profileName": "GREEN",
-      "sourceUrl": "https://owcdn.net/img/658658c275a25.png",
-      "path": "assets/players/CN42.png"
+      "sourceUrl": "https://esports.val.qq.com/val/gen/player/Greendc6772f599f3a6e328fd2ee186b02988.png",
+      "path": "assets/players/CN42.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=1246",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · NOVA）",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（NOVA）队服照，替换旧战队队服照"
     },
     {
       "id": "CN43",
@@ -849,8 +909,12 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/49476/zhe",
       "profileName": "zhe",
-      "sourceUrl": "https://owcdn.net/img/6739e1d4086dd.png",
-      "path": "assets/players/CN45.png"
+      "sourceUrl": "https://esports.val.qq.com/val/gen/player/zhebe7abc4f25d35d479ac8b6ca6a662cab.png",
+      "path": "assets/players/CN45.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=1986",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · JDG）",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（JDG）队服照，替换旧战队队服照"
     },
     {
       "id": "CN46",
@@ -858,8 +922,12 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/12365/coconut",
       "profileName": "coconut",
-      "sourceUrl": "https://owcdn.net/img/6782529707e67.png",
-      "path": "assets/players/CN46.png"
+      "sourceUrl": "https://esports.val.qq.com/val/gen/player/coconut3b09d1d648cca646754b0f33c71cbb36.png",
+      "path": "assets/players/CN46.png",
+      "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=1774",
+      "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · FPX）",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（FPX）队服照，替换旧战队队服照"
     },
     {
       "id": "CN48",
@@ -903,8 +971,13 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/3993/jawgemo",
       "profileName": "jawgemo",
-      "sourceUrl": "https://owcdn.net/img/64169400bfed7.png",
-      "path": "assets/players/AM21.png"
+      "sourceUrl": "https://liquipedia.net/commons/images/0/05/G2_jawgemo_at_Valorant_Champions_2026.jpg",
+      "path": "assets/players/AM21.png",
+      "photoPage": "https://liquipedia.net/valorant/File:G2_jawgemo_at_Valorant_Champions_2026.jpg",
+      "photoCredit": "Liquipedia · G2 jawgemo at Valorant Champions 2026（裁切为头像）",
+      "fit": "cover",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（G2）队服照，替换旧战队队服照"
     },
     {
       "id": "AM22",
@@ -912,8 +985,13 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/30470/kyu",
       "profileName": "Kyu",
-      "sourceUrl": "https://owcdn.net/img/688c62cf8c6b1.png",
-      "path": "assets/players/AM22.png"
+      "sourceUrl": "https://liquipedia.net/commons/images/0/0f/M80_Kyu_at_VCT_2026_Americas_Stage_2.jpg",
+      "path": "assets/players/AM22.png",
+      "photoPage": "https://liquipedia.net/valorant/File:M80_Kyu_at_VCT_2026_Americas_Stage_2.jpg",
+      "photoCredit": "Liquipedia · M80 Kyu at VCT 2026 Americas Stage 2（裁切为头像）",
+      "fit": "cover",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（M80）队服照，替换旧战队队服照"
     },
     {
       "id": "AM23",
@@ -930,8 +1008,13 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/36245/n4rrate",
       "profileName": "N4RRATE",
-      "sourceUrl": "https://owcdn.net/img/6974146682328.png",
-      "path": "assets/players/AM24.png"
+      "sourceUrl": "https://liquipedia.net/commons/images/7/7f/KC_N4RRATE_at_VCT_EMEA_2026_Stage_2.jpeg",
+      "path": "assets/players/AM24.png",
+      "photoPage": "https://liquipedia.net/valorant/File:KC_N4RRATE_at_VCT_EMEA_2026_Stage_2.jpeg",
+      "photoCredit": "Liquipedia · KC N4RRATE at VCT EMEA 2026 Stage 2（裁切为头像）",
+      "fit": "cover",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（KC）队服照，替换旧战队队服照"
     },
     {
       "id": "AM25",
@@ -1083,8 +1166,13 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/619/c0m",
       "profileName": "C0M",
-      "sourceUrl": "https://owcdn.net/img/641693c3a0312.png",
-      "path": "assets/players/AM42.png"
+      "sourceUrl": "https://liquipedia.net/commons/images/0/0a/FUR_C0M_at_VCT_2026_Americas_Stage_2.jpg",
+      "path": "assets/players/AM42.png",
+      "photoPage": "https://liquipedia.net/valorant/File:FUR_C0M_at_VCT_2026_Americas_Stage_2.jpg",
+      "photoCredit": "Liquipedia · FUR C0M at VCT 2026 Americas Stage 2（裁切为头像）",
+      "fit": "cover",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（FURIA）队服照，替换旧战队队服照"
     },
     {
       "id": "AM44",
@@ -1092,8 +1180,13 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/8873/dgzin",
       "profileName": "dgzin",
-      "sourceUrl": "https://owcdn.net/img/689e1886cc5ed.png",
-      "path": "assets/players/AM44.png"
+      "sourceUrl": "https://liquipedia.net/commons/images/0/03/EG_dgzin_at_VCT_2026_Americas_Kickoff.jpg",
+      "path": "assets/players/AM44.png",
+      "photoPage": "https://liquipedia.net/valorant/File:EG_dgzin_at_VCT_2026_Americas_Kickoff.jpg",
+      "photoCredit": "Liquipedia · EG dgzin at VCT 2026 Americas Kickoff（裁切为头像）",
+      "fit": "cover",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（EG）队服照，替换旧战队队服照"
     },
     {
       "id": "AM45",
@@ -1281,8 +1374,13 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/12928/veqaj",
       "profileName": "Veqaj",
-      "sourceUrl": "https://owcdn.net/img/689668c152fdd.png",
-      "path": "assets/players/EU35.png"
+      "sourceUrl": "https://liquipedia.net/commons/images/2/2b/FNC_Veqaj_at_EMEA_Kickoff_2026.jpg",
+      "path": "assets/players/EU35.png",
+      "photoPage": "https://liquipedia.net/valorant/File:FNC_Veqaj_at_EMEA_Kickoff_2026.jpg",
+      "photoCredit": "Liquipedia · FNC Veqaj at EMEA Kickoff 2026（裁切为头像）",
+      "fit": "cover",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（FNC）队服照，替换旧战队队服照"
     },
     {
       "id": "EU36",
@@ -1353,8 +1451,13 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/34684/westside",
       "profileName": "westside",
-      "sourceUrl": "https://owcdn.net/img/6636bf8d94177.png",
-      "path": "assets/players/EU44.png"
+      "sourceUrl": "https://liquipedia.net/commons/images/4/4c/GX_westside_at_VCT_EMEA_Kickoff_2026.jpg",
+      "path": "assets/players/EU44.png",
+      "photoPage": "https://liquipedia.net/valorant/File:GX_westside_at_VCT_EMEA_Kickoff_2026.jpg",
+      "photoCredit": "Liquipedia · GX westside at VCT EMEA Kickoff 2026（裁切为头像）",
+      "fit": "cover",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（GX）队服照，替换旧战队队服照"
     },
     {
       "id": "EU46",
@@ -1362,8 +1465,13 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/6959/flickless",
       "profileName": "Flickless",
-      "sourceUrl": "https://owcdn.net/img/678094302930e.png",
-      "path": "assets/players/EU46.png"
+      "sourceUrl": "https://liquipedia.net/commons/images/5/54/GX_Flickless_at_VCT_EMEA_Kickoff_2026.jpg",
+      "path": "assets/players/EU46.png",
+      "photoPage": "https://liquipedia.net/valorant/File:GX_Flickless_at_VCT_EMEA_Kickoff_2026.jpg",
+      "photoCredit": "Liquipedia · GX Flickless at VCT EMEA Kickoff 2026（裁切为头像）",
+      "fit": "cover",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（GX）队服照，替换旧战队队服照"
     },
     {
       "id": "EU47",
@@ -1524,8 +1632,13 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/29841/caedye",
       "profileName": "Caedye",
-      "sourceUrl": "https://owcdn.net/img/682d95ad8a7a4.png",
-      "path": "assets/players/PA35.png"
+      "sourceUrl": "https://liquipedia.net/commons/images/2/21/DFM_Caedye_at_VCT_Pacific_2026_Kickoff.jpg",
+      "path": "assets/players/PA35.png",
+      "photoPage": "https://liquipedia.net/valorant/File:DFM_Caedye_at_VCT_Pacific_2026_Kickoff.jpg",
+      "photoCredit": "Liquipedia · DFM Caedye at VCT Pacific 2026 Kickoff（裁切为头像）",
+      "fit": "cover",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（DFM）队服照，替换旧战队队服照"
     },
     {
       "id": "PA36",
@@ -1533,8 +1646,13 @@
       "status": "ok",
       "profileUrl": "https://www.vlr.gg/player/29843/yatsuka",
       "profileName": "yatsuka",
-      "sourceUrl": "https://owcdn.net/img/682d95bed801b.png",
-      "path": "assets/players/PA36.png"
+      "sourceUrl": "https://liquipedia.net/commons/images/b/ba/DFM_yatsuka_at_VCT_Pacific_2026_Kickoff.jpg",
+      "path": "assets/players/PA36.png",
+      "photoPage": "https://liquipedia.net/valorant/File:DFM_yatsuka_at_VCT_Pacific_2026_Kickoff.jpg",
+      "photoCredit": "Liquipedia · DFM yatsuka at VCT Pacific 2026 Kickoff（裁切为头像）",
+      "fit": "cover",
+      "photoUpdatedOn": "2026-09-26",
+      "photoNote": "2026 现役战队（DFM）队服照，替换旧战队队服照"
     },
     {
       "id": "PA37",

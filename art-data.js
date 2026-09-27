@@ -25,7 +25,9 @@ export const CARD_ART={
     "path": "assets/players/CN04.png",
     "profileUrl": "https://www.vlr.gg/player/3028/life",
     "name": "Life",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=10",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · DRG）"
   },
   "CN05": {
     "path": "assets/players/CN05.png",
@@ -43,13 +45,17 @@ export const CARD_ART={
     "path": "assets/players/CN07.png",
     "profileUrl": "https://www.vlr.gg/player/6022/yosemite",
     "name": "yosemite",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=23",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · WOL）"
   },
   "CN08": {
     "path": "assets/players/CN08.png",
     "profileUrl": "https://www.vlr.gg/player/11218/yuicaw",
     "name": "Yuicaw",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=44",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · JDG）"
   },
   "CN09": {
     "path": "assets/players/CN09.png",
@@ -79,7 +85,9 @@ export const CARD_ART={
     "path": "assets/players/CN13.png",
     "profileUrl": "https://www.vlr.gg/player/7857/berlin",
     "name": "BerLIN",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=45",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · JDG）"
   },
   "CN14": {
     "path": "assets/players/CN14.png",
@@ -91,7 +99,9 @@ export const CARD_ART={
     "path": "assets/players/CN15.png",
     "profileUrl": "https://www.vlr.gg/player/7849/siufatbb",
     "name": "SiuFatBB",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=263",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · TYL）"
   },
   "CN16": {
     "path": "assets/players/CN16.png",
@@ -295,7 +305,10 @@ export const CARD_ART={
     "path": "assets/players/AM09.png",
     "profileUrl": "https://www.vlr.gg/player/2170/babybay",
     "name": "BABYBAY",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:G2_babybay_at_VCT_2026_Americas_Stage_2.jpg",
+    "photoCredit": "Liquipedia · G2 babybay at VCT 2026 Americas Stage 2（裁切为头像）",
+    "fit": "cover"
   },
   "AM10": {
     "path": "assets/players/AM10.png",
@@ -325,7 +338,10 @@ export const CARD_ART={
     "path": "assets/players/AM14.png",
     "profileUrl": "https://www.vlr.gg/player/10885/davih",
     "name": "DaviH",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:LOUD_DaviH_at_VCT_2026_Americas_Stage_2.jpg",
+    "photoCredit": "Liquipedia · LOUD DaviH at VCT 2026 Americas Stage 2（裁切为头像）",
+    "fit": "cover"
   },
   "AM15": {
     "path": "assets/players/AM15.png",
@@ -343,7 +359,10 @@ export const CARD_ART={
     "path": "assets/players/AM17.png",
     "profileUrl": "https://www.vlr.gg/player/729/zellsis",
     "name": "Zellsis",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:C9_Zellsis_at_VCT_2026_Americas_Stage_2.jpg",
+    "photoCredit": "Liquipedia · C9 Zellsis at VCT 2026 Americas Stage 2（裁切为头像）",
+    "fit": "cover"
   },
   "AM18": {
     "path": "assets/players/AM18.png",
@@ -379,7 +398,10 @@ export const CARD_ART={
     "path": "assets/players/EU05.png",
     "profileUrl": "https://www.vlr.gg/player/20144/lewn",
     "name": "LewN",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:Karmine_Corp_L%C3%AAwN_at_VCT_2026_EMEA_Stage_2.jpg",
+    "photoCredit": "Liquipedia · Karmine Corp LêwN at VCT 2026 EMEA Stage 2（裁切为头像）",
+    "fit": "cover"
   },
   "EU06": {
     "path": "assets/players/EU06.png",
@@ -589,13 +611,17 @@ export const CARD_ART={
     "path": "assets/players/CN22.png",
     "profileUrl": "https://www.vlr.gg/player/36415/viva",
     "name": "Viva",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000060&playerId=153",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第一赛段 · TE）"
   },
   "CN23": {
     "path": "assets/players/CN23.png",
     "profileUrl": "https://www.vlr.gg/player/10821/delb",
     "name": "deLb",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=1439",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · TE）"
   },
   "CN24": {
     "path": "assets/players/CN24.png",
@@ -681,13 +707,17 @@ export const CARD_ART={
     "path": "assets/players/CN36.png",
     "profileUrl": "https://www.vlr.gg/player/37489/lysoar",
     "name": "Lysoar",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=50",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · XLG）"
   },
   "CN37": {
     "path": "assets/players/CN37.png",
     "profileUrl": "https://www.vlr.gg/player/24308/wsleo",
     "name": "WsLeo",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=1222",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · XLG）"
   },
   "CN38": {
     "path": "assets/players/CN38.png",
@@ -718,7 +748,9 @@ export const CARD_ART={
     "path": "assets/players/CN42.png",
     "profileUrl": "https://www.vlr.gg/player/34181/green",
     "name": "Green",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=1246",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · NOVA）"
   },
   "CN43": {
     "path": "assets/players/CN43.png",
@@ -736,13 +768,17 @@ export const CARD_ART={
     "path": "assets/players/CN45.png",
     "profileUrl": "https://www.vlr.gg/player/49476/zhe",
     "name": "zhe",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=1986",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · JDG）"
   },
   "CN46": {
     "path": "assets/players/CN46.png",
     "profileUrl": "https://www.vlr.gg/player/12365/coconut",
     "name": "coconut",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://vct.qq.com/player-data.html?gameId=1000068&playerId=1774",
+    "photoCredit": "无畏契约赛事官网 vct.qq.com 选手照（2026 CN 联赛第二赛段 · FPX）"
   },
   "CN47": {
     "path": "assets/players/CN47.png",
@@ -938,13 +974,19 @@ export const CARD_ART={
     "path": "assets/players/AM21.png",
     "profileUrl": "https://www.vlr.gg/player/3993/jawgemo",
     "name": "jawgemo",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:G2_jawgemo_at_Valorant_Champions_2026.jpg",
+    "photoCredit": "Liquipedia · G2 jawgemo at Valorant Champions 2026（裁切为头像）",
+    "fit": "cover"
   },
   "AM22": {
     "path": "assets/players/AM22.png",
     "profileUrl": "https://www.vlr.gg/player/30470/kyu",
     "name": "Kyu",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:M80_Kyu_at_VCT_2026_Americas_Stage_2.jpg",
+    "photoCredit": "Liquipedia · M80 Kyu at VCT 2026 Americas Stage 2（裁切为头像）",
+    "fit": "cover"
   },
   "AM23": {
     "path": "assets/players/AM23.png",
@@ -956,7 +998,10 @@ export const CARD_ART={
     "path": "assets/players/AM24.png",
     "profileUrl": "https://www.vlr.gg/player/36245/n4rrate",
     "name": "N4RRATE",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:KC_N4RRATE_at_VCT_EMEA_2026_Stage_2.jpeg",
+    "photoCredit": "Liquipedia · KC N4RRATE at VCT EMEA 2026 Stage 2（裁切为头像）",
+    "fit": "cover"
   },
   "AM25": {
     "path": "assets/players/AM25.png",
@@ -1065,7 +1110,10 @@ export const CARD_ART={
     "path": "assets/players/AM42.png",
     "profileUrl": "https://www.vlr.gg/player/619/c0m",
     "name": "C0M",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:FUR_C0M_at_VCT_2026_Americas_Stage_2.jpg",
+    "photoCredit": "Liquipedia · FUR C0M at VCT 2026 Americas Stage 2（裁切为头像）",
+    "fit": "cover"
   },
   "AM43": {
     "path": "assets/players/AM43.png",
@@ -1080,7 +1128,10 @@ export const CARD_ART={
     "path": "assets/players/AM44.png",
     "profileUrl": "https://www.vlr.gg/player/8873/dgzin",
     "name": "dgzin",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:EG_dgzin_at_VCT_2026_Americas_Kickoff.jpg",
+    "photoCredit": "Liquipedia · EG dgzin at VCT 2026 Americas Kickoff（裁切为头像）",
+    "fit": "cover"
   },
   "AM45": {
     "path": "assets/players/AM45.png",
@@ -1371,7 +1422,10 @@ export const CARD_ART={
     "path": "assets/players/EU35.png",
     "profileUrl": "https://www.vlr.gg/player/12928/veqaj",
     "name": "Veqaj",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:FNC_Veqaj_at_EMEA_Kickoff_2026.jpg",
+    "photoCredit": "Liquipedia · FNC Veqaj at EMEA Kickoff 2026（裁切为头像）",
+    "fit": "cover"
   },
   "EU36": {
     "path": "assets/players/EU36.png",
@@ -1426,7 +1480,10 @@ export const CARD_ART={
     "path": "assets/players/EU44.png",
     "profileUrl": "https://www.vlr.gg/player/34684/westside",
     "name": "westside",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:GX_westside_at_VCT_EMEA_Kickoff_2026.jpg",
+    "photoCredit": "Liquipedia · GX westside at VCT EMEA Kickoff 2026（裁切为头像）",
+    "fit": "cover"
   },
   "EU45": {
     "path": "assets/players/EU45.png",
@@ -1440,7 +1497,10 @@ export const CARD_ART={
     "path": "assets/players/EU46.png",
     "profileUrl": "https://www.vlr.gg/player/6959/flickless",
     "name": "Flickless",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:GX_Flickless_at_VCT_EMEA_Kickoff_2026.jpg",
+    "photoCredit": "Liquipedia · GX Flickless at VCT EMEA Kickoff 2026（裁切为头像）",
+    "fit": "cover"
   },
   "EU47": {
     "path": "assets/players/EU47.png",
@@ -1724,13 +1784,19 @@ export const CARD_ART={
     "path": "assets/players/PA35.png",
     "profileUrl": "https://www.vlr.gg/player/29841/caedye",
     "name": "Caedye",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:DFM_Caedye_at_VCT_Pacific_2026_Kickoff.jpg",
+    "photoCredit": "Liquipedia · DFM Caedye at VCT Pacific 2026 Kickoff（裁切为头像）",
+    "fit": "cover"
   },
   "PA36": {
     "path": "assets/players/PA36.png",
     "profileUrl": "https://www.vlr.gg/player/29843/yatsuka",
     "name": "yatsuka",
-    "kind": "photo"
+    "kind": "photo",
+    "photoPage": "https://liquipedia.net/valorant/File:DFM_yatsuka_at_VCT_Pacific_2026_Kickoff.jpg",
+    "photoCredit": "Liquipedia · DFM yatsuka at VCT Pacific 2026 Kickoff（裁切为头像）",
+    "fit": "cover"
   },
   "PA37": {
     "path": "assets/players/PA37.png",
