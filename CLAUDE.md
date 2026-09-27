@@ -100,7 +100,7 @@
   2. 收集用户真人试玩反馈，尤其是手机上的点击出牌、多敌人选目标、成就是否容易达成；
   3. 处理瓦版中国赛区和新 Demo 烈锋突击队的平衡。
 - 每次改完：`npm run build` → `npm test` → 提交（提交信息末尾加 `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`）→ 推送两个分支 → `curl` 核对线上 → 中文汇报 → 更新 `docs/TASKS.md`。
-- 玩家能感知到的改动，上线时同步在 `shared/changelog.js` 顶部加一条（首页"更新日志"读取它；新版本号 + 当天日期，按 瓦 Demo／新 Demo／好友 PvP／两个版本 打标签，写给玩家看的中文）。
+- 玩家能感知到的改动，上线时同步在 `shared/changelog.js` 顶部加一条（瓦 Demo 与新 Demo 封面的"更新日志"读取它，changelogFor 按版本筛选；标 all 的条目两边都显示，不能写无畏契约相关内容；新版本号 + 当天日期，按 瓦 Demo／新 Demo／好友 PvP／两个版本 打标签，写给玩家看的中文）。
 
 ## 七、过时资料提醒
 

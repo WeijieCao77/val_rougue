@@ -1,17 +1,19 @@
-// Player-facing update log, newest first. Shown from the landing page (/).
+// Player-facing update log, newest first. Each demo's cover shows its own log
+// (changelogFor): the Wa demo gets 'wa' + 'pvp' + 'all' lines, the new demo only
+// 'new' + 'all' — so 'all' lines must never mention Valorant, players or PvP.
 // tag: 'wa' 瓦 Demo · 'new' 新 Demo · 'pvp' 好友 PvP · 'all' 两个版本
 // When shipping something players will notice, add a line to the top entry
 // (or a new entry with the next version and today's date).
 export const CHANGELOG = [
   {
-    version: 'v0.9.1', date: '2026-09-27', title: '选手照片更新',
+    version: 'v0.9.1', date: '2026-09-27', title: { wa: '选手照片更新', new: '封面更新日志' },
     items: [
       ['wa', '26 名选手换上 2026 赛季现役队服照片（中国赛区为官方定妆照）。'],
-      ['all', '首页新增更新日志。']
+      ['all', '封面新增更新日志。']
     ]
   },
   {
-    version: 'v0.9.0', date: '2026-09-26', title: '好友 PvP 重做',
+    version: 'v0.9.0', date: '2026-09-26', title: { wa: '好友 PvP 重做', new: '手机战斗与卡牌说明' },
     items: [
       ['pvp', '对战界面整体重做：上下对坐的牌桌，拖牌出牌，打出的牌双方都在桌面中央完整展示。'],
       ['pvp', '回合结束时就摸好下回合手牌，对手回合里可以先看牌、先盘算。'],
@@ -64,3 +66,12 @@ export const CHANGELOG = [
 
 export const TAG_LABELS = { wa: '瓦 Demo', new: '新 Demo', pvp: '好友 PvP', all: '两个版本' };
 export const LATEST_VERSION = CHANGELOG[0].version;
+
+// One demo's log: only its lines, entries without any dropped. PvP lines keep a tag
+// in the Wa log; everything else there is implicitly about that demo.
+export function changelogFor(demo) {
+  const tags = demo === 'wa' ? ['wa', 'pvp', 'all'] : ['new', 'all'];
+  // A title can differ per demo ({ wa, new }) when the headline item is demo-specific.
+  const entries = CHANGELOG.map(r => ({ ...r, title: typeof r.title === 'string' ? r.title : r.title[demo], items: r.items.filter(([t]) => tags.includes(t)) })).filter(r => r.items.length);
+  return { key: `changelog-seen-${demo}`, entries, labels: demo === 'wa' ? { pvp: '好友 PvP' } : {} };
+}

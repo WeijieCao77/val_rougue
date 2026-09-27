@@ -150,3 +150,9 @@ test('new demo card type strip labels describe effects, not deck-building roles'
   assert.doesNotMatch(line, /构筑|流派|混搭|推荐/);
   assert.doesNotMatch(src, /'诅咒'/);
 });
+
+test('new demo update log never mentions Valorant, players or PvP', async () => {
+  const { changelogFor } = await import('../shared/changelog.js');
+  const text = changelogFor('new').entries.map(r => r.title + r.items.map(([, x]) => x).join('')).join('\n');
+  assert.doesNotMatch(text, /PvP|选手|赛区|无畏|瓦|VCT|大师赛|冠军赛/);
+});

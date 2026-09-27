@@ -189,3 +189,9 @@
   .new-home .team-card { min-height: 44px; padding: 4px 6px; }
   .new-home .hero-content { bottom: 18px; }
 }
+
+/* Update log sits in the cover link row, styled like its neighbours. */
+.new-home .nav-links .cl-btn{min-height:0;padding:0;border:0;background:none;font:inherit;letter-spacing:inherit;color:inherit;gap:4px}
+.new-home .nav-links .cl-btn small{display:none}
+.new-home .nav-links .cl-btn.unseen:after{top:-3px;right:-9px;width:8px;height:8px}
+.new-home .nav-links .cl-btn:hover{color:#effff7}

@@ -5,6 +5,9 @@ import { statusBadges, statusBadge, statusIcon, highlightKeywords, keywordRules,
 import { attachCardDetail, openCardSheet, showDragHint, hideDragHint, trackLayer } from '/shared/touch-feel.js';
 import { tapPlayMode, tapCardAction, watchTapPlay, enforceTextFloor } from '/shared/tap-play.js';
 import { startCoach } from '/shared/coach.js';
+import { changelogFor } from '/shared/changelog.js';
+import { changelogButtonHtml, initChangelog } from '/shared/changelog-ui.js';
+const ND_LOG = changelogFor('new');
 import { showResultSummary, resultWorthShowing } from '/shared/result-summary.js';
 import { ACTS } from './season-map.js';
 import { cardArt, combatArt, relicArt } from './art.js';
@@ -250,6 +253,7 @@ function renderHome() {
         <button class="hero-link" id="btn-library">图鉴</button>
         <button class="hero-link" id="btn-history">战绩</button>
         <button class="hero-link" id="btn-achievements">成就</button>
+        ${changelogButtonHtml(ND_LOG)}
         <a href="/">选择版本</a>
       </nav>
       <footer class="credit">猪之家出品</footer>
@@ -2249,6 +2253,7 @@ function initGlobalTooltip() {
 document.addEventListener('DOMContentLoaded', () => {
   initGlobalTooltip();
   initUpgradePeek();
+  initChangelog(ND_LOG);
   // First fight: a few tips over the first two turns (once per browser).
   startCoach({ key: 'new-demo-coach-v1', getTurn: () => state?.phase === 'combat' && state.battle ? state.battle.turn : null, steps: [
   { turn: 1, sel: '.enemy-unit:not(.is-dead) .intent', text: '敌人头上显示它<b>下一步要做什么</b>，数字是它实际会造成的伤害。' },

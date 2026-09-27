@@ -18339,6 +18339,164 @@ function startCoach({ key, getTurn, steps }) {
 return {coachDone,startCoach};
 })();
 const module34=(()=>{
+// Player-facing update log, newest first. Each demo's cover shows its own log
+// (changelogFor): the Wa demo gets 'wa' + 'pvp' + 'all' lines, the new demo only
+// 'new' + 'all' — so 'all' lines must never mention Valorant, players or PvP.
+// tag: 'wa' 瓦 Demo · 'new' 新 Demo · 'pvp' 好友 PvP · 'all' 两个版本
+// When shipping something players will notice, add a line to the top entry
+// (or a new entry with the next version and today's date).
+const CHANGELOG = [
+  {
+    version: 'v0.9.1', date: '2026-09-27', title: { wa: '选手照片更新', new: '封面更新日志' },
+    items: [
+      ['wa', '26 名选手换上 2026 赛季现役队服照片（中国赛区为官方定妆照）。'],
+      ['all', '封面新增更新日志。']
+    ]
+  },
+  {
+    version: 'v0.9.0', date: '2026-09-26', title: { wa: '好友 PvP 重做', new: '手机战斗与卡牌说明' },
+    items: [
+      ['pvp', '对战界面整体重做：上下对坐的牌桌，拖牌出牌，打出的牌双方都在桌面中央完整展示。'],
+      ['pvp', '回合结束时就摸好下回合手牌，对手回合里可以先看牌、先盘算。'],
+      ['pvp', '新战报栏：从左侧滑出，每一步谁出了什么牌、造成了什么效果都能点开看。'],
+      ['pvp', '新结算画面：胜利与失败有各自的动画与音效，附双方数据对比。'],
+      ['pvp', '再来一局：双方同意后在同一房间直接开新局，先后手互换。'],
+      ['pvp', '回合限时 75 秒，最后 20 秒出现燃烧的引线；连续 3 回合超时判负。'],
+      ['pvp', '云端构筑库改为卡牌网格 + 费用分布 + 列表，可点开看大图与训练后版本。'],
+      ['pvp', '修复：打完一幕后"存储失败"、PvP 页面空白、PvP 卡牌没有选手照片。'],
+      ['wa', '补齐最后 16 名选手的真人照片，200 张选手牌全部有照片。'],
+      ['all', '第一幕稍微加难一点。'],
+      ['all', '逐张核对全部卡牌说明，修正与实际效果不符、用词不统一的地方（例如"基础伤害 +true"）。'],
+      ['all', '手机战斗界面重排：一屏显示完整，所有手牌都在屏幕内，点牌时画面不再跳动，特效不再飞出屏幕。'],
+      ['all', '卡牌说明改为鼠标停留约 1 秒才弹出，移开即关闭。'],
+      ['all', '第一场战斗的前两个回合加入新手指引。']
+    ]
+  },
+  {
+    version: 'v0.8.0', date: '2026-09-25', title: '成就与手机操作',
+    items: [
+      ['all', '成就系统：局内成就与生涯成就，完成可获得称号。'],
+      ['all', '手机改为点击出牌（点一下选中、再点一下打出），长按看详情。'],
+      ['all', '随机训练、随机奖励会弹窗写明是哪张牌、数值怎么变。'],
+      ['all', '第一幕难度下调，新手更容易见到第一幕决战。']
+    ]
+  },
+  {
+    version: 'v0.7.0', date: '2026-09-24', title: '赛程与构筑系统',
+    items: [
+      ['all', '每幕扩展为 15 层地图 + 第 16 层决战；未知房间、补给箱、事件池。'],
+      ['all', '每幕决战从 3 个候选中抽取，地图顶部提前显示；敌人分弱组与强组，加入多人群战。'],
+      ['all', '难度等级 0–10、专属特质、开局抉择、装备与补给品。'],
+      ['all', '卡牌解锁进度、跳过奖励补偿、投资与商店刷新。'],
+      ['all', '战绩、图鉴、局后结算、牌组与牌堆查看。'],
+      ['all', '程序生成音效与打击感；状态改为图标徽章。'],
+      ['wa', '卡牌稀有度（普通／罕见／稀有），只表示出现频率。'],
+      ['wa', '新增 112 名扩展选手的照片。'],
+      ['new', '战术卡牌重新设计；新增燃烧、部署、连击、过载、发现等关键词卡。']
+    ]
+  },
+  {
+    version: 'v0.6.0', date: '2026-09-23', title: '赛季路线与卡池扩充',
+    items: [
+      ['wa', '各赛区卡池扩充，赛季路线更多样；抽牌与弃牌加入动画。'],
+      ['new', '新手引导、卡牌与像素角色改进。'],
+      ['all', '战斗角色改为战术小人，出牌节奏调整。']
+    ]
+  }
+];
+
+const TAG_LABELS = { wa: '瓦 Demo', new: '新 Demo', pvp: '好友 PvP', all: '两个版本' };
+const LATEST_VERSION = CHANGELOG[0].version;
+
+// One demo's log: only its lines, entries without any dropped. PvP lines keep a tag
+// in the Wa log; everything else there is implicitly about that demo.
+function changelogFor(demo) {
+  const tags = demo === 'wa' ? ['wa', 'pvp', 'all'] : ['new', 'all'];
+  // A title can differ per demo ({ wa, new }) when the headline item is demo-specific.
+  const entries = CHANGELOG.map(r => ({ ...r, title: typeof r.title === 'string' ? r.title : r.title[demo], items: r.items.filter(([t]) => tags.includes(t)) })).filter(r => r.items.length);
+  return { key: `changelog-seen-${demo}`, entries, labels: demo === 'wa' ? { pvp: '好友 PvP' } : {} };
+}
+
+return {CHANGELOG,TAG_LABELS,LATEST_VERSION,changelogFor};
+})();
+const module35=(()=>{
+// Update-log button + slide-out panel for a demo's cover screen (shared by both
+// demos). Plain ES module with named exports and no imports (bundled into the
+// Wa app.js by tools/build-browser.mjs, imported directly by the new demo).
+//
+// changelogButtonHtml(log)  → the cover button (a dot until the newest version is opened)
+// initChangelog(log)        → once per page: styles + click handling for [data-changelog]
+// log = { key, entries: [{version, date, title, items: [[tag, text]]}], labels: {tag: label} }
+
+const CSS = `
+.cl-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid #d9b67799;border-radius:6px;background:#0d151ccc;color:#f4ead7;font:600 14px system-ui,"Microsoft YaHei",sans-serif;letter-spacing:.06em;cursor:pointer;position:relative}
+.cl-btn small{color:#d6c6a8;font-weight:400}
+.cl-btn.unseen:after{content:"";position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:#ff6b3d;box-shadow:0 0 8px #ff6b3d}
+.cl-wrap{position:fixed;inset:0;z-index:5000;background:#03070bb3;opacity:0;pointer-events:none;transition:opacity .2s}
+.cl-wrap.open{opacity:1;pointer-events:auto}
+.cl{position:absolute;top:0;right:0;bottom:0;width:min(460px,100%);display:flex;flex-direction:column;background:linear-gradient(#141f28,#0b1219);border-left:1px solid #d9b67755;box-shadow:-20px 0 60px #000a;transform:translateX(100%);transition:transform .25s ease;color:#f4ead7;font-family:system-ui,"Microsoft YaHei",sans-serif;text-align:left}
+.cl-wrap.open .cl{transform:none}
+.cl header{display:flex;justify-content:space-between;align-items:center;padding:max(16px,env(safe-area-inset-top)) 18px 12px;border-bottom:1px solid #ffffff14}
+.cl header h2{margin:0;font-family:Georgia,"SimSun",serif;font-size:22px;letter-spacing:.12em;color:#f3dfa6}
+.cl-close{min-width:44px;min-height:44px;border:1px solid #6d6146;border-radius:6px;background:#17252a;color:#e8d8ae;font-size:18px;cursor:pointer}
+.cl-body{overflow-y:auto;padding:6px 18px max(24px,env(safe-area-inset-bottom));overscroll-behavior:contain}
+.cl-rel{padding:16px 0;border-bottom:1px solid #ffffff10}
+.cl-rel h3{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 10px;font-size:17px;color:#fff3d2}
+.cl-rel h3 b{font-size:13px;padding:2px 8px;border-radius:10px;background:#d9b677;color:#1a1408}
+.cl-rel h3 time{font-size:13px;color:#98a8a4;font-weight:400}
+.cl-rel ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.cl-rel li{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:baseline;font-size:14px;line-height:1.6;color:#dfe6e3}
+.cl-rel li.no-tag{grid-template-columns:1fr}
+.cl-tag{font-size:12px;padding:1px 7px;border-radius:4px;white-space:nowrap;border:1px solid #c8d2cf55;color:#c8d2cf}
+.cl-tag-pvp{color:#ff9b7a;border-color:#ff9b7a66}
+@media(prefers-reduced-motion:reduce){.cl,.cl-wrap{transition:none}}
+`;
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const seenVersion = key => { try { return localStorage.getItem(key); } catch { return null; } };
+
+function changelogButtonHtml(log) {
+  const latest = log.entries[0]?.version || '';
+  return `<button type="button" class="cl-btn${seenVersion(log.key) !== latest ? ' unseen' : ''}" data-changelog aria-haspopup="dialog">更新日志 <small>${esc(latest)}</small></button>`;
+}
+
+let active = null;
+function initChangelog(log) {
+  active = log;
+  if (document.getElementById('cl-style')) return;
+  const style = document.createElement('style');
+  style.id = 'cl-style';
+  style.textContent = CSS;
+  document.head.append(style);
+  const wrap = document.createElement('div');
+  wrap.className = 'cl-wrap';
+  wrap.setAttribute('aria-hidden', 'true');
+  wrap.innerHTML = '<aside class="cl" role="dialog" aria-modal="true" aria-label="更新日志"><header><h2>更新日志</h2><button type="button" class="cl-close" aria-label="关闭">✕</button></header><div class="cl-body"></div></aside>';
+  document.body.append(wrap);
+  const fmt = d => { const [, m, day] = d.split('-'); return `${+m} 月 ${+day} 日`; };
+  let opener = null;
+  const close = () => { wrap.classList.remove('open'); wrap.setAttribute('aria-hidden', 'true'); opener?.focus?.(); };
+  const open = btn => {
+    const { entries, labels = {}, key } = active;
+    wrap.querySelector('.cl-body').innerHTML = entries.map(r => `<section class="cl-rel"><h3><b>${esc(r.version)}</b>${esc(r.title)}<time datetime="${r.date}">${fmt(r.date)}</time></h3><ul>${r.items.map(([t, text]) => labels[t] ? `<li><span class="cl-tag cl-tag-${t}">${esc(labels[t])}</span><span>${esc(text)}</span></li>` : `<li class="no-tag"><span>${esc(text)}</span></li>`).join('')}</ul></section>`).join('');
+    opener = btn;
+    btn.classList.remove('unseen');
+    try { localStorage.setItem(key, entries[0]?.version || ''); } catch {}
+    wrap.classList.add('open');
+    wrap.setAttribute('aria-hidden', 'false');
+    wrap.querySelector('.cl-close').focus();
+  };
+  document.addEventListener('click', e => {
+    const btn = e.target.closest?.('[data-changelog]');
+    if (btn && active) { e.preventDefault(); open(btn); }
+  });
+  wrap.addEventListener('click', e => { if (e.target === wrap || e.target.closest('.cl-close')) close(); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && wrap.classList.contains('open')) close(); });
+}
+
+return {changelogButtonHtml,initChangelog};
+})();
+const module36=(()=>{
 const { cardArtwork, opponentArtwork, artCredit } = module17;
 const { combatEvents } = module18;
 const { clearCombatFx, captureCombatStage, playCombatFx } = module22;
@@ -18355,6 +18513,10 @@ const { soundToggleHtml } = module19;
 const { attachCardDetail, cardSheetOpen, openCardSheet, showDragHint, hideDragHint, touchLift, trackLayer } = module31;
 const { tapPlayMode, tapCardAction, allowCardDrag, watchTapPlay, enforceTextFloor } = module32;
 const { startCoach } = module33;
+const { changelogFor } = module34;
+const { changelogButtonHtml, initChangelog } = module35;
+// Cover update log: the Wa demo's own entries (Wa + PvP).
+const WA_LOG=changelogFor('wa');
 const { waJuiceAction, waSlam } = module21;
 const { showResultSummary, resultWorthShowing } = module28;
 const { waAchieve, waHallHtml, bindWaHall, waAchResultHtml, waTitleHtml } = module30;
@@ -18472,9 +18634,10 @@ function home(){
      <p class="cover-sub">把这支队伍，带到赛季最后一场。</p>
      ${waTitleHtml('cover-title-badge')}
      <div class="cover-actions">
-       ${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}
+       ${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.act||1}幕${saved.node?` · 第${saved.node}站`:''}`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}
        <a class="primary cover-select-link" href="#cover-setup">选择赛区 ↓</a>
      </div>
+     <div class="cover-log">${changelogButtonHtml(WA_LOG)}</div>
    </div>
  </section>
  <section class="cover-setup" id="cover-setup">
@@ -18710,6 +18873,7 @@ function crateRoom(){
  return `${heading('补给箱 · 已打开',names[c.size],'')}${box}${loot}${ups}<div class="page-footer">${button(r.upgrade?'不训练，继续赛程 →':'收好物资，继续赛程 →',{type:'crate',choice:'leave'},r.upgrade?'secondary':'primary')}</div>`;
 }
 function render(){
+ initChangelog(WA_LOG);
  clearCombatFx();
  document.querySelectorAll('.card-flight').forEach(el=>{el.getAnimations().forEach(a=>a.cancel());el.remove();});
  hideCardTip();

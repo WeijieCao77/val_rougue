@@ -42,6 +42,8 @@ const modules = [
   'shared/touch-feel.js',
   'shared/tap-play.js',
   'shared/coach.js',
+  'shared/changelog.js',
+  'shared/changelog-ui.js',
   'ui-source.js'
 ];
 

@@ -14,6 +14,10 @@ import {soundToggleHtml} from './shared/sfx.js';
 import {attachCardDetail,cardSheetOpen,openCardSheet,showDragHint,hideDragHint,touchLift,trackLayer} from './shared/touch-feel.js';
 import {tapPlayMode,tapCardAction,allowCardDrag,watchTapPlay,enforceTextFloor} from './shared/tap-play.js';
 import {startCoach} from './shared/coach.js';
+import {changelogFor} from './shared/changelog.js';
+import {changelogButtonHtml,initChangelog} from './shared/changelog-ui.js';
+// Cover update log: the Wa demo's own entries (Wa + PvP).
+const WA_LOG=changelogFor('wa');
 import {waJuiceAction,waSlam} from './wa-juice.js';
 import {showResultSummary,resultWorthShowing} from './shared/result-summary.js';
 import {waAchieve,waHallHtml,bindWaHall,waAchResultHtml,waTitleHtml} from './wa-achievements.js';
@@ -131,9 +135,10 @@ function home(){
      <p class="cover-sub">把这支队伍，带到赛季最后一场。</p>
      ${waTitleHtml('cover-title-badge')}
      <div class="cover-actions">
-       ${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.node}站`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}
+       ${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.act||1}幕${saved.node?` · 第${saved.node}站`:''}`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}
        <a class="primary cover-select-link" href="#cover-setup">选择赛区 ↓</a>
      </div>
+     <div class="cover-log">${changelogButtonHtml(WA_LOG)}</div>
    </div>
  </section>
  <section class="cover-setup" id="cover-setup">
@@ -369,6 +374,7 @@ function crateRoom(){
  return `${heading('补给箱 · 已打开',names[c.size],'')}${box}${loot}${ups}<div class="page-footer">${button(r.upgrade?'不训练，继续赛程 →':'收好物资，继续赛程 →',{type:'crate',choice:'leave'},r.upgrade?'secondary':'primary')}</div>`;
 }
 function render(){
+ initChangelog(WA_LOG);
  clearCombatFx();
  document.querySelectorAll('.card-flight').forEach(el=>{el.getAnimations().forEach(a=>a.cancel());el.remove();});
  hideCardTip();
