@@ -5,7 +5,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createWaSeason, waAct, waLegalActions } from '../wa-season.js';
 import { CARDS, REGIONS, effects } from '../content.js';
-import { ENEMY_TUNING_V2, ENEMY_TUNING_V3, ENEMY_TUNING_V4, TRAIT_TUNING, GEAR, RULES_VERSION } from '../wa-rules.js';
+import { ENEMY_TUNING_V2, ENEMY_TUNING_V3, ENEMY_TUNING_V4, ENEMY_TUNING_V5, TRAIT_TUNING, GEAR, RULES_VERSION } from '../wa-rules.js';
 import { describeSeasonEvent, battleFoes } from '../engine.js';
 import { WA_EVENTS } from '../wa-events.js';
 
@@ -15,7 +15,7 @@ const SEED_START = Number(args['seed-start'] || 1); // --seed-start N: first see
 const ACTS = Number(args.acts || 3);
 const OUT = args.out || 'reports/playtest/wa.json';
 const RULES = Number(args.rules ?? RULES_VERSION);
-const ENEMY_TUNING = RULES >= 4 ? ENEMY_TUNING_V4 : RULES >= 3 ? ENEMY_TUNING_V3 : ENEMY_TUNING_V2;
+const ENEMY_TUNING = RULES >= 5 ? ENEMY_TUNING_V5 : RULES >= 4 ? ENEMY_TUNING_V4 : RULES >= 3 ? ENEMY_TUNING_V3 : ENEMY_TUNING_V2;
 // --tune '{"1":{"normal":{"hp":1.2}}}' overrides opponent tuning for balance sweeps.
 if (args.tune) { const t = JSON.parse(args.tune); for (const [act, kinds] of Object.entries(t)) for (const [kind, v] of Object.entries(kinds)) ENEMY_TUNING[act][kind] = Object.assign(ENEMY_TUNING[act][kind] || {}, v); }
 // --trait '{"PAC":{"every":4}}' overrides region trait numbers for balance sweeps.

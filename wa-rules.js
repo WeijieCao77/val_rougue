@@ -7,12 +7,14 @@ import {SKINS} from './content.js';
 
 // Runs created with rules >= 1 get traits, the opening, equipment and supplies.
 // Older saves and server records without `rules` replay exactly as before.
-export const RULES_VERSION = 4;
+export const RULES_VERSION = 5;
 // Rules 3 (2026-09-24): group fights, weak/strong encounter pools, three boss
 // candidates per act, keyword cards. Rules 1 stays accepted so its records replay.
 // Rules 4 (2026-09-25): rules 3 with an easier first act (ENEMY_TUNING_V4) after
 // players died before the act-1 boss. Rules 1 and 3 records replay unchanged.
-export const RULES_VERSIONS = [1, 3, 4];
+// Rules 5 (2026-09-26): rules 4 with act 1 a small step harder again
+// (ENEMY_TUNING_V5) after the eased act felt too easy. Rules 4 records replay unchanged.
+export const RULES_VERSIONS = [1, 3, 4, 5];
 export const ROLES = ['决斗','哨位','控场','先锋','自由人'];
 
 // Numbers live here so the engine, PvP and the displayed text never disagree.
@@ -195,4 +197,12 @@ export const ENEMY_TUNING_V4 = {
  1:{weak:{hp:1.08,dmg:1.2},normalEarly:{hp:1.12,dmg:1.15},normal:{hp:1.25,dmg:1.3},eliteEarly:{hp:1.1,dmg:1.1},elite:{hp:1.2,dmg:1.2},boss:{hp:1.3,dmg:1.25}},
  2:{weak:{hp:1.35,dmg:1.25},normal:{hp:1.5,dmg:1.38},elite:{hp:1.5,dmg:1.38},boss:{hp:1.8,dmg:1.5,growth:2}},
  3:{weak:{hp:1.55,dmg:1.4},normal:{hp:1.7,dmg:1.52},elite:{hp:1.7,dmg:1.52},boss:{hp:1.9,dmg:1.6,growth:3}}
+};
+// Rules 5: act 1 a small step back toward rules 3 (2026-09-26). The first
+// floors (weak, normalEarly, eliteEarly) take back part of the rules-4 easing,
+// later act-1 fights and elites a little; the act-1 boss and acts 2–3 unchanged.
+export const ENEMY_TUNING_V5 = {
+ 1:{weak:{hp:1.1,dmg:1.22},normalEarly:{hp:1.14,dmg:1.17},normal:{hp:1.26,dmg:1.31},eliteEarly:{hp:1.12,dmg:1.12},elite:{hp:1.21,dmg:1.21},boss:{hp:1.3,dmg:1.25}},
+ 2:{...ENEMY_TUNING_V4[2]},
+ 3:{...ENEMY_TUNING_V4[3]}
 };

@@ -5,10 +5,12 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createRun, legalActions, act, battleEnemies, describeEvent } from '../new-demo/engine.js';
 import { EVENTS } from '../new-demo/events.js';
-import { CARDS, TEAMS, SUPPLIES, RELICS } from '../new-demo/content.js';
+import { CARDS, TEAMS, SUPPLIES, RELICS, EARLY_EASE } from '../new-demo/content.js';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, v, i, all) => (v.startsWith('--') ? [...acc, [v.slice(2), all[i + 1]]] : acc), []));
 const SEEDS = Number(args.seeds || 10);
+// --ease '{"weak":{"hp":0.9}}' overrides the act-1 EARLY_EASE multipliers for balance sweeps.
+if (args.ease) for (const [k, v] of Object.entries(JSON.parse(args.ease))) EARLY_EASE[k] = typeof v === 'object' ? { ...EARLY_EASE[k], ...v } : v;
 const ACTS = Number(args.acts || 1);
 const OUT = args.out || 'reports/playtest/new-demo-act1.json';
 const POLICIES = (args.policies || 'smart,naive,random').split(',');

@@ -4,7 +4,7 @@ import {createSeason,act,instance,startBattle,legalActions,battleFoes,livingFoes
 import {buildMap,availableNodes} from '../season-map.js';
 import {CARDS,ENEMIES,REGIONS,WA_GROUPS,ENCOUNTER_POOLS,BOSS_POOL,BOSS_INFO,describe,compactLines} from '../content.js';
 import {createMatch,applyCommand} from '../online/duel.mjs';
-import {RULES_VERSION,RULES_VERSIONS,ENEMY_TUNING_V3,ENEMY_TUNING_V4,EARLY_STEP} from '../wa-rules.js';
+import {RULES_VERSION,RULES_VERSIONS,ENEMY_TUNING_V3,ENEMY_TUNING_V4,ENEMY_TUNING_V5,EARLY_STEP} from '../wa-rules.js';
 
 const step=(s,a)=>{const r=act(s,a);assert.equal(r.error,null,JSON.stringify(a)+' '+r.error);return r.state;};
 const r3=(seed='r3',region='CN')=>createSeason(seed,false,region,{rules:3});
@@ -19,8 +19,9 @@ function fightWith(enemy,hand,{region='CN',seed='r3-fight'}={}){
 }
 const uidOf=(s,id)=>s.battle.hand.find(c=>c.id===id).uid;
 
-test('rules 4 is the current ruleset; rules 1 and 3 stay accepted for replays, 2 is unknown',()=>{
- assert.equal(RULES_VERSION,4);assert.deepEqual(RULES_VERSIONS,[1,3,4]);
+test('rules 5 is the current ruleset; rules 1, 3 and 4 stay accepted for replays, 2 is unknown',()=>{
+ assert.equal(RULES_VERSION,5);assert.deepEqual(RULES_VERSIONS,[1,3,4,5]);
+ assert.equal(createSeason('x',false,'CN',{rules:4}).rules,4);
  assert.equal(r3().rules,3);
  assert.equal(createSeason('x',false,'CN',{rules:1}).rules,1);
  assert.throws(()=>createSeason('x',false,'CN',{rules:2}),/规则/);
@@ -195,4 +196,44 @@ test('rules 4 eases act 1 (weak floors, early floors, elites, boss); rules 3 kee
  }
  // Acts 2 and 3 stay as they were.
  assert.deepEqual(ENEMY_TUNING_V4[2],ENEMY_TUNING_V3[2]);assert.deepEqual(ENEMY_TUNING_V4[3],ENEMY_TUNING_V3[3]);
+});
+
+// Rules 5 only changes act-1 opponent numbers (ENEMY_TUNING_V5): a little harder
+// than rules 4, still easier than rules 3. Rules-4 seasons keep ENEMY_TUNING_V4.
+test('rules 5 makes act 1 slightly harder than rules 4 (never above rules 3); rules 4 keeps its numbers',()=>{
+ const fightOf=(rules,pickNode)=>{
+  let s=createSeason('r5-tune',false,'CN',{rules});
+  s=step(s,{type:'opening',choice:'trainRandom'});
+  const node=pickNode(s.map.nodes);
+  if(!node)return null;
+  s.currentNode=node.key;startBattle(s,node.enemy);
+  const base=ENEMIES[s.battle.enemy]?.hp;
+  return {max:s.battle.enemyMaxHp??base,base,dmgK:s.battle.dmgK||1};
+ };
+ const weak=n=>n.find(x=>x.kind==='battle'&&x.weak);
+ const early=n=>n.find(x=>x.kind==='battle'&&!x.weak&&x.step<=EARLY_STEP&&!WA_GROUPS[x.enemy]);
+ const late=n=>n.find(x=>x.kind==='battle'&&x.step>EARLY_STEP&&!WA_GROUPS[x.enemy]);
+ const boss=n=>n.find(x=>x.kind==='boss'&&!WA_GROUPS[x.enemy]);
+ let checked=0;
+ for(const [pick,key] of [[weak,'weak'],[early,'normalEarly'],[late,'normal'],[boss,'boss']]){
+  const four=fightOf(4,pick),five=fightOf(5,pick);
+  if(!four)continue;
+  checked++;
+  const k4=ENEMY_TUNING_V4[1][key],k5=ENEMY_TUNING_V5[1][key];
+  assert.equal(four.max,Math.round(four.base*k4.hp),`rules 4 ${key} hp unchanged`);
+  assert.ok(Math.abs(four.dmgK-k4.dmg)<1e-9,`rules 4 ${key} dmg unchanged`);
+  assert.equal(five.max,Math.round(five.base*k5.hp),`rules 5 ${key} hp`);
+  assert.ok(Math.abs(five.dmgK-k5.dmg)<1e-9,`rules 5 ${key} dmg`);
+  assert.ok(five.max>=four.max&&five.dmgK>=four.dmgK,`rules 5 ${key} is not easier than rules 4`);
+  if(key!=='boss')assert.ok(five.dmgK>four.dmgK,`rules 5 ${key} hits harder than rules 4`);
+ }
+ assert.ok(checked>=3);
+ // A small step: every act-1 multiplier sits between rules 4 and rules 3, and
+ // every fight except the boss is harder than under rules 4.
+ for(const [key,k5] of Object.entries(ENEMY_TUNING_V5[1])){
+  const k4=ENEMY_TUNING_V4[1][key],k3=ENEMY_TUNING_V3[1][key.replace('Early','')];
+  for(const f of ['hp','dmg'])assert.ok(k5[f]>=k4[f]&&k5[f]<=k3[f]&&(key==='boss'||k5[f]>k4[f]),`${key}.${f} between rules 4 and 3`);
+ }
+ // Acts 2 and 3 stay as they were.
+ assert.deepEqual(ENEMY_TUNING_V5[2],ENEMY_TUNING_V4[2]);assert.deepEqual(ENEMY_TUNING_V5[3],ENEMY_TUNING_V4[3]);
 });

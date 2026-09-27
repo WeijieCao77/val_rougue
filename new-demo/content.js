@@ -614,13 +614,16 @@ const DIFFICULTY = {
   // Boss pool pass (2026-09-24): with three act-1 candidates, weaker openers and
   // team retuning the bot cleared act 1 in ~65% of runs, so 1.5/1.5 -> 1.6/1.55.
   // 2026-09-25: players died before the act-1 boss; 1.6/1.55 -> 1.58/1.52 (with the early easing, the smart bot cleared act 1 in 85%).
-  boss: { hp: 1.58, dmg: 1.52 }
+  // 2026-09-26: felt a little too easy again; back to 1.6/1.55 (smart bot act 1: 73% -> 63%).
+  boss: { hp: 1.6, dmg: 1.55 }
 };
 // Early act-1 easing (2026-09-25, applied by the engine per fight): players died
 // before the act-1 boss. Weak floors (1–4), the other fights up to floor `step`
 // and elites up to floor `step` get these extra multipliers; later act-1 fights
 // (`late`, `lateElite`) are eased less.
-export const EARLY_EASE = { step: 8, weak: { hp: 0.85, dmg: 0.8 }, normal: { hp: 0.9, dmg: 0.88 }, elite: { hp: 0.75, dmg: 0.7 }, lateElite: { hp: 0.85, dmg: 0.82 }, late: { hp: 0.95, dmg: 0.93 } };
+// 2026-09-26: the eased act felt a little too easy; weak floors 0.85/0.8 -> 0.86/0.82,
+// floors 5–8 0.9/0.88 -> 0.91/0.89 (elites and later fights unchanged).
+export const EARLY_EASE = { step: 8, weak: { hp: 0.86, dmg: 0.82 }, normal: { hp: 0.91, dmg: 0.89 }, elite: { hp: 0.75, dmg: 0.7 }, lateElite: { hp: 0.85, dmg: 0.82 }, late: { hp: 0.95, dmg: 0.93 } };
 function roleOf(e) { return e.boss ? 'boss' : e.elite ? 'elite' : e.member ? 'member' : 'normal'; }
 function tuneEnemy(e, t) {
   const keep = a => (a.type === 'buff' || a.type === 'rally' ? { ...a } : null);
