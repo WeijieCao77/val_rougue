@@ -3,6 +3,7 @@ import { createMatch, applyCommand, viewFor, validateSnapshot } from './duel.mjs
 import { createWaSeason, waAct, extractCheckpoints } from '../wa-season.js';
 import { RULES_VERSIONS } from '../wa-rules.js';
 import { generateToken, generateRoomCode, sha256 } from './store.mjs';
+import { createSyncHandler } from './sync-api.mjs';
 
 const MAX_BODY_BYTES = 1024 * 1024;
 const MAX_ACTIONS = 5000;
@@ -40,14 +41,14 @@ function clone(obj) {
   return obj == null ? obj : structuredClone(obj);
 }
 
-class HttpError extends Error {
+export class HttpError extends Error {
   constructor(status, message) {
     super(message);
     this.status = status;
   }
 }
 
-function sendJson(res, status, obj) {
+export function sendJson(res, status, obj) {
   const body = JSON.stringify(obj);
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
@@ -58,7 +59,7 @@ function sendJson(res, status, obj) {
   res.end(body);
 }
 
-function sendError(res, err) {
+export function sendError(res, err) {
   if (!(err instanceof HttpError)) {
     console.error('API内部错误:', err);
     err = new HttpError(500, '服务器内部错误');
@@ -72,7 +73,21 @@ function getBearerToken(req) {
   return auth.slice(7).trim();
 }
 
-function checkSameOrigin(req) {
+// Behind Railway's edge proxy every request arrives from the proxy's address, so per-IP
+// limits would be shared by all players. On Railway (or with TRUST_PROXY=1) the client
+// address comes from X-Real-IP / the last X-Forwarded-For hop added by the proxy.
+const TRUST_PROXY = process.env.TRUST_PROXY === '1' || !!process.env.RAILWAY_ENVIRONMENT_ID || !!process.env.RAILWAY_SERVICE_NAME;
+export function clientIpOf(req) {
+  if (TRUST_PROXY) {
+    const real = req.headers?.['x-real-ip'];
+    if (typeof real === 'string' && real.trim()) return real.trim().slice(0, 64);
+    const fwd = req.headers?.['x-forwarded-for'];
+    if (typeof fwd === 'string' && fwd.trim()) return fwd.split(',').at(-1).trim().slice(0, 64);
+  }
+  return req.socket?.remoteAddress || 'unknown';
+}
+
+export function checkSameOrigin(req) {
   const origin = req.headers.origin;
   if (!origin) return true;
   const host = req.headers.host;
@@ -85,7 +100,7 @@ function checkSameOrigin(req) {
   }
 }
 
-async function readJsonBody(req) {
+export async function readJsonBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
     let size = 0;
@@ -216,7 +231,7 @@ function publicRoomAt(room, forSeat, nowTime = Date.now()) {
   };
 }
 
-class RateLimiter {
+export class RateLimiter {
   constructor() {
     this.map = new Map();
     this.timer = setInterval(() => this.cleanup(), RATE_LIMIT_CLEANUP_INTERVAL);
@@ -484,6 +499,8 @@ export function createOnlineHandler(store, options = {}) {
   const turnMs = Number.isInteger(options.turnMs) && options.turnMs > 0 ? options.turnMs : DEFAULT_TURN_MS;
   const cleanRoomTimeouts = (room, nowTime) => cleanRoomTimeoutsAt(room, nowTime, turnMs);
   const publicRoom = (room, seat) => publicRoomAt(room, seat, now());
+  // Progress sync between devices (no PvP account needed): /api/sync/*
+  const syncHandler = createSyncHandler(store, { now });
 
   return async function onlineHandler(req, res, url) {
     if (!url.pathname.startsWith('/api/')) {
@@ -495,7 +512,11 @@ export function createOnlineHandler(store, options = {}) {
       return true;
     }
 
-    const clientIp = req.socket.remoteAddress || 'unknown';
+    if (url.pathname.startsWith('/api/sync/')) {
+      return syncHandler(req, res, url);
+    }
+
+    const clientIp = clientIpOf(req);
     const pathname = url.pathname;
     const method = req.method;
 

@@ -16,6 +16,7 @@ import {tapPlayMode,tapCardAction,allowCardDrag,watchTapPlay,enforceTextFloor} f
 import {startCoach} from './shared/coach.js';
 import {changelogFor} from './shared/changelog.js';
 import {changelogButtonHtml,initChangelog} from './shared/changelog-ui.js';
+import {initProgressSync,syncButtonHtml,progressSyncNow} from './shared/progress-sync.js';
 // Cover update log: the Wa demo's own entries (Wa + PvP).
 const WA_LOG=changelogFor('wa');
 import {waJuiceAction,waSlam} from './wa-juice.js';
@@ -71,6 +72,12 @@ import {routeNodes,mapEntry,nextScreen,restoreScreen} from './navigation.js';
 import {ACTS,availableNodes} from './season-map.js';
 const app=document.querySelector('#app'),dialog=document.querySelector('#dialog'),modal=document.querySelector('#dialog-content');
 const SAVE='bao-yi-ba-D0.1-save-route-v2',SEASON_SAVE='peak-season-D0.2-save-route-v6',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view-route-v5',LEGACY_VIEW='bao-yi-ba-view-legacy-route-v2';
+// Progress sync between devices: every key that makes up Wa progress (run saves, unlocks,
+// achievements, history, settings, the PvP account token so builds follow the player).
+// Only the newest 300 combat-log lines of a run are uploaded (the log is display-only).
+const trimRunLogs=v=>{const s=JSON.parse(v);if(!Array.isArray(s.logs)||s.logs.length<=300)return v;s.logs=s.logs.slice(-300);return JSON.stringify(s);};
+const WA_SYNC={demo:'wa',metaKey:'wa-sync-v1',keys:[SEASON_SAVE,SAVE,VIEW,LEGACY_VIEW,HINTS,'wa-ascension-v1','wa-unlocks-v1','wa-run-history-v1','wa-collection-v1','wa-run-tracker-v1','wa-achievements-v1','wa-ach-run-v1','wa-coach-v1','changelog-seen-wa','val-sfx-v1','wa-online-token','wa-archive-pending'],prefixes:['wa-processed-'],alias:{'val-sfx-v1':'sfx'},core:[SEASON_SAVE,SAVE,'wa-ascension-v1','wa-unlocks-v1','wa-run-history-v1','wa-achievements-v1','wa-online-token'],shrink:{[SEASON_SAVE]:trimRunLogs,[SAVE]:trimRunLogs}};
+let syncMark='';
 // Internal beta: old maps cannot be resumed under the new route rules.
 try{for(const key of ['bao-yi-ba-D0.1-save','peak-season-D0.2-save','bao-yi-ba-view','bao-yi-ba-view-legacy','peak-season-D0.2-save-route-v2','bao-yi-ba-view-route-v2','peak-season-D0.2-save-route-v3','bao-yi-ba-view-route-v3','peak-season-D0.2-save-route-v4','peak-season-D0.2-save-route-v5','bao-yi-ba-view-route-v4'])localStorage.removeItem(key);}catch{}
 let state=null,atHome=true,hints=true,saveError='',saved=null,screen='map',selected=null,echo=null,dragging=null,pointerDrag=null,suppressClick=false,region='CN',turnAnimating=false;
@@ -95,6 +102,8 @@ function persist(){
     notice(saveError);
   }
   syncWaCheckpoint(state, (msg)=>notice(msg)).catch(err=>notice('云端同步失败：'+err.message));
+  // Upload soon at act / run boundaries (auto-sync otherwise runs at most every 30 s).
+  const mark=`${state.act}:${state.phase==='result'}`;if(syncMark&&mark!==syncMark)progressSyncNow();syncMark=mark;
 }
 const button=(label,action,cls='',disabled='')=>`<button class="${cls}" ${disabled?'disabled':''} data-action="${esc(JSON.stringify({...action,rev:state?.rev}))}">${esc(label)}</button>${disabled?`<small class="disabled-reason">${esc(disabled)}</small>`:''}`;
 const ui=(label,name,cls='secondary',extra='')=>`<button class="${cls}" data-ui="${name}" ${extra}>${esc(label)}</button>`;
@@ -138,7 +147,7 @@ function home(){
        ${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.act||1}幕${saved.node?` · 第${saved.node}站`:''}`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}
        <a class="primary cover-select-link" href="#cover-setup">选择赛区 ↓</a>
      </div>
-     <div class="cover-log">${changelogButtonHtml(WA_LOG)}</div>
+     <div class="cover-log ps-links">${changelogButtonHtml(WA_LOG)}${syncButtonHtml(WA_SYNC)}</div>
    </div>
  </section>
  <section class="cover-setup" id="cover-setup">
@@ -375,6 +384,7 @@ function crateRoom(){
 }
 function render(){
  initChangelog(WA_LOG);
+ initProgressSync(WA_SYNC);
  clearCombatFx();
  document.querySelectorAll('.card-flight').forEach(el=>{el.getAnimations().forEach(a=>a.cancel());el.remove();});
  hideCardTip();

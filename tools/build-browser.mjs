@@ -44,6 +44,7 @@ const modules = [
   'shared/coach.js',
   'shared/changelog.js',
   'shared/changelog-ui.js',
+  'shared/progress-sync.js',
   'ui-source.js'
 ];
 

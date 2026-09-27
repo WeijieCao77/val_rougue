@@ -25,7 +25,7 @@ try {
   process.emitWarning = originalEmitWarning;
 }
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 // Finished / closed rooms are kept for a week; waiting or active rooms that nobody has
 // touched for two days are abandoned (their accounts are released).
@@ -119,6 +119,36 @@ export class SqliteStore {
         PRAGMA user_version = 1;
       `);
     }
+    if (version < 2) {
+      // Progress sync between devices (online/sync-api.mjs). Bundles are gzip BLOBs.
+      this.db.exec(`
+        CREATE TABLE IF NOT EXISTS sync_links (
+          sync_id TEXT PRIMARY KEY,
+          demo TEXT NOT NULL,
+          secret_hash TEXT NOT NULL,
+          rev INTEGER NOT NULL DEFAULT 0,
+          saved_at INTEGER,
+          device TEXT,
+          bundle BLOB,
+          bundle_bytes INTEGER NOT NULL DEFAULT 0,
+          backup BLOB,
+          backup_rev INTEGER,
+          backup_saved_at INTEGER,
+          backup_device TEXT,
+          created_at INTEGER NOT NULL,
+          touched_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS sync_links_touched ON sync_links(touched_at);
+        CREATE TABLE IF NOT EXISTS sync_codes (
+          code TEXT PRIMARY KEY,
+          demo TEXT NOT NULL,
+          sync_id TEXT NOT NULL REFERENCES sync_links(sync_id) ON DELETE CASCADE,
+          expires_at INTEGER NOT NULL
+        ) WITHOUT ROWID;
+        CREATE INDEX IF NOT EXISTS sync_codes_expiry ON sync_codes(expires_at);
+        PRAGMA user_version = 2;
+      `);
+    }
     if (this.db.prepare('PRAGMA user_version').get().user_version !== SCHEMA_VERSION) {
       throw new Error('数据库结构版本不匹配');
     }
@@ -160,7 +190,96 @@ export class SqliteStore {
         OR (status IN ('waiting', 'active') AND COALESCE(last_action_at, created_at, 0) < ?)`),
       getMeta: p('SELECT value FROM meta WHERE key = ?'),
       setMeta: p('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)'),
+      syncLink: p(`SELECT sync_id, demo, secret_hash, rev, saved_at, device, bundle_bytes,
+        backup IS NOT NULL AS has_backup, backup_rev, backup_saved_at, backup_device FROM sync_links WHERE sync_id = ?`),
+      syncBundle: p('SELECT bundle FROM sync_links WHERE sync_id = ?'),
+      syncBackup: p('SELECT backup, backup_rev, backup_saved_at, backup_device FROM sync_links WHERE sync_id = ?'),
+      insertSyncLink: p(`INSERT INTO sync_links (sync_id, demo, secret_hash, rev, saved_at, device, bundle, bundle_bytes, created_at, touched_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
+      setSyncCurrent: p('UPDATE sync_links SET rev = ?, saved_at = ?, device = ?, bundle = ?, bundle_bytes = ?, touched_at = ? WHERE sync_id = ?'),
+      setSyncBackup: p('UPDATE sync_links SET backup = ?, backup_rev = ?, backup_saved_at = ?, backup_device = ? WHERE sync_id = ?'),
+      touchSyncLink: p('UPDATE sync_links SET touched_at = ? WHERE sync_id = ?'),
+      setSyncSecrets: p('UPDATE sync_links SET secret_hash = ? WHERE sync_id = ?'),
+      insertSyncCode: p('INSERT INTO sync_codes (code, demo, sync_id, expires_at) VALUES (?, ?, ?, ?)'),
+      syncCode: p('SELECT code, demo, sync_id, expires_at FROM sync_codes WHERE code = ?'),
+      deleteSyncCode: p('DELETE FROM sync_codes WHERE code = ?'),
+      deleteSyncCodesOf: p('DELETE FROM sync_codes WHERE sync_id = ?'),
+      purgeSyncCodes: p('DELETE FROM sync_codes WHERE expires_at < ?'),
+      purgeSyncLinks: p('DELETE FROM sync_links WHERE touched_at < ?'),
     };
+  }
+
+  // ------------------------------------------------------------------ progress sync
+  // Plain row access; callers wrap related calls in store.tx for atomicity.
+  syncLink(syncId) {
+    const row = this.q.syncLink.get(syncId);
+    if (!row) return null;
+    return {
+      syncId: row.sync_id, demo: row.demo, secretHashes: String(row.secret_hash).split(' ').filter(Boolean), rev: row.rev, savedAt: row.saved_at,
+      device: row.device, bytes: row.bundle_bytes,
+      backup: row.has_backup ? { rev: row.backup_rev, savedAt: row.backup_saved_at, device: row.backup_device } : null,
+    };
+  }
+
+  syncBundle(syncId) {
+    return this.q.syncBundle.get(syncId)?.bundle ?? null;
+  }
+
+  syncBackup(syncId) {
+    const row = this.q.syncBackup.get(syncId);
+    return row?.backup ? { blob: row.backup, rev: row.backup_rev, savedAt: row.backup_saved_at, device: row.backup_device } : null;
+  }
+
+  createSyncLink({ syncId, demo, secretHash, rev, savedAt, device, blob, bytes, now }) {
+    this.q.insertSyncLink.run(syncId, demo, secretHash, rev, num(savedAt), device ?? null, blob, bytes, now, now);
+  }
+
+  setSyncCurrent(syncId, { rev, savedAt, device, blob, bytes, now }) {
+    this.q.setSyncCurrent.run(rev, num(savedAt), device ?? null, blob, bytes, now, syncId);
+  }
+
+  setSyncBackup(syncId, backup) {
+    if (!backup) this.q.setSyncBackup.run(null, null, null, null, syncId);
+    else this.q.setSyncBackup.run(backup.blob, num(backup.rev), num(backup.savedAt), backup.device ?? null, syncId);
+  }
+
+  // secret_hash holds the space-separated hashes of every linked device (newest last).
+  addSyncSecret(syncId, secretHash) {
+    const link = this.syncLink(syncId);
+    const hashes = [...link.secretHashes, secretHash].slice(-8);
+    this.q.setSyncSecrets.run(hashes.join(' '), syncId);
+  }
+
+  touchSyncLink(syncId, now) {
+    this.q.touchSyncLink.run(now, syncId);
+  }
+
+  putSyncCode(code, demo, syncId, expiresAt) {
+    this.q.insertSyncCode.run(code, demo, syncId, expiresAt);
+  }
+
+  syncCodeExists(code) {
+    return !!this.q.syncCode.get(code);
+  }
+
+  // Single use: the code row is deleted whether or not it was still valid.
+  takeSyncCode(code, now) {
+    const row = this.q.syncCode.get(code);
+    if (!row) return null;
+    this.q.deleteSyncCode.run(code);
+    if (row.expires_at < now) return null;
+    return { code: row.code, demo: row.demo, syncId: row.sync_id, expiresAt: row.expires_at };
+  }
+
+  clearSyncCodes(syncId) {
+    this.q.deleteSyncCodesOf.run(syncId);
+  }
+
+  purgeSync(nowTime, linkMaxIdleMs) {
+    return this.tx(() => ({
+      codes: Number(this.q.purgeSyncCodes.run(nowTime).changes),
+      links: Number(this.q.purgeSyncLinks.run(nowTime - linkMaxIdleMs).changes),
+    }));
   }
 
   // ------------------------------------------------------------------ transactions
@@ -332,6 +451,8 @@ export class SqliteStore {
       checkpoints: one('SELECT COUNT(*) AS n FROM checkpoints'),
       rooms: one('SELECT COUNT(*) AS n FROM rooms'),
       roomRequests: one('SELECT COUNT(*) AS n FROM room_requests'),
+      syncLinks: one('SELECT COUNT(*) AS n FROM sync_links'),
+      syncCodes: one('SELECT COUNT(*) AS n FROM sync_codes'),
     };
   }
 

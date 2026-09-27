@@ -6,9 +6,10 @@
 // (or a new entry with the next version and today's date).
 export const CHANGELOG = [
   {
-    version: 'v0.9.1', date: '2026-09-27', title: { wa: '选手照片更新', new: '封面更新日志' },
+    version: 'v0.9.1', date: '2026-09-27', title: { wa: '进度同步与选手照片', new: '进度同步与更新日志' },
     items: [
       ['wa', '26 名选手换上 2026 赛季现役队服照片（中国赛区为官方定妆照）。'],
+      ['all', '新增进度同步：用 6 位同步码把手机和电脑的进度连起来，之后自动同步。'],
       ['all', '封面新增更新日志。']
     ]
   },

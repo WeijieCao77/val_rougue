@@ -7,6 +7,7 @@ import { tapPlayMode, tapCardAction, watchTapPlay, enforceTextFloor } from '/sha
 import { startCoach } from '/shared/coach.js';
 import { changelogFor } from '/shared/changelog.js';
 import { changelogButtonHtml, initChangelog } from '/shared/changelog-ui.js';
+import { initProgressSync, syncButtonHtml, progressSyncNow } from '/shared/progress-sync.js';
 const ND_LOG = changelogFor('new');
 import { showResultSummary, resultWorthShowing } from '/shared/result-summary.js';
 import { ACTS } from './season-map.js';
@@ -24,6 +25,18 @@ import { openModal, trackNewRun, recordNewAbandon, entryFor, resultPageHtml, ope
 
 const STORAGE_KEY = 'new-demo-run-route-v5';
 const GUIDE_KEY = 'new-demo-guide-v2-';
+// Progress sync between devices: everything that makes up this demo's progress.
+// The run's event log is only read within a session, so it is not uploaded.
+const ND_SYNC = {
+  demo: 'new',
+  metaKey: 'new-demo-sync-v1',
+  keys: [STORAGE_KEY, 'new-demo-unlocks-v1', 'new-demo-ascension-v1', 'new-demo-run-history-v1', 'new-demo-collection-v1', 'new-demo-run-tracker-v1', 'new-demo-achievements-v1', 'new-demo-ach-run-v1', 'new-demo-coach-v1', 'changelog-seen-new', 'val-sfx-v1'],
+  prefixes: [GUIDE_KEY],
+  alias: { 'val-sfx-v1': 'sfx' },
+  core: [STORAGE_KEY, 'new-demo-unlocks-v1', 'new-demo-ascension-v1', 'new-demo-run-history-v1', 'new-demo-achievements-v1'],
+  shrink: { [STORAGE_KEY]: v => { const s = JSON.parse(v); if (!Array.isArray(s.logs) || !s.logs.length) return v; s.logs = []; return JSON.stringify(s); } },
+};
+let syncMark = '';
 // Internal beta: discard runs created with the previous route layout.
 try { for (const key of ['new-demo-run-v1', 'new-demo-run-route-v2', 'new-demo-run-route-v3', 'new-demo-run-route-v4']) localStorage.removeItem(key); } catch {}
 let state = null;
@@ -53,6 +66,10 @@ function saveState() {
     console.error('Save failed', e);
   }
   trackNewRun(state);
+  // Upload soon at act / run boundaries (auto-sync otherwise runs at most every 30 s).
+  const mark = `${state?.act}:${state?.phase === 'result'}`;
+  if (syncMark && mark !== syncMark) progressSyncNow();
+  syncMark = mark;
 }
 
 function loadState() {
@@ -254,6 +271,7 @@ function renderHome() {
         <button class="hero-link" id="btn-history">战绩</button>
         <button class="hero-link" id="btn-achievements">成就</button>
         ${changelogButtonHtml(ND_LOG)}
+        ${syncButtonHtml(ND_SYNC)}
         <a href="/">选择版本</a>
       </nav>
       <footer class="credit">猪之家出品</footer>
@@ -2254,6 +2272,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initGlobalTooltip();
   initUpgradePeek();
   initChangelog(ND_LOG);
+  initProgressSync(ND_SYNC);
   // First fight: a few tips over the first two turns (once per browser).
   startCoach({ key: 'new-demo-coach-v1', getTurn: () => state?.phase === 'combat' && state.battle ? state.battle.turn : null, steps: [
   { turn: 1, sel: '.enemy-unit:not(.is-dead) .intent', text: '敌人头上显示它<b>下一步要做什么</b>，数字是它实际会造成的伤害。' },
