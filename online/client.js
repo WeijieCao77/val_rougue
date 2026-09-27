@@ -1,4 +1,5 @@
-import { CARDS, cardName, compactLines, describe, SKINS, TACTICS } from '/pvp/content.js';
+import { cardName, SKINS } from '/pvp/content.js';
+import { createBattle } from '/pvp/battle.js';
 import { ACTS } from '/pvp/season-map.js';
 import {
   loadAccount, saveAccount, getPendingProofCache, clearPendingProofCache,
@@ -16,7 +17,6 @@ let token = null;
 let account = null;
 let room = null;
 let screen = 'home';
-let selectedCardUid = null;
 let actionInFlight = false;
 let pollTimer = null;
 let pollFailures = 0;
@@ -33,26 +33,15 @@ function showModal(title, html) {
   modal.querySelector('h2')?.focus({preventScroll:true});
   dialog.scrollTop = 0;
 }
-closeDialog.addEventListener('click', () => { dialog.close(); if (dialogResolve) { dialogResolve(null); dialogResolve = null; } });
+const battle = createBattle({
+  root: app,
+  notice,
+  send: command => sendAction(command),
+  leave: () => handleLeaveRoom(),
+  newRoom: async () => { await handleLeaveRoom(); showCreateDialog(); }
+});
 
-function cardFace(c, compact = false) {
-  const t = CARDS[c.id];
-  if (!t) return '<div class="card-face"><span class="card-title">未知卡牌</span></div>';
-  const name = cardName(c);
-  const zone = t.zone;
-  const tag = zone === 'exhaust' ? '消耗' : zone === 'temporary' ? '临时 · 消耗' : zone === 'exhaustEnd' ? '回合末消耗' : zone === 'power' ? '持续能力' : t.id.startsWith('CU') ? '跨比赛保留' : c.up ? '已训练' : t.player ? '选手牌' : '辅助牌';
-  const role = t.player ? t.role : t.id.startsWith('CU') ? '隐患' : '行动';
-  const lines = compact ? compactLines(c) : compactLines(c);
-  const title = describe(c).replace(/\n/g, ' / ');
-  return `<div class="card-face" title="${esc(title)}">
-    <span class="card-cost">${t.cost === null ? '—' : t.cost}</span>
-    <span class="card-title">${esc(name)}</span>
-    <span class="card-portrait" aria-hidden="true"><span class="portrait-placeholder">${esc(role.charAt(0))}</span><span class="portrait-role">${esc(role)}</span></span>
-    <b class="card-tactic">${esc(TACTICS[c.id]?.title || '')}</b>
-    <span class="card-effect">${lines.map(line => `<span>${esc(line).replace(/(\d+)/g,'<strong>$1</strong>')}</span>`).join('')}</span>
-    <span class="card-foot"><b class="${['exhaust','temporary','exhaustEnd'].includes(zone) ? 'exhaust-tag' : ''}">${tag}</b></span>
-  </div>`;
-}
+closeDialog.addEventListener('click', () => { dialog.close(); if (dialogResolve) { dialogResolve(null); dialogResolve = null; } });
 
 function archiveCard(a, selected = false) {
   const actInfo = ACTS[a.snapshot.act - 1] || { name: `第${a.snapshot.act}赛段` };
@@ -72,6 +61,7 @@ function render() {
   if ((screen === 'lobby' || screen === 'game') && room && (room.status === 'active' || room.status === 'finished')) {
     screen = 'game';
   }
+  if (screen !== 'game') battle.hide();
   if (screen === 'home') renderHome();
   else if (screen === 'archives') renderArchives();
   else if (screen === 'lobby') renderLobby();
@@ -158,61 +148,12 @@ function renderLobby() {
 }
 
 function renderGame() {
-  const view = room?.match;
-  if (!view) {
-    app.innerHTML = `<header class="pvp-header"><div class="brand">好友 PvP</div></header><main class="pvp-main"><p class="error">牌局数据不可用。</p></main>`;
+  if (!room?.match) {
+    battle.hide();
+    app.innerHTML = `<header class="pvp-header"><div class="brand">好友 PvP</div><button data-nav="home">返回</button></header><main class="pvp-main"><p class="error">牌局数据不可用。</p></main>`;
     return;
   }
-  const mySeat = room.seat;
-  const isMyTurn = view.status === 'active' && view.active === mySeat;
-  const me = view.you;
-  const opp = view.opponent;
-  const cards = me.hand || [];
-  const selected = cards.find(c => c.uid === selectedCardUid);
-  const targetHint = selected ? '点击对手或我方目标，然后点打出' : '选择一张手牌';
-  const finished = view.status === 'finished';
-  const resultText = finished ? (view.winner === mySeat ? '胜利' : view.winner === null ? '平局' : '失败') : '';
-  app.innerHTML = `
-    <header class="pvp-header">
-      <div class="brand">好友 PvP <span>回合 ${view.turn}</span></div>
-      <div class="status">${finished ? `已结束 · ${resultText}` : isMyTurn ? '你的回合' : '等待对方...'}</div>
-      <button data-action="leave-room">退出房间</button>
-    </header>
-    <main class="pvp-main game-main">
-      <section class="opponent-panel">
-        <h3>${esc(room.members?.find(m => m.seat !== mySeat)?.name || '对手')}</h3>
-        <p>手牌 ${opp.handCount} 张 · 抽牌堆 ${opp.drawCount}</p>
-        ${opp.trait ? `<p class="trait-line" title="${esc(opp.trait.text)}">赛区特质 · ${esc(opp.trait.name)} <b>${esc(opp.trait.counter)}</b></p>` : ''}
-        <p>声望 ${opp.hp}/${opp.maxHp} · 布防 ${opp.block}${opp.weak ? ` · 压制 ${opp.weak}` : ''}${opp.vulnerable ? ` · 易伤 ${opp.vulnerable}` : ''}${opp.burn ? ` · 燃烧 ${opp.burn}` : ''}${opp.strength ? ` · 火力 ${opp.strength}` : ''}${opp.overload ? ` · 过载 ${opp.overload}` : ''}${(opp.deployables || []).map(d => ` · ${d.kind === 'turret' ? '哨戒炮' : '屏障'} ${d.n}×${d.turns}`).join('')}</p>
-        <div class="opp-hand-stub">${Array.from({ length: Math.min(opp.handCount, 10) }).map(() => '<span class="card-back"></span>').join('')}</div>
-      </section>
-      <section class="battle-ground">
-        ${finished ? `<div class="battle-result">${resultText}</div>` : ''}
-        <div class="my-info">
-          <h3>你</h3>
-          <p>声望 ${me.hp}/${me.maxHp} · 布防 ${me.block}${me.weak ? ` · 压制 ${me.weak}` : ''}${me.vulnerable ? ` · 易伤 ${me.vulnerable}` : ''}${me.burn ? ` · 燃烧 ${me.burn}` : ''}${me.strength ? ` · 火力 ${me.strength}` : ''}${me.overload ? ` · 过载 ${me.overload}` : ''}${(me.deployables || []).map(d => ` · ${d.kind === 'turret' ? '哨戒炮' : '屏障'} ${d.n}×${d.turns}`).join('')}</p>
-          <p>行动点 ${me.energy} · 抽牌堆 ${me.drawCount}</p>
-          ${me.trait ? `<p class="trait-line" title="${esc(me.trait.text)}">赛区特质 · ${esc(me.trait.name)} <b>${esc(me.trait.counter)}</b><br><small>${esc(me.trait.text)}</small></p>` : ''}
-          <div class="powers">${(me.powers || []).map(p => `<span class="power-chip">${esc(cardName(p))}</span>`).join('')}</div>
-        </div>
-        <div class="log-box"><h4>战报</h4><ul>${(view.log || []).map(l => `<li><small>${esc(l)}</small></li>`).join('')}</ul></div>
-      </section>
-      <section class="hand-panel">
-        <div class="hand-header">
-          <span>手牌 ${cards.length} 张 · 弃牌堆 ${me.discard?.length || 0} · 消耗区 ${me.exhaust?.length || 0}</span>
-          <span>${targetHint}</span>
-          <span>${isMyTurn ? '可以操作' : '等待对方'}</span>
-        </div>
-        <div class="hand-cards" id="hand-cards">
-          ${cards.length ? cards.map((c, i) => `<button class="hand-card-pvp ${selectedCardUid === c.uid ? 'selected' : ''}" data-card-uid="${c.uid}" style="--card-index:${i}">${cardFace(c, true)}</button>`).join('') : '<p class="empty-hand">手牌为空</p>'}
-        </div>
-        <div class="hand-actions">
-          ${selected ? `<button class="secondary" data-action="clear-selection">取消</button><button class="primary" data-action="play-selected" ${!isMyTurn ? 'disabled' : ''}>打出</button>` : ''}
-          <button class="primary" data-action="end-turn" ${!isMyTurn ? 'disabled' : ''}>结束回合</button>
-          <button class="danger" data-action="concede" ${finished ? 'disabled' : ''}>认输</button>
-        </div>
-      </section>
-    </main>`;
+  battle.show(room);
 }
 
 function roomKey(r) {
@@ -240,7 +181,8 @@ function roomKey(r) {
         weak: r.match.opponent.weak, vulnerable: r.match.opponent.vulnerable, burn: r.match.opponent.burn, strength: r.match.opponent.strength, overload: r.match.opponent.overload, deployables: r.match.opponent.deployables,
         handCount: r.match.opponent.handCount, drawCount: r.match.opponent.drawCount
       },
-      log: r.match.log
+      log: r.match.log,
+      history: r.match.history?.length || 0
     } : null
   });
 }
@@ -284,7 +226,7 @@ async function pollRoom() {
 }
 
 async function sendAction(command) {
-  if (!token || !room?.code || actionInFlight) return;
+  if (!token || !room?.code || actionInFlight) return false;
   actionInFlight = true;
   try {
     if (!pendingRetry) {
@@ -299,15 +241,17 @@ async function sendAction(command) {
     room = res.room;
     latestRoomKey = roomKey(room);
     pendingRetry = null;
-    selectedCardUid = null;
     render();
+    return true;
   } catch (err) {
     if (err.status && err.status >= 400 && err.status < 500) {
       pendingRetry = null;
       notice('操作被拒绝，牌局已更新，请重新选择操作。');
+      pollRoom();
     } else {
       notice('操作失败：' + err.message + ' 可重试同一命令。');
     }
+    return false;
   } finally {
     actionInFlight = false;
   }
@@ -349,6 +293,9 @@ async function loadInitial() {
         const res = await apiGetRoom(token, account.roomCode);
         room = res.room || null;
         latestRoomKey = roomKey(room);
+        // Reloading during a match goes straight back to the table.
+        if (room?.status === 'active') screen = 'game';
+        else if (room?.status === 'waiting') screen = 'lobby';
       }
     } catch (err) {
       notice('获取账号数据失败：' + err.message);
@@ -390,45 +337,23 @@ document.addEventListener('click', async e => {
     else if (action === 'resolve-server-pending') showResolvePendingDialog();
     else if (action === 'offline-proof') showOfflineProofDialog();
     else if (action === 'manage-account') showAccountDialog();
-    else if (action === 'clear-selection') { selectedCardUid = null; render(); }
-    else if (action === 'play-selected') {
-      if (!selectedCardUid) return;
-      const me = room?.match?.you;
-      const card = me?.hand?.find(c => c.uid === selectedCardUid);
-      if (card) {
-        const def = CARDS[card.id];
-        if (def && def.cost != null && def.cost > me.energy) {
-          notice('费用不足，无法打出这张牌。');
-          return;
-        }
-      }
-      await sendAction({ type: 'play', uid: selectedCardUid });
-    }
-    else if (action === 'end-turn') await sendAction({ type: 'end' });
-    else if (action === 'concede') { if (confirm('确认认输？')) await sendAction({ type: 'concede' }); }
-    return;
-  }
-
-  const cardEl = e.target.closest('[data-card-uid]');
-  if (cardEl && screen === 'game') {
-    selectedCardUid = cardEl.dataset.cardUid;
-    render();
     return;
   }
 });
 
 async function handleLeaveRoom() {
-  if (!room?.code || !token) return;
+  if (!room?.code || !token) { screen = 'home'; render(); return; }
   try {
     await apiLeaveRoom(token, room.code);
-    room = null;
-    latestRoomKey = '';
-    stopPolling();
-    screen = 'home';
-    render();
   } catch (err) {
-    notice('退出失败：' + err.message);
+    if (room?.status !== 'finished') { notice('退出失败：' + err.message); return; }
   }
+  room = null;
+  latestRoomKey = '';
+  stopPolling();
+  screen = 'home';
+  try { account = await apiGetAccount(token); } catch {}
+  render();
 }
 
 async function handleReadyToggle() {

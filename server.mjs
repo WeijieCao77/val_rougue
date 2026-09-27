@@ -43,6 +43,13 @@ const assets = new Map([
   ['/pvp/', ['online/index.html', 'text/html; charset=utf-8']],
   ['/pvp/client.js', ['online/client.js', 'text/javascript; charset=utf-8']],
   ['/pvp/style.css', ['online/style.css', 'text/css; charset=utf-8']],
+  ['/pvp/battle.js', ['online/battle.js', 'text/javascript; charset=utf-8']],
+  ['/pvp/battle.css', ['online/battle.css', 'text/css; charset=utf-8']],
+  // Card faces in PvP use the same photos / art and rarity gems as the Wa demo.
+  ['/pvp/art-ui.js', ['art-ui.js', 'text/javascript; charset=utf-8']],
+  ['/pvp/art-data.js', ['art-data.js', 'text/javascript; charset=utf-8']],
+  ['/pvp/weapon-frame.js', ['weapon-frame.js', 'text/javascript; charset=utf-8']],
+  ['/pvp/card-rarity.js', ['card-rarity.js', 'text/javascript; charset=utf-8']],
   ['/pvp/content.js', ['content.js', 'text/javascript; charset=utf-8']],
   ['/pvp/helper.js', ['wa-online.js', 'text/javascript; charset=utf-8']],
   ['/pvp/regions.js', ['regions.js', 'text/javascript; charset=utf-8']],

@@ -335,7 +335,7 @@ function cleanRoomTimeouts(room, nowTime) {
   } else if (room.status === 'active') {
     if (nowTime - room.lastActionAt > ROOM_ACTIVE_TIMEOUT_MS) {
       const activeSeat = room.match.active;
-      room.match = applyCommand(room.match, activeSeat, { type: 'concede' });
+      room.match = applyCommand(room.match, activeSeat, { type: 'concede', reason: 'timeout' });
       room.status = 'finished';
       room.lastActionAt = nowTime;
       return 'finished';
@@ -825,7 +825,8 @@ export function createOnlineHandler(store) {
 
             let newMatch;
             try {
-              newMatch = applyCommand(room.match, seat, command);
+              // A client concede never carries a reason; timeout / leave are set by the server only.
+              newMatch = applyCommand(room.match, seat, command.type === 'concede' ? { type: 'concede' } : command);
             } catch (err) {
               throw new HttpError(400, err.message || '无效的操作');
             }
@@ -871,7 +872,7 @@ export function createOnlineHandler(store) {
                 roomResponse = publicRoom(room, room.members[0].seat);
               }
             } else if (room.status === 'active') {
-              room.match = applyCommand(room.match, seat, { type: 'concede' });
+              room.match = applyCommand(room.match, seat, { type: 'concede', reason: 'leave' });
               room.status = 'finished';
               room.lastActionAt = now();
               acct.roomCode = null;

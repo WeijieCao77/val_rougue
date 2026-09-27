@@ -120,7 +120,8 @@ test('duel: createMatch initializes full hp and hidden hands', () => {
   assert.equal(match.players[0].hp, 100);
   assert.equal(match.players[1].hp, 80);
   assert.equal(match.players[match.active].hand.length, 5);
-  assert.equal(match.players[1 - match.active].hand.length, 0);
+  // End-of-turn draw rule: the second player also starts holding the opening hand.
+  assert.equal(match.players[1 - match.active].hand.length, 5);
   const view = viewFor(match, 1 - match.active);
   assert.equal(view.opponent.handCount, match.players[match.active].hand.length);
   assert.ok(!('hand' in view.opponent));
