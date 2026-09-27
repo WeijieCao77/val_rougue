@@ -114,7 +114,7 @@ function renderHome() {
         <button data-nav="archives">构筑库</button>
         <button data-nav="account">账号</button>
         <a href="/wa/" class="nav-link">返回登峰赛季</a>
-        ${globalThis.DEMO_CONFIG?.newDemoEnabled === true ? `<a href="/new/" class="nav-link">战术试炼</a>` : ''}
+        <a href="/" class="nav-link">选择版本</a>
       </nav>
     </header>
     <main class="pvp-main home-main">
