@@ -47,3 +47,9 @@ body.home-mode .title-note,body.home-mode .cover-footer { margin:4px 0; }
  .combat-screen>.arena { min-height:280px; flex:0 0 auto; }
  .combat-controls { height:auto; min-height:0; gap:12px; padding:12px; }
 }
+
+/* All region descriptions share the tallest intrinsic size at this viewport. */
+body.home-mode .region-trait-copy { display:grid; flex:1; min-width:0; }
+body.home-mode .region-trait-copy > div { grid-area:1 / 1; min-width:0; }
+body.home-mode .trait-size-guide { visibility:hidden; pointer-events:none; }
+body.home-mode .unlock-head { display:grid; grid-template-columns:1fr; gap:4px; }
