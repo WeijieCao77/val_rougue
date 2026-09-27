@@ -50,6 +50,7 @@ const rectC = r => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
 function resultLines(e, mineSeat) {
   const r = e.results || {}, out = [];
   const who = e.seat === mineSeat ? '你' : '对手', other = e.seat === mineSeat ? '对手' : '你';
+  if (e.kind === 'end' && e.auto) out.push(['mut', `超时，自动结束回合${e.afk ? `（连续第 ${e.afk} 次）` : ''}`]);
   if (e.kind === 'play') {
     if (r.damage || r.absorbed) {
       if (r.damage) out.push(['dmg', `造成 ${r.damage} 伤害${r.absorbed ? `（被布防挡 ${r.absorbed}）` : ''}${r.hits > 1 ? ` · ${r.hits} 段` : ''}`]);
@@ -81,18 +82,24 @@ function resultLines(e, mineSeat) {
   if (e.kind === 'play' && e.zone === 'exhaust') out.push(['mut', '打出后消耗']);
   return out;
 }
+const ROPE_MS = 20000; // the fuse appears for the last 20 s of a turn
+const TICK_FROM = 5;   // clock ticks in the last 5 s of my turn
+const fmtClock = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return s >= 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : `${s}s`; };
 const REASON = {
   hp: [w => w ? '对手声望归零' : '你的声望归零'],
   concede: [w => w ? '对手认输' : '你已认输'],
-  timeout: [w => w ? '对手超时未行动，判负' : '你超时未行动，判负'],
+  timeout: [w => w ? '对手长时间未操作，超时判负' : '你长时间未操作，超时判负'],
   leave: [w => w ? '对手离开了房间' : '你离开了房间'],
   draw: [() => '达到回合上限，平局']
 };
 
 // ---------------------------------------------------------------- battle
 export function createBattle(ctx) {
-  // ctx: { root, send(command) -> Promise<boolean>, leave(), newRoom(), notice(text) }
-  let el = null, fx = null, room = null, mySeat = 0, code = '';
+  // ctx: { root, send(command) -> Promise<boolean>, leave(), newRoom(), notice(text), rematch(op, round) -> Promise }
+  let el = null, fx = null, room = null, mySeat = 0, code = '', round = 1;
+  // Turn timer: server epoch ms of the turn end, corrected by the server/client clock offset.
+  let timer = null, skew = 0, clockInt = 0, lastTickSec = -1, ropeOn = false;
+  let rematchBusy = false, lastRematchKey = '';
   let target = null, shownView = null, lastN = 0, pumping = false, speed = 1;
   let heroes = [{}, {}], activeShown = null, busy = false;
   let handCards = [], handEls = new Map(), handPos = new Map(), drawing = new Set();
@@ -118,6 +125,7 @@ export function createBattle(ctx) {
       <section class="table" aria-label="战场">
         <div class="mat"><i class="mat-grid"></i><i class="mat-edge"></i></div>
         <div class="half half-opp"><div class="persist" data-persist="opp"></div><div class="played" data-played="opp"></div></div>
+        <div class="rope" hidden aria-hidden="true"><i class="rope-cord"></i><i class="rope-fire"></i></div>
         <div class="midline"><span class="turn-chip"></span></div>
         <div class="half half-me"><div class="played" data-played="me"></div><div class="persist" data-persist="me"></div></div>
         <span class="held-tag">下回合手牌 · 轮到你时才能打出</span>
@@ -144,6 +152,7 @@ export function createBattle(ctx) {
     el.addEventListener('pointerdown', onRootDown, true);
     window.addEventListener('resize', onResize);
     bindPanelSwipe();
+    clockInt = setInterval(() => { tickClock(); if (resultShown) tickRematch(); }, 200);
   }
   function heroSkeleton(s) {
     return `<div class="emblem"><span class="emb-txt"></span><span class="shield" hidden>${statusIcon('block')}<b></b></span></div>
@@ -156,6 +165,7 @@ export function createBattle(ctx) {
   function unmount() {
     if (!el) return;
     window.removeEventListener('resize', onResize);
+    clearInterval(clockInt); clockInt = 0; timer = null; ropeOn = false; lastTickSec = -1;
     document.body.classList.remove('in-duel');
     el.remove();
     el = null; fx = null; target = null; shownView = null; room = null;
@@ -165,12 +175,17 @@ export function createBattle(ctx) {
   // ------------------------------------------------ public: feed room states
   function show(r) {
     if (!r?.match) return;
-    const fresh = !el || !ctx.root.contains(el) || code !== r.code;
+    // A rematch keeps the room code but starts a new match (round + 1): build a fresh table.
+    const fresh = !el || !ctx.root.contains(el) || code !== r.code || round !== (r.round || 1);
+    if (Number.isFinite(r.now)) skew = r.now - Date.now();
     if (fresh) {
+      const rematched = !!el && code === r.code && round !== (r.round || 1);
       unmount();
-      room = r; code = r.code; mySeat = r.seat; target = r;
-      resultShown = false; resultDismissed = false; histOpen = false; table = { played: [[], []] };
+      room = r; code = r.code; mySeat = r.seat; target = r; round = r.round || 1;
+      timer = r.timer || null;
+      resultShown = false; resultDismissed = false; histOpen = false; table = { played: [[], []] }; lastRematchKey = '';
       mount();
+      if (rematched) ctx.notice(`再来一局 · 第 ${round} 局开始`);
       const hist = r.match.history || [];
       // A brand-new match plays its opening deal; a reload mid-match starts from now.
       const opening = hist.length && hist.every(e => e.kind === 'deal' || e.kind === 'turn');
@@ -188,6 +203,8 @@ export function createBattle(ctx) {
     // Ignore responses older than what we already hold (a slow poll after an action).
     if (target?.match && r.match.rev < target.match.rev) return;
     room = r; target = r;
+    timer = r.timer || null;
+    if (resultShown) renderRematch();
     if (r.match.hasHistory === false) { applyView(r.match); return; }
     pump();
   }
@@ -283,12 +300,54 @@ export function createBattle(ctx) {
     const h = heroes[mySeat];
     const playable = mine && handCards.some(c => canAfford(c, h));
     b.classList.toggle('ready', mine && !playable && !endPending);
-    b.innerHTML = mine ? (endPending ? '<b>结束中…</b>' : '<b>结束回合</b>') : '<b>对手回合</b><small>等待中</small>';
+    b.innerHTML = mine ? (endPending ? '<b>结束中…</b>' : '<b>结束回合</b>') + '<small class="t-clock"></small>' : '<b>对手回合</b><small class="t-clock">等待中</small>';
     $('.turn-chip').textContent = `第 ${v.turn} 回合 · ${finished ? '已结束' : mine ? '你的回合' : '对手回合'}`;
     el.classList.toggle('my-turn', mine);
     el.classList.toggle('their-turn', !mine && !finished);
     el.querySelector('.hand-zone').classList.toggle('held', !mine && !finished);
     layoutHand();
+    tickClock();
+  }
+  // ------------------------------------------------ turn timer (server enforced, shown here)
+  // The timer belongs to the turn currently on screen only when the animation queue has
+  // caught up with it; otherwise hide it rather than show another turn's clock.
+  function timerLeft() {
+    if (!timer || timer.endsAt == null || !shownView || shownView.status !== 'active') return null;
+    if (timer.seat !== activeShown || target?.match?.turn !== timer.turn) return null;
+    return timer.endsAt - (Date.now() + skew);
+  }
+  function timeUp() { const left = timerLeft(); return left !== null && left <= 0; }
+  function tickClock() {
+    if (!el) return;
+    const left = timerLeft(), b = $('.end-turn'), clock = b?.querySelector('.t-clock'), rope = $('.rope');
+    const mine = activeShown === mySeat;
+    if (left === null) {
+      if (clock) clock.textContent = mine ? '' : '等待中';
+      if (rope) rope.hidden = true;
+      ropeOn = false;
+      b?.classList.remove('urgent');
+      return;
+    }
+    if (clock) clock.textContent = left <= 0 ? '超时' : fmtClock(left);
+    b?.classList.toggle('urgent', left <= ROPE_MS);
+    if (mine && left <= 0 && !endPending && b) { b.disabled = true; b.innerHTML = '<b>超时</b><small class="t-clock">自动结束</small>'; }
+    // Burning fuse along the centre line toward the end-turn button for the last 20 s.
+    const burning = left > 0 && left <= ROPE_MS;
+    if (rope) {
+      rope.hidden = !burning;
+      rope.classList.toggle('mine', mine);
+      rope.classList.toggle('theirs', !mine);
+      if (burning) {
+        const frac = clamp(left / ROPE_MS, 0, 1);
+        rope.style.setProperty('--left', frac.toFixed(4));
+        if (!ropeOn) playSfx('turnEnd');
+      }
+    }
+    ropeOn = burning;
+    el.classList.toggle("roping", burning);
+    const sec = Math.ceil(left / 1000);
+    if (mine && left > 0 && sec <= TICK_FROM && sec !== lastTickSec) { lastTickSec = sec; playSfx('tick'); }
+    if (left > TICK_FROM * 1000) lastTickSec = -1;
   }
   async function banner(seat) {
     const b = $('.banner');
@@ -486,7 +545,7 @@ export function createBattle(ctx) {
     e.addEventListener('pointercancel', up);
     layoutHand();
   }
-  function live() { return activeShown === mySeat && shownView?.status === 'active' && !endPending; }
+  function live() { return activeShown === mySeat && shownView?.status === 'active' && !endPending && !timeUp(); }
   function onCardMove(ev) {
     if (!press || ev.pointerId !== press.id) return;
     const now = performance.now(), dt = Math.max(1, now - press.lt);
@@ -706,6 +765,7 @@ export function createBattle(ctx) {
   }
   async function animEnd(e, v) {
     const r = e.results || {};
+    if (e.auto) await autoEndNotice(e);
     if (r.damage || r.absorbed) { impact(1 - e.seat, r, 'turret'); await wait(600); }
     if (r.block) { popup(e.seat, `+${r.block} 布防`, 'blk'); playSfx('block'); await wait(300); }
     if (r.selfDamage) { popup(e.seat, `-${r.selfDamage}`, 'dmg'); shake(e.seat, false); await wait(450); }
@@ -728,6 +788,18 @@ export function createBattle(ctx) {
       await oppDraw(drawn);
       if (after) { oppCount = after[6]; layoutOpp(); }
     }
+  }
+  async function autoEndNotice(e) {
+    const mine = e.seat === mySeat, limit = timer?.afkLimit || 3;
+    const b = $('.banner');
+    if (mine) { endPending = false; selectedUid = null; $('.sheet').hidden = true; }
+    ctx.notice(mine ? `超时，自动结束回合${e.afk ? `（连续 ${e.afk}/${limit} 次，达到 ${limit} 次判负）` : ''}` : '对手超时，自动结束回合');
+    if (!b) return;
+    b.className = `banner show timeout ${mine ? 'mine' : 'theirs'}`;
+    b.innerHTML = `<b>超时，自动结束回合</b>`;
+    playSfx('debuff');
+    await wait(1100);
+    b.className = 'banner';
   }
   function impact(seat, r, how) {
     const heavy = (r.damage || 0) >= 12;
@@ -882,7 +954,7 @@ export function createBattle(ctx) {
   function entryVisible(e) {
     if (e.kind === 'play' || e.kind === 'result') return true;
     const r = e.results || {};
-    if (e.kind === 'end') return !!(r.damage || r.absorbed || r.block || r.selfDamage);
+    if (e.kind === 'end') return !!(e.auto || r.damage || r.absorbed || r.block || r.selfDamage);
     if (e.kind === 'turn') return !!(r.burnDamage || r.block);
     return false;
   }
@@ -891,6 +963,7 @@ export function createBattle(ctx) {
     const cls = `tile ${mine ? 'mine' : 'theirs'}`;
     let inner;
     if (e.kind === 'play') inner = `<span class="tile-art">${cardArtwork(e.id)}</span><span class="tile-cost">${CARDS[e.id]?.x ? 'X' : e.cost ?? ''}</span>`;
+    else if (e.kind === 'end' && e.auto && !(r.damage || r.absorbed || r.selfDamage || r.block)) inner = `<span class="tile-icon clock">⏱</span>`;
     else if (e.kind === 'end') inner = `<span class="tile-icon">${statusIcon(r.damage || r.absorbed ? 'sentry' : r.selfDamage ? 'curse' : 'block')}</span>`;
     else if (e.kind === 'turn') inner = `<span class="tile-icon">${statusIcon(r.burnDamage ? 'burn' : 'block')}</span>`;
     else inner = `<span class="tile-icon flag">${e.winner === mySeat ? '胜' : e.winner === null ? '平' : '负'}</span>`;
@@ -900,7 +973,7 @@ export function createBattle(ctx) {
   function entryTitle(e) {
     const who = e.seat === mySeat ? '你' : '对手';
     if (e.kind === 'play') return `${who} · ${cardName({ id: e.id, up: e.up })}`;
-    if (e.kind === 'end') return `${who} · 回合结束`;
+    if (e.kind === 'end') return `${who} · 回合结束${e.auto ? '（超时）' : ''}`;
     if (e.kind === 'turn') return `${who} · 回合开始`;
     if (e.kind === 'result') return e.winner === null ? '平局' : e.winner === mySeat ? '你获胜' : '对手获胜';
     return who;
@@ -983,6 +1056,7 @@ export function createBattle(ctx) {
   function showResult(v) {
     if (resultShown || !el) { return; }
     resultShown = true;
+    ctx.notice("");
     if (histOpen) openHistory(false);
     $('.sheet').hidden = true;
     $('.hand-actions').hidden = true;
@@ -1005,12 +1079,53 @@ export function createBattle(ctx) {
         <tr><th>最高单次伤害</th><td>${best(me.best)}</td><td>${best(op.best)}</td></tr>
       </tbody></table>
       ${v.hasHistory === false ? '<p class="res-note">这局开始于旧版本，统计只含更新后的部分。</p>' : ''}
-      <div class="res-actions"><button type="button" class="primary" data-b="new-room">新建房间</button><button type="button" data-b="view-log">查看战报</button><button type="button" data-b="back">返回</button></div></div>`;
+      <div class="res-rematch" aria-live="polite"></div>
+      <div class="res-actions"><button type="button" data-b="new-room">新建房间</button><button type="button" data-b="view-log">查看战报</button><button type="button" data-b="back">返回</button></div></div>`;
     box.hidden = false;
+    renderRematch();
     el.classList.toggle('lost', !win && !draw);
     if (!RM()) burst(box, win && !draw);
     playSfx(draw ? 'turnEnd' : win ? 'victory' : 'defeat');
     if (!win && !draw) setTimeout(() => playSfx('hitHeavy'), 120);
+  }
+  // 再来一局: both players agree, the same room starts a new match (see api.mjs rematch).
+  function renderRematch() {
+    const box = $('.res-rematch');
+    if (!box || !room) return;
+    const rm = room.rematch, opp = room.members?.find(m => m.seat !== mySeat), me = room.members?.find(m => m.seat === mySeat);
+    const oppLeft = !opp || opp.left || rm?.status === 'left';
+    const key = JSON.stringify([rm, oppLeft, me?.left, rematchBusy]);
+    if (key === lastRematchKey) return;
+    const prev = lastRematchKey;
+    lastRematchKey = key;
+    const incoming = rm?.status === 'pending' && rm.from !== mySeat;
+    const dis = rematchBusy ? ' disabled' : '';
+    let html;
+    if (oppLeft) html = `<p class="rm-msg bad">对手已离开房间，可以新建房间或返回。</p>`;
+    else if (incoming) html = `<p class="rm-msg hot">对手想再来一局 <span class="rm-count"></span></p><div class="rm-btns"><button type="button" class="primary" data-b="rm-accept"${dis}>接受</button><button type="button" data-b="rm-decline"${dis}>拒绝</button></div>`;
+    else if (rm?.status === 'pending') html = `<p class="rm-msg wait"><i class="rm-spin"></i>等待对手… <span class="rm-count"></span></p><div class="rm-btns"><button type="button" data-b="rm-cancel"${dis}>取消</button></div>`;
+    else {
+      const note = !rm ? '' : rm.status === 'declined' ? (rm.by === mySeat ? '你拒绝了再来一局。' : '对手拒绝了再来一局。')
+        : rm.status === 'cancelled' ? (rm.by === mySeat ? '你取消了请求。' : '对手取消了请求。')
+        : rm.status === 'expired' ? (rm.from === mySeat ? '对手没有回应，请求已超时。' : '请求已超时。') : '';
+      html = `${note ? `<p class="rm-msg bad">${note}</p>` : ''}<div class="rm-btns"><button type="button" class="primary rm-main" data-b="rm-request"${dis}>再来一局</button></div>`;
+    }
+    box.innerHTML = html;
+    tickRematch();
+    if (incoming && !prev.includes('"pending"')) {
+      playSfx('reward');
+      if ($('.result').hidden) { ctx.notice('对手想再来一局，点「结果」回应'); $('.reopen')?.classList.add('hot'); }
+    }
+    if (!incoming) $('.reopen')?.classList.remove('hot');
+  }
+  function tickRematch() {
+    const c = $('.res-rematch .rm-count'), exp = room?.rematch?.expiresAt;
+    if (c) c.textContent = exp ? fmtClock(exp - (Date.now() + skew)) : '';
+  }
+  async function rematch(op) {
+    if (rematchBusy || !ctx.rematch) return;
+    rematchBusy = true; renderRematch();
+    try { await ctx.rematch(op, round); } finally { rematchBusy = false; if (el) renderRematch(); }
   }
   function burst(box, win) {
     const n = win ? 26 : 12;
@@ -1061,9 +1176,13 @@ export function createBattle(ctx) {
     else if (k === 'concede') { if (confirm('确认认输？本局判负。')) await ctx.send({ type: 'concede' }); }
     else if (k === 'leave') { if (shownView?.status !== 'active' || confirm('对局进行中，退出房间会直接判负。确认退出？')) ctx.leave(); }
     else if (k === 'new-room') ctx.newRoom();
+    else if (k === 'rm-request') rematch('request');
+    else if (k === 'rm-accept') rematch('accept');
+    else if (k === 'rm-decline') rematch('decline');
+    else if (k === 'rm-cancel') rematch('cancel');
     else if (k === 'back') ctx.leave();
     else if (k === 'view-log') { $('.result').hidden = true; resultDismissed = true; openHistory(true); addReopen(); }
-    else if (k === 'reopen-result') { $('.result').hidden = false; }
+    else if (k === 'reopen-result') { $('.result').hidden = false; b.classList.remove('hot'); if (histOpen) openHistory(false); }
   }
   function addReopen() {
     if ($('.reopen')) return;

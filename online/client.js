@@ -4,8 +4,12 @@ import { ACTS } from '/pvp/season-map.js';
 import {
   loadAccount, saveAccount, getPendingProofCache, clearPendingProofCache,
   apiCreateAccount, apiGetAccount, apiResolvePending,
-  apiCreateRoom, apiJoinRoom, apiGetRoom, apiReady, apiAction, apiLeaveRoom
+  apiCreateRoom, apiJoinRoom, apiGetRoom, apiReady, apiAction, apiLeaveRoom, apiFetch
 } from '/pvp/helper.js';
+
+// 再来一局: op = request | accept | decline | cancel; round = the match being answered.
+const apiRematch = (token, code, op, round) =>
+  apiFetch(`/api/rooms/${encodeURIComponent(code)}/rematch`, { method: 'POST', token, body: JSON.stringify({ op, round }) });
 
 const app = document.getElementById('pvp-app');
 const noticeEl = document.getElementById('pvp-notice');
@@ -26,7 +30,12 @@ let pendingRetry = null;
 let dialogResolve = null;
 
 const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function notice(text) { noticeEl.textContent = text; noticeEl.style.display = text ? 'block' : 'none'; }
+let noticeTimer = 0;
+function notice(text) {
+  noticeEl.textContent = text; noticeEl.style.display = text ? 'block' : 'none';
+  clearTimeout(noticeTimer);
+  if (text) noticeTimer = setTimeout(() => { noticeEl.style.display = 'none'; }, 5000);
+}
 function showModal(title, html) {
   modal.innerHTML = `<h2 tabindex="-1">${title}</h2>${html}`;
   dialog.showModal();
@@ -38,8 +47,24 @@ const battle = createBattle({
   notice,
   send: command => sendAction(command),
   leave: () => handleLeaveRoom(),
-  newRoom: async () => { await handleLeaveRoom(); showCreateDialog(); }
+  newRoom: async () => { await handleLeaveRoom(); showCreateDialog(); },
+  rematch: (op, round) => handleRematch(op, round)
 });
+
+async function handleRematch(op, round) {
+  if (!token || !room?.code) return;
+  try {
+    const res = await apiRematch(token, room.code, op, round);
+    room = res.room;
+    latestRoomKey = roomKey(room);
+    render();
+  } catch (err) {
+    notice('再来一局失败：' + err.message);
+    pollRoom();
+  }
+}
+// A finished room keeps polling so both players see rematch requests and answers.
+const watchFinished = r => r?.status === 'finished' && !r.members?.find(m => m.seat === r.seat)?.left;
 
 closeDialog.addEventListener('click', () => { dialog.close(); if (dialogResolve) { dialogResolve(null); dialogResolve = null; } });
 
@@ -67,7 +92,7 @@ function render() {
   else if (screen === 'lobby') renderLobby();
   else if (screen === 'game') renderGame();
 
-  if (room && (room.status === 'active' || room.status === 'waiting') && (screen === 'game' || screen === 'lobby')) {
+  if (room && (room.status === 'active' || room.status === 'waiting' || (screen === 'game' && watchFinished(room))) && (screen === 'game' || screen === 'lobby')) {
     startPolling();
   } else {
     stopPolling();
@@ -162,7 +187,10 @@ function roomKey(r) {
     code: r.code,
     status: r.status,
     seat: r.seat,
-    members: r.members?.map(m => [m.seat, m.ready, m.deckCount, m.maxHp]),
+    round: r.round,
+    rematch: r.rematch,
+    timer: r.timer,
+    members: r.members?.map(m => [m.seat, m.ready, m.deckCount, m.maxHp, m.left]),
     match: r.match ? {
       rev: r.match.rev,
       status: r.match.status,
@@ -192,7 +220,7 @@ function startPolling() {
     visibilityInstalled = true;
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') stopPolling();
-      else if (room?.code && (room.status === 'active' || room.status === 'waiting')) startPolling();
+      else if (room?.code && (room.status === 'active' || room.status === 'waiting' || (screen === 'game' && watchFinished(room)))) startPolling();
     });
   }
   if (pollTimer) return;

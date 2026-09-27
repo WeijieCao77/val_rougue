@@ -5,7 +5,7 @@ body.in-duel{overflow:hidden;overscroll-behavior:none}
 .duel button{font:inherit}
 .duel [hidden]{display:none!important}
 .opp-fan{grid-area:fan;position:relative}
-.fan-count{position:absolute;left:50%;top:32px;transform:translateX(-50%);z-index:46;min-width:22px;height:20px;padding:0 6px;border-radius:10px;background:#2a1216;border:1px solid var(--opp);color:#ffd0d0;font-size:12px;line-height:18px;text-align:center;pointer-events:none}
+.fan-count{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:46;min-width:22px;height:20px;padding:0 6px;border-radius:10px;background:#2a1216;border:1px solid var(--opp);color:#ffd0d0;font-size:12px;line-height:18px;text-align:center;pointer-events:none}
 .opp-fan.empty .fan-count{opacity:.55}
 .duel-corner{position:absolute;top:4px;z-index:45;display:flex;gap:6px}
 .duel-corner.left{left:6px}.duel-corner.right{right:6px}
@@ -284,7 +284,42 @@ body.in-duel{overflow:hidden;overscroll-behavior:none}
   .end-turn b{font-size:17px}
   .hist-strip{width:52px;left:10px}
   .tile{width:40px;height:40px}
-  .fan-count{top:42px}
+  .fan-count{top:14px}
   .banner b{font-size:40px}
 }
+/* ---------- turn timer: clock on the end-turn button + burning fuse (last 20 s) */
+.end-turn .t-clock{font-variant-numeric:tabular-nums;font-weight:800;min-height:1em}
+.end-turn.urgent:not(.theirs){border-color:#ffb36b;animation:urgentPulse .9s ease-in-out infinite}
+.end-turn.urgent.theirs .t-clock{color:#ffb3a8}
+@keyframes urgentPulse{0%,100%{box-shadow:0 4px 14px #000a,0 0 0 0 #ff6b2e00}50%{box-shadow:0 4px 14px #000a,0 0 0 5px #ff6b2e55,0 0 20px #ff6b2e}}
+.midline{z-index:4}
+.turn-chip{transition:transform .3s}
+.duel.roping .turn-chip{transform:translateY(-28px)}
+.rope{--left:1;position:absolute;left:46px;right:74px;top:50%;height:16px;margin-top:-8px;z-index:3;pointer-events:none}
+.rope::before{content:"";position:absolute;left:0;top:7px;height:2px;width:calc((1 - var(--left)) * 100%);background:repeating-linear-gradient(90deg,#1b120a 0 5px,#3b2a18 5px 8px);opacity:.8;border-radius:1px}
+.rope-cord{position:absolute;right:0;top:5px;height:6px;width:calc(var(--left) * 100%);border-radius:3px;background:repeating-linear-gradient(115deg,#e2bf78 0 4px,#9a7234 4px 7px);box-shadow:0 0 0 1px #3a2810,0 0 8px #ff9d2e44;transition:width .22s linear}
+.rope.theirs .rope-cord{background:repeating-linear-gradient(115deg,#d9a08c 0 4px,#8a4a3a 4px 7px)}
+.rope-fire{position:absolute;top:50%;left:calc((1 - var(--left)) * 100%);width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:radial-gradient(circle,#fffbe0 0 18%,#ffc23d 38%,#ff5a1acc 62%,transparent 72%);box-shadow:0 0 14px 4px #ff7a1acc,0 0 30px 8px #ff3d0044;animation:fuse .16s infinite alternate;transition:left .22s linear}
+.rope-fire::before,.rope-fire::after{content:"";position:absolute;left:8px;top:6px;width:3px;height:3px;border-radius:50%;background:#ffe07a;box-shadow:0 0 4px #ffb300;animation:spk .5s linear infinite}
+.rope-fire::after{left:11px;animation-delay:.25s;animation-duration:.6s}
+@keyframes fuse{from{transform:scale(.85) rotate(-8deg);filter:brightness(1)}to{transform:scale(1.15) rotate(8deg);filter:brightness(1.3)}}
+@keyframes spk{0%{transform:translate(0,0);opacity:1}100%{transform:translate(-9px,-14px);opacity:0}}
+.banner.timeout b{background:linear-gradient(90deg,transparent,#3a2206f2 20%,#3a2206f2 80%,transparent);color:#ffe7b8;text-shadow:0 0 18px #ff8a1a;font-size:19px;letter-spacing:2px;padding-right:70px}
+.tile-icon.clock{font-size:16px;color:#ffc36b}
+
+/* ---------- 再来一局 on the result screen */
+.res-rematch{display:flex;flex-direction:column;align-items:center;gap:8px;min-height:48px;width:100%}
+.rm-msg{margin:0;font-size:14px;color:#cfe0e4;display:flex;align-items:center;gap:6px}
+.rm-msg.hot{font-size:16px;font-weight:800;color:#ffe08a;text-shadow:0 0 12px #ffb30088;animation:rmHot 1.2s ease-in-out infinite}
+.rm-msg.bad{color:#f0c9c6}
+.rm-msg .rm-count{font-size:12px;font-weight:400;color:#9fb8be;font-variant-numeric:tabular-nums}
+@keyframes rmHot{0%,100%{opacity:1}50%{opacity:.7}}
+.rm-spin{width:14px;height:14px;border-radius:50%;border:2px solid #6fd9cc44;border-top-color:#6fd9cc;animation:rmSpin .8s linear infinite}
+@keyframes rmSpin{to{transform:rotate(360deg)}}
+.rm-btns{display:flex;gap:10px;justify-content:center}
+.rm-btns button{font-size:15px;padding:12px 20px;border-radius:10px}
+.rm-btns .rm-main{min-width:180px;font-size:17px;font-weight:800}
+.reopen.hot{border-color:#ffd36b;color:#ffe08a;animation:urgentPulse 1s ease-in-out infinite}
+@media (min-width:720px){.rope{left:70px;right:112px}}
+@media (prefers-reduced-motion:reduce){.rope-fire,.rope-fire::before,.rope-fire::after,.end-turn.urgent,.rm-msg.hot{animation:none}}
 @media (prefers-reduced-motion:reduce){.banner.show{animation:bannerIn .4s forwards}.hero.hit,.hero.hit-heavy{animation:none}.res-rays{animation:none}}

@@ -15,6 +15,23 @@ const ANON_CREATE_IP_LIMIT = 30;
 const READ_TOKEN_LIMIT = 600;
 const WRITE_TOKEN_LIMIT = 120;
 
+// ---------------------------------------------------------------- PvP turn timer
+// Every turn has PVP_TURN_MS. When it runs out the server ends that turn through the
+// normal end-turn path (history entry kind 'end' with auto: true); it is not a loss.
+// AFK rule (Hearthstone-like): a seat whose turn is auto-ended PVP_AFK_LIMIT times in
+// a row without sending any command of its own in between loses by 超时判负
+// (endReason 'timeout'). Any play / end by that seat resets its count.
+// There is no background loop: the timer is enforced lazily whenever a request touches
+// the room (GET poll / action / ready / leave / rematch) using server time, catching up
+// over every turn that expired while nobody was polling.
+// PVP_TURN_MS may be overridden by the env var of the same name for local testing only.
+export const PVP_TURN_MS = 75 * 1000;
+export const PVP_AFK_LIMIT = 3;
+const ENV_TURN_MS = Number(process.env.PVP_TURN_MS);
+const DEFAULT_TURN_MS = Number.isInteger(ENV_TURN_MS) && ENV_TURN_MS >= 3000 ? ENV_TURN_MS : PVP_TURN_MS;
+// A rematch request lapses if the other player does not answer in time.
+export const REMATCH_WAIT_MS = 60 * 1000;
+
 function now() {
   return Date.now();
 }
@@ -160,7 +177,19 @@ function cleanAccount(account) {
   };
 }
 
-function publicRoom(room, forSeat) {
+function publicTimer(room) {
+  const t = room.timer;
+  if (!t || room.status !== 'active') return null;
+  return { turn: t.turn, seat: t.seat, endsAt: t.endsAt ?? null, limit: t.limit, afk: [...(t.afk || [0, 0])], afkLimit: PVP_AFK_LIMIT };
+}
+
+function publicRematch(room) {
+  const r = room.rematch;
+  if (!r) return null;
+  return { status: r.status, from: r.from ?? null, by: r.by ?? null, round: room.round || 1, expiresAt: r.status === 'pending' ? r.at + REMATCH_WAIT_MS : null };
+}
+
+function publicRoomAt(room, forSeat, nowTime = Date.now()) {
   if (!room || !Array.isArray(room.members) || room.members.length === 0 || room.members.length > 2) {
     throw new HttpError(500, '房间数据无效');
   }
@@ -177,10 +206,15 @@ function publicRoom(room, forSeat) {
     code: room.code,
     status: room.status,
     seat: forSeat,
+    round: room.round || 1,
+    now: nowTime,
+    timer: publicTimer(room),
+    rematch: room.status === 'finished' ? publicRematch(room) : null,
     members: room.members.map(m => ({
       seat: m.seat,
       name: m.name || '玩家',
       ready: m.ready,
+      left: !!m.left,
       act: m.archiveSnapshot ? m.archiveSnapshot.act : null,
       maxHp: m.archiveSnapshot ? m.archiveSnapshot.maxHp : null,
       deckCount: m.archiveSnapshot ? m.archiveSnapshot.deck.length : null,
@@ -321,7 +355,84 @@ function validateArchiveSnapshot(snapshot) {
   }
 }
 
-function cleanRoomTimeouts(room, nowTime) {
+// Start (or keep) the clock for the match's current turn. `at` is when the turn began.
+function syncTimer(room, at, limit) {
+  const m = room.match;
+  if (!m || m.status !== 'active') return;
+  const t = room.timer;
+  if (t && t.turn === m.turn && t.seat === m.active) return;
+  room.timer = { turn: m.turn, seat: m.active, startedAt: at, endsAt: at + limit, limit, afk: t?.afk ? [...t.afk] : [0, 0] };
+}
+
+function firstSeatOf(room) {
+  if (room.firstSeat === 0 || room.firstSeat === 1) return room.firstSeat;
+  const m = room.match;
+  const t = m?.history?.find(e => e.kind === 'turn');
+  if (t && (t.seat === 0 || t.seat === 1)) return t.seat;
+  return m ? (m.turn % 2 === 1 ? m.active : 1 - m.active) : 0;
+}
+
+function startRoomMatch(room, nowTime, limit, first) {
+  room.seed = randomBytes(16).toString('hex');
+  room.match = createMatch(
+    room.members[0].archiveSnapshot,
+    room.members[1].archiveSnapshot,
+    room.seed,
+    first === 0 || first === 1 ? { first } : {}
+  );
+  room.firstSeat = room.match.active;
+  room.status = 'active';
+  room.startedAt = nowTime;
+  room.lastActionAt = nowTime;
+  room.timer = null;
+  room.rematch = null;
+  syncTimer(room, nowTime, limit);
+}
+
+function finishRoomIfDone(room) {
+  if (room.match?.status === 'finished') {
+    room.status = 'finished';
+    room.timer = null;
+    return true;
+  }
+  return false;
+}
+
+// Auto-end every turn whose time has run out (see PVP_TURN_MS above).
+function enforceTurnTimer(room, nowTime, limit) {
+  if (room.status !== 'active' || !room.match || room.match.status !== 'active') return false;
+  if (!room.timer) {
+    // A match stored before the timer existed: its current turn stays untimed and the
+    // clock starts with the next turn.
+    room.timer = { turn: room.match.turn, seat: room.match.active, startedAt: null, endsAt: null, limit, afk: [0, 0] };
+    return false;
+  }
+  let changed = false;
+  for (let guard = 0; guard < 500; guard++) {
+    const t = room.timer;
+    if (!t || t.endsAt == null || nowTime < t.endsAt || room.match.status !== 'active') break;
+    const seat = room.match.active;
+    const at = t.endsAt;
+    const afk = [...(t.afk || [0, 0])];
+    afk[seat]++;
+    room.match = applyCommand(room.match, seat, { type: 'end', auto: true, afk: afk[seat] });
+    room.lastActionAt = at;
+    changed = true;
+    if (room.match.status === 'active' && afk[seat] >= PVP_AFK_LIMIT) {
+      room.match = applyCommand(room.match, seat, { type: 'concede', reason: 'timeout' });
+    }
+    if (finishRoomIfDone(room)) break;
+    room.timer = { ...t, afk };
+    syncTimer(room, at, t.limit || limit);
+  }
+  return changed;
+}
+
+function cleanRoomTimeoutsAt(room, nowTime, limit = DEFAULT_TURN_MS) {
+  if (room.status === 'active') enforceTurnTimer(room, nowTime, limit);
+  if (room.status === 'finished' && room.rematch?.status === 'pending' && nowTime - room.rematch.at > REMATCH_WAIT_MS) {
+    room.rematch = { status: 'expired', from: room.rematch.from, at: nowTime };
+  }
   if (room.status === 'waiting') {
     if (nowTime - room.createdAt > ROOM_WAIT_TIMEOUT_MS) {
       room.status = 'closed';
@@ -333,10 +444,14 @@ function cleanRoomTimeouts(room, nowTime) {
       return 'closed';
     }
   } else if (room.status === 'active') {
-    if (nowTime - room.lastActionAt > ROOM_ACTIVE_TIMEOUT_MS) {
+    // Long-inactivity forfeit, kept for matches whose current turn is untimed (stored
+    // before the turn timer). A timed turn always ends within PVP_TURN_MS, so this can
+    // never fire before the AFK rule above has had its PVP_AFK_LIMIT auto-ended turns.
+    if (room.timer?.endsAt == null && nowTime - room.lastActionAt > ROOM_ACTIVE_TIMEOUT_MS) {
       const activeSeat = room.match.active;
       room.match = applyCommand(room.match, activeSeat, { type: 'concede', reason: 'timeout' });
       room.status = 'finished';
+      room.timer = null;
       room.lastActionAt = nowTime;
       return 'finished';
     }
@@ -344,8 +459,13 @@ function cleanRoomTimeouts(room, nowTime) {
   return null;
 }
 
-function removeAccountFromRoom(account) {
-  account.roomCode = null;
+// A member who walks away from a finished room (返回 / 新建房间) can no longer rematch.
+function markLeftFinishedRoom(room, accountId, nowTime) {
+  if (!room || room.status !== 'finished') return;
+  const m = room.members.find(x => x.accountId === accountId);
+  if (!m) return;
+  m.left = true;
+  if (room.rematch?.status === 'pending') room.rematch = { status: 'left', from: room.rematch.from, by: m.seat, at: nowTime };
 }
 
 function isCheckpointProcessed(account, checkpointId) {
@@ -367,8 +487,13 @@ function isArchiveLockedInRoom() {
   return false;
 }
 
-export function createOnlineHandler(store) {
+export function createOnlineHandler(store, options = {}) {
   const limiter = new RateLimiter();
+  // Injected clock / turn length for tests; production uses Date.now and PVP_TURN_MS.
+  const now = typeof options.now === 'function' ? options.now : () => Date.now();
+  const turnMs = Number.isInteger(options.turnMs) && options.turnMs > 0 ? options.turnMs : DEFAULT_TURN_MS;
+  const cleanRoomTimeouts = (room, nowTime) => cleanRoomTimeoutsAt(room, nowTime, turnMs);
+  const publicRoom = (room, seat) => publicRoomAt(room, seat, now());
 
   return async function onlineHandler(req, res, url) {
     if (!url.pathname.startsWith('/api/')) {
@@ -585,6 +710,7 @@ export function createOnlineHandler(store) {
               throw new HttpError(409, '账户已在房间中');
             }
             if (existingRoom.status === 'closed' || existingRoom.status === 'finished') {
+              markLeftFinishedRoom(existingRoom, acct.accountId, now());
               acct.roomCode = null;
             }
           }
@@ -642,6 +768,7 @@ export function createOnlineHandler(store) {
               throw new HttpError(409, '账户已在房间中');
             }
             if (existingRoom.status === 'closed' || existingRoom.status === 'finished') {
+              markLeftFinishedRoom(existingRoom, acct.accountId, now());
               acct.roomCode = null;
             }
           }
@@ -707,7 +834,7 @@ export function createOnlineHandler(store) {
       return true;
     }
 
-    const roomActionMatch = pathname.match(/^\/api\/rooms\/([A-Z0-9]{6,8})\/(ready|action|leave)$/);
+    const roomActionMatch = pathname.match(/^\/api\/rooms\/([A-Z0-9]{6,8})\/(ready|action|leave|rematch)$/);
     if (roomActionMatch && method === 'POST') {
       const code = roomActionMatch[1];
       const action = roomActionMatch[2];
@@ -748,15 +875,8 @@ export function createOnlineHandler(store) {
             room.lastActionAt = now();
 
             if (room.members.length === 2 && room.members.every(m => m.ready)) {
-              room.seed = randomBytes(16).toString('hex');
-              room.match = createMatch(
-                room.members[0].archiveSnapshot,
-                room.members[1].archiveSnapshot,
-                room.seed
-              );
-              room.status = 'active';
-              room.startedAt = now();
-              room.lastActionAt = now();
+              startRoomMatch(room, now(), turnMs);
+              room.round = 1;
             }
             roomResponse = publicRoom(room, seat);
           });
@@ -798,6 +918,9 @@ export function createOnlineHandler(store) {
             if (!room) throw new HttpError(404, '房间未找到');
             const seat = getSeatInRoom(room, account.accountId);
             if (seat === -1) throw new HttpError(403, '非房间成员');
+            // A turn whose time ran out between the pre-clean and now is ended first, so a
+            // late command then fails on the revision check.
+            cleanRoomTimeouts(room, now());
 
             const requestKey = `${account.accountId}:${seat}:${requestId}`;
             if (room.requests[requestKey]) {
@@ -825,20 +948,80 @@ export function createOnlineHandler(store) {
 
             let newMatch;
             try {
-              // A client concede never carries a reason; timeout / leave are set by the server only.
-              newMatch = applyCommand(room.match, seat, command.type === 'concede' ? { type: 'concede' } : command);
+              // A client concede never carries a reason and a client end is never 'auto';
+              // timeout / leave / auto are set by the server only.
+              const clean = command.type === 'concede' ? { type: 'concede' } : command.type === 'end' ? { type: 'end' } : command;
+              newMatch = applyCommand(room.match, seat, clean);
             } catch (err) {
               throw new HttpError(400, err.message || '无效的操作');
             }
             room.match = newMatch;
             room.requests[requestKey] = { command: clone(command), rev: newMatch.rev };
             room.lastActionAt = now();
-            if (newMatch.status === 'finished') {
-              room.status = 'finished';
-            }
+            // Acting yourself clears your run of auto-ended turns.
+            if (room.timer?.afk) room.timer.afk[seat] = 0;
+            if (!finishRoomIfDone(room)) syncTimer(room, now(), turnMs);
             roomResponse = publicRoom(room, seat);
           });
 
+          sendJson(res, 200, { room: roomResponse });
+          return true;
+        }
+
+        if (action === 'rematch') {
+          // body: { op: 'request' | 'accept' | 'decline' | 'cancel', round }
+          // `round` is the match number the player is answering (room.round). A repeat of a
+          // request/accept that already took effect returns the current room unchanged.
+          const { op, round } = body;
+          if (!['request', 'accept', 'decline', 'cancel'].includes(op)) throw new HttpError(400, '无效的再来一局操作');
+          if (round !== undefined && (!Number.isInteger(round) || round < 1)) throw new HttpError(400, '无效的局数');
+          let roomResponse;
+          await store.transaction(async (data) => {
+            const room = findRoomByCode(data, code);
+            if (!room) throw new HttpError(404, '房间未找到');
+            const seat = getSeatInRoom(room, account.accountId);
+            if (seat === -1) throw new HttpError(403, '非房间成员');
+            const nowTime = now();
+            cleanRoomTimeouts(room, nowTime);
+            const current = room.round || 1;
+            // Stale: the rematch this answers already started (or the room moved on).
+            if (round !== undefined && round !== current) { roomResponse = publicRoom(room, seat); return; }
+            if (room.status !== 'finished') {
+              if (room.status === 'active' && (op === 'request' || op === 'accept') && round === undefined && current > 1) { roomResponse = publicRoom(room, seat); return; }
+              throw new HttpError(409, '对局尚未结束');
+            }
+            const me = room.members[seat];
+            const other = room.members[1 - seat];
+            const r = room.rematch;
+            if (op === 'decline' || op === 'cancel') {
+              if (r?.status === 'pending' && (op === 'cancel' ? r.from === seat : r.from !== seat)) {
+                room.rematch = { status: op === 'cancel' ? 'cancelled' : 'declined', from: r.from, by: seat, at: nowTime };
+              }
+              roomResponse = publicRoom(room, seat);
+              return;
+            }
+            // request / accept
+            if (room.members.length !== 2 || !other) throw new HttpError(409, '对手已离开房间');
+            const accounts = room.members.map(m => data.accounts[m.accountId]);
+            if (me.left || !accounts[seat] || accounts[seat].roomCode !== room.code) throw new HttpError(409, '你已离开这个房间');
+            if (other.left || !accounts[1 - seat] || accounts[1 - seat].roomCode !== room.code) throw new HttpError(409, '对手已离开房间');
+            room.members.forEach((m, i) => {
+              if (!findArchiveById(accounts[i], m.archiveId)) throw new HttpError(409, i === seat ? '你的构筑已不存在' : '对手的构筑已不存在');
+            });
+            if (r?.status === 'pending' && r.from === seat) { roomResponse = publicRoom(room, seat); return; }
+            if (r?.status === 'pending' && r.from !== seat) {
+              // Both want it: same room, same archives, new seed, the other player opens.
+              const first = 1 - firstSeatOf(room);
+              startRoomMatch(room, nowTime, turnMs, first);
+              room.round = current + 1;
+              room.requests = Object.create(null);
+              roomResponse = publicRoom(room, seat);
+              return;
+            }
+            if (op === 'accept') throw new HttpError(409, '没有待接受的再来一局请求');
+            room.rematch = { status: 'pending', from: seat, at: nowTime };
+            roomResponse = publicRoom(room, seat);
+          });
           sendJson(res, 200, { room: roomResponse });
           return true;
         }
@@ -874,10 +1057,13 @@ export function createOnlineHandler(store) {
             } else if (room.status === 'active') {
               room.match = applyCommand(room.match, seat, { type: 'concede', reason: 'leave' });
               room.status = 'finished';
+              room.timer = null;
               room.lastActionAt = now();
+              markLeftFinishedRoom(room, acct.accountId, now());
               acct.roomCode = null;
               roomResponse = publicRoom(room, seat);
             } else {
+              markLeftFinishedRoom(room, acct.accountId, now());
               roomResponse = publicRoom(room, seat);
               acct.roomCode = null;
             }
