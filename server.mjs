@@ -4,6 +4,10 @@ import { openStore } from './online/store.mjs';
 import { createOnlineHandler } from './online/api.mjs';
 import { createReplayPool } from './online/replay-pool.mjs';
 import { createStaticCache } from './static-cache.mjs';
+// Error reports, feedback, admin view and daily SQLite snapshots (docs/BACKUP-AND-MONITORING.md).
+import { createReportHandler } from './online/report-api.mjs';
+import { setServerErrorSink } from './online/server-errors.mjs';
+import { startBackupScheduler } from './online/backup.mjs';
 
 const assets = new Map([
   ['/pvp/equipment.js', ['online/equipment.js', 'text/javascript; charset=utf-8']],
@@ -24,6 +28,8 @@ const assets = new Map([
   ['/shared/card-gesture.js', ['shared/card-gesture.js', 'text/javascript; charset=utf-8']],
   ['/shared/touch-feel.js', ['shared/touch-feel.js', 'text/javascript; charset=utf-8']],
   ['/shared/tap-play.js', ['shared/tap-play.js', 'text/javascript; charset=utf-8']],
+  ['/shared/error-report.js', ['shared/error-report.js', 'text/javascript; charset=utf-8']],
+  ['/shared/feedback.js', ['shared/feedback.js', 'text/javascript; charset=utf-8']],
   ['/shared/changelog.js', ['shared/changelog.js', 'text/javascript; charset=utf-8']],
   ['/shared/changelog-ui.js', ['shared/changelog-ui.js', 'text/javascript; charset=utf-8']],
   ['/shared/progress-sync.js', ['shared/progress-sync.js', 'text/javascript; charset=utf-8']],
@@ -118,6 +124,8 @@ if (!Number.isInteger(port) || port < 0 || port > 65535) throw Error('Invalid PO
 
 let store;
 let onlineHandler;
+let reportHandler;
+let backups = null;
 // Claim replays run on worker threads so they never stall other requests.
 const replayPool = createReplayPool();
 const staticCache = createStaticCache();
@@ -125,6 +133,9 @@ const staticCache = createStaticCache();
 try {
   store = await openStore();
   onlineHandler = createOnlineHandler(store, { verifyClaim: replayPool.verify });
+  reportHandler = createReportHandler(store, { backupNow: () => backups?.runNow() });
+  setServerErrorSink(reportHandler.recordServerError);
+  if (store.dataDir && process.env.BACKUPS !== 'off') backups = startBackupScheduler(store, store.dataDir);
 } catch (err) {
   console.error('存储初始化失败:', err.message);
   process.exit(1);
@@ -168,11 +179,18 @@ const server = http.createServer(async (req, res) => {
   }
 
   const url = new URL(req.url, 'http://localhost');
+  if (await reportHandler(req, res, url)) return;
   const handled = await onlineHandler(req, res, url);
   if (handled) return;
 
   if (!['GET', 'HEAD'].includes(req.method)) {
     send(405, 'Method not allowed', undefined, { Allow: 'GET, HEAD' });
+    return;
+  }
+
+  // Admin view: only exists when ADMIN_TOKEN is set (the page asks for the token itself).
+  if ((pathname === '/admin/' || pathname === '/admin') && reportHandler.adminEnabled) {
+    await staticCache.serve(req, res, fileURLToPath(new URL('online/admin.html', import.meta.url)), 'text/html; charset=utf-8', { 'X-Content-Type-Options': 'nosniff', 'X-Robots-Tag': 'noindex', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'DENY' });
     return;
   }
 
@@ -200,6 +218,7 @@ let shuttingDown = false;
 async function shutdown() {
   if (shuttingDown) return;
   shuttingDown = true;
+  backups?.stop();
   console.log('正在关闭服务器...');
   // Stop accepting connections; claims already in flight finish, then the replay
   // workers are terminated (anything still queued answers 503 and the client retries).

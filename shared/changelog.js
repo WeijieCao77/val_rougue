@@ -5,6 +5,10 @@
 // When shipping something players will notice, add a line to the top entry
 // (or a new entry with the next version and today's date).
 export const CHANGELOG = [
+  { version: 'v0.9.7', date: '2026-09-28', title: '信箱与稳定性', items: [
+    ['all', '新增「信箱」：遇到问题或有建议，可以直接写信给作者。'],
+    ['all', '游戏出错时会自动上报，方便我们更快修复。']
+  ] },
   { version: 'v0.9.6', date: '2026-09-27', title: '你的对战身份', items: [
     ['pvp', '可以设置昵称、选择猪之家头像或上传图片，房间和牌桌显示双方昵称与头像。'],
     ['pvp', '首页展示已有构筑的幕数、赛区和保存时间；创建及加入房间时可以先查看完整卡组。'],

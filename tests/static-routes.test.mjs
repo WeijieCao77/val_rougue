@@ -33,3 +33,15 @@ for (const page of ['/', '/wa/', '/new/', '/pvp/']) {
     assert.deepEqual(missingFor(page), []);
   });
 }
+
+// /admin/ is served by server.mjs only when ADMIN_TOKEN is set (tests/backup-reports),
+// never from the always-on whitelist, and no player page links to it.
+test('admin page is not on the static whitelist and not linked from player pages', () => {
+  for (const url of routes.keys()) assert.ok(!url.startsWith('/admin'), url);
+  assert.ok(![...routes.values()].includes('online/admin.html'));
+  assert.equal(routes.get('/shared/error-report.js'), 'shared/error-report.js');
+  assert.equal(routes.get('/shared/feedback.js'), 'shared/feedback.js');
+  for (const f of ['landing.html', 'index.html', 'new-demo/index.html', 'online/index.html', 'ui-source.js', 'new-demo/ui.js', 'online/client.js', 'shared/feedback.js']) {
+    assert.doesNotMatch(read(f), /['"(]\/admin\b/, f);
+  }
+});

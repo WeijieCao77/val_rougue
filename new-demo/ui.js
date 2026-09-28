@@ -5,10 +5,19 @@ import { statusBadges, statusBadge, statusIcon, highlightKeywords, keywordRules,
 import { attachCardDetail, openCardSheet, showDragHint, hideDragHint, trackLayer } from '/shared/touch-feel.js';
 import { tapPlayMode, tapCardAction, watchTapPlay, enforceTextFloor } from '/shared/tap-play.js';
 import { startCoach } from '/shared/coach.js';
-import { changelogFor } from '/shared/changelog.js';
+import { changelogFor, LATEST_VERSION } from '/shared/changelog.js';
+import { initErrorReport, recentErrorMessages, gameContext } from '/shared/error-report.js';
+import { feedbackButtonHtml, initFeedback } from '/shared/feedback.js';
 import { changelogButtonHtml, initChangelog } from '/shared/changelog-ui.js';
 import { initProgressSync, syncButtonHtml, progressSyncNow } from '/shared/progress-sync.js';
 const ND_LOG = changelogFor('new');
+// Error reports + feedback carry only this coarse state (no account, no storage).
+function ndErrorContext() {
+  if (!state) return { screen: 'home' };
+  const step = state.map?.nodes?.find(n => n.key === state.currentNode)?.step;
+  return { screen: 'game', phase: state.phase, team: state.team, act: state.act, floor: step, turn: state.phase === 'combat' ? state.battle?.turn : undefined, ascension: state.ascension || 0 };
+}
+initErrorReport({ page: 'new', version: LATEST_VERSION, getContext: ndErrorContext });
 import { showResultSummary, resultWorthShowing } from '/shared/result-summary.js';
 import { ACTS } from './season-map.js';
 import { cardArt, combatArt, relicArt } from './art.js';
@@ -272,6 +281,7 @@ function renderHome() {
         <button class="hero-link" id="btn-achievements">成就</button>
         ${changelogButtonHtml(ND_LOG)}
         ${syncButtonHtml(ND_SYNC)}
+        ${feedbackButtonHtml('hero-link')}
         <a href="/">选择版本</a>
       </nav>
       <footer class="credit brand-credit"><img src="/shared/pig-house.svg" alt="猪之家标志">猪之家出品</footer>
@@ -575,6 +585,7 @@ function renderGame() {
         <button class="btn" id="btn-guide" aria-label="怎么玩"><span class="lbl-full">怎么玩</span><span class="lbl-short">玩法</span></button>
         <button class="btn" id="btn-abandon" aria-label="放弃本局"><span class="lbl-full">放弃本局</span><span class="lbl-short">放弃</span></button>
         <button class="btn" id="btn-home" aria-label="返回首页"><span class="lbl-full">返回首页</span><span class="lbl-short">首页</span></button>
+        ${feedbackButtonHtml('btn')}
         ${soundToggleHtml()}
       </div>
     </header>
@@ -2269,6 +2280,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initUpgradePeek();
   initChangelog(ND_LOG);
   initProgressSync(ND_SYNC);
+  initFeedback({ page: 'new', version: LATEST_VERSION, theme: 'new', getContext: gameContext, recentErrors: () => recentErrorMessages(3) });
   // First fight: a few tips over the first two turns (once per browser).
   startCoach({ key: 'new-demo-coach-v1', getTurn: () => state?.phase === 'combat' && state.battle ? state.battle.turn : null, steps: [
   { turn: 1, sel: '.enemy-unit:not(.is-dead) .intent', text: '敌人头上显示它<b>下一步要做什么</b>，数字是它实际会造成的伤害。' },
