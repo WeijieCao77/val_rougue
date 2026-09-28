@@ -27,5 +27,10 @@
     </a>
   </main>
   <footer class="credit brand-credit"><img src="/shared/pig-house.svg" alt="猪之家标志">猪之家出品</footer>
+  <script type="module">
+    import { LATEST_VERSION } from '/shared/changelog.js';
+    import { initErrorReport } from '/shared/error-report.js';
+    initErrorReport({ page: 'landing', version: LATEST_VERSION, getContext: () => ({ screen: 'landing' }) });
+  </script>
 </body>
 </html>

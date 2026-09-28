@@ -6,6 +6,7 @@ import { generateToken, generateRoomCode, sha256 } from './store.mjs';
 import { recordPvpResult, pvpProgress } from './pvp-records.js';
 import { publicProfile, validateName, prepareAvatar } from './profile.mjs';
 import { createSyncHandler } from './sync-api.mjs';
+import { reportServerError } from './server-errors.mjs';
 
 const MAX_BODY_BYTES = 1024 * 1024;
 const MAX_ARCHIVES = 10;
@@ -59,8 +60,9 @@ export function sendJson(res, status, obj, extraHeaders) {
 export function sendError(res, err) {
   if (!(err instanceof HttpError)) {
     console.error('API内部错误:', err);
+    reportServerError(err, { status: 500, method: res.req?.method, route: res.req?.url?.split('?')[0] });
     err = new HttpError(500, '服务器内部错误');
-  }
+  } else if (err.status === 500) reportServerError(err, { status: 500, method: res.req?.method, route: res.req?.url?.split('?')[0] });
   sendJson(res, err.status, { error: err.message }, err.headers);
 }
 

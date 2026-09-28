@@ -18253,6 +18253,396 @@ function watchTapPlay(onChange) {
 return {TAP_PLAY_MAX_WIDTH,isTapPlayDevice,tapPlayMode,allowCardDrag,tapCardAction,PHONE_QUERY,MIN_TEXT_PX,floorFontSize,enforceTextFloor,watchTapPlay};
 })();
 const module33=(()=>{
+// Client error capture for every page (Wa, new demo, PvP, landing). Plain ES module
+// with named exports and no imports (bundled into the Wa app.js by
+// tools/build-browser.mjs, imported directly by the other pages).
+//
+// initErrorReport({ page, version, getContext }) — once per page: listens to window
+//   'error' and 'unhandledrejection'. getContext() returns a coarse game context
+//   (screen / phase, act / floor, turn…); only flat numbers, booleans and short strings
+//   are sent, and keys that look like identities or secrets are dropped.
+// reportError(err, context) — manual report.
+// recentErrorMessages(n) — the last captured messages (attached to feedback).
+//
+// Sent to POST /api/report/error with keepalive. Never tokens, storage dumps or
+// nicknames. The same error (message + first stack line) is sent at most once per
+// 10 minutes, at most 10 reports per page load. Nothing here may throw or recurse.
+
+const DEDUPE_MS = 10 * 60 * 1000;
+const MAX_REPORTS = 10;
+const STACK_MAX = 4096;
+const DENY_KEY = /token|secret|pass|key|name|nick|mail|phone|auth|cookie|storage/i;
+// Browser / extension noise that says nothing about the game.
+const IGNORE = /^(Script error\.?|ResizeObserver loop|Non-Error promise rejection captured)/i;
+
+let cfg = { page: 'unknown', version: '', getContext: null, endpoint: '/api/report/error', transport: null };
+let installed = false;
+let busy = false;
+let sentCount = 0;
+const lastSent = new Map();
+const recent = [];
+
+const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
+
+function safeContext(extra) {
+  const out = {};
+  const add = obj => {
+    if (!obj || typeof obj !== 'object') return;
+    for (const k of Object.keys(obj).slice(0, 30)) {
+      if (Object.keys(out).length >= 14 || DENY_KEY.test(k)) continue;
+      const v = obj[k];
+      if (typeof v === 'number' && isFinite(v)) out[k] = v;
+      else if (typeof v === 'boolean') out[k] = v;
+      else if (typeof v === 'string') out[k] = clip(v, 60);
+    }
+  };
+  try { add(cfg.getContext ? cfg.getContext() : null); } catch {}
+  try { add(extra); } catch {}
+  return out;
+}
+
+// Coarse state for the feedback modal (same filtering as error reports).
+function gameContext() {
+  return safeContext(null);
+}
+
+function clientInfo() {
+  const info = { page: cfg.page, version: cfg.version };
+  try { info.path = location.pathname; } catch {}
+  try { info.viewport = `${Math.round(innerWidth)}x${Math.round(innerHeight)}`; } catch {}
+  return info;
+}
+
+function recentErrorMessages(n = 3) {
+  return recent.slice(-n).map(e => e.message);
+}
+
+function send(payload) {
+  const body = JSON.stringify(payload);
+  if (cfg.transport) { cfg.transport(cfg.endpoint, body); return; }
+  if (typeof fetch !== 'function') return;
+  const p = fetch(cfg.endpoint, { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body });
+  if (p && typeof p.catch === 'function') p.catch(() => {});
+}
+
+function reportError(err, context) {
+  if (busy) return false;
+  busy = true;
+  try {
+    const isErr = err && typeof err === 'object';
+    const message = clip(isErr ? (err.message || err.name || String(err)) : err, 500).trim() || 'Unknown error';
+    if (IGNORE.test(message)) return false;
+    const stack = clip(isErr && typeof err.stack === 'string' ? err.stack : '', STACK_MAX);
+    const firstLine = stack.split('\n').map(s => s.trim()).find(s => /^at |@/.test(s)) || '';
+    const key = `${message}|${firstLine}`;
+    recent.push({ message: clip(message, 200), at: Date.now() });
+    if (recent.length > 10) recent.shift();
+    const now = Date.now();
+    const last = lastSent.get(key);
+    if (last && now - last < DEDUPE_MS) return false;
+    if (sentCount >= MAX_REPORTS) return false;
+    lastSent.set(key, now);
+    sentCount++;
+    let ua = '';
+    try { ua = clip(navigator.userAgent, 300); } catch {}
+    send({ ...clientInfo(), ua, message, stack, context: safeContext(context) });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    busy = false;
+  }
+}
+
+function initErrorReport(options = {}) {
+  try {
+    cfg = {
+      ...cfg,
+      page: clip(options.page || cfg.page, 20),
+      version: clip(options.version || cfg.version, 24),
+      getContext: typeof options.getContext === 'function' ? options.getContext : cfg.getContext,
+      endpoint: options.endpoint || cfg.endpoint,
+      transport: typeof options.transport === 'function' ? options.transport : cfg.transport,
+    };
+    if (installed || typeof addEventListener !== 'function') return;
+    installed = true;
+    addEventListener('error', e => {
+      try {
+        // Resource load errors (img/script 404) have no .error and no message.
+        if (!e || (!e.error && !e.message)) return;
+        reportError(e.error || { message: e.message, stack: e.filename ? `at ${e.filename}:${e.lineno}:${e.colno}` : '' }, { source: 'error' });
+      } catch {}
+    });
+    addEventListener('unhandledrejection', e => {
+      try {
+        const r = e && e.reason;
+        reportError(r && typeof r === 'object' ? r : { message: `Unhandled rejection: ${clip(r, 300)}` }, { source: 'rejection' });
+      } catch {}
+    });
+  } catch {}
+}
+
+// Registers / replaces the context callback after init (e.g. once state exists).
+function registerGameContext(fn) {
+  if (typeof fn === 'function') cfg.getContext = fn;
+}
+
+// Tests only.
+function resetErrorReportForTests() {
+  sentCount = 0;
+  lastSent.clear();
+  recent.length = 0;
+  busy = false;
+}
+
+return {gameContext,clientInfo,recentErrorMessages,reportError,initErrorReport,registerGameContext,resetErrorReportForTests};
+})();
+const module34=(()=>{
+// 信箱: a private letter box to the author (Wa demo, new demo, PvP). Plain ES module with
+// named exports and no imports (bundled into the Wa app.js, imported directly elsewhere).
+//
+// Private only: letters go to the author's /admin/ view; nothing is shown to other
+// players (no public board, votes or ranking).
+//
+// feedbackButtonHtml(cls) → the 「信箱」 button (envelope icon); any element with
+//   [data-feedback] opens the mailbox.
+// initFeedback({ page, version, theme, getContext, recentErrors }) — once per page.
+//   getContext() → coarse game state (same filtering as error reports);
+//   recentErrors() → last captured error messages (up to 3 are attached).
+//
+// Two tabs: 「写信给作者」 (subject optional, body ≤ 1000 chars, category chips, attach
+// state checkbox, 寄出) and 「我寄出的信」 — the letters sent from this browser, kept only
+// in localStorage (per page). Each letter carries an unguessable receipt returned by the
+// server; the list asks POST /api/report/letters/status for the author's status of those
+// receipts only (已读 / 已采纳 / 已修复). The dialog is a <dialog> opened with showModal(),
+// so it sits above the demos' own dialogs (e.g. the Wa in-game menu).
+
+const CSS = `
+.fb-btn-ico{width:1.15em;height:1.15em;vertical-align:-.2em;margin-right:.3em;flex:none}
+.fb-dialog{--fb-accent:#d9b677;--fb-accent-ink:#1a1408;--fb-bg:#111b22;--fb-paper:#f4ecdc;--fb-paper-ink:#2a2418;--fb-line:#d9b67755;--fb-ink:#f4ead7;--fb-muted:#b9b3a3;border:1px solid var(--fb-line);border-radius:10px;padding:0;width:min(460px,calc(100vw - 20px));max-height:calc(100dvh - 20px);background:var(--fb-bg);color:var(--fb-ink);font:15px/1.5 system-ui,"Microsoft YaHei",sans-serif;box-shadow:0 24px 70px #000c;overflow:auto}
+.fb-dialog::backdrop{background:#03070bb8}
+.fb-dialog button{box-shadow:none;text-shadow:none;transform:none;-webkit-tap-highlight-color:transparent;letter-spacing:normal;outline-offset:2px}
+.fb-dialog .fb-chip[aria-pressed="true"],.fb-dialog .fb-chip[aria-pressed="true"]:active{background:var(--fb-accent);border-color:var(--fb-accent);color:var(--fb-accent-ink);font-weight:700}
+.fb-dialog.fb-new{--fb-accent:#81e1d1;--fb-accent-ink:#06201c;--fb-bg:#0e171a;--fb-paper:#e9f3f0;--fb-paper-ink:#132421;--fb-line:#81e1d155;--fb-ink:#e6f4f1;--fb-muted:#9fb5b0}
+.fb-dialog.fb-pvp{--fb-accent:#ff9b7a;--fb-accent-ink:#2a0f06;--fb-bg:#121a20;--fb-paper:#f5ebe4;--fb-paper-ink:#2b1d16;--fb-line:#ff9b7a55;--fb-ink:#f3ece4;--fb-muted:#b6ada4}
+.fb-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 12px 0 16px}
+.fb-top h2{margin:0;font-size:19px;letter-spacing:.1em;color:var(--fb-accent);display:flex;align-items:center;gap:8px}
+.fb-x{min-width:44px;min-height:44px;border:1px solid var(--fb-line);border-radius:8px;background:transparent;color:var(--fb-ink);font-size:18px;cursor:pointer}
+.fb-tabs{display:flex;gap:4px;padding:10px 12px 0;border-bottom:1px solid var(--fb-line)}
+.fb-tab{flex:1;min-height:44px;border:0;border-bottom:3px solid transparent;background:transparent;color:var(--fb-muted);font:600 15px system-ui,"Microsoft YaHei",sans-serif;cursor:pointer}
+.fb-tab[aria-selected="true"]{color:var(--fb-ink);border-bottom-color:var(--fb-accent)}
+.fb-form{display:grid;gap:12px;padding:14px 14px max(16px,env(safe-area-inset-bottom))}
+.fb-letter{display:grid;gap:0;background:var(--fb-paper);color:var(--fb-paper-ink);border-radius:6px;padding:12px 14px 10px;box-shadow:inset 0 0 0 1px #0000001a;background-image:repeating-linear-gradient(transparent 0 31px,#00000014 31px 32px);background-position:0 12px}
+.fb-to{font-size:13px;opacity:.75;padding-bottom:4px}
+.fb-subject,.fb-text{width:100%;box-sizing:border-box;border:0;background:transparent;color:inherit;font:16px/32px system-ui,"Microsoft YaHei",sans-serif;padding:0;outline:none}
+.fb-subject{font-weight:700;border-bottom:1px dashed #00000033}
+.fb-text{min-height:160px;resize:vertical}
+.fb-subject::placeholder,.fb-text::placeholder{color:inherit;opacity:.45}
+.fb-letter:focus-within{box-shadow:inset 0 0 0 2px var(--fb-accent)}
+.fb-count{justify-self:end;font-size:12px;opacity:.6}
+.fb-chips{display:flex;flex-wrap:wrap;gap:8px;border:0;margin:0;padding:0}
+.fb-chips legend{font-size:13px;color:var(--fb-muted);padding:0;margin-bottom:6px}
+.fb-chip{min-height:44px;min-width:64px;padding:0 14px;border:1px solid var(--fb-line);border-radius:22px;background:transparent;color:var(--fb-ink);font:14px system-ui,"Microsoft YaHei",sans-serif;cursor:pointer}
+.fb-chip[aria-pressed="true"]{background:var(--fb-accent);border-color:var(--fb-accent);color:var(--fb-accent-ink);font-weight:700}
+.fb-attach{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;cursor:pointer}
+.fb-attach input{width:22px;height:22px;accent-color:var(--fb-accent);flex:none}
+.fb-note{margin:0;font-size:12px;color:var(--fb-muted)}
+.fb-status{min-height:20px;font-size:14px;color:var(--fb-muted)}
+.fb-status.err{color:#ff8a7a}
+.fb-actions{display:flex;gap:10px;justify-content:flex-end}
+.fb-actions button,.fb-done button{min-height:44px;min-width:96px;padding:0 18px;border-radius:8px;font:600 15px system-ui,"Microsoft YaHei",sans-serif;cursor:pointer}
+.fb-cancel,.fb-done button{border:1px solid var(--fb-line);background:transparent;color:var(--fb-ink)}
+.fb-send{border:1px solid var(--fb-accent);background:var(--fb-accent);color:var(--fb-accent-ink)}
+.fb-send:disabled{opacity:.6;cursor:wait}
+.fb-done{display:grid;gap:14px;justify-items:center;padding:36px 18px;text-align:center}
+.fb-done svg{width:48px;height:48px;color:var(--fb-accent)}
+.fb-done b{font-size:18px;color:var(--fb-ink)}
+.fb-sent{display:grid;gap:0;padding:6px 14px max(16px,env(safe-area-inset-bottom))}
+.fb-sent-item{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:12px 2px;border-bottom:1px solid var(--fb-line)}
+.fb-sent-item b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fb-sent-item small{font-size:12px;color:var(--fb-muted)}
+.fb-state{grid-row:span 2;align-self:center;font-size:12px;padding:3px 9px;border-radius:12px;border:1px solid var(--fb-line);color:var(--fb-muted);white-space:nowrap}
+.fb-state.read{color:var(--fb-ink)}
+.fb-state.adopted,.fb-state.fixed{background:var(--fb-accent);border-color:var(--fb-accent);color:var(--fb-accent-ink);font-weight:700}
+.fb-empty{padding:28px 6px;text-align:center;color:var(--fb-muted);font-size:14px}
+`;
+
+const ENVELOPE = '<svg class="fb-btn-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
+const CATEGORIES = ['问题', '建议', '平衡', '其他'];
+const MAX = 1000;
+const SUBJECT_MAX = 60;
+const KEEP_SENT = 30;
+// Player-facing status of a letter (the author's 忽略 shows as 作者已读).
+const STATE_LABEL = { new: '已寄出', read: '作者已读', ignored: '作者已读', adopted: '已采纳', fixed: '已修复' };
+let opts = { page: 'unknown', version: '', theme: 'wa', getContext: null, recentErrors: null, endpoint: '/api/report/feedback', statusEndpoint: '/api/report/letters/status' };
+let dialog = null;
+let bound = false;
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sentKey = () => `mailbox-sent-${opts.page}`;
+function loadSent() {
+  try { const list = JSON.parse(localStorage.getItem(sentKey()) || '[]'); return Array.isArray(list) ? list.filter(x => x && typeof x === 'object') : []; } catch { return []; }
+}
+function saveSent(list) {
+  try { localStorage.setItem(sentKey(), JSON.stringify(list.slice(0, KEEP_SENT))); } catch {}
+}
+
+function feedbackButtonHtml(cls = 'fb-btn', label = '信箱') {
+  return `<button type="button" class="${cls}" data-feedback aria-haspopup="dialog" aria-label="${label}（写信给作者）">${ENVELOPE}${label}</button>`;
+}
+
+function injectStyle() {
+  if (document.getElementById('fb-style')) return;
+  const style = document.createElement('style');
+  style.id = 'fb-style';
+  style.textContent = CSS;
+  document.head.append(style);
+}
+
+function build() {
+  dialog = document.createElement('dialog');
+  dialog.setAttribute('aria-label', '信箱');
+  document.body.append(dialog);
+  dialog.addEventListener('click', e => {
+    if (e.target === dialog) { const r = dialog.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) close(); }
+  });
+}
+
+function close() {
+  try { if (dialog?.open) dialog.close(); } catch { dialog?.removeAttribute('open'); }
+}
+
+function shell(tab) {
+  dialog.className = `fb-dialog fb-${opts.theme}`;
+  dialog.innerHTML = `<div class="fb-top"><h2>${ENVELOPE.replace('fb-btn-ico', 'fb-btn-ico fb-h-ico')}信箱</h2><button type="button" class="fb-x" aria-label="关闭">✕</button></div>
+    <div class="fb-tabs" role="tablist"><button type="button" class="fb-tab" role="tab" data-tab="write" aria-selected="${tab === 'write'}">写信给作者</button><button type="button" class="fb-tab" role="tab" data-tab="sent" aria-selected="${tab === 'sent'}">我寄出的信</button></div>
+    <div class="fb-pane"></div>`;
+  dialog.querySelector('.fb-x').addEventListener('click', close);
+  dialog.querySelectorAll('.fb-tab').forEach(b => b.addEventListener('click', () => show(b.dataset.tab)));
+  return dialog.querySelector('.fb-pane');
+}
+
+function show(tab) {
+  const pane = shell(tab);
+  if (tab === 'sent') renderSent(pane);
+  else return renderForm(pane);
+}
+
+function renderSent(pane) {
+  const list = loadSent();
+  const fmt = t => { try { return new Date(t).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }); } catch { return ''; } };
+  const draw = () => {
+    pane.innerHTML = list.length ? `<div class="fb-sent">${list.map(l => `<div class="fb-sent-item"><b>${esc(l.subject || l.first || '（无标题）')}</b><span class="fb-state ${esc(l.status || 'new')}">${esc(STATE_LABEL[l.status] || STATE_LABEL.new)}</span><small>${esc(l.category || '未分类')} · ${esc(fmt(l.at))}</small></div>`).join('')}<p class="fb-note" style="padding-top:10px">只保存在这台设备的浏览器里，其他玩家看不到。</p></div>`
+      : '<div class="fb-empty">还没有寄出过信。</div>';
+  };
+  draw();
+  const receipts = list.map(l => l.receipt).filter(r => typeof r === 'string' && /^[0-9a-f]{32}$/.test(r));
+  if (!receipts.length || typeof fetch !== 'function') return;
+  fetch(opts.statusEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ receipts }) })
+    .then(r => (r.ok ? r.json() : null))
+    .then(data => {
+      if (!data?.statuses) return;
+      let changed = false;
+      for (const l of list) {
+        const s = data.statuses[l.receipt];
+        if (s && s !== l.status) { l.status = s; changed = true; }
+      }
+      if (changed) saveSent(list);
+      if (pane.isConnected) draw();
+    })
+    .catch(() => {});
+}
+
+function renderForm(pane) {
+  pane.innerHTML = `<form class="fb-form" method="dialog" novalidate>
+    <div class="fb-letter">
+      <span class="fb-to">致 作者：</span>
+      <input class="fb-subject" name="subject" maxlength="${SUBJECT_MAX}" placeholder="标题（可不填）" aria-label="标题（可不填）" autocomplete="off">
+      <textarea class="fb-text" name="text" maxlength="${MAX}" rows="5" placeholder="遇到的问题或建议…" aria-label="信的内容"></textarea>
+      <span class="fb-count" aria-live="polite">0 / ${MAX}</span>
+    </div>
+    <fieldset class="fb-chips"><legend>类别（可选）</legend>${CATEGORIES.map(c => `<button type="button" class="fb-chip" data-cat="${c}" aria-pressed="false">${c}</button>`).join('')}</fieldset>
+    <label class="fb-attach"><input type="checkbox" name="attach" checked>附带当前游戏状态（不含账号信息）</label>
+    <p class="fb-note">信只有作者能看到，不会公开。</p>
+    <div class="fb-status" role="status"></div>
+    <div class="fb-actions"><button type="button" class="fb-cancel">取消</button><button type="submit" class="fb-send">寄出</button></div>
+  </form>`;
+  const form = pane.querySelector('form');
+  const subject = form.querySelector('.fb-subject');
+  const text = form.querySelector('.fb-text');
+  const count = form.querySelector('.fb-count');
+  const status = form.querySelector('.fb-status');
+  const send = form.querySelector('.fb-send');
+  let category = null;
+  text.addEventListener('input', () => { count.textContent = `${text.value.length} / ${MAX}`; });
+  form.querySelectorAll('.fb-chip').forEach(chip => chip.addEventListener('click', () => {
+    category = category === chip.dataset.cat ? null : chip.dataset.cat;
+    form.querySelectorAll('.fb-chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.cat === category)));
+  }));
+  form.querySelector('.fb-cancel').addEventListener('click', close);
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const value = text.value.trim();
+    const title = subject.value.trim().slice(0, SUBJECT_MAX);
+    status.className = 'fb-status';
+    if (!value) { status.textContent = '请先写点内容。'; status.classList.add('err'); text.focus(); return; }
+    const payload = { subject: title, text: value.slice(0, MAX), category, page: opts.page, version: opts.version };
+    try { payload.path = location.pathname; payload.viewport = `${Math.round(innerWidth)}x${Math.round(innerHeight)}`; } catch {}
+    if (form.querySelector('[name="attach"]').checked) {
+      try { payload.context = opts.getContext ? opts.getContext() : null; } catch {}
+      try { payload.recentErrors = (opts.recentErrors ? opts.recentErrors() : []).slice(-3); } catch {}
+    }
+    send.disabled = true;
+    status.textContent = '正在寄出…';
+    try {
+      const res = await fetch(opts.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      let data = null;
+      try { data = await res.json(); } catch {}
+      if (!res.ok) throw new Error(res.status === 429 ? '寄得太频繁了，请稍后再试。' : data?.error || '寄出失败，请稍后再试。');
+      const list = loadSent();
+      list.unshift({ receipt: typeof data?.receipt === 'string' ? data.receipt : null, subject: title, first: value.slice(0, 40), category, at: Date.now(), status: 'new' });
+      saveSent(list);
+      pane.innerHTML = `<div class="fb-done" role="status">${ENVELOPE.replace('fb-btn-ico', '')}<b>信已寄出，作者会认真看。</b><button type="button" class="fb-close">好的</button></div>`;
+      pane.querySelector('.fb-close').addEventListener('click', close);
+      pane.querySelector('.fb-close').focus();
+    } catch (err) {
+      send.disabled = false;
+      status.textContent = err?.message && !/fetch|network/i.test(err.message) ? err.message : '网络异常，寄出失败，请稍后再试。';
+      status.classList.add('err');
+    }
+  });
+  return text;
+}
+
+function openFeedback(tab = 'write') {
+  try {
+    injectStyle();
+    if (!dialog) build();
+    const text = show(tab);
+    if (typeof dialog.showModal === 'function') { if (!dialog.open) dialog.showModal(); }
+    else dialog.setAttribute('open', '');
+    // Phones: do not pop the keyboard over the letter before the player reads it.
+    if (text && !matchMedia('(pointer: coarse)').matches) text.focus();
+  } catch {}
+}
+
+function initFeedback(options = {}) {
+  opts = { ...opts, ...options };
+  if (typeof document === 'undefined') return;
+  injectStyle();
+  if (bound) return;
+  bound = true;
+  document.addEventListener('click', e => {
+    const btn = e.target?.closest?.('[data-feedback]');
+    if (!btn) return;
+    e.preventDefault();
+    openFeedback();
+  });
+}
+
+return {feedbackButtonHtml,openFeedback,initFeedback};
+})();
+const module35=(()=>{
 // First-fight coach marks: a few short tips over the first two turns of the
 // player's first combat (shared by both demos). It only explains controls and
 // what the screen shows — never how to build a deck.
@@ -18385,7 +18775,7 @@ function startCoach({ key, getTurn, steps }) {
 
 return {coachDone,startCoach};
 })();
-const module34=(()=>{
+const module36=(()=>{
 // Player-facing update log, newest first. Each demo's cover shows its own log
 // (changelogFor): the Wa demo gets 'wa' + 'pvp' + 'all' lines, the new demo only
 // 'new' + 'all' — so 'all' lines must never mention Valorant, players or PvP.
@@ -18393,6 +18783,10 @@ const module34=(()=>{
 // When shipping something players will notice, add a line to the top entry
 // (or a new entry with the next version and today's date).
 const CHANGELOG = [
+  { version: 'v0.9.7', date: '2026-09-28', title: '信箱与稳定性', items: [
+    ['all', '新增「信箱」：遇到问题或有建议，可以直接写信给作者。'],
+    ['all', '游戏出错时会自动上报，方便我们更快修复。']
+  ] },
   { version: 'v0.9.6', date: '2026-09-27', title: '你的对战身份', items: [
     ['pvp', '可以设置昵称、选择猪之家头像或上传图片，房间和牌桌显示双方昵称与头像。'],
     ['pvp', '首页展示已有构筑的幕数、赛区和保存时间；创建及加入房间时可以先查看完整卡组。'],
@@ -18501,7 +18895,7 @@ function changelogFor(demo) {
 
 return {CHANGELOG,TAG_LABELS,LATEST_VERSION,changelogFor};
 })();
-const module35=(()=>{
+const module37=(()=>{
 // Update-log button + slide-out panel for a demo's cover screen (shared by both
 // demos). Plain ES module with named exports and no imports (bundled into the
 // Wa app.js by tools/build-browser.mjs, imported directly by the new demo).
@@ -18578,7 +18972,7 @@ function initChangelog(log) {
 
 return {changelogButtonHtml,initChangelog};
 })();
-const module36=(()=>{
+const module38=(()=>{
 // Progress sync between devices (shared by both demos; each passes its own config and
 // syncs separately). Plain ES module with named exports and no imports: bundled into
 // the Wa app.js by tools/build-browser.mjs, imported directly by the new demo.
@@ -18980,7 +19374,7 @@ function progressSyncNow() {
 
 return {SYNC_MAX_BYTES,progressKeys,collectBundle,applyBundle,bundleHash,bundleBytes,resolveSyncResponse,agoText,deviceLabel,syncButtonHtml,initProgressSync,progressSyncNow};
 })();
-const module37=(()=>{
+const module39=(()=>{
 const { cardArtwork, opponentArtwork, artCredit } = module17;
 const { combatEvents } = module18;
 const { clearCombatFx, captureCombatStage, playCombatFx } = module22;
@@ -18996,12 +19390,17 @@ const { flyCardsFromPile, flyCardsToPile } = module25;
 const { soundToggleHtml } = module19;
 const { attachCardDetail, cardSheetOpen, openCardSheet, showDragHint, hideDragHint, touchLift, trackLayer } = module31;
 const { tapPlayMode, tapCardAction, allowCardDrag, watchTapPlay, enforceTextFloor } = module32;
-const { startCoach } = module33;
-const { changelogFor } = module34;
-const { changelogButtonHtml, initChangelog } = module35;
-const { initProgressSync, syncButtonHtml, progressSyncNow } = module36;
+const { startCoach } = module35;
+const { changelogFor, LATEST_VERSION } = module36;
+const { initErrorReport, recentErrorMessages, gameContext } = module33;
+const { feedbackButtonHtml, initFeedback } = module34;
+const { changelogButtonHtml, initChangelog } = module37;
+const { initProgressSync, syncButtonHtml, progressSyncNow } = module38;
 // Cover update log: the Wa demo's own entries (Wa + PvP).
 const WA_LOG=changelogFor('wa');
+// Error reports + feedback carry only this coarse state (no account, no storage).
+function waErrorContext(){if(atHome||!state)return {screen:'home'};return {screen,phase:state.phase,mode:state.mode,region:state.region,act:state.act,floor:state.node,turn:state.phase==='combat'?state.battle?.turn:undefined,ascension:state.ascension||0};}
+initErrorReport({page:'wa',version:LATEST_VERSION,getContext:waErrorContext});
 const { waJuiceAction, waSlam } = module21;
 const { showResultSummary, resultWorthShowing } = module28;
 const { waAchieve, waHallHtml, bindWaHall, waAchResultHtml, waTitleHtml } = module30;
@@ -19129,7 +19528,7 @@ function home(){
        ${saved?ui(`继续征程 · ${saved.mode==='season'?`第${saved.act||1}幕${saved.node?` · 第${saved.node}站`:''}`:'旧版第'+saved.node+'站'}`,'continue','primary'):''}
        <a class="primary cover-select-link" href="#cover-setup">选择赛区 ↓</a>
      </div>
-     <div class="cover-log ps-links">${changelogButtonHtml(WA_LOG)}${syncButtonHtml(WA_SYNC)}</div>
+     <div class="cover-log ps-links">${changelogButtonHtml(WA_LOG)}${syncButtonHtml(WA_SYNC)}${feedbackButtonHtml('cl-btn fb-btn')}</div>
    </div>
  </section>
  <section class="cover-setup" id="cover-setup">
@@ -19174,7 +19573,7 @@ function header(){
  const actInfo=state.mode==='season'?ACTS[state.act-1]:null;
  const label=state.mode==='season'?`${actInfo?actInfo.name:'赛段'} · ${state.region}${R(state)&&state.ascension?` · 难度 ${state.ascension}`:''}`:'第一幕 · 大师赛征程';
  const extra=R(state)?`${gearSlotsStrip(state)}${ui(`补给 ${state.supplies.length}/${supplySlots(state)}`,'supplies','hud-link')}${E(state)?ui(`投资 ${state.invest.length}`,'invest','hud-link',`title="${esc(state.invest.map(id=>INVESTMENTS[id].name).join('、')||'尚未投资')}"`):''}`:'';
- return `<header class="game-hud"><div class="brand"><img class="brand-pig" src="/shared/pig-house.svg" alt="猪之家">登峰赛季 <span>${esc(label)}</span></div><span class="header-links"><a href="/pvp/">好友PvP</a><a href="/">选择版本</a></span><div class="hud-resources"><span class="hud-hp">${icon('shield')} <b>${state.hp}</b> / ${state.maxHp}</span><span class="hud-money">${icon('coin')} <b>${state.money}</b></span>${ui(`牌组 ${state.deck.length}`,'deck','hud-link')}${extra}</div><div class="hud-tools">${ui(screen==='map'?'路线图':'查看路线','map','hud-link')}${ui('记录','logs','hud-link')}${ui('规则','rules','hud-link')}${ui('菜单','menu','hud-link')}${soundToggleHtml()}</div></header>`;
+ return `<header class="game-hud"><div class="brand"><img class="brand-pig" src="/shared/pig-house.svg" alt="猪之家">登峰赛季 <span>${esc(label)}</span></div><span class="header-links"><a href="/pvp/">好友PvP</a><a href="/">选择版本</a></span><div class="hud-resources"><span class="hud-hp">${icon('shield')} <b>${state.hp}</b> / ${state.maxHp}</span><span class="hud-money">${icon('coin')} <b>${state.money}</b></span>${ui(`牌组 ${state.deck.length}`,'deck','hud-link')}${extra}</div><div class="hud-tools">${ui(screen==='map'?'路线图':'查看路线','map','hud-link')}${ui('记录','logs','hud-link')}${ui('规则','rules','hud-link')}${ui('菜单','menu','hud-link')}${feedbackButtonHtml('hud-link')}${soundToggleHtml()}</div></header>`;
 }
 function route(){
  if(state.mode==='season')return seasonRoute();
@@ -19364,6 +19763,7 @@ function crateRoom(){
 function render(){
  initChangelog(WA_LOG);
  initProgressSync(WA_SYNC);
+ initFeedback({page:'wa',version:LATEST_VERSION,theme:'wa',getContext:gameContext,recentErrors:()=>recentErrorMessages(3)});
  clearCombatFx();
  document.querySelectorAll('.card-flight').forEach(el=>{el.getAnimations().forEach(a=>a.cancel());el.remove();});
  hideCardTip();
@@ -19688,7 +20088,7 @@ function handleUI(name){
   showModal('赛季规则',`<div class="rules"><p><strong>目标：</strong>对手防线降到 0 就赢得比赛；自己的声望降到 0，赛季失败。</p><p><strong>每回合：</strong>3 行动点、抽 5 张。按费用出牌，结束回合后对手按公开意图行动。资金与行动点是两种资源。</p><p><strong>布防：</strong>绊线、减速、墙体与掩护的共同收益；每点抵消 1 点攻击伤害。先抵消攻击，下个自己的回合开始清空。对手布防在对手下次行动开始时清空。</p><p><strong>牌堆：</strong>打出的普通牌进入弃牌堆；结束回合时，所有未打出的手牌也进入弃牌堆，不留到下回合。注明回合末消耗的牌改入消耗区。下回合重新抽 5 张，并结算额外抽牌能力；需要抽牌而抽牌堆为空时，将弃牌堆洗成新的抽牌堆。手牌最多 10 张。</p><p><strong>消耗：</strong>写着“打出后消耗”的牌，效果结算后进入消耗区，不进入弃牌堆，本场不再抽到；未打出时仍正常弃置，除非另写“回合末消耗”。消耗不等于永久删除，赛季牌组中的原牌下场恢复。临时牌和比赛干扰在赛后消失。</p><p><strong>能力：</strong>自由人牌打出后持续本场，不再洗回；多张可叠加，只影响之后的触发。</p><p><strong>压制：</strong>攻击伤害 ×0.75。<strong>易伤：</strong>受到攻击 ×1.5。每段伤害分别向下取整；回合数在受影响一方行动结束后减少。</p><p><strong>战术场景：</strong>卡上的特工技能转译成上述卡牌规则。腐坏逼退以压制结算，闪光接枪窗口以易伤结算；不另加持续伤害、硬控或隐藏触发。选牌后点“详解”可看说明。</p><p><strong>五个位置：</strong>决斗进攻，哨位布防，控场压制，先锋配合与抽牌，自由人建立持续能力。</p><p><strong>俱乐部活动：</strong>粉丝见面会恢复最大声望的 30%（向上取整、至多满声望）；训练升级一张选手或战术牌；团建移除一张隐患。每节点只能选一项。</p><p><strong>招募：</strong>可跳过。相同选手最多三张，升级前后合并计算。</p><p><strong>登峰赛季：</strong>四个赛区、三个赛段。每赛段 15 站，第 16 层为决赛，包含分支路线：第 1–2 站固定为比赛，第 7 站转会市场，第 9 站补给箱，第 15 站俱乐部活动；前 5 站不会出现强敌。前两幕 Boss 胜利各奖励 50 资金与 Boss 装备三选一（旧存档仍为皮肤选择，集齐后改得 20 资金）。之后晋级宣传恢复最大声望的 30%。冠军赛获胜即为赛季胜利。</p><h3>赛区特质</h3>${Object.entries(REGION_TRAITS).map(([id,t])=>`<p><strong>${esc(REGIONS[id].name)} · ${esc(t.name)}：</strong>${esc(t.text)}</p>`).join('')}<p>特质只在新规则赛季与好友 PvP 中生效，战斗界面左侧显示当前计数。</p><h3>赞助商签约日</h3><p>选择赛区后、进入路线图前，从 4 份合同中签下 1 份：两份免费的小奖励、一份有代价的交换、一份常规合同。选项由赛季种子决定。</p><h3>装备</h3><p>装备在本赛季持续生效，不进入抽牌堆，分普通、罕见、稀有、Boss 专属与市场专属。战胜强敌必得 1 件（普通／罕见／稀有约 50%／33%／17%，不重复）；Boss 胜利后可从 3 件 Boss 专属装备中选 1 件或放弃；转会市场出售 2 件装备与 1 件市场专属装备。原有三件皮肤归入普通装备。最多装备 6 件（Boss 专属装备与皮肤同样占槽）：槽满时获得新装备，需替换一件（被替换的按品级折算资金：普通 15、罕见 25、稀有 40、Boss 专属 50、市场专属 30）或放弃；任何时候都可在装备栏出售一件换同样资金。转会市场在槽满时不能购入装备。</p><h3>补给品</h3><p>一次性道具，默认 3 个栏位，比赛中点击使用，任何时候都可以丢弃。普通与强敌比赛胜利后按掉落率获得：初始 40%，掉落一次 -10%，未掉落 +10%。转会市场出售 3 个补给品；栏位满时需先丢弃或替换。</p><h3>解锁、跳过补偿与俱乐部投资</h3><p>每个赛区初次游玩时牌池较小（35 张），装备也少 15 件。比赛胜利 +1 解锁经验，每击败一幕 Boss +10，赛季冠军再 +10；解锁分 4 批，所需经验依次为 20／30／40／50；每批为该赛区加入约 10 张牌，并开放 3–4 件装备（装备按各赛区中最高的解锁等级开放）。解锁从下个赛季起生效。跳过招募时，可选 ${SKIP_FUNDS} 资金，或 1 次免费刷新转会名单（可留到之后的市场）。转会名单可付费刷新：每个市场第一次 20 资金，之后每次 +10。每个市场提供 1 项俱乐部投资（150–220 资金），买下后整赛季生效，同一项只能买一次。</p><h3>难度等级</h3><ol>${ASCENSION_LEVELS.filter(l=>l.level).map(l=>`<li>${esc(l.text)}</li>`).join('')}</ol><p>难度逐级叠加。每个赛区单独解锁：在当前最高难度赢下完整三幕赛季，解锁下一级。好友 PvP 只显示难度，不改变对局规则；装备与补给品不带入 PvP。</p><p>选手头像暂用占位图。游玩无需联网，也不消耗模型额度。</p></div>`);return;
  }
  if(name==='menu'){
-  showModal('赛季菜单',`<p>当前种子：${esc(state.seed)} · ${state.mode==='season'?'D0.2.0':VERSION}${state.mode==='season'?' · '+esc(state.region):''}${R(state)?' · 难度 '+(state.ascension||0):''}</p><div class="stack">${R(state)?ui(`查看装备（${state.skins.length}）`,'gear')+ui(`补给品（${state.supplies.length}/${supplySlots(state)}）`,'supplies'):''}${ui('比赛记录','logs')}${ui('赛季规则','rules')}${ui('导出本局记录','export')}${ui('返回开始页（保留进度）','home')}<a class="secondary menu-link" href="/pvp/">好友PvP</a><a class="secondary menu-link" href="/">选择版本</a>${state.phase!=='result'?ui('放弃本次赛季…','abandon','danger-button'):''}</div>${investList(state)}`);return;
+  showModal('赛季菜单',`<p>当前种子：${esc(state.seed)} · ${state.mode==='season'?'D0.2.0':VERSION}${state.mode==='season'?' · '+esc(state.region):''}${R(state)?' · 难度 '+(state.ascension||0):''}</p><div class="stack">${R(state)?ui(`查看装备（${state.skins.length}）`,'gear')+ui(`补给品（${state.supplies.length}/${supplySlots(state)}）`,'supplies'):''}${ui('比赛记录','logs')}${ui('赛季规则','rules')}${ui('导出本局记录','export')}${feedbackButtonHtml('secondary','信箱')}${ui('返回开始页（保留进度）','home')}<a class="secondary menu-link" href="/pvp/">好友PvP</a><a class="secondary menu-link" href="/">选择版本</a>${state.phase!=='result'?ui('放弃本次赛季…','abandon','danger-button'):''}</div>${investList(state)}`);return;
  }
  if(name==='abandon'){showModal('放弃本次赛季',`<p>本次将记录为主动放弃，不算声望耗尽。之后可以重新开始。</p>${button('确认放弃',{type:'abandon'},'danger-button')}`);return;}
  if(name==='export'){

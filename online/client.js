@@ -6,6 +6,9 @@ import { PVP_ACHIEVEMENTS, pvpProgress } from '/pvp/pvp-records.js';
 import { createBattle } from '/pvp/battle.js';
 import { openDeckView } from '/pvp/deck-view.js';
 import { ACTS } from '/pvp/season-map.js';
+import { LATEST_VERSION } from '/shared/changelog.js';
+import { initErrorReport, recentErrorMessages, gameContext } from '/shared/error-report.js';
+import { initFeedback, feedbackButtonHtml } from '/shared/feedback.js';
 import {
   loadAccount, saveAccount, getPendingProofCache, clearPendingProofCache,
   apiCreateAccount, apiGetAccount, apiResolvePending,
@@ -21,6 +24,10 @@ const noticeEl = document.getElementById('pvp-notice');
 const dialog = document.getElementById('pvp-dialog');
 const modal = document.getElementById('pvp-dialog-content');
 const closeDialog = document.getElementById('pvp-close-dialog');
+// Error reports + feedback carry only this coarse state (no token, no nickname).
+const pvpErrorContext = () => ({ screen, roomStatus: room?.status || 'none', turn: room?.match?.turn });
+initErrorReport({ page: 'pvp', version: LATEST_VERSION, getContext: pvpErrorContext });
+initFeedback({ page: 'pvp', version: LATEST_VERSION, theme: 'pvp', getContext: gameContext, recentErrors: () => recentErrorMessages(3) });
 
 let token = null;
 let account = null;
@@ -125,6 +132,7 @@ function renderHome() {
         <button data-nav="archives">构筑库</button>
         <button data-nav="records">PvP 战绩</button>
         <button data-nav="account">账号</button>
+        ${feedbackButtonHtml('')}
         <a href="/wa/" class="nav-link">返回登峰赛季</a>
         <a href="/" class="nav-link">选择版本</a>
       </nav>
@@ -191,7 +199,7 @@ function renderLobby() {
   app.innerHTML = `
     <header class="pvp-header">
       <div class="brand">好友 PvP <span>${esc(room?.code || '')}</span></div>
-      <button data-action="leave-room">退出房间</button>
+      <nav>${feedbackButtonHtml('')}<button data-action="leave-room">退出房间</button></nav>
     </header>
     <main class="pvp-main lobby-main">
       <section class="room-panel">

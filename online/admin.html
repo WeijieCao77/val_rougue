@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>后台 · 报告与备份</title>
+<link rel="icon" type="image/svg+xml" href="/shared/pig-house.svg">
+<style>
+:root{--bg:#0d1419;--panel:#131d24;--line:#2a3a44;--ink:#e9eef0;--muted:#98a8ae;--accent:#7fd0c2;--warn:#ffb86b;--bad:#ff8a7a;--ok:#8fd694}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,"Microsoft YaHei",sans-serif}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#0d1419f2;z-index:5}
+header h1{margin:0;font-size:18px;letter-spacing:.06em}
+main{max-width:1100px;margin:0 auto;padding:16px;display:grid;gap:16px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+h2{margin:0 0 10px;font-size:16px;color:var(--accent)}
+button,select,input{font:inherit;color:inherit}
+button{min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:8px;background:#1b2831;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#06201c;font-weight:700}
+select,input[type=password]{min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:#0b1216}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.muted{color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:10px}
+.stat b{display:block;font-size:22px}
+.stat small{color:var(--muted)}
+.item{border-top:1px solid var(--line);padding:12px 0;display:grid;gap:6px}
+.item:first-child{border-top:0}
+.item .head{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+.tag{font-size:12px;padding:1px 8px;border-radius:10px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.tag.error{color:var(--warn);border-color:#ffb86b66}
+.tag.server-error{color:var(--bad);border-color:#ff8a7a66}
+.tag.feedback{color:var(--accent);border-color:#7fd0c266}
+.count{font-weight:700;color:var(--warn)}
+.msg{font-weight:600;word-break:break-word}
+.fb-text{white-space:pre-wrap;word-break:break-word}
+details summary{cursor:pointer;color:var(--muted);font-size:13px;min-height:32px;display:flex;align-items:center}
+pre{margin:6px 0 0;padding:8px;background:#0a1014;border-radius:6px;overflow:auto;font-size:12px;max-height:260px;white-space:pre-wrap;word-break:break-all}
+.resolved{opacity:.55}
+#login{max-width:420px;margin:12vh auto;display:grid;gap:12px}
+#login input{width:100%}
+.err{color:var(--bad)}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="login" class="hidden">
+  <section>
+    <h2>管理员登录</h2>
+    <p class="muted">输入管理密码（服务器环境变量 ADMIN_TOKEN 的值）。只保存在本标签页，关闭即清除。连续输错 5 次会锁定 15 分钟。</p>
+    <form id="login-form" class="row" autocomplete="off">
+      <input id="token" type="password" placeholder="管理密码" aria-label="管理密码" autocomplete="current-password">
+      <button class="primary" type="submit">进入</button>
+    </form>
+    <p id="login-err" class="err"></p>
+  </section>
+</div>
+<div id="app" class="hidden">
+  <header>
+    <h1>报告与备份</h1>
+    <div class="row">
+      <select id="f-since" aria-label="时间范围"><option value="24h">最近 24 小时</option><option value="7d" selected>最近 7 天</option><option value="30d">最近 30 天</option><option value="90d">最近 90 天</option></select>
+      <select id="f-page" aria-label="页面"><option value="">全部页面</option><option value="wa">登峰赛季</option><option value="new">战术试炼</option><option value="pvp">好友 PvP</option><option value="landing">首页</option><option value="server">服务器</option></select>
+      <button id="refresh">刷新</button>
+      <button id="logout">退出</button>
+    </div>
+  </header>
+  <main>
+    <section><h2>概况</h2><div id="stats" class="grid"></div></section>
+    <section><h2>备份</h2><div id="backup"></div></section>
+    <section><h2>错误（按指纹分组）</h2><div id="errors"></div></section>
+    <section><h2>信箱（最新在前）</h2><div id="feedback"></div></section>
+  </main>
+</div>
+<script>
+(() => {
+  const KEY = 'admin-token';
+  const $ = s => document.querySelector(s);
+  const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = t => t ? new Date(t).toLocaleString('zh-CN', { hour12: false }) : '—';
+  const PAGES = { wa: '登峰赛季', new: '战术试炼', pvp: '好友 PvP', landing: '首页', server: '服务器', unknown: '未知' };
+  const KINDS = { error: '客户端错误', 'server-error': '服务器错误', feedback: '来信' };
+  const LETTER = { new: '未读', read: '已读', adopted: '采纳', fixed: '已修复', ignored: '忽略' };
+  let token = '';
+  try { token = sessionStorage.getItem(KEY) || ''; } catch {}
+
+  async function api(path, options = {}) {
+    const res = await fetch(path, { ...options, headers: { ...(options.headers || {}), Authorization: `Bearer ${token}` } });
+    if (res.status === 401) { logout('管理密码错误'); throw new Error('管理密码错误'); }
+    if (!res.ok) { let m = ''; try { m = (await res.json()).error; } catch {} throw new Error(m || `请求失败 ${res.status}`); }
+    return res;
+  }
+  function logout(msg = '') {
+    token = '';
+    try { sessionStorage.removeItem(KEY); } catch {}
+    $('#app').classList.add('hidden');
+    $('#login').classList.remove('hidden');
+    $('#login-err').textContent = msg;
+  }
+  const ctxText = c => c ? Object.entries(c).map(([k, v]) => `${k}: ${v}`).join('\n') : '';
+
+  function statCards(s) {
+    const card = (label, w) => {
+      const k = w.byKind, total = (k.error || 0) + (k['server-error'] || 0);
+      const pages = Object.entries(w.byPage).map(([p, n]) => `${PAGES[p] || p} ${n}`).join(' · ') || '无';
+      return `<div class="stat"><small>${label} 错误</small><b>${total}</b><small>客户端 ${k.error || 0} · 服务器 ${k['server-error'] || 0}</small></div>
+        <div class="stat"><small>${label} 来信</small><b>${k.feedback || 0}</b><small>${esc(pages)}</small></div>`;
+    };
+    $('#stats').innerHTML = card('24 小时', s.last24h) + card('7 天', s.last7d) + `<div class="stat"><small>7 天内未处理的错误组</small><b>${s.unresolvedGroups7d}</b></div><div class="stat"><small>未读来信</small><b>${(s.letters && s.letters.new) || 0}</b><small>${Object.entries(s.letters || {}).map(([k, n]) => `${LETTER[k] || k} ${n}`).join(' · ') || '暂无来信'}</small></div>`;
+    const b = s.backup;
+    const age = b ? (Date.now() - Date.parse(b.time)) / 3600e3 : null;
+    $('#backup').innerHTML = b ? `<p>最新：<b>${esc(b.file)}</b>（${(b.bytes / 1024).toFixed(1)} KB，${fmt(Date.parse(b.time))}，${age < 26 ? '<span style="color:var(--ok)">正常</span>' : '<span class="err">超过 26 小时未备份</span>'}，完整性检查 ${esc(b.check)}）</p>
+      <p class="muted">行数：${Object.entries(b.tables || {}).map(([t, n]) => `${esc(t)} ${n}`).join(' · ')}</p>
+      <p class="muted">磁盘上的快照（${s.backups.length}）：${s.backups.map(esc).join('、')}</p>
+      <div class="row"><button class="primary" id="dl">下载最新备份</button><button id="run-backup">立即备份</button><span id="dl-status" class="muted"></span></div>`
+      : `<p class="muted">还没有备份（服务器启动约 2 分钟后自动生成）。</p><div class="row"><button id="run-backup">立即备份</button><span id="dl-status" class="muted"></span></div>`;
+    $('#dl')?.addEventListener('click', download);
+    $('#run-backup')?.addEventListener('click', runBackup);
+  }
+
+  async function download() {
+    const st = $('#dl-status');
+    st.textContent = '下载中…';
+    try {
+      const res = await api('/api/admin/backup/latest');
+      const name = (res.headers.get('X-Backup-File') || 'online.db') + '.gz';
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = name; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      st.textContent = `已下载 ${name}（${(blob.size / 1024).toFixed(1)} KB）`;
+    } catch (e) { st.textContent = e.message; }
+  }
+  async function runBackup() {
+    const st = $('#dl-status');
+    st.textContent = '备份中…';
+    try { await api('/api/admin/backup/run', { method: 'POST' }); st.textContent = '完成'; load(); } catch (e) { st.textContent = e.message; }
+  }
+
+  function renderErrors(list) {
+    $('#errors').innerHTML = list.length ? list.map(g => `<div class="item ${g.resolved ? 'resolved' : ''}">
+      <div class="head"><span class="tag ${esc(g.kind)}">${KINDS[g.kind] || esc(g.kind)}</span><span class="tag">${esc(PAGES[g.page] || g.page)}</span><span class="count">×${g.count}</span><span class="muted">首次 ${fmt(g.firstAt)} · 最近 ${fmt(g.lastAt)}</span></div>
+      <div class="msg">${esc(g.message)}</div>
+      <div class="muted">版本：${g.versions.map(esc).join('、') || '—'}${g.sample.path ? ' · ' + esc(g.sample.path) : ''}${g.sample.viewport ? ' · ' + esc(g.sample.viewport) : ''}</div>
+      <details><summary>示例：堆栈与状态</summary><pre>${esc(g.sample.stack || '（无堆栈）')}</pre>${g.sample.context ? `<pre>${esc(ctxText(g.sample.context))}</pre>` : ''}${g.sample.ua ? `<pre>${esc(g.sample.ua)}</pre>` : ''}</details>
+      <div class="row"><button data-resolve="${esc(g.fingerprint)}" data-val="${g.resolved ? '0' : '1'}">${g.resolved ? '重新打开' : '标记已处理'}</button></div>
+    </div>`).join('') : '<p class="muted">这段时间没有错误。</p>';
+  }
+  function renderFeedback(list) {
+    $('#feedback').innerHTML = list.length ? list.map(f => `<div class="item ${['adopted', 'fixed', 'ignored'].includes(f.status) ? 'resolved' : ''}">
+      <div class="head"><span class="tag ${f.status === 'new' ? 'error' : ''}">${LETTER[f.status] || '未读'}</span><span class="tag feedback">${esc(f.category || '未分类')}</span><span class="tag">${esc(PAGES[f.page] || f.page)}</span><span class="muted">${fmt(f.at)} · ${esc(f.version || '')}${f.viewport ? ' · ' + esc(f.viewport) : ''}</span></div>
+      ${f.subject ? `<div class="msg">${esc(f.subject)}</div>` : ''}<div class="fb-text">${esc(f.text)}</div>
+      ${f.context ? `<details><summary>附带的游戏状态</summary><pre>${esc(ctxText(f.context))}</pre></details>` : '<span class="muted">未附带游戏状态</span>'}
+      <div class="row">${['read', 'adopted', 'fixed', 'ignored'].map(k => `<button data-letter="${f.id}" data-status="${k}" ${f.status === k ? 'aria-pressed="true" style="border-color:var(--accent);color:var(--accent)"' : ''}>${LETTER[k]}</button>`).join('')}</div>
+    </div>`).join('') : '<p class="muted">这段时间没有来信。</p>';
+  }
+
+  async function load() {
+    const params = new URLSearchParams({ since: $('#f-since').value });
+    if ($('#f-page').value) params.set('page', $('#f-page').value);
+    try {
+      const [stats, reports] = await Promise.all([
+        api('/api/admin/stats').then(r => r.json()),
+        api('/api/admin/reports?' + params).then(r => r.json()),
+      ]);
+      statCards(stats);
+      renderErrors(reports.errors);
+      renderFeedback(reports.feedback);
+    } catch (e) {
+      if (token) $('#stats').innerHTML = `<p class="err">${esc(e.message)}</p>`;
+    }
+  }
+
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-resolve],[data-letter]');
+    if (!b) return;
+    const body = b.dataset.letter ? { id: Number(b.dataset.letter), status: b.dataset.status } : { fingerprint: b.dataset.resolve, resolved: b.dataset.val === '1' };
+    b.disabled = true;
+    try { await api('/api/admin/reports', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); load(); } catch { b.disabled = false; }
+  });
+  $('#login-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    token = $('#token').value.trim();
+    $('#token').value = '';
+    if (!token) return;
+    try {
+      await api('/api/admin/stats');
+      try { sessionStorage.setItem(KEY, token); } catch {}
+      start();
+    } catch (err) { $('#login-err').textContent = err.message; }
+  });
+  $('#refresh').addEventListener('click', load);
+  $('#logout').addEventListener('click', () => logout());
+  $('#f-since').addEventListener('change', load);
+  $('#f-page').addEventListener('change', load);
+  function start() { $('#login').classList.add('hidden'); $('#app').classList.remove('hidden'); load(); }
+  if (token) start(); else logout();
+})();
+</script>
+</body>
+</html>
