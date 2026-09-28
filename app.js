@@ -18858,7 +18858,7 @@ function initProgressSync(cfg) {
     } else {
       body.innerHTML = `<div class="ps-status"><i></i><span>未开启同步</span></div>${err}
         ${codeHtml || '<button type="button" class="ps-b ps-main" data-ps="code">在这台设备生成同步码</button>'}
-        <div class="ps-row"><input class="ps-in" value="${esc(typed)}" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" placeholder="同步码" aria-label="输入同步码"><button type="button" class="ps-b" data-ps="redeem">连接</button></div>
+        <div class="ps-row"><input class="ps-in" value="${esc(typed)}" maxlength="80" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" placeholder="同步码" aria-label="输入同步码"><button type="button" class="ps-b" data-ps="redeem">连接</button></div>
         <p class="ps-note">输入另一台设备生成的同步码后，这台设备会换成那台设备的进度；这台设备原来的进度存为备份，可以在这里恢复。之后两台设备自动同步。</p>`;
     }
   };
@@ -18887,7 +18887,9 @@ function initProgressSync(cfg) {
       state.code = res;
     }),
     redeem: () => { const code = wrap.querySelector('.ps-in')?.value.trim().toUpperCase() || ''; return run(async () => {
-      if (!/^[A-Z0-9]{6}$/.test(code)) throw new Error('请输入 6 位同步码');
+      // A pasted 64-character account credential is not a sync code (it used to be cut to 6 characters).
+      if (/^[0-9A-F]{32,}$/.test(code)) throw new Error(cfg.demo === 'wa' ? '这是好友 PvP 的账号凭证，不是同步码。请在另一台设备点「在这台设备生成同步码」，再输入显示的 6 位码。' : '这不是同步码。请在另一台设备点「在这台设备生成同步码」，再输入显示的 6 位码。');
+      if (!/^[A-Z0-9]{6}$/.test(code)) throw new Error('请输入 6 位同步码（在另一台设备点「在这台设备生成同步码」获得）');
       const own = collect();
       // Keep this device's progress as the backup only if it has any (not just settings).
       const core = (cfg.core || cfg.keys || []).map(k => cfg.alias?.[k] || k);
