@@ -1,3 +1,6 @@
+import { PVP_GEAR, GEAR, equipmentOf } from './equipment.js';
+import { SUPPLIES } from '../wa-rules.js';
+import { CURSE_RULES } from '../afflictions.js';
 import { CARDS, SKINS, effects, xEffects, cardName } from '../content.js';
 import { TRAIT_TUNING, ROLES, REGION_TRAITS } from '../wa-rules.js';
 
@@ -173,6 +176,10 @@ export function validateSnapshot(snapshot) {
   if (!snapshot.region || !['CN', 'AM', 'EMEA', 'PAC'].includes(snapshot.region)) throw new Error('region invalid');
   const deck = validateDeck(snapshot.deck);
   const skins = validateSkins(snapshot.skins || []);
+  const gear = snapshot.gear;
+  if(gear !== undefined && (!Array.isArray(gear) || gear.length>6 || new Set(gear).size!==gear.length || gear.some(id=>typeof id!=='string'||!Object.hasOwn(GEAR,id))))throw new Error('invalid equipment');
+  const supplies=snapshot.supplies;
+  if(supplies !== undefined && (!Array.isArray(supplies)||supplies.length>5||supplies.some(id=>!Object.hasOwn(SUPPLIES,id))))throw new Error('invalid supplies');
   const maxHp = validateNumeric(snapshot.maxHp, 'maxHp', 1, 999);
   const hp = validateNumeric(snapshot.hp, 'hp', 1, 999);
   if (hp !== maxHp) throw new Error('snapshot hp must equal maxHp');
@@ -193,6 +200,8 @@ export function validateSnapshot(snapshot) {
     hp: maxHp,
     money,
     actionsCount,
+    ...(gear !== undefined ? {gear:[...gear]} : {}),
+    ...(supplies !== undefined ? {supplies:[...supplies]} : {}),
     ...(ascension !== undefined ? { ascension } : {})
   };
 }
@@ -225,6 +234,8 @@ function createPlayerState(snapshot, seat, matchSeed) {
     roleCounts: {},
     skinZeroUsed: false,
     skins: snapshot.skins,
+    gear:equipmentOf(snapshot).filter(id=>PVP_GEAR.has(id)),
+    gearCount:0, gearRevived:false, gearHurt:false, savedEnergy:0, drawPenalty:0,
     region: snapshot.region,
     tt: { roles: [], dmg: 0, cnDone: false, emeaDrew: false },
     temps: 0,
@@ -250,7 +261,7 @@ function shuffleDiscardIntoDraw(player, matchSeed) {
   player.discard = [];
 }
 
-function drawCards(state, seat, count) {
+function drawCards(state, seat, count, futureHand=false) {
   const player = state.players[seat];
   for (let i = 0; i < count; i++) {
     if (player.hand.length >= 10) {
@@ -266,6 +277,8 @@ function drawCards(state, seat, count) {
     const card = player.drawPile.shift();
     player.hand.push(card);
     bump('draw', 1);
+    if(state.equipmentRules===1)onCurseDraw(state,seat,card,futureHand);
+    if(state.status==='finished')break;
   }
   if (count > 0) state.log.push(`抽 ${count} 张牌。`);
 }
@@ -274,19 +287,39 @@ function powerTotal(player, key) {
   return player.powers.flatMap(effects).filter(e => e.key === key).reduce((sum, e) => sum + e.n, 0);
 }
 
-function damageCalc(base, weak, vulnerable) {
+function damageCalc(base, weak, vulnerable, player=null, state=null) {
   let mult = 1;
   if (weak) mult *= 0.75;
-  if (vulnerable) mult *= 1.5;
+  if (vulnerable) mult *= state && player && hasGear(state,player,'GR46') ? 1.75 : 1.5;
   return Math.floor(Math.max(0, base) * mult);
+}
+
+function hasGear(state,p,id){return state.equipmentRules===1 && (p.gear||[]).includes(id);}
+function losePvpHp(state,seat,n,attack=false){
+ const p=state.players[seat];n=Math.max(0,n-(hasGear(state,p,'GR45')?1:0));
+ if(attack && n>0){if(hasGear(state,p,'GR20')&&!p.gearHurt)n=Math.min(1,n);p.gearHurt=true;}
+ p.hp=Math.max(0,p.hp-n);
+ if(p.hp===0 && hasGear(state,p,'GR43')&&!p.gearRevived){p.gearRevived=true;p.hp=Math.ceil(p.maxHp*.5);state.log.push('应急预案：恢复至最大声望的 50%。');}
+ if(p.hp===0){state.status='finished';state.winner=1-seat;}
+ return n;
+}
+function gearStrike(state,seat,n){const p=state.players[seat];attackPlayer(state,seat,1-seat,damageCalc(n,false,state.players[1-seat].vulnerable>0,p,state));}
+function gearExhaust(state,seat){if(hasGear(state,state.players[seat],'GR41')){state.log.push('燃烧弹挂袋：造成 3 伤害。');gearStrike(state,seat,3);}}
+function onCurseDraw(state,seat,card,future){
+ const r=CURSE_RULES[card.id],p=state.players[seat];if(!r)return;
+ if(r.trigger==='onDrawLoseEnergy'){if(future)p.drawPenalty=(p.drawPenalty||0)+r.n;else p.energy=Math.max(0,p.energy-r.n);}
+ else if(r.trigger==='onDrawWeak')p.weak+=r.n;
+ else if(r.trigger==='onDrawVuln')p.vulnerable+=r.n;
+ else if(r.trigger==='onDrawLoseHp'){bump('selfDamage',r.n);losePvpHp(state,seat,r.n);}
+ else if(r.trigger==='onDrawDiscard')for(let i=0;i<r.n;i++){const candidates=p.hand.filter(c=>c.uid!==card.uid);if(!candidates.length)break;const target=candidates[Math.floor(rngNext(p,state.matchSeed)*candidates.length)];p.hand.splice(p.hand.indexOf(target),1);p.discard.push(target);}
+ if(r.trigger.startsWith('onDraw'))state.log.push(`${CARDS[card.id].name}：${r.text}`);
 }
 
 function attackPlayer(state, attackerSeat, defenderSeat, damage) {
   const defender = state.players[defenderSeat];
   const absorbed = Math.min(defender.block, damage);
   defender.block -= absorbed;
-  const actual = damage - absorbed;
-  defender.hp = Math.max(0, defender.hp - actual);
+  const actual = losePvpHp(state,defenderSeat,damage-absorbed,true);
   bump('damage', actual);
   bump('absorbed', absorbed);
   bump('hits', 1);
@@ -307,6 +340,7 @@ function playCard(state, seat, uid) {
   const card = player.hand[cardIndex];
   const t = CARDS[card.id];
   if (t.cost === null) throw new Error('cannot play');
+  if(hasGear(state,player,'BX05')&&player.plays>=6)throw new Error('战术纪律守则：每回合最多打出 6 张牌');
   if (t.cost > player.energy) throw new Error('not enough energy');
 
   player.hand.splice(cardIndex, 1);
@@ -326,6 +360,7 @@ function playCard(state, seat, uid) {
 
   let list = effects(card).flatMap(e => e.type === 'combo' ? (playsBefore > 0 ? [e.effect] : []) : [e]);
   if (t.x) list = xEffects(list, X);
+  if(hasGear(state,player,'GR40') && t.player && t.role==='决斗' && first)list=[...list,...list];
   const tt = player.tt || (player.tt = { roles: [], dmg: 0, cnDone: false, emeaDrew: false });
   const deals = list.some(e => DAMAGE_TYPES.includes(e.type));
   if (deals) tt.dmg++;
@@ -335,7 +370,7 @@ function playCard(state, seat, uid) {
   for (const e of list) {
     if (e.type === 'hit') {
       for (let i = 0; i < e.times; i++) {
-        const dmg = damageCalc(e.n + bonus + amLeft + extra + (e.ifWeak && wasWeak ? e.ifWeak : 0) + (e.ifVuln && wasVuln ? e.ifVuln : 0) + (e.ifBurn && wasBurning ? e.ifBurn : 0), player.weak > 0, opponent.vulnerable > 0);
+        const dmg = damageCalc(e.n + bonus + amLeft + extra + (e.ifWeak && wasWeak ? e.ifWeak : 0) + (e.ifVuln && wasVuln ? e.ifVuln : 0) + (e.ifBurn && wasBurning ? e.ifBurn : 0), player.weak > 0, opponent.vulnerable > 0, player, state);
         attackPlayer(state, seat, 1 - seat, dmg);
         bonus = 0;
         if (!TRAIT_TUNING.AM.perHit) amLeft = 0;
@@ -368,7 +403,7 @@ function playCard(state, seat, uid) {
       bump('detonated', opponent.burn || 0);
       opponent.burn = 0;
       amLeft = 0;
-      if (n) attackPlayer(state, seat, 1 - seat, damageCalc(n, player.weak > 0, opponent.vulnerable > 0));
+      if (n) attackPlayer(state, seat, 1 - seat, damageCalc(n, player.weak > 0, opponent.vulnerable > 0, player, state));
     } else if (e.type === 'deploy') {
       player.deployables.push({ kind: e.kind, n: e.n, turns: e.turns });
       note('deploy', { kind: e.kind, n: e.n, turns: e.turns });
@@ -376,11 +411,11 @@ function playCard(state, seat, uid) {
     } else if (e.type === 'fireTurrets') {
       for (const d of player.deployables) {
         if (d.kind !== 'turret') continue;
-        attackPlayer(state, seat, 1 - seat, damageCalc(d.n, false, opponent.vulnerable > 0));
+        attackPlayer(state, seat, 1 - seat, damageCalc(d.n, false, opponent.vulnerable > 0, player, state));
         if (state.status === 'finished') break;
       }
     } else if (e.type === 'bodyslam') {
-      attackPlayer(state, seat, 1 - seat, damageCalc(player.block + (player.strength || 0) + amLeft, player.weak > 0, opponent.vulnerable > 0));
+      attackPlayer(state, seat, 1 - seat, damageCalc(player.block + (player.strength || 0) + amLeft, player.weak > 0, opponent.vulnerable > 0, player, state));
       amLeft = 0;
     } else if (e.type === 'strength') {
       player.strength = (player.strength || 0) + e.n;
@@ -434,6 +469,13 @@ function playCard(state, seat, uid) {
     drawCards(state, seat, 1);
   }
 
+  if(state.status==='active'){
+    if(hasGear(state,player,'GR21') && ++player.gearCount%10===0){player.energy++;bump('energy',1);}
+    if(hasGear(state,player,'GR23') && deals && tt.dmg===3)player.strength++;
+    if(!deals){tt.nonDmg=(tt.nonDmg||0)+1;if(hasGear(state,player,'GR24')&&tt.nonDmg===3)gearStrike(state,seat,5);}
+    if(state.equipmentRules===1)for(const c of player.hand){const r=CURSE_RULES[c.id];if(r?.trigger==='onPlayLoseHp'){losePvpHp(state,seat,r.n);bump('selfDamage',r.n);if(state.status!=='active')break;}}
+  }
+
   // 成长: this copy grows for the rest of the match.
   if (t.growth) card.g = (card.g || 0) + 1;
   if (REC) REC.zone = t.zone === 'power' ? 'power' : ['exhaust', 'temporary'].includes(t.zone) ? 'exhaust' : 'discard';
@@ -442,6 +484,7 @@ function playCard(state, seat, uid) {
     state.log.push(`${cardName(card)} 能力生效。`);
   } else if (['exhaust', 'temporary'].includes(t.zone)) {
     player.exhaust.push(card);
+    if(state.status==='active')gearExhaust(state,seat);
     state.log.push(`${cardName(card)} 消耗。`);
   } else {
     player.discard.push(card);
@@ -463,8 +506,9 @@ function playCard(state, seat, uid) {
 
 function beginTurn(state, seat) {
   const player = state.players[seat];
-  player.block = 0;
-  player.energy = Math.max(0, 3 + powerTotal(player, 'energy') - (player.overloadNext || 0));
+  player.block = hasGear(state,player,'GR42')?Math.max(0,player.block-10):0;
+  player.energy = Math.max(0, 3 + powerTotal(player, 'energy') + (hasGear(state,player,'BX01')?1:0)+(hasGear(state,player,'BX05')?1:0)+(hasGear(state,player,'BX06')?1:0)+(player.turnsTaken===0&&hasGear(state,player,'GR04')?1:0)+(player.savedEnergy||0)-(player.drawPenalty||0) - (player.overloadNext || 0));
+  player.savedEnergy=0;player.drawPenalty=0;
   player.overload = player.overloadNext || 0;
   player.overloadNext = 0;
   player.plays = 0;
@@ -478,7 +522,7 @@ function beginTurn(state, seat) {
   // Burn on this player ticks at the start of their own turn and ignores block.
   if (player.burn > 0) {
     bump('burnDamage', Math.min(player.hp, player.burn));
-    player.hp = Math.max(0, player.hp - player.burn);
+    losePvpHp(state,seat,player.burn);
     state.log.push(`玩家${seat} 燃烧 -${player.burn} 声望。`);
     player.burn--;
     if (player.hp === 0) { state.status = 'finished'; state.winner = 1 - seat; return; }
@@ -487,10 +531,11 @@ function beginTurn(state, seat) {
     const g = gainBlock(state, seat, 3);
     state.log.push(`磨砂黑：获得 ${g} 布防。`);
   }
+  if(player.turnsTaken===0){if(hasGear(state,player,'GR08'))gainBlock(state,seat,8);if(hasGear(state,player,'GR10'))addToken(state,seat,'TK03','备用飞刀');}
   player.turnsTaken++;
   // earlyDraw matches (every match created since the rule change) dealt this hand at
   // the end of the player's previous turn; older stored matches still draw here.
-  if (!state.earlyDraw) drawCards(state, seat, 5 + powerTotal(player, 'extraDraw'));
+  if (!state.earlyDraw) drawCards(state, seat, 5 + powerTotal(player, 'extraDraw') + (hasGear(state,player,'BX11')?2:0));
   if (player.region === 'PAC') {
     const id = player.pacNext || 'TK01';
     if (addToken(state, seat, id, '临时战术')) player.pacNext = id === 'TK01' ? 'TK02' : 'TK01';
@@ -501,26 +546,23 @@ function beginTurn(state, seat) {
 function endTurn(state, seat, extra = {}) {
   const player = state.players[seat];
   openEntry(state, { seat, kind: 'end', ...extra });
-  for (const card of player.hand.filter(c => c.id === 'CU02')) {
-    bump('selfDamage', Math.min(player.hp, 2));
-    player.hp = Math.max(0, player.hp - 2);
-    state.log.push('舆论压力：直接失去 2 声望。');
-    if (player.hp === 0) {
-      state.status = 'finished';
-      state.winner = 1 - seat;
-      return;
-    }
-  }
+  if(hasGear(state,player,'BX11')){losePvpHp(state,seat,1);bump('selfDamage',1);if(state.status==='finished')return;}
+  for(const c of player.hand){const r=state.equipmentRules===1?CURSE_RULES[c.id]:(c.id==='CU02'?{trigger:'endTurnLoseHp',n:2}:null);if(r?.trigger==='endTurnLoseHp'){losePvpHp(state,seat,r.n);bump('selfDamage',r.n);state.log.push(`${CARDS[c.id].name}：直接失去 ${r.n} 声望。`);if(state.status==='finished')return;}}
+  let keepUid=null;
+  if(hasGear(state,player,'GR22')){const candidates=player.hand.filter(c=>CARDS[c.id].cost!==null&&!['temporary','retain'].includes(CARDS[c.id].zone));const best=candidates.reduce((a,c)=>!a||CARDS[c.id].cost>CARDS[a.id].cost?c:a,null);keepUid=best?.uid;}
+  if(hasGear(state,player,'GR44'))player.savedEnergy=player.energy;
   const kept = [];
   for (const card of player.hand) {
     if (CARDS[card.id].ethereal) {
       bump('exhausted', 1);
       player.exhaust.push(card);
+      gearExhaust(state,seat);if(state.status==='finished')return;
       state.log.push(`${cardName(card)} 虚无：在回合末消耗。`);
-    } else if (CARDS[card.id].zone === 'retain') kept.push(card);
+    } else if (CARDS[card.id].zone === 'retain' || card.uid===keepUid || (hasGear(state,player,'BX10') && !/^(ST|CU)/.test(card.id) && CARDS[card.id].zone!=='temporary')) kept.push(card);
     else if (CARDS[card.id].zone === 'exhaustEnd' || CARDS[card.id].zone === 'temporary') {
       bump('exhausted', 1);
       player.exhaust.push(card);
+      gearExhaust(state,seat);if(state.status==='finished')return;
       state.log.push(`${cardName(card)} 在回合末消耗。`);
     } else {
       player.discard.push(card);
@@ -530,19 +572,20 @@ function endTurn(state, seat, extra = {}) {
   player.hand = kept;
   for (const d of player.deployables || []) {
     if (d.kind === 'turret') {
-      attackPlayer(state, seat, 1 - seat, damageCalc(d.n, false, state.players[1 - seat].vulnerable > 0));
+      attackPlayer(state, seat, 1 - seat, damageCalc(d.n, false, state.players[1 - seat].vulnerable > 0,player,state));
       if (state.status === 'finished') return;
     } else gainBlock(state, seat, d.n);
     d.turns--;
   }
   player.deployables = (player.deployables || []).filter(d => d.turns > 0);
+  if(hasGear(state,player,'GR09')&&player.block===0)gainBlock(state,seat,4);
   player.weak = Math.max(0, player.weak - 1);
   player.vulnerable = Math.max(0, player.vulnerable - 1);
   // Draw the next turn's hand now so it can be studied during the opponent's turn.
   // Only the base draw and 额外抽牌 powers move here; effects that say 'turn start'
   // (the PAC temporary card, burn, SK01) stay in beginTurn. The hand is held but
   // cannot be played until this seat is active again (applyCommand checks the seat).
-  if (state.earlyDraw) drawCards(state, seat, 5 + powerTotal(player, 'extraDraw'));
+  if (state.earlyDraw) drawCards(state, seat, 5 + powerTotal(player, 'extraDraw') + (hasGear(state,player,'BX11')?2:0),true);
 }
 
 function startNextTurn(state) {
@@ -568,6 +611,7 @@ export function createMatch(snapshotA, snapshotB, seed, options = {}) {
   const matchSeed = String(seed || `${snapA.runId}|${snapB.runId}`);
   const state = {
     rev: 0,
+    equipmentRules:1,
     status: 'active',
     active: 0,
     winner: null,
@@ -582,6 +626,14 @@ export function createMatch(snapshotA, snapshotB, seed, options = {}) {
     matchSeed,
     ...(options.earlyDraw === false ? {} : { earlyDraw: true })
   };
+  for(const seat of [0,1]){
+    const p=state.players[seat],foe=state.players[1-seat];
+    if(hasGear(state,p,'GR11'))p.strength++;
+    if(hasGear(state,p,'GR05'))foe.vulnerable++;
+    if(hasGear(state,p,'GR06'))foe.weak++;
+    if(hasGear(state,p,'BX01'))foe.strength++;
+    if(hasGear(state,p,'BX06')){const innate=p.drawPile.filter(c=>CARDS[c.id].innate),rest=p.drawPile.filter(c=>!CARDS[c.id].innate);rest.push({uid:`g${seat}-fatigue-1`,id:'ST03',up:false},{uid:`g${seat}-fatigue-2`,id:'ST03',up:false});const rng={next:()=>rngNext(p,state.matchSeed)};p.drawPile=[...innate,...shuffleWithRng(rng,rest)];}
+  }
   const rng = createRng(matchSeed + '|first');
   // options.first forces who opens (a rematch hands the first turn to the other player).
   state.active = options.first === 0 || options.first === 1 ? options.first : rng.next() < 0.5 ? 0 : 1;
@@ -592,10 +644,12 @@ export function createMatch(snapshotA, snapshotB, seed, options = {}) {
     if (state.earlyDraw) {
       for (const seat of [state.active, 1 - state.active]) {
         openEntry(state, { seat, kind: 'deal' });
-        drawCards(state, seat, 5);
+        drawCards(state, seat, 5+(hasGear(state,state.players[seat],'GR02')?2:0)+(hasGear(state,state.players[seat],'BX11')?2:0),true);
+        if(state.status==='finished')break;
       }
     }
-    beginTurn(state, state.active);
+    if(state.status==='active')beginTurn(state, state.active);
+    finishEntry(state);
     closeEntry(state);
   } finally { REC = null; }
   return state;
@@ -700,6 +754,7 @@ export function viewFor(match, seat) {
       exhaust: me.exhaust.map(c => ({ uid: c.uid, id: c.id, up: c.up })),
       powers: me.powers.map(c => ({ uid: c.uid, id: c.id, up: c.up })),
       skins: me.skins,
+      gear:me.gear||me.skins,
       roleCounts: { ...me.roleCounts },
       skinZeroUsed: me.skinZeroUsed,
       turnsTaken: me.turnsTaken,
@@ -722,6 +777,7 @@ export function viewFor(match, seat) {
       exhaust: opp.exhaust.map(c => ({ uid: c.uid, id: c.id, up: c.up })),
       powers: opp.powers.map(c => ({ uid: c.uid, id: c.id, up: c.up })),
       skins: opp.skins,
+      gear:opp.gear||opp.skins,
       roleCounts: { ...opp.roleCounts },
       skinZeroUsed: opp.skinZeroUsed,
       turnsTaken: opp.turnsTaken,

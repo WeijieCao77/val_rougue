@@ -3,6 +3,7 @@ import { createMatch, applyCommand, viewFor } from './duel.mjs';
 import { HttpError } from './http-error.mjs';
 import { verifyClaim } from './claim-verify.mjs';
 import { generateToken, generateRoomCode, sha256 } from './store.mjs';
+import { recordPvpResult, pvpProgress } from './pvp-records.js';
 import { publicProfile, validateName, prepareAvatar } from './profile.mjs';
 import { createSyncHandler } from './sync-api.mjs';
 
@@ -171,6 +172,7 @@ function cleanAccount(account) {
   return {
     accountId: account.accountId,
     ...publicProfile(account),
+    pvp: clone(pvpProgress(account)),
     archives: account.archives.map(archive => ({
       id: archive.id,
       name: archive.name,
@@ -294,7 +296,7 @@ function startRoomMatch(room, nowTime, limit, first) {
     first === 0 || first === 1 ? { first } : {}
   );
   room.firstSeat = room.match.active;
-  room.status = 'active';
+  room.status = room.match.status === 'finished' ? 'finished' : 'active';
   room.startedAt = nowTime;
   room.lastActionAt = nowTime;
   room.timer = null;
@@ -399,6 +401,13 @@ function isArchiveLockedInRoom() {
 
 export function createOnlineHandler(store, options = {}) {
   const limiter = new RateLimiter();
+  function transact(work) {
+    return store.tx(t => {
+      const result=work(t);
+      for(const room of t.loadedRooms())recordPvpResult(t,room,now());
+      return result;
+    });
+  }
   // Claim verification (full replay of a Wa season act, ~0.4 s CPU). server.mjs injects
   // the worker pool (online/replay-pool.mjs) so the replay never blocks this thread;
   // without one (tests) it runs in-process, yielding every 100 actions.
@@ -441,7 +450,7 @@ export function createOnlineHandler(store, options = {}) {
         const token = generateToken();
         const tokenHash = sha256(token);
         const accountId = sha256(tokenHash).slice(0, 16);
-        store.tx((t) => {
+        transact((t) => {
           t.createAccount({
             accountId,
             tokenHash,
@@ -461,7 +470,7 @@ export function createOnlineHandler(store, options = {}) {
     const avatarMatch = pathname.match(/^\/api\/avatars\/([a-f0-9]{16})$/);
     if (avatarMatch && method === 'GET') {
       let image;
-      store.tx(t => { image = t.account(avatarMatch[1])?.avatarData; });
+      transact(t => { image = t.account(avatarMatch[1])?.avatarData; });
       if (!image) { sendError(res, new HttpError(404, '头像不存在')); return true; }
       const bytes = Buffer.from(image, 'base64');
       res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Content-Length': bytes.length, 'Cache-Control': 'public, max-age=300', 'X-Content-Type-Options': 'nosniff' });
@@ -494,7 +503,7 @@ export function createOnlineHandler(store, options = {}) {
         const name = validateName(body.name);
         const avatar = body.avatar === undefined ? null : await prepareAvatar(body.avatar);
         let result;
-        store.tx(t => {
+        transact(t => {
           const acct = t.account(account.accountId);
           acct.name = name;
           if (avatar) Object.assign(acct, avatar);
@@ -511,7 +520,7 @@ export function createOnlineHandler(store, options = {}) {
     if (pathname === '/api/account' && method === 'GET') {
       try {
         let accountData;
-        store.tx((t) => {
+        transact((t) => {
           const freshAccount = t.account(account.accountId);
           if (!freshAccount) throw new HttpError(401, '令牌无效');
           accountData = cleanAccount(freshAccount);
@@ -532,7 +541,7 @@ export function createOnlineHandler(store, options = {}) {
         const archiveId = `${validated.runId}:${validated.act}`;
 
         let resultStatus;
-        store.tx((t) => {
+        transact((t) => {
           const acct = t.account(account.accountId);
           if (!acct) throw new HttpError(401, '令牌无效');
 
@@ -584,7 +593,7 @@ export function createOnlineHandler(store, options = {}) {
         const body = await readJsonBody(req);
         const { decision, archiveId, expectedPendingId } = body;
 
-        store.tx((t) => {
+        transact((t) => {
           const acct = t.account(account.accountId);
           if (!acct) throw new HttpError(401, '令牌无效');
           if (!acct.pending) throw new HttpError(409, '没有待处理的存档');
@@ -628,7 +637,7 @@ export function createOnlineHandler(store, options = {}) {
           throw new HttpError(400, '无效的archiveId或name');
         }
 
-        store.tx((t) => {
+        transact((t) => {
           const acct = t.account(account.accountId);
           if (!acct) throw new HttpError(401, '令牌无效');
           const archive = findArchiveById(acct, archiveId);
@@ -650,7 +659,7 @@ export function createOnlineHandler(store, options = {}) {
         if (!archiveId) throw new HttpError(400, '缺少archiveId');
 
         let roomResult;
-        store.tx((t) => {
+        transact((t) => {
           const acct = t.account(account.accountId);
           if (!acct) throw new HttpError(401, '令牌无效');
           const existingRoom = getAccountRoom(t, acct);
@@ -707,7 +716,7 @@ export function createOnlineHandler(store, options = {}) {
         if (!code || !archiveId) throw new HttpError(400, '缺少code或archiveId');
 
         let roomResult;
-        store.tx((t) => {
+        transact((t) => {
           const acct = t.account(account.accountId);
           if (!acct) throw new HttpError(401, '令牌无效');
           const existingRoom = getAccountRoom(t, acct);
@@ -765,7 +774,7 @@ export function createOnlineHandler(store, options = {}) {
       const code = roomMatch[1];
       try {
         let roomResponse;
-        store.tx((t) => {
+        transact((t) => {
           const room = findRoomByCode(t, code);
           if (!room) throw new HttpError(404, '房间未找到');
           const seat = getSeatInRoom(room, account.accountId);
@@ -796,7 +805,7 @@ export function createOnlineHandler(store, options = {}) {
           if (typeof ready !== 'boolean') throw new HttpError(400, '无效的ready值');
 
           // Pre-clean target room in its own transaction so cleanup persists if later action fails
-          store.tx((t) => {
+          transact((t) => {
             const room = findRoomByCode(t, code);
             if (room) {
               cleanRoomTimeouts(room, now());
@@ -805,7 +814,7 @@ export function createOnlineHandler(store, options = {}) {
 
           let roomResponse;
           let errorResponse = null;
-          store.tx((t) => {
+          transact((t) => {
             const room = findRoomByCode(t, code);
             if (!room) throw new HttpError(404, '房间未找到');
             const seat = getSeatInRoom(room, account.accountId);
@@ -842,7 +851,7 @@ export function createOnlineHandler(store, options = {}) {
           const { requestId, expectedRev, command } = body;
 
           // Pre-clean target room to persist cleanup even if action fails
-          store.tx((t) => {
+          transact((t) => {
             const room = findRoomByCode(t, code);
             if (room) {
               cleanRoomTimeouts(room, now());
@@ -862,7 +871,7 @@ export function createOnlineHandler(store, options = {}) {
           }
 
           let roomResponse;
-          store.tx((t) => {
+          transact((t) => {
             const room = findRoomByCode(t, code);
             if (!room) throw new HttpError(404, '房间未找到');
             const seat = getSeatInRoom(room, account.accountId);
@@ -926,7 +935,7 @@ export function createOnlineHandler(store, options = {}) {
           if (!['request', 'accept', 'decline', 'cancel'].includes(op)) throw new HttpError(400, '无效的再来一局操作');
           if (round !== undefined && (!Number.isInteger(round) || round < 1)) throw new HttpError(400, '无效的局数');
           let roomResponse;
-          store.tx((t) => {
+          transact((t) => {
             const room = findRoomByCode(t, code);
             if (!room) throw new HttpError(404, '房间未找到');
             const seat = getSeatInRoom(room, account.accountId);
@@ -978,7 +987,7 @@ export function createOnlineHandler(store, options = {}) {
 
         if (action === 'leave') {
           // Pre-clean target room to persist cleanup even if leave fails
-          store.tx((t) => {
+          transact((t) => {
             const room = findRoomByCode(t, code);
             if (room) {
               cleanRoomTimeouts(room, now());
@@ -986,7 +995,7 @@ export function createOnlineHandler(store, options = {}) {
           });
 
           let roomResponse;
-          store.tx((t) => {
+          transact((t) => {
             const room = findRoomByCode(t, code);
             if (!room) throw new HttpError(404, '房间未找到');
             const seat = getSeatInRoom(room, account.accountId);

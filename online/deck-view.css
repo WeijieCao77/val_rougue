@@ -35,6 +35,7 @@ body.dv-open{overflow:hidden}
 .dv-skins h3{margin:0 0 8px;font-size:15px;color:#e8d8ae}
 .dv-skins ul{margin:0;padding:0;list-style:none;display:grid;gap:6px}
 .dv-skins li{font-size:13px;color:#c6d2ce}.dv-skins li strong{color:#f0dca8;margin-right:8px}
+.dv-skins li em{display:inline-block;margin-right:8px;padding:1px 6px;border:1px solid #576267;border-radius:4px;color:#aab9b3;font-size:11px;font-style:normal}.dv-skins li em.pvp-active{border-color:#7e9c72;color:#b5dfa2}
 .dv-skins p{margin:0;font-size:13px;color:#8fa19c}
 /* Detail: the card big, the trained version beside it, rules below. */
 .dv-detail-wrap{position:fixed;inset:0;z-index:3100;display:flex;align-items:center;justify-content:center;padding:16px;background:#050b0dd9;overflow-y:auto}

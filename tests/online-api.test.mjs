@@ -501,3 +501,26 @@ test('上传头像经过服务器解码、方形压缩和去元数据，公开�
     assert.equal((await request(ctx.handler,{path:r.body.avatar})).status,404);
   }finally{await teardown(ctx);}
 });
+
+
+test('PvP 战绩在结算时各记一次，重复读取不会重复计数', async () => {
+  const ctx = await setup();
+  try {
+    const a=await createAccount(ctx.handler), b=await createAccount(ctx.handler);
+    await addArchive(ctx.store,a,'record-a');await addArchive(ctx.store,b,'record-b');
+    const code=(await request(ctx.handler,{method:'POST',path:'/api/rooms',token:a,body:{archiveId:'record-a'}})).body.room.code;
+    await request(ctx.handler,{method:'POST',path:'/api/rooms/join',token:b,body:{code,archiveId:'record-b'}});
+    await request(ctx.handler,{method:'POST',path:`/api/rooms/${code}/ready`,token:a,body:{ready:true}});
+    await request(ctx.handler,{method:'POST',path:`/api/rooms/${code}/ready`,token:b,body:{ready:true}});
+    const before=(await request(ctx.handler,{path:`/api/rooms/${code}`,token:a})).body.room;
+    const finish=await request(ctx.handler,{method:'POST',path:`/api/rooms/${code}/action`,token:a,body:{requestId:'record-concede',expectedRev:before.match.rev,command:{type:'concede'}}});
+    assert.equal(finish.status,200);assert.equal(finish.body.room.status,'finished');
+    for(let i=0;i<3;i++)await request(ctx.handler,{path:`/api/rooms/${code}`,token:a});
+    const mine=(await request(ctx.handler,{path:'/api/account',token:a})).body.pvp;
+    const foe=(await request(ctx.handler,{path:'/api/account',token:b})).body.pvp;
+    assert.equal(mine.played,1);assert.equal(mine.losses,1);assert.equal(mine.records.length,1);
+    assert.equal(mine.records[0].archiveName,'测试存档');
+    assert.equal(foe.played,1);assert.equal(foe.wins,1);assert.ok(foe.achievements['first-win']);
+    assert.equal(foe.records[0].opponent,finish.body.room.members[0].name);
+  } finally {await teardown(ctx);}
+});

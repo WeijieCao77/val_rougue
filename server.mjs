@@ -6,6 +6,10 @@ import { createReplayPool } from './online/replay-pool.mjs';
 import { createStaticCache } from './static-cache.mjs';
 
 const assets = new Map([
+  ['/pvp/equipment.js', ['online/equipment.js', 'text/javascript; charset=utf-8']],
+  ['/pvp/pvp-records.js', ['online/pvp-records.js', 'text/javascript; charset=utf-8']],
+  ['/pvp/wa-rules.js', ['wa-rules.js', 'text/javascript; charset=utf-8']],
+  ['/pvp/shared-unlock.js', ['shared-unlock.js', 'text/javascript; charset=utf-8']],
   ['/pvp/avatar.js', ['online/avatar.js', 'text/javascript; charset=utf-8']],
   ['/pvp/profile-editor.js', ['online/profile-editor.js', 'text/javascript; charset=utf-8']],
   ['/', ['landing.html', 'text/html; charset=utf-8']],

@@ -524,6 +524,8 @@ class UnitOfWork {
     return obj;
   }
 
+  loadedRooms() { return [...this.rooms.values()].map(entry => entry.obj); }
+
   roomExists(code) {
     return this.rooms.has(code) || !!this.q.roomExists.get(code);
   }

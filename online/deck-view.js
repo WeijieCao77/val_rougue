@@ -1,7 +1,8 @@
 // Deck viewer for a cloud build (Hearthstone-style "view deck"): the cards as
 // full faces, duplicates stacked with a count, a cost curve, a compact list
 // strip, and a tap-to-inspect detail with the trained version beside it.
-import { CARDS, cardName, describe, TACTICS, SKINS, REGIONS } from '/pvp/content.js';
+import { CARDS, cardName, describe, TACTICS, REGIONS } from '/pvp/content.js';
+import { GEAR, equipmentOf, gearStatus } from '/pvp/equipment.js';
 import { faceHtml } from '/pvp/battle.js';
 import { keywordRules, highlightKeywords } from '/shared/status-icons.js';
 
@@ -55,7 +56,8 @@ function detailHtml(card) {
 export function openDeckView(archive) {
   const snap = archive.snapshot || {};
   const deck = snap.deck || [];
-  const skins = snap.skins || [];
+  const gear = equipmentOf(snap);
+  const supplies = snap.supplies || [];
   const list = stacks(deck);
   const region = snap.region || deck.map(c => c.id.slice(0, 2)).find(p => ({ CN: 1, AM: 1, EU: 1, PA: 1 })[p]);
   const regionName = REGION_NAME[region] || REGION_NAME[{EU:'EMEA',PA:'PAC'}[region]] || REGIONS?.[region]?.name || '';
@@ -78,7 +80,7 @@ export function openDeckView(archive) {
       <div class="dv-grid">${list.map((s, i) => `<button type="button" class="dv-card" data-i="${i}" aria-label="${esc(cardName(s.card))}${s.n > 1 ? ` ×${s.n}` : ''}"><span class="dv-face">${faceHtml(s.card)}</span>${s.n > 1 ? `<span class="dv-n">×${s.n}</span>` : ''}</button>`).join('')}</div>
       <ol class="dv-list">${list.map((s, i) => { const p = photo(s.card.id); const v = costOf(s.card); return `<li><button type="button" class="dv-row role-${esc(CARDS[s.card.id].player ? CARDS[s.card.id].role : 'tactic')}" data-i="${i}"${p ? ` style="--photo:url('${p}')"` : ''}><span class="dv-gem">${v === null ? '—' : v}</span><span class="dv-name">${esc(cardName(s.card))}</span><span class="dv-rn">${s.n > 1 ? `×${s.n}` : ''}</span></button></li>`; }).join('')}</ol>
     </div>
-    <section class="dv-skins"><h3>皮肤 · ${skins.length} 件</h3>${skins.length ? `<ul>${skins.map(id => `<li><strong>${esc(SKINS[id]?.name || id)}</strong><span>${esc(SKINS[id]?.text || '')}</span></li>`).join('')}</ul>` : '<p>这份构筑没有携带皮肤。</p>'}</section>`;
+    <section class="dv-skins"><h3>记录装备 · ${gear.length} 件</h3>${gear.length ? `<ul>${gear.map(id => { const st=gearStatus(id); return `<li><strong>${esc(GEAR[id]?.name||id)}</strong><em class="${st.active?'pvp-active':''}">${esc(st.label)}</em><span>${esc(st.text)}</span></li>`; }).join('')}</ul>` : '<p>这份构筑没有记录装备。</p>'}<p>构筑最大声望完整继承并满血开局。${supplies.length?`已记录 ${supplies.length} 件补给品；`:''}补给品不进入 PvP，对战后也不会消耗。</p></section>`;
   const previousFocus=document.activeElement;
   (document.querySelector('dialog[open]') || document.body).append(root);
   root.querySelector('.dv-back').focus();

@@ -1,4 +1,5 @@
 import { avatarSrc } from '/pvp/avatar.js';
+import { GEAR } from '/pvp/equipment.js';
 // PvP battle screen: two players across a tactical table. The opponent sits at the
 // top (card-back fan + hero panel), I sit at the bottom (hero panel + hand fan), the
 // middle is the play mat where both players' cards are shown and laid down.
@@ -139,7 +140,7 @@ export function createBattle(ctx) {
       <div class="hand-actions" hidden></div>
       <div class="hist-backdrop" hidden></div>
       <aside class="hist-panel" hidden aria-label="战报"><header><b>战报</b><small>最新在上 · 点击查看详情</small><button type="button" data-b="hist-close" aria-label="关闭战报">✕</button></header><div class="hist-body"><div class="hist-list"></div><div class="hist-detail" hidden></div></div></aside>
-      <div class="menu-pop" hidden><button type="button" data-b="concede">认输</button><button type="button" data-b="leave">退出房间</button></div>
+      <div class="menu-pop" hidden><button type="button" data-b="gear">对战装备</button><button type="button" data-b="concede">认输</button><button type="button" data-b="leave">退出房间</button></div>
       <div class="result" hidden></div>
       <div class="sheet" hidden></div>`;
     for (const s of ['opp', 'me']) el.querySelector(`.hero-${s}`).innerHTML = heroSkeleton(s);
@@ -1056,6 +1057,12 @@ export function createBattle(ctx) {
     sh.hidden = false;
     selectedUid = null; layoutHand();
   }
+  function openGearSheet() {
+    const sh=$('.sheet'),v=shownView||target?.match;
+    const side=(title,p)=>`<h3>${title}</h3>${p?.gear?.length?`<ul>${p.gear.map(id=>`<li><b>${esc(GEAR[id]?.name||id)}</b> · ${esc(GEAR[id]?.text||'')}</li>`).join('')}</ul>`:'<p>没有生效的装备</p>'}`;
+    sh.innerHTML=`<div class="sheet-text pvp-gear-sheet">${side('我方装备',v?.you)}${side('对手装备',v?.opponent)}<p class="hint">最大声望已经继承；补给品不进入对战。点击任意处关闭。</p></div>`;
+    sh.hidden=false;
+  }
 
   // ------------------------------------------------ result
   function showResult(v) {
@@ -1160,6 +1167,7 @@ export function createBattle(ctx) {
     const k = b.dataset.b;
     if (k !== 'menu') $('.menu-pop').hidden = true;
     if (k === 'menu') { const m = $('.menu-pop'); m.hidden = !m.hidden; }
+    else if (k === 'gear') openGearSheet();
     else if (k === 'hist') openHistory(true);
     else if (k === 'hist-close') openHistory(false);
     else if (k === 'detail-back') closeDetail();

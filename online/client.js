@@ -1,6 +1,8 @@
 import { avatarSrc } from '/pvp/avatar.js';
 import { profileEditorHtml, bindProfileEditor } from '/pvp/profile-editor.js';
-import { cardName, SKINS } from '/pvp/content.js';
+import { cardName } from '/pvp/content.js';
+import { equipmentOf } from '/pvp/equipment.js';
+import { PVP_ACHIEVEMENTS, pvpProgress } from '/pvp/pvp-records.js';
 import { createBattle } from '/pvp/battle.js';
 import { openDeckView } from '/pvp/deck-view.js';
 import { ACTS } from '/pvp/season-map.js';
@@ -84,7 +86,7 @@ function archiveInfo(a) {
   return `<h3>${esc(a.name || `第${a.snapshot.act}幕构筑`)}</h3>
     <p class="archive-meta"><strong>第${a.snapshot.act}幕</strong><span>${esc(archiveRegion(a))}赛区</span></p>
     <p class="archive-date">保存于 ${esc(archiveTime(a))}</p>
-    <p class="archive-stats">${a.snapshot.deck.length} 张牌 · ${a.snapshot.maxHp} 最大声望 · ${a.snapshot.skins.length} 件装备${Number.isInteger(a.snapshot.ascension) ? ` · 难度 ${a.snapshot.ascension}` : ''}</p>`;
+    <p class="archive-stats">${a.snapshot.deck.length} 张牌 · ${a.snapshot.maxHp} 最大声望 · ${equipmentOf(a.snapshot).length} 件已记录装备${Number.isInteger(a.snapshot.ascension) ? ` · 难度 ${a.snapshot.ascension}` : ''}</p>`;
 }
 function archiveCard(a) {
   return `<article class="archive-card" data-archive-id="${esc(a.id)}">${archiveInfo(a)}<button type="button" data-view-archive="${esc(a.id)}">查看卡组</button></article>`;
@@ -102,6 +104,7 @@ function render() {
   else if (screen === 'archives') renderArchives();
   else if (screen === 'lobby') renderLobby();
   else if (screen === 'game') renderGame();
+  else if (screen === 'records') renderRecords();
 
   if (room && (room.status === 'active' || room.status === 'waiting' || (screen === 'game' && watchFinished(room))) && (screen === 'game' || screen === 'lobby')) {
     startPolling();
@@ -120,6 +123,7 @@ function renderHome() {
       <div class="brand">登峰赛季 <span>好友 PvP</span></div>
       <nav>
         <button data-nav="archives">构筑库</button>
+        <button data-nav="records">PvP 战绩</button>
         <button data-nav="account">账号</button>
         <a href="/wa/" class="nav-link">返回登峰赛季</a>
         <a href="/" class="nav-link">选择版本</a>
@@ -129,6 +133,7 @@ function renderHome() {
       <h1>好友真人 PvP</h1>
       <button class="player-profile" data-action="edit-profile"><img src="${esc(avatarSrc(account?.avatar))}" alt="你的头像" width="56" height="56"><span><b>${esc(account?.name || '设置玩家昵称')}</b><small>修改昵称与头像</small></span><span aria-hidden="true">✎</span></button>
       <p class="subtitle">选择你的同幕构筑，创建房间或加入朋友码。</p>
+      <p class="pvp-record-summary">${account?.pvp?.played || 0} 场 · ${account?.pvp?.wins || 0} 胜 · ${account?.pvp?.losses || 0} 负 · ${account?.pvp?.draws || 0} 平 <button data-nav="records">查看战绩与成就</button></p>
       ${hasActiveRoom ? `<div class="continue-room"><strong>你有进行中的房间</strong><button data-action="resume-room">继续（${esc(room.code)}）</button></div>` : ''}
       ${serverPending ? `<div class="pending-banner"><strong>云端待处理保存</strong> 第${serverPending.snapshot.act}幕 · ${serverPending.snapshot.maxHp}声望<button data-action="resolve-server-pending">处理</button></div>` : ''}
       ${offlinePending ? `<div class="pending-banner"><strong>离线保存待处理</strong> 第${offlinePending.act}幕 · ${offlinePending.checkpoint.maxHp}声望<button data-action="offline-proof">处理</button></div>` : ''}
@@ -144,8 +149,20 @@ function renderHome() {
       </section>
       <section class="hero-tip">
         <p>${accountSummary}。需要先在登峰赛季中完成赛段并云端保存，之后这里可选构筑开局。</p>
-        <p>同幕、同版本才能对战；PvP 胜负不改存档。</p>
+        <p>同幕、同版本才能对战；PvP 胜负不改存档。继承最大声望和适用装备，补给品不进入 PvP。</p>
       </section>
+    </main>`;
+}
+
+function renderRecords() {
+  const p = pvpProgress(account || {});
+  const fmt = value => value ? new Date(value).toLocaleString('zh-CN', {hour12:false}) : '时间未记录';
+  app.innerHTML = `<header class="pvp-header"><div class="brand">好友 PvP <span>战绩与成就</span></div><button data-nav="home">返回</button></header>
+    <main class="pvp-main pvp-records"><h1>战绩与成就</h1>
+      <div class="pvp-record-totals"><span>${p.played} 场对战</span><span>${p.wins} 胜</span><span>${p.losses} 负</span><span>${p.draws} 平</span><span>最长 ${p.bestStreak} 连胜</span></div>
+      <h2>成就</h2><div class="pvp-achievements">${PVP_ACHIEVEMENTS.map(a=>`<article class="${p.achievements[a.id]?'unlocked':''}"><b>${esc(a.name)}</b><p>${esc(a.text)}</p><small>${p.achievements[a.id]?`达成于 ${esc(fmt(p.achievements[a.id]))}`:`${Math.min(p[a.key]||0,a.target)} / ${a.target}`}</small></article>`).join('')}</div>
+      <h2>最近对战 <small>保留最近 50 场，累计战绩永久保留</small></h2>
+      <div class="pvp-record-list">${p.records.length?p.records.map(r=>`<article><strong class="result-${esc(r.result)}">${r.result==='win'?'胜利':r.result==='loss'?'失败':'平局'}</strong><img src="${esc(avatarSrc(r.opponentAvatar))}" alt="" width="40" height="40"><span><b>${esc(r.opponent)}</b><small>第${Number(r.act)||1}幕 · ${esc(({CN:'中国',AM:'美洲',EMEA:'EMEA',PAC:'太平洋'})[r.region]||r.region||'未知赛区')} · ${esc(r.archiveName||'历史构筑')}</small></span><time>${esc(fmt(r.at))}</time></article>`).join(''):'<p class="empty">还没有完成过 PvP 对战。</p>'}</div>
     </main>`;
 }
 
@@ -368,6 +385,7 @@ document.addEventListener('click', async e => {
     const nav = btn.dataset.nav;
     if (nav === 'home') { screen = 'home'; stopPolling(); render(); }
     else if (nav === 'archives') { screen = 'archives'; stopPolling(); render(); }
+    else if (nav === 'records') { try { account = await apiGetAccount(token); } catch (err) { notice('战绩同步失败：' + err.message); } screen = 'records'; stopPolling(); render(); }
     else if (nav === 'account') showAccountDialog();
     return;
   }

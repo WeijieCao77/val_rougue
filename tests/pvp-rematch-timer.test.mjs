@@ -76,6 +76,9 @@ test('rematch: request, the other accepts, same room starts a new match and the 
     assert.equal(before.round, 1);
     const store0 = await ctx.store.transaction(async d => structuredClone(d.rooms[ctx.code]));
     await finishByConcede(ctx);
+    const firstRecord=(await request(ctx.handler,{path:'/api/account',token:ctx.B})).body.pvp;
+    assert.equal(firstRecord.wins,1);
+    assert.equal(firstRecord.records.length,1);
 
     const req = await ctx.post(ctx.A, 'rematch', { op: 'request', round: 1 });
     assert.equal(req.status, 200);
@@ -96,6 +99,8 @@ test('rematch: request, the other accepts, same room starts a new match and the 
     const room = acc.body.room;
     assert.equal(room.status, 'active');
     assert.equal(room.round, 2);
+    const afterRematch=(await request(ctx.handler,{path:'/api/account',token:ctx.B})).body.pvp;
+    assert.equal(afterRematch.wins,1,'starting a rematch must not count the previous round twice');
     assert.equal(room.rematch, null);
     assert.equal(room.match.rev, 0);
     assert.equal(room.match.turn, 1);
@@ -115,6 +120,10 @@ test('rematch: request, the other accepts, same room starts a new match and the 
 
     // Round 3 swaps back.
     await finishByConcede(ctx, ctx.B);
+    const twoRounds=(await request(ctx.handler,{path:'/api/account',token:ctx.A})).body.pvp;
+    assert.equal(twoRounds.played,2);
+    assert.equal(twoRounds.records.length,2);
+    assert.equal(twoRounds.records[0].round,2);
     await ctx.post(ctx.B, 'rematch', { op: 'request', round: 2 });
     const third = (await ctx.post(ctx.A, 'rematch', { op: 'request', round: 2 })).body.room;
     assert.equal(third.round, 3);

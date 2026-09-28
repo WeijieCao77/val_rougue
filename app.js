@@ -16515,8 +16515,9 @@ function makeCheckpoint(s) {
     seed: s.seed,
     region: s.region,
     deck: s.deck.map(c => ({ uid: c.uid, id: c.id, up: !!c.up })),
-    // PvP builds carry only the original skins; rules-1 equipment and supplies are PvE-only.
+    // Legacy skin field stays compatible; full equipment is recorded separately.
     skins: s.skins.filter(id => Object.hasOwn(SKINS, id)),
+    ...(s.rules ? {gear:[...s.skins], supplies:[...(s.supplies||[])]} : {}),
     maxHp: s.maxHp,
     hp: s.maxHp,
     money: s.money,
