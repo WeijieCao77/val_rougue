@@ -34,16 +34,59 @@ export function generateSyncCode() {
   return code;
 }
 
-function validDemo(demo) {
+export const linkView = link => ({
+  rev: link.rev,
+  savedAt: link.savedAt,
+  device: link.device,
+  backup: link.backup ? { savedAt: link.backup.savedAt, device: link.backup.device } : null,
+});
+const view = linkView;
+
+// The conflict rule shared by /api/sync/sync and /api/save/sync (inside store.tx).
+// Returns { status, conflict?, …view, blob? }.
+export function applySync(store, link, { baseRev, dirty, packed, savedAt, device, nowTime }) {
+  store.touchSyncLink(link.syncId, nowTime);
+  if (!dirty) {
+    if (link.rev <= baseRev) return { status: 'uptodate', ...view(link) };
+    return { status: 'pulled', ...view(link), blob: store.syncBundle(link.syncId) };
+  }
+  if (baseRev >= link.rev) {
+    // Nothing new on the server since this device last synced: fast-forward.
+    store.setSyncCurrent(link.syncId, { rev: link.rev + 1, savedAt, device, blob: packed.blob, bytes: packed.bytes, now: nowTime });
+    return { status: 'pushed', ...view(store.syncLink(link.syncId)) };
+  }
+  // Both sides changed since this device's last sync.
+  if (savedAt > (link.savedAt ?? 0)) {
+    const previous = { blob: store.syncBundle(link.syncId), rev: link.rev, savedAt: link.savedAt, device: link.device };
+    store.setSyncBackup(link.syncId, previous);
+    store.setSyncCurrent(link.syncId, { rev: link.rev + 1, savedAt, device, blob: packed.blob, bytes: packed.bytes, now: nowTime });
+    return { status: 'pushed', conflict: true, ...view(store.syncLink(link.syncId)) };
+  }
+  store.setSyncBackup(link.syncId, { blob: packed.blob, rev: baseRev, savedAt, device });
+  return { status: 'pulled', conflict: true, ...view(store.syncLink(link.syncId)), blob: store.syncBundle(link.syncId) };
+}
+
+// Swap the current copy and the backup (inside store.tx). Returns { link, blob }.
+export function restoreLinkBackup(store, link, nowTime) {
+  const backup = store.syncBackup(link.syncId);
+  if (!backup) throw new HttpError(404, '没有可恢复的备份');
+  const current = { blob: store.syncBundle(link.syncId), rev: link.rev, savedAt: link.savedAt, device: link.device };
+  const bytes = gunzipSync(backup.blob).length;
+  store.setSyncCurrent(link.syncId, { rev: link.rev + 1, savedAt: nowTime, device: backup.device, blob: backup.blob, bytes, now: nowTime });
+  store.setSyncBackup(link.syncId, current);
+  return { link: store.syncLink(link.syncId), blob: backup.blob };
+}
+
+export function validDemo(demo) {
   if (!DEMOS.has(demo)) throw new HttpError(400, '无效的版本');
   return demo;
 }
 
-function validDevice(device) {
+export function validDevice(device) {
   return typeof device === 'string' ? device.slice(0, 24) : null;
 }
 
-function validSavedAt(savedAt, nowTime) {
+export function validSavedAt(savedAt, nowTime) {
   if (!Number.isFinite(savedAt) || savedAt <= 0) throw new HttpError(400, '无效的保存时间');
   // A device clock far in the future must not win every conflict forever.
   return Math.min(Math.floor(savedAt), nowTime + 5 * 60 * 1000);
@@ -94,12 +137,6 @@ export function createSyncHandler(store, { now = () => Date.now() } = {}) {
     return link;
   }
 
-  const view = link => ({
-    rev: link.rev,
-    savedAt: link.savedAt,
-    device: link.device,
-    backup: link.backup ? { savedAt: link.backup.savedAt, device: link.backup.device } : null,
-  });
 
   function issueCode(demo, syncId, nowTime) {
     for (let i = 0; i < 20; i++) {
@@ -176,25 +213,7 @@ export function createSyncHandler(store, { now = () => Date.now() } = {}) {
       const device = validDevice(body.device);
       const out = store.tx(() => {
         const link = requireLink(body);
-        store.touchSyncLink(link.syncId, nowTime);
-        if (!dirty) {
-          if (link.rev <= baseRev) return { status: 'uptodate', ...view(link) };
-          return { status: 'pulled', ...view(link), blob: store.syncBundle(link.syncId) };
-        }
-        if (baseRev >= link.rev) {
-          // Nothing new on the server since this device last synced: fast-forward.
-          store.setSyncCurrent(link.syncId, { rev: link.rev + 1, savedAt, device, blob: packed.blob, bytes: packed.bytes, now: nowTime });
-          return { status: 'pushed', ...view(store.syncLink(link.syncId)) };
-        }
-        // Both sides changed since this device's last sync.
-        if (savedAt > (link.savedAt ?? 0)) {
-          const previous = { blob: store.syncBundle(link.syncId), rev: link.rev, savedAt: link.savedAt, device: link.device };
-          store.setSyncBackup(link.syncId, previous);
-          store.setSyncCurrent(link.syncId, { rev: link.rev + 1, savedAt, device, blob: packed.blob, bytes: packed.bytes, now: nowTime });
-          return { status: 'pushed', conflict: true, ...view(store.syncLink(link.syncId)) };
-        }
-        store.setSyncBackup(link.syncId, { blob: packed.blob, rev: baseRev, savedAt, device });
-        return { status: 'pulled', conflict: true, ...view(store.syncLink(link.syncId)), blob: store.syncBundle(link.syncId) };
+        return applySync(store, link, { baseRev, dirty, packed, savedAt, device, nowTime });
       });
       const { blob, ...rest } = out;
       return blob ? { ...rest, bundle: unpackBundle(blob) } : rest;
@@ -203,16 +222,7 @@ export function createSyncHandler(store, { now = () => Date.now() } = {}) {
     // Swap the current copy and the backup; the restored copy becomes the newest revision.
     restore(body, ip, nowTime) {
       limit(`sync:${ip}`, LIMITS.sync);
-      const out = store.tx(() => {
-        const link = requireLink(body);
-        const backup = store.syncBackup(link.syncId);
-        if (!backup) throw new HttpError(404, '没有可恢复的备份');
-        const current = { blob: store.syncBundle(link.syncId), rev: link.rev, savedAt: link.savedAt, device: link.device };
-        const bytes = gunzipSync(backup.blob).length;
-        store.setSyncCurrent(link.syncId, { rev: link.rev + 1, savedAt: nowTime, device: backup.device, blob: backup.blob, bytes, now: nowTime });
-        store.setSyncBackup(link.syncId, current);
-        return { link: store.syncLink(link.syncId), blob: backup.blob };
-      });
+      const out = store.tx(() => restoreLinkBackup(store, requireLink(body), nowTime));
       return { status: 'restored', ...view(out.link), bundle: unpackBundle(out.blob) };
     },
   };

@@ -69,6 +69,10 @@ pre{margin:6px 0 0;padding:8px;background:#0a1014;border-radius:6px;overflow:aut
   <main>
     <section><h2>概况</h2><div id="stats" class="grid"></div></section>
     <section><h2>备份</h2><div id="backup"></div></section>
+    <section><h2>存档码（按账号 ID 查找）</h2>
+      <div class="row"><input id="sc-id" placeholder="16 位账号 ID（玩家在「存档码」面板底部可以看到）" aria-label="账号 ID" autocomplete="off" spellcheck="false" style="min-width:18em"><button id="sc-find">查找</button><button id="sc-replace">补发新存档码</button></div>
+      <div id="sc-out" class="muted">服务器只保存存档码的哈希，查不到原码；存档码泄露或遗失时可以补发新码，旧码立即失效，已登录的设备不受影响。</div>
+    </section>
     <section><h2>错误（按指纹分组）</h2><div id="errors"></div></section>
     <section><h2>信箱（最新在前）</h2><div id="feedback"></div></section>
   </main>
@@ -138,6 +142,25 @@ pre{margin:6px 0 0;padding:8px;background:#0a1014;border-radius:6px;overflow:aut
     st.textContent = '备份中…';
     try { await api('/api/admin/backup/run', { method: 'POST' }); st.textContent = '完成'; load(); } catch (e) { st.textContent = e.message; }
   }
+
+  async function saveLookup() {
+    const id = $('#sc-id').value.trim();
+    try {
+      const r = await (await api('/api/admin/save?account=' + encodeURIComponent(id))).json();
+      const demos = Object.entries(r.demos).map(([d, v]) => `${d === 'wa' ? '登峰赛季' : '战术试炼'} 第 ${v.rev} 版 · ${fmt(v.savedAt)} · ${esc(v.device || '')} · ${(v.bytes / 1024).toFixed(1)} KB${v.backup ? ' · 有备份' : ''}`).join('<br>') || '暂无云端进度';
+      $('#sc-out').innerHTML = `<p>账号 <b>${esc(r.accountId)}</b> ${esc(r.name || '')} · 创建 ${fmt(r.createdAt)} · 已登录设备约 ${r.devices} 台</p><p>存档码：${r.saveCode ? '已设置（' + fmt(r.saveCode.createdAt) + '）' : '尚未生成'}</p><p>${demos}</p>`;
+    } catch (e) { $('#sc-out').textContent = e.message; }
+  }
+  async function saveReplace() {
+    const id = $('#sc-id').value.trim();
+    if (!confirm('为账号 ' + id + ' 补发新存档码？旧存档码会立即失效。')) return;
+    try {
+      const r = await (await api('/api/admin/save/replace', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accountId: id }) })).json();
+      $('#sc-out').innerHTML = `<p>新存档码（只显示这一次，请直接转交玩家）：<b style="font-size:1.4em;letter-spacing:.1em">${esc(r.code)}</b></p>`;
+    } catch (e) { $('#sc-out').textContent = e.message; }
+  }
+  $('#sc-find').addEventListener('click', saveLookup);
+  $('#sc-replace').addEventListener('click', saveReplace);
 
   function renderErrors(list) {
     $('#errors').innerHTML = list.length ? list.map(g => `<div class="item ${g.resolved ? 'resolved' : ''}">

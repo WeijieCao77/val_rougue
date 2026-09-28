@@ -9,6 +9,7 @@ import { ACTS } from '/pvp/season-map.js';
 import { LATEST_VERSION } from '/shared/changelog.js';
 import { initErrorReport, recentErrorMessages, gameContext } from '/shared/error-report.js';
 import { initFeedback, feedbackButtonHtml } from '/shared/feedback.js';
+import { initProgressSync, PREVIOUS_TOKEN_KEY, ACCOUNT_KEY, CODE_KEY } from '/shared/progress-sync.js';
 import {
   loadAccount, saveAccount, getPendingProofCache, clearPendingProofCache,
   apiCreateAccount, apiGetAccount, apiResolvePending,
@@ -28,6 +29,10 @@ const closeDialog = document.getElementById('pvp-close-dialog');
 const pvpErrorContext = () => ({ screen, roomStatus: room?.status || 'none', turn: room?.match?.turn });
 initErrorReport({ page: 'pvp', version: LATEST_VERSION, getContext: pvpErrorContext });
 initFeedback({ page: 'pvp', version: LATEST_VERSION, theme: 'pvp', getContext: gameContext, recentErrors: () => recentErrorMessages(3) });
+
+// 存档码: the same code logs this device into PvP, 登峰赛季 and 战术试炼.
+const SAVE_CFG = { demo: null, metaKey: null, scope: '好友 PvP 账号和登峰赛季的进度' };
+initProgressSync(SAVE_CFG);
 
 let token = null;
 let account = null;
@@ -131,7 +136,7 @@ function renderHome() {
       <nav>
         <button data-nav="archives">构筑库</button>
         <button data-nav="records">PvP 战绩</button>
-        <button data-nav="account">账号</button>
+        <button data-progress-sync>存档码</button>
         ${feedbackButtonHtml('')}
         <a href="/wa/" class="nav-link">返回登峰赛季</a>
         <a href="/" class="nav-link">选择版本</a>
@@ -148,7 +153,7 @@ function renderHome() {
       <section class="quick-actions">
         <button class="primary" data-action="start-create">创建房间</button>
         <button data-action="start-join">加入朋友码</button>
-        <button data-action="manage-account">账号凭证</button>
+        <button data-progress-sync>存档码</button>
       </section>
       <section class="home-builds" aria-label="已有构筑">
         <h2>我的构筑 <small>${account?.archives.length || 0} / 10</small></h2>
@@ -158,6 +163,7 @@ function renderHome() {
       <section class="hero-tip">
         <p>${accountSummary}。需要先在登峰赛季中完成赛段并云端保存，之后这里可选构筑开局。</p>
         <p>同幕、同版本才能对战；PvP 胜负不改存档。继承最大声望和适用装备，补给品不进入 PvP。</p>
+        <p>换设备时在「存档码」里输入你的存档码即可找回账号。<button class="secondary" data-action="manage-account">高级：旧版账号凭证</button></p>
       </section>
     </main>`;
 }
@@ -529,13 +535,17 @@ function showProfileDialog() {
 }
 
 function showAccountDialog() {
-  showModal('账号凭证', `
-    <p>你的账号凭证用于恢复好友 PvP 账号。不要发送给好友。</p>
-    <button id="export-token" class="secondary">导出凭证</button>
-    <details><summary>恢复凭证</summary>
-      <p>粘贴完整 token（64位hex）并点击恢复。</p>
+  let previous = '';
+  try { previous = (localStorage.getItem(PREVIOUS_TOKEN_KEY) || '').trim(); } catch {}
+  const hasPrevious = /^[a-f0-9]{64}$/i.test(previous) && previous !== token;
+  showModal('高级：旧版账号凭证', `
+    <p>现在请用「存档码」在其他设备登录。旧版 64 位账号凭证仍然可用：把它粘贴到「存档码」输入框，或在这里恢复。不要发送给好友。</p>
+    <details><summary>高级</summary>
+      <button id="export-token" class="secondary">导出当前凭证</button>
+      <p>粘贴完整凭证（64 位十六进制）并点击恢复。</p>
       <textarea id="account-import" rows="2" placeholder="64位hex token"></textarea>
       <button id="import-token" class="secondary">恢复</button>
+      ${hasPrevious ? '<p>这台设备登录存档码之前使用过另一个 PvP 账号。</p><button id="use-previous" class="secondary">切换回之前的账号</button>' : ''}
     </details>`);
   modal.querySelector('#export-token').addEventListener('click', () => {
     const blob = new Blob([token || ''], { type: 'text/plain' });
@@ -544,22 +554,29 @@ function showAccountDialog() {
     a.href = url; a.download = 'wa-online-token.txt'; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
-  modal.querySelector('#import-token').addEventListener('click', async () => {
-    const value = modal.querySelector('#account-import').value.trim();
+  const restore = async value => {
     if (!/^[a-f0-9]{64}$/i.test(value)) { notice('凭证格式无效'); return; }
     try {
       // Validate token before saving
       const testAccount = await apiGetAccount(value);
       if (!testAccount) throw new Error('无效凭证');
+      const old = token;
       if (!saveAccount(value)) throw new Error('本地保存失败');
+      try {
+        if (old && old !== value) localStorage.setItem(PREVIOUS_TOKEN_KEY, old);
+        // The 存档码 panel re-reads this account (and its code) on the next check.
+        localStorage.removeItem(ACCOUNT_KEY); localStorage.removeItem(CODE_KEY);
+      } catch {}
       token = value;
       dialog.close();
       notice('凭证已恢复，重新加载...');
-      loadInitial();
+      location.reload();
     } catch (err) {
       notice('恢复失败：' + err.message);
     }
-  });
+  };
+  modal.querySelector('#import-token').addEventListener('click', () => restore(modal.querySelector('#account-import').value.trim()));
+  modal.querySelector('#use-previous')?.addEventListener('click', () => restore(previous));
 }
 
 function showResolvePendingDialog() {

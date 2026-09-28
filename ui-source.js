@@ -77,10 +77,10 @@ import {ACTS,availableNodes} from './season-map.js';
 const app=document.querySelector('#app'),dialog=document.querySelector('#dialog'),modal=document.querySelector('#dialog-content');
 const SAVE='bao-yi-ba-D0.1-save-route-v2',SEASON_SAVE='peak-season-D0.2-save-route-v6',HINTS='bao-yi-ba-hints',VIEW='bao-yi-ba-view-route-v5',LEGACY_VIEW='bao-yi-ba-view-legacy-route-v2';
 // Progress sync between devices: every key that makes up Wa progress (run saves, unlocks,
-// achievements, history, settings, the PvP account token so builds follow the player).
+// achievements, history, settings). The PvP account itself follows the 存档码 login (shared/progress-sync.js).
 // Only the newest 300 combat-log lines of a run are uploaded (the log is display-only).
 const trimRunLogs=v=>{const s=JSON.parse(v);if(!Array.isArray(s.logs)||s.logs.length<=300)return v;s.logs=s.logs.slice(-300);return JSON.stringify(s);};
-const WA_SYNC={demo:'wa',metaKey:'wa-sync-v1',keys:[SEASON_SAVE,SAVE,VIEW,LEGACY_VIEW,HINTS,'wa-ascension-v1','wa-unlocks-v1','wa-run-history-v1','wa-collection-v1','wa-run-tracker-v1','wa-achievements-v1','wa-ach-run-v1','wa-coach-v1','changelog-seen-wa','val-sfx-v1','wa-online-token','wa-archive-pending'],prefixes:['wa-processed-'],alias:{'val-sfx-v1':'sfx'},core:[SEASON_SAVE,SAVE,'wa-ascension-v1','wa-unlocks-v1','wa-run-history-v1','wa-achievements-v1','wa-online-token'],shrink:{[SEASON_SAVE]:trimRunLogs,[SAVE]:trimRunLogs}};
+const WA_SYNC={demo:'wa',metaKey:'wa-sync-v1',keys:[SEASON_SAVE,SAVE,VIEW,LEGACY_VIEW,HINTS,'wa-ascension-v1','wa-unlocks-v1','wa-run-history-v1','wa-collection-v1','wa-run-tracker-v1','wa-achievements-v1','wa-ach-run-v1','wa-coach-v1','changelog-seen-wa','val-sfx-v1','wa-archive-pending'],prefixes:['wa-processed-'],alias:{'val-sfx-v1':'sfx'},core:[SEASON_SAVE,SAVE,'wa-ascension-v1','wa-unlocks-v1','wa-run-history-v1'],scope:'登峰赛季的进度和好友 PvP 账号',shrink:{[SEASON_SAVE]:trimRunLogs,[SAVE]:trimRunLogs}};
 let syncMark='';
 // Internal beta: old maps cannot be resumed under the new route rules.
 try{for(const key of ['bao-yi-ba-D0.1-save','peak-season-D0.2-save','bao-yi-ba-view','bao-yi-ba-view-legacy','peak-season-D0.2-save-route-v2','bao-yi-ba-view-route-v2','peak-season-D0.2-save-route-v3','bao-yi-ba-view-route-v3','peak-season-D0.2-save-route-v4','peak-season-D0.2-save-route-v5','bao-yi-ba-view-route-v4'])localStorage.removeItem(key);}catch{}

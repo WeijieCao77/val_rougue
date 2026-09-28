@@ -5,6 +5,10 @@
 // When shipping something players will notice, add a line to the top entry
 // (or a new entry with the next version and today's date).
 export const CHANGELOG = [
+  { version: 'v0.9.8', date: '2026-09-28', title: '存档码', items: [
+    ['all', '新增「存档码」：一个码保存全部进度，换手机、换电脑输入存档码即可继续。'],
+    ['pvp', '好友 PvP 使用同一个存档码登录。']
+  ] },
   { version: 'v0.9.7', date: '2026-09-28', title: '信箱与稳定性', items: [
     ['all', '新增「信箱」：遇到问题或有建议，可以直接写信给作者。'],
     ['all', '游戏出错时会自动上报，方便我们更快修复。']

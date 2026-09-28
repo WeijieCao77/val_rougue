@@ -246,7 +246,7 @@ test('客户端：响应处理（上传成功记下哈希、拉取时标记重�
   assert.equal(pulled.meta.rebase, true);
   assert.equal(pulled.meta.dirty, false);
   assert.deepEqual(pulled.apply, { v: 1 });
-  assert.equal(pulled.notice, '已同步另一台设备的进度（3 分钟前）。');
+  assert.equal(pulled.notice, '已载入另一台设备保存的进度（3 分钟前）。');
   const conflict = resolveSyncResponse(meta, { status: 'pulled', conflict: true, rev: 5, savedAt: 0, bundle: {}, backup: { device: '手机' } }, null, 1000);
   assert.match(conflict.notice, /备份/);
   assert.equal(agoText(0, 3 * 3600_000), '3 小时前');

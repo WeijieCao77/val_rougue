@@ -42,7 +42,8 @@ const ND_SYNC = {
   keys: [STORAGE_KEY, 'new-demo-unlocks-v1', 'new-demo-ascension-v1', 'new-demo-run-history-v1', 'new-demo-collection-v1', 'new-demo-run-tracker-v1', 'new-demo-achievements-v1', 'new-demo-ach-run-v1', 'new-demo-coach-v1', 'changelog-seen-new', 'val-sfx-v1'],
   prefixes: [GUIDE_KEY],
   alias: { 'val-sfx-v1': 'sfx' },
-  core: [STORAGE_KEY, 'new-demo-unlocks-v1', 'new-demo-ascension-v1', 'new-demo-run-history-v1', 'new-demo-achievements-v1'],
+  // Real progress only (the achievements object is written empty on first open).
+  core: [STORAGE_KEY, 'new-demo-unlocks-v1', 'new-demo-ascension-v1', 'new-demo-run-history-v1'],
   shrink: { [STORAGE_KEY]: v => { const s = JSON.parse(v); if (!Array.isArray(s.logs) || !s.logs.length) return v; s.logs = []; return JSON.stringify(s); } },
 };
 let syncMark = '';

@@ -6,6 +6,7 @@ import { generateToken, generateRoomCode, sha256 } from './store.mjs';
 import { recordPvpResult, pvpProgress } from './pvp-records.js';
 import { publicProfile, validateName, prepareAvatar } from './profile.mjs';
 import { createSyncHandler } from './sync-api.mjs';
+import { createSaveHandler } from './save-api.mjs';
 import { reportServerError } from './server-errors.mjs';
 
 const MAX_BODY_BYTES = 1024 * 1024;
@@ -421,8 +422,12 @@ export function createOnlineHandler(store, options = {}) {
   const publicRoom = (room, seat) => publicRoomAt(room, seat, now());
   // Progress sync between devices (no PvP account needed): /api/sync/*
   const syncHandler = createSyncHandler(store, { now });
+  // 存档码: account + cloud save for every page: /api/save/*
+  const saveHandler = createSaveHandler(store, { now, pepper: options.saveCodePepper });
 
-  return async function onlineHandler(req, res, url) {
+  onlineHandler.saveAdmin = saveHandler.admin;
+  return onlineHandler;
+  async function onlineHandler(req, res, url) {
     if (!url.pathname.startsWith('/api/')) {
       return false;
     }
@@ -434,6 +439,9 @@ export function createOnlineHandler(store, options = {}) {
 
     if (url.pathname.startsWith('/api/sync/')) {
       return syncHandler(req, res, url);
+    }
+    if (url.pathname.startsWith('/api/save/')) {
+      return saveHandler(req, res, url);
     }
 
     const clientIp = clientIpOf(req);

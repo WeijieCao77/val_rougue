@@ -133,7 +133,7 @@ const staticCache = createStaticCache();
 try {
   store = await openStore();
   onlineHandler = createOnlineHandler(store, { verifyClaim: replayPool.verify });
-  reportHandler = createReportHandler(store, { backupNow: () => backups?.runNow() });
+  reportHandler = createReportHandler(store, { backupNow: () => backups?.runNow(), adminRoutes: (req, res, url) => onlineHandler.saveAdmin(req, res, url) });
   setServerErrorSink(reportHandler.recordServerError);
   if (store.dataDir && process.env.BACKUPS !== 'off') backups = startBackupScheduler(store, store.dataDir);
 } catch (err) {

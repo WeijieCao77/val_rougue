@@ -194,6 +194,7 @@ export function createReportHandler(store, {
   salt = process.env.REPORT_SALT || '',
   log = console,
   backupNow = null,
+  adminRoutes = null, // extra admin endpoints (e.g. 存档码 lookup), called after the password check
 } = {}) {
   const db = store.db;
   ensureReportSchema(db);
@@ -407,6 +408,7 @@ export function createReportHandler(store, {
           sendJson(res, 200, pub);
           return true;
         }
+        if (adminRoutes && await adminRoutes(req, res, url)) return true;
         throw new HttpError(404, '接口未找到');
       }
 

@@ -25,7 +25,7 @@ try {
   process.emitWarning = originalEmitWarning;
 }
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 // Finished / closed rooms are kept for a week; waiting or active rooms that nobody has
 // touched for two days are abandoned (their accounts are released).
@@ -149,6 +149,31 @@ export class SqliteStore {
         PRAGMA user_version = 2;
       `);
     }
+    if (version < 3) {
+      // 存档码 (online/save-api.mjs): one permanent save code per account (only its
+      // keyed hash is stored), extra bearer tokens for every device logged in with the
+      // code, and the account's progress per demo (a sync_links row, never purged).
+      this.db.exec(`
+        CREATE TABLE IF NOT EXISTS save_codes (
+          account_id TEXT PRIMARY KEY REFERENCES accounts(account_id) ON DELETE CASCADE,
+          code_hash TEXT NOT NULL UNIQUE,
+          created_at INTEGER NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS account_tokens (
+          token_hash TEXT PRIMARY KEY,
+          account_id TEXT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
+          created_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS account_tokens_account ON account_tokens(account_id, created_at);
+        CREATE TABLE IF NOT EXISTS account_sync (
+          account_id TEXT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
+          demo TEXT NOT NULL,
+          sync_id TEXT NOT NULL UNIQUE REFERENCES sync_links(sync_id) ON DELETE CASCADE,
+          PRIMARY KEY (account_id, demo)
+        ) WITHOUT ROWID;
+        PRAGMA user_version = 3;
+      `);
+    }
     if (this.db.prepare('PRAGMA user_version').get().user_version !== SCHEMA_VERSION) {
       throw new Error('数据库结构版本不匹配');
     }
@@ -205,7 +230,21 @@ export class SqliteStore {
       deleteSyncCode: p('DELETE FROM sync_codes WHERE code = ?'),
       deleteSyncCodesOf: p('DELETE FROM sync_codes WHERE sync_id = ?'),
       purgeSyncCodes: p('DELETE FROM sync_codes WHERE expires_at < ?'),
-      purgeSyncLinks: p('DELETE FROM sync_links WHERE touched_at < ?'),
+      purgeSyncLinks: p('DELETE FROM sync_links WHERE touched_at < ? AND sync_id NOT IN (SELECT sync_id FROM account_sync)'),
+      accountByExtraToken: p(`SELECT a.account_id, a.token_hash, a.room_code, a.name, a.created_at FROM account_tokens t
+        JOIN accounts a ON a.account_id = t.account_id WHERE t.token_hash = ?`),
+      insertExtraToken: p('INSERT OR IGNORE INTO account_tokens (token_hash, account_id, created_at) VALUES (?, ?, ?)'),
+      deleteExtraToken: p('DELETE FROM account_tokens WHERE token_hash = ?'),
+      trimExtraTokens: p(`DELETE FROM account_tokens WHERE account_id = ? AND token_hash NOT IN
+        (SELECT token_hash FROM account_tokens WHERE account_id = ? ORDER BY created_at DESC LIMIT ?)`),
+      saveCodeByHash: p('SELECT account_id, created_at FROM save_codes WHERE code_hash = ?'),
+      saveCodeOf: p('SELECT code_hash, created_at FROM save_codes WHERE account_id = ?'),
+      putSaveCode: p(`INSERT INTO save_codes (account_id, code_hash, created_at) VALUES (?, ?, ?)
+        ON CONFLICT(account_id) DO UPDATE SET code_hash = excluded.code_hash, created_at = excluded.created_at`),
+      accountSyncOf: p('SELECT demo, sync_id FROM account_sync WHERE account_id = ?'),
+      accountSync: p('SELECT sync_id FROM account_sync WHERE account_id = ? AND demo = ?'),
+      syncOwner: p('SELECT account_id, demo FROM account_sync WHERE sync_id = ?'),
+      putAccountSync: p('INSERT OR REPLACE INTO account_sync (account_id, demo, sync_id) VALUES (?, ?, ?)'),
     };
   }
 
@@ -282,6 +321,47 @@ export class SqliteStore {
     }));
   }
 
+  // ------------------------------------------------------------------ 存档码 / accounts
+  // Extra device tokens (every device that logged in with the save code gets its own).
+  addAccountToken(accountId, tokenHash, now, keep = 50) {
+    this.q.insertExtraToken.run(tokenHash, accountId, now);
+    this.q.trimExtraTokens.run(accountId, accountId, keep);
+  }
+
+  removeAccountToken(tokenHash) {
+    return Number(this.q.deleteExtraToken.run(tokenHash).changes);
+  }
+
+  accountIdBySaveCodeHash(codeHash) {
+    return this.q.saveCodeByHash.get(codeHash)?.account_id ?? null;
+  }
+
+  saveCodeInfo(accountId) {
+    const row = this.q.saveCodeOf.get(accountId);
+    return row ? { createdAt: row.created_at } : null;
+  }
+
+  setSaveCode(accountId, codeHash, now) {
+    this.q.putSaveCode.run(accountId, codeHash, now);
+  }
+
+  accountSyncIds(accountId) {
+    return Object.fromEntries(this.q.accountSyncOf.all(accountId).map(r => [r.demo, r.sync_id]));
+  }
+
+  accountSyncId(accountId, demo) {
+    return this.q.accountSync.get(accountId, demo)?.sync_id ?? null;
+  }
+
+  syncLinkOwner(syncId) {
+    const row = this.q.syncOwner.get(syncId);
+    return row ? { accountId: row.account_id, demo: row.demo } : null;
+  }
+
+  setAccountSync(accountId, demo, syncId) {
+    this.q.putAccountSync.run(accountId, demo, syncId);
+  }
+
   // ------------------------------------------------------------------ transactions
   // Run `fn(t)` synchronously inside BEGIN IMMEDIATE … COMMIT. `fn` must not be async.
   tx(fn) {
@@ -305,7 +385,7 @@ export class SqliteStore {
   }
 
   getAccountByTokenHash(tokenHash) {
-    const row = this.q.accountByToken.get(tokenHash);
+    const row = this.q.accountByToken.get(tokenHash) || this.q.accountByExtraToken.get(tokenHash);
     if (!row) return null;
     return { accountId: row.account_id, tokenHash: row.token_hash, roomCode: row.room_code, name: row.name ?? undefined, createdAt: row.created_at };
   }
