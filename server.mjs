@@ -8,6 +8,8 @@ import { createStaticCache } from './static-cache.mjs';
 import { createReportHandler } from './online/report-api.mjs';
 import { setServerErrorSink } from './online/server-errors.mjs';
 import { startBackupScheduler } from './online/backup.mjs';
+// Anonymous play statistics for the admin 玩家概况 (docs/BACKUP-AND-MONITORING.md 「玩家统计」).
+import { createAnalyticsHandler } from './online/analytics-api.mjs';
 
 const assets = new Map([
   ['/pvp/equipment.js', ['online/equipment.js', 'text/javascript; charset=utf-8']],
@@ -29,6 +31,7 @@ const assets = new Map([
   ['/shared/touch-feel.js', ['shared/touch-feel.js', 'text/javascript; charset=utf-8']],
   ['/shared/tap-play.js', ['shared/tap-play.js', 'text/javascript; charset=utf-8']],
   ['/shared/error-report.js', ['shared/error-report.js', 'text/javascript; charset=utf-8']],
+  ['/shared/play-analytics.js', ['shared/play-analytics.js', 'text/javascript; charset=utf-8']],
   ['/shared/feedback.js', ['shared/feedback.js', 'text/javascript; charset=utf-8']],
   ['/shared/changelog.js', ['shared/changelog.js', 'text/javascript; charset=utf-8']],
   ['/shared/changelog-ui.js', ['shared/changelog-ui.js', 'text/javascript; charset=utf-8']],
@@ -125,6 +128,7 @@ if (!Number.isInteger(port) || port < 0 || port > 65535) throw Error('Invalid PO
 let store;
 let onlineHandler;
 let reportHandler;
+let analyticsHandler;
 let backups = null;
 // Claim replays run on worker threads so they never stall other requests.
 const replayPool = createReplayPool();
@@ -133,7 +137,8 @@ const staticCache = createStaticCache();
 try {
   store = await openStore();
   onlineHandler = createOnlineHandler(store, { verifyClaim: replayPool.verify });
-  reportHandler = createReportHandler(store, { backupNow: () => backups?.runNow(), adminRoutes: (req, res, url) => onlineHandler.saveAdmin(req, res, url) });
+  analyticsHandler = createAnalyticsHandler(store);
+  reportHandler = createReportHandler(store, { backupNow: () => backups?.runNow(), adminRoutes: async (req, res, url) => (await analyticsHandler.adminRoute(req, res, url)) || onlineHandler.saveAdmin(req, res, url) });
   setServerErrorSink(reportHandler.recordServerError);
   if (store.dataDir && process.env.BACKUPS !== 'off') backups = startBackupScheduler(store, store.dataDir);
 } catch (err) {
@@ -179,6 +184,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   const url = new URL(req.url, 'http://localhost');
+  if (await analyticsHandler(req, res, url)) return;
   if (await reportHandler(req, res, url)) return;
   const handled = await onlineHandler(req, res, url);
   if (handled) return;

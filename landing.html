@@ -31,6 +31,8 @@
     import { LATEST_VERSION } from '/shared/changelog.js';
     import { initErrorReport } from '/shared/error-report.js';
     initErrorReport({ page: 'landing', version: LATEST_VERSION, getContext: () => ({ screen: 'landing' }) });
+    import { initAnalytics } from '/shared/play-analytics.js';
+    initAnalytics({ page: 'landing', version: LATEST_VERSION });
   </script>
 </body>
 </html>

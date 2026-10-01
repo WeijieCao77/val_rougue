@@ -199,6 +199,8 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const safeGet = key => { try { return localStorage.getItem(key); } catch { return null; } };
 const safeSet = (key, value) => { try { localStorage.setItem(key, value); } catch {} };
 const safeDel = key => { try { localStorage.removeItem(key); } catch {} };
+// Anonymous play statistics (shared/play-analytics.js listens; never the code itself).
+const paEmit = (name, props) => { try { if (typeof dispatchEvent === 'function') dispatchEvent(new CustomEvent('pa:track', { detail: { name, props } })); } catch {} };
 
 function readMeta(cfg) {
   if (!cfg.metaKey) return {};
@@ -329,6 +331,7 @@ export function initProgressSync(cfg) {
     const res = await post('ensure', body);
     const hadCode = !!safeGet(CODE_KEY);
     rememberLogin(res);
+    if (res.code && !hadCode) paEmit('save_code_created', { demo: cfg.demo || undefined });
     if (res.code && !hadCode && !wrap?.classList.contains('open')) toast('已为你生成存档码，点「存档码」查看，并截图或抄下保存。');
     if (res.demo) {
       const r = metaAfterAttach(readMeta(cfg), res.demo, res.accountId, sent);
@@ -476,6 +479,7 @@ export function initProgressSync(cfg) {
         }
         const res = await post('login', body);
         rememberLogin(res, parsed.kind === 'code' ? parsed.value : null);
+        paEmit('save_code_login', { demo: cfg.demo || undefined });
         wrap.querySelector('.ps-in').value = '';
         if (hasDemo && res.demo) {
           const r = metaAfterAttach(readMeta(cfg), res.demo, res.accountId, sent);
@@ -492,6 +496,7 @@ export function initProgressSync(cfg) {
       return run(async () => {
         const res = await post('newcode', {});
         safeSet(CODE_KEY, res.code);
+        paEmit('save_code_created', { demo: cfg.demo || undefined });
         const acct = readAccount() || {};
         safeSet(ACCOUNT_KEY, JSON.stringify({ ...acct, unseen: true }));
       });

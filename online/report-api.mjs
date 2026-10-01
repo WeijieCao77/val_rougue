@@ -185,6 +185,9 @@ export function ensureReportSchema(db) {
     CREATE INDEX IF NOT EXISTS reports_last ON reports(last_at);
     CREATE INDEX IF NOT EXISTS reports_receipt ON reports(receipt_hash) WHERE receipt_hash IS NOT NULL;
   `);
+  // Distinct reporters of an error group per day (salted IP hashes, at most 100), so the
+  // admin view can say how many players hit it. Added 2026-10-01.
+  if (!db.prepare('PRAGMA table_info(reports)').all().some(c => c.name === 'ip_hashes')) db.exec('ALTER TABLE reports ADD COLUMN ip_hashes TEXT');
 }
 
 export function createReportHandler(store, {
@@ -206,8 +209,8 @@ export function createReportHandler(store, {
   const limiter = new WindowLimiter(LIMIT_WINDOW_MS);
   const guard = new AdminGuard();
   const q = {
-    findGroup: db.prepare('SELECT id, versions FROM reports WHERE kind = ? AND fingerprint = ? AND day = ?'),
-    bump: db.prepare('UPDATE reports SET count = count + 1, last_at = ?, versions = ?, resolved = 0, context = COALESCE(?, context) WHERE id = ?'),
+    findGroup: db.prepare('SELECT id, versions, ip_hash, ip_hashes FROM reports WHERE kind = ? AND fingerprint = ? AND day = ?'),
+    bump: db.prepare('UPDATE reports SET count = count + 1, last_at = ?, versions = ?, resolved = 0, context = COALESCE(?, context), ip_hashes = ? WHERE id = ?'),
     insert: db.prepare(`INSERT INTO reports (kind, fingerprint, day, created_at, last_at, count, page, version, versions, category, message, stack, context, path, viewport, ua, ip_hash)
       VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
     purge: db.prepare('DELETE FROM reports WHERE last_at < ?'),
@@ -226,7 +229,10 @@ export function createReportHandler(store, {
         let versions = [];
         try { versions = JSON.parse(row.versions || '[]'); } catch {}
         if (r.version && !versions.includes(r.version)) versions = [...versions, r.version].slice(-10);
-        q.bump.run(t, JSON.stringify(versions), context, row.id);
+        let ips = [];
+        try { ips = JSON.parse(row.ip_hashes || 'null') || (row.ip_hash ? [row.ip_hash] : []); } catch {}
+        if (r.ipHash && !ips.includes(r.ipHash) && ips.length < 100) ips = [...ips, r.ipHash];
+        q.bump.run(t, JSON.stringify(versions), context, ips.length ? JSON.stringify(ips) : null, row.id);
         return { id: row.id, fingerprint: fp, grouped: true };
       }
       const info = q.insert.run(kind, fp, day, t, t, r.page || null, r.version || null, JSON.stringify(r.version ? [r.version] : []), null,
@@ -325,8 +331,12 @@ export function createReportHandler(store, {
       g.lastAt = Math.max(g.lastAt, r.last_at);
       g.resolved = g.resolved && !!r.resolved;
       for (const v of parseJson(r.versions) || []) if (!g.versions.includes(v)) g.versions.push(v);
+      g._ips = g._ips || new Set();
+      for (const h of parseJson(r.ip_hashes) || (r.ip_hash ? [r.ip_hash] : [])) g._ips.add(h);
     }
-    return { since, errors: [...groups.values()].sort((a, b) => b.lastAt - a.lastAt), feedback };
+    // players: distinct reporters (salted IP hashes; server errors have none → null).
+    const errors = [...groups.values()].map(({ _ips, ...g }) => ({ ...g, players: _ips && _ips.size ? _ips.size : null })).sort((a, b) => b.lastAt - a.lastAt);
+    return { since, errors, feedback };
   }
 
   function stats(t) {

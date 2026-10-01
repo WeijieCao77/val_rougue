@@ -202,6 +202,8 @@ function renderForm(pane) {
       const list = loadSent();
       list.unshift({ receipt: typeof data?.receipt === 'string' ? data.receipt : null, subject: title, first: value.slice(0, 40), category, at: Date.now(), status: 'new' });
       saveSent(list);
+      // Anonymous play statistics (shared/play-analytics.js listens): only that a letter was sent.
+      try { if (typeof dispatchEvent === 'function') dispatchEvent(new CustomEvent('pa:track', { detail: { name: 'mailbox_sent', props: { category } } })); } catch {}
       pane.innerHTML = `<div class="fb-done" role="status">${ENVELOPE.replace('fb-btn-ico', '')}<b>信已寄出，作者会认真看。</b><button type="button" class="fb-close">好的</button></div>`;
       pane.querySelector('.fb-close').addEventListener('click', close);
       pane.querySelector('.fb-close').focus();

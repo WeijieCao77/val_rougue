@@ -272,6 +272,8 @@ const dateText = at => (at ? new Date(at).toLocaleDateString('zh-CN') : '');
 // Non-blocking unlock toasts at the top of the screen, one after another.
 export function showAchToasts(list, { delay = 0, sound = true } = {}) {
   if (!list?.length || typeof document === 'undefined') return;
+  // Anonymous play statistics (shared/play-analytics.js listens): the achievement key only.
+  for (const d of list) try { if (typeof dispatchEvent === 'function') dispatchEvent(new CustomEvent('pa:track', { detail: { name: 'achievement', props: { id: d.key } } })); } catch {}
   const go = () => {
     let host = document.getElementById('ach-toasts');
     if (!host) {

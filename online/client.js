@@ -9,6 +9,7 @@ import { ACTS } from '/pvp/season-map.js';
 import { LATEST_VERSION } from '/shared/changelog.js';
 import { initErrorReport, recentErrorMessages, gameContext } from '/shared/error-report.js';
 import { initFeedback, feedbackButtonHtml } from '/shared/feedback.js';
+import { initAnalytics, trackOnce } from '/shared/play-analytics.js';
 import { initProgressSync, PREVIOUS_TOKEN_KEY, ACCOUNT_KEY, CODE_KEY } from '/shared/progress-sync.js';
 import {
   loadAccount, saveAccount, getPendingProofCache, clearPendingProofCache,
@@ -29,6 +30,7 @@ const closeDialog = document.getElementById('pvp-close-dialog');
 const pvpErrorContext = () => ({ screen, roomStatus: room?.status || 'none', turn: room?.match?.turn });
 initErrorReport({ page: 'pvp', version: LATEST_VERSION, getContext: pvpErrorContext });
 initFeedback({ page: 'pvp', version: LATEST_VERSION, theme: 'pvp', getContext: gameContext, recentErrors: () => recentErrorMessages(3) });
+initAnalytics({ page: 'pvp', version: LATEST_VERSION });
 
 // 存档码: the same code logs this device into PvP, 登峰赛季 and 战术试炼.
 const SAVE_CFG = { demo: null, metaKey: null, scope: '好友 PvP 账号和登峰赛季的进度' };
@@ -107,7 +109,18 @@ function archivePickerCard(a, mode) {
   return `<article class="archive-choice">${archiveInfo(a)}<div class="archive-choice-actions"><button type="button" data-view-archive="${esc(a.id)}">查看卡组</button><button type="button" data-${mode}-archive="${esc(a.id)}" class="primary">${mode==='create'?'使用此构筑创建':'选择此构筑'}</button></div></article>`;
 }
 
+// Anonymous play statistics: one start / end per match (round) on this browser.
+function trackPvp(r) {
+  const m = r?.match;
+  if (!m || !r.code) return;
+  const round = r.round || 1;
+  const key = `pvp:${r.code}:${round}`;
+  trackOnce(`${key}:s`, 'pvp_match_start', { round, rematch: round > 1 });
+  if (m.status === 'finished' || r.status === 'finished') trackOnce(`${key}:e`, 'pvp_match_end', { won: m.winner === r.seat, draw: m.winner === null, turns: m.turn, round });
+}
+
 function render() {
+  try { trackPvp(room); } catch {}
   if ((screen === 'lobby' || screen === 'game') && room && (room.status === 'active' || room.status === 'finished')) {
     screen = 'game';
   }

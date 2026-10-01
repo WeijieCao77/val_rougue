@@ -17642,6 +17642,8 @@ const dateText = at => (at ? new Date(at).toLocaleDateString('zh-CN') : '');
 // Non-blocking unlock toasts at the top of the screen, one after another.
 function showAchToasts(list, { delay = 0, sound = true } = {}) {
   if (!list?.length || typeof document === 'undefined') return;
+  // Anonymous play statistics (shared/play-analytics.js listens): the achievement key only.
+  for (const d of list) try { if (typeof dispatchEvent === 'function') dispatchEvent(new CustomEvent('pa:track', { detail: { name: 'achievement', props: { id: d.key } } })); } catch {}
   const go = () => {
     let host = document.getElementById('ach-toasts');
     if (!host) {
@@ -18398,6 +18400,269 @@ function resetErrorReportForTests() {
 return {gameContext,clientInfo,recentErrorMessages,reportError,initErrorReport,registerGameContext,resetErrorReportForTests};
 })();
 const module34=(()=>{
+// Anonymous play statistics for every page (landing, 登峰赛季, 战术试炼, 好友 PvP).
+// Plain ES module with named exports and no imports: bundled into the Wa app.js by
+// tools/build-browser.mjs, imported directly by the other pages.
+// Server side: online/analytics-api.mjs; what is collected: docs/BACKUP-AND-MONITORING.md
+// (「玩家统计」).
+//
+// initAnalytics({ page, version }) — once per page: page_view, a heartbeat every 60 s
+//   while the page is visible, batching (sent at most every 30 s, and on page hide with
+//   keepalive). Other modules without imports can emit through a DOM event:
+//   dispatchEvent(new CustomEvent('pa:track', { detail: { name, props } })).
+// track(name, props)       — queue one event (flat numbers / booleans / short strings).
+// trackOnce(key, name, p)  — at most once per key on this browser (last 60 keys).
+// observeRun(demo, snap)   — fed with the run state after every change; derives
+//   run_start / fight_end / run_end from transitions (survives reloads).
+// abandonRun(demo, snap)   — the player gave up or started over on top of a run.
+//
+// Identity: a random visitor id per browser (localStorage, shared by every page) and a
+// session id that is renewed after 30 minutes without activity. Never sent: save codes,
+// tokens, nicknames, storage contents. When this browser is logged in with a 存档码, the
+// account's bearer token goes in the Authorization header only, so the server can link
+// the visitor to the account id; it never appears in the event body.
+// Nothing here may throw.
+
+const VISITOR_KEY = 'pa-visitor-v1';
+const SESSION_KEY = 'pa-session-v1';
+const RUN_KEY = 'pa-run-v1';
+const ONCE_KEY = 'pa-once-v1';
+const TOKEN_KEY = 'wa-online-token';
+const SESSION_IDLE_MS = 30 * 60 * 1000;
+const SEND_EVERY_MS = 30 * 1000;
+const HEARTBEAT_MS = 60 * 1000;
+const QUEUE_MAX = 200;
+const BATCH_MAX = 50;
+
+let cfg = { page: 'unknown', version: '', endpoint: '/api/analytics', transport: null, storage: undefined, now: () => Date.now() };
+let installed = false;
+let queue = [];
+let lastSend = 0;
+let sending = false;
+let sendingAt = 0;
+let mem = null; // per-demo run memory (mirrors RUN_KEY)
+let device = ''; // measured once at start (the viewport can read 0 while a page unloads)
+
+const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
+const now = () => { try { return cfg.now(); } catch { return Date.now(); } };
+function store() {
+  if (cfg.storage !== undefined) return cfg.storage;
+  try { return globalThis.localStorage || null; } catch { return null; }
+}
+function get(key) { try { return store()?.getItem(key) ?? null; } catch { return null; } }
+function set(key, value) { try { store()?.setItem(key, value); } catch {} }
+function getJson(key) { try { const v = JSON.parse(get(key) || 'null'); return v && typeof v === 'object' ? v : null; } catch { return null; } }
+
+function randomId() {
+  try {
+    const a = new Uint8Array(10);
+    globalThis.crypto.getRandomValues(a);
+    return [...a].map(b => b.toString(36).padStart(2, '0')).join('').slice(0, 16);
+  } catch {
+    return (Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)).slice(0, 16);
+  }
+}
+
+function visitorId() {
+  let v = get(VISITOR_KEY);
+  if (!v || !/^[a-z0-9]{8,32}$/.test(v)) { v = randomId(); set(VISITOR_KEY, v); }
+  return v;
+}
+
+// A new session after 30 minutes without any event on any page.
+function sessionId(t = now()) {
+  const s = getJson(SESSION_KEY);
+  const id = s && typeof s.id === 'string' && /^[a-z0-9]{8,32}$/.test(s.id) && t - (Number(s.last) || 0) < SESSION_IDLE_MS ? s.id : randomId();
+  set(SESSION_KEY, JSON.stringify({ id, last: t }));
+  return id;
+}
+
+// phone / tablet / desktop from the viewport and touch support (no user agent needed).
+function deviceClass(w, touch) {
+  try {
+    if (w == null) w = Math.min(globalThis.innerWidth || 0, globalThis.screen?.width || globalThis.innerWidth || 0);
+    if (touch == null) touch = (globalThis.navigator?.maxTouchPoints || 0) > 0 || !!globalThis.matchMedia?.('(pointer: coarse)')?.matches;
+  } catch {}
+  if (!touch) return 'desktop';
+  return !w || w < 600 ? 'phone' : w && w < 1100 ? 'tablet' : 'desktop';
+}
+
+// Coarse browser family only.
+function browserFamily(ua) {
+  try { if (ua == null) ua = globalThis.navigator?.userAgent || ''; } catch { ua = ''; }
+  if (/MicroMessenger/i.test(ua)) return 'wechat';
+  if (/\bQQ\//i.test(ua) || /MQQBrowser/i.test(ua)) return 'qq';
+  if (/Edg\//i.test(ua)) return 'edge';
+  if (/SamsungBrowser/i.test(ua)) return 'samsung';
+  if (/Firefox|FxiOS/i.test(ua)) return 'firefox';
+  if (/Chrome|CriOS|Chromium/i.test(ua)) return 'chrome';
+  if (/Safari/i.test(ua)) return 'safari';
+  return 'other';
+}
+
+function cleanProps(props) {
+  const out = {};
+  if (!props || typeof props !== 'object') return out;
+  for (const k of Object.keys(props).slice(0, 16)) {
+    const v = props[k];
+    if (typeof v === 'number' && isFinite(v)) out[k] = Math.round(v * 100) / 100;
+    else if (typeof v === 'boolean') out[k] = v;
+    else if (typeof v === 'string' && v) out[k] = clip(v, 40);
+  }
+  return out;
+}
+
+function track(name, props) {
+  try {
+    if (typeof name !== 'string' || !/^[a-z_]{2,32}$/.test(name)) return false;
+    const t = now();
+    queue.push({ n: name, t, p: cleanProps(props) });
+    if (queue.length > QUEUE_MAX) {
+      // Drop heartbeats first, then the oldest events.
+      const hb = queue.findIndex(e => e.n === 'heartbeat');
+      queue.splice(hb >= 0 ? hb : 0, 1);
+    }
+    sessionId(t);
+    if (name !== 'heartbeat' && name !== 'page_view' && t - lastSend >= SEND_EVERY_MS) flush();
+    return true;
+  } catch { return false; }
+}
+
+function trackOnce(key, name, props) {
+  try {
+    key = clip(key, 80);
+    const list = Array.isArray(getJson(ONCE_KEY)?.k) ? getJson(ONCE_KEY).k : [];
+    if (list.includes(key)) return false;
+    set(ONCE_KEY, JSON.stringify({ k: [...list, key].slice(-60) }));
+    return track(name, props);
+  } catch { return false; }
+}
+
+function bearer() {
+  const t = clip(get(TOKEN_KEY), 80).trim();
+  return /^[a-f0-9]{64}$/i.test(t) ? t : null;
+}
+
+function flush({ keepalive = false } = {}) {
+  try {
+    if (!queue.length || (sending && !keepalive && now() - sendingAt < 60000)) return false;
+    const events = queue.splice(0, BATCH_MAX);
+    const t = now();
+    lastSend = t;
+    const body = JSON.stringify({ v: visitorId(), s: sessionId(t), page: cfg.page, ver: cfg.version, dev: (device = device || deviceClass()), br: browserFamily(), now: t, events });
+    if (cfg.transport) { cfg.transport(cfg.endpoint, body, { keepalive }); return true; }
+    if (typeof fetch !== 'function') return false;
+    const headers = { 'Content-Type': 'application/json' };
+    const tok = bearer();
+    if (tok) headers.Authorization = `Bearer ${tok}`;
+    sending = true;
+    sendingAt = t;
+    const p = fetch(cfg.endpoint, { method: 'POST', keepalive, headers, body });
+    const done = () => { sending = false; };
+    if (p && typeof p.then === 'function') p.then(done, done); else done();
+    if (queue.length && !keepalive) setTimeout(() => flush(), 1000);
+    return true;
+  } catch { sending = false; return false; }
+}
+
+const visible = () => { try { return typeof document === 'undefined' || document.visibilityState !== 'hidden'; } catch { return true; } };
+
+function initAnalytics(options = {}) {
+  try {
+    cfg = {
+      ...cfg,
+      page: clip(options.page || cfg.page, 20),
+      version: clip(options.version || cfg.version, 24),
+      endpoint: options.endpoint || cfg.endpoint,
+      transport: typeof options.transport === 'function' ? options.transport : cfg.transport,
+      storage: 'storage' in options ? options.storage : cfg.storage,
+      now: typeof options.now === 'function' ? options.now : cfg.now,
+    };
+    if (installed) return;
+    installed = true;
+    device = deviceClass();
+    track('page_view');
+    if (options.timers === false || typeof setInterval !== 'function') return;
+    setInterval(() => { if (visible()) track('heartbeat'); }, HEARTBEAT_MS);
+    setInterval(() => { if (queue.length && now() - lastSend >= SEND_EVERY_MS) flush(); }, 5000);
+    // The first page_view goes out quickly so 「现在在线」 sees short visits too.
+    setTimeout(() => flush(), 3000);
+    if (typeof addEventListener === 'function') {
+      addEventListener('pa:track', e => { try { track(e.detail?.name, e.detail?.props); } catch {} });
+      addEventListener('pagehide', () => flush({ keepalive: true }));
+      try {
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'hidden') flush({ keepalive: true });
+          else track('heartbeat');
+        });
+      } catch {}
+    }
+  } catch {}
+}
+
+// ---------------------------------------------------------------- runs
+// snap = { key, team, asc, act, floor, phase, inCombat, hp, turn,
+//          fight: { enemy, kind: 'normal'|'elite'|'boss', act, floor }, outcome: 'win'|'lose'|'abandon'|null }
+function loadMem() {
+  if (!mem) mem = getJson(RUN_KEY) || {};
+  return mem;
+}
+function saveMem() { set(RUN_KEY, JSON.stringify(mem)); }
+
+function observeRun(demo, snap) {
+  try {
+    if (!snap || !snap.key) return;
+    const m = loadMem();
+    const key = clip(snap.key, 60);
+    let r = m[demo];
+    const t = now();
+    if (!r || r.key !== key) {
+      // Fresh runs only: a run loaded from a cloud save on another device is not a new start.
+      const fresh = !snap.outcome && (snap.act || 1) === 1 && (snap.floor || 0) <= 1;
+      r = { key, start: fresh ? t : null, fights: 0, ended: !!snap.outcome, inCombat: false, fight: null, turn: 0 };
+      if (fresh) track('run_start', { demo, team: snap.team, asc: snap.asc || 0 });
+    }
+    if (snap.inCombat) {
+      if (!r.inCombat || !r.fight) r.fight = { enemy: snap.fight?.enemy || '', kind: snap.fight?.kind || 'normal', act: snap.fight?.act ?? snap.act, floor: snap.fight?.floor ?? snap.floor };
+      r.turn = Number(snap.turn) || r.turn || 0;
+    } else if (r.inCombat && r.fight) {
+      const won = (!snap.outcome || snap.outcome === 'win') && !(snap.hp <= 0);
+      if (won) r.fights++;
+      track('fight_end', { demo, act: r.fight.act, floor: r.fight.floor, kind: r.fight.kind, won, enemy: r.fight.enemy, turns: r.turn });
+      r.last = { enemy: r.fight.enemy, won };
+      r.fight = null;
+    }
+    r.inCombat = !!snap.inCombat;
+    if (snap.outcome && !r.ended) {
+      r.ended = true;
+      const lostTo = snap.outcome === 'lose' && r.last && !r.last.won ? r.last.enemy : '';
+      track('run_end', { demo, result: snap.outcome, team: snap.team, asc: snap.asc || 0, act: snap.act, floor: snap.floor, fights: r.fights, mins: r.start ? Math.min(1440, (t - r.start) / 60000) : undefined, enemy: lostTo || undefined });
+    }
+    m[demo] = r;
+    saveMem();
+  } catch {}
+}
+
+function abandonRun(demo, snap) {
+  try {
+    if (!snap || !snap.key || snap.outcome) return;
+    observeRun(demo, { ...snap, inCombat: false, outcome: 'abandon' });
+  } catch {}
+}
+
+// Tests only.
+function resetAnalyticsForTests() {
+  queue = [];
+  lastSend = 0;
+  sending = false;
+  mem = null;
+  installed = false;
+}
+function pendingEvents() { return queue.slice(); }
+
+return {visitorId,sessionId,deviceClass,browserFamily,track,trackOnce,flush,initAnalytics,observeRun,abandonRun,resetAnalyticsForTests,pendingEvents};
+})();
+const module35=(()=>{
 // 信箱: a private letter box to the author (Wa demo, new demo, PvP). Plain ES module with
 // named exports and no imports (bundled into the Wa app.js, imported directly elsewhere).
 //
@@ -18602,6 +18867,8 @@ function renderForm(pane) {
       const list = loadSent();
       list.unshift({ receipt: typeof data?.receipt === 'string' ? data.receipt : null, subject: title, first: value.slice(0, 40), category, at: Date.now(), status: 'new' });
       saveSent(list);
+      // Anonymous play statistics (shared/play-analytics.js listens): only that a letter was sent.
+      try { if (typeof dispatchEvent === 'function') dispatchEvent(new CustomEvent('pa:track', { detail: { name: 'mailbox_sent', props: { category } } })); } catch {}
       pane.innerHTML = `<div class="fb-done" role="status">${ENVELOPE.replace('fb-btn-ico', '')}<b>信已寄出，作者会认真看。</b><button type="button" class="fb-close">好的</button></div>`;
       pane.querySelector('.fb-close').addEventListener('click', close);
       pane.querySelector('.fb-close').focus();
@@ -18642,7 +18909,7 @@ function initFeedback(options = {}) {
 
 return {feedbackButtonHtml,openFeedback,initFeedback};
 })();
-const module35=(()=>{
+const module36=(()=>{
 // First-fight coach marks: a few short tips over the first two turns of the
 // player's first combat (shared by both demos). It only explains controls and
 // what the screen shows — never how to build a deck.
@@ -18775,7 +19042,7 @@ function startCoach({ key, getTurn, steps }) {
 
 return {coachDone,startCoach};
 })();
-const module36=(()=>{
+const module37=(()=>{
 // Player-facing update log, newest first. Each demo's cover shows its own log
 // (changelogFor): the Wa demo gets 'wa' + 'pvp' + 'all' lines, the new demo only
 // 'new' + 'all' — so 'all' lines must never mention Valorant, players or PvP.
@@ -18899,7 +19166,7 @@ function changelogFor(demo) {
 
 return {CHANGELOG,TAG_LABELS,LATEST_VERSION,changelogFor};
 })();
-const module37=(()=>{
+const module38=(()=>{
 // Update-log button + slide-out panel for a demo's cover screen (shared by both
 // demos). Plain ES module with named exports and no imports (bundled into the
 // Wa app.js by tools/build-browser.mjs, imported directly by the new demo).
@@ -18976,7 +19243,7 @@ function initChangelog(log) {
 
 return {changelogButtonHtml,initChangelog};
 })();
-const module38=(()=>{
+const module39=(()=>{
 // 存档码: one permanent personal save code = account + cloud save (shared by every page;
 // each demo passes its own config and saves its progress separately). Plain ES module
 // with named exports and no imports: bundled into the Wa app.js by
@@ -19178,6 +19445,8 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const safeGet = key => { try { return localStorage.getItem(key); } catch { return null; } };
 const safeSet = (key, value) => { try { localStorage.setItem(key, value); } catch {} };
 const safeDel = key => { try { localStorage.removeItem(key); } catch {} };
+// Anonymous play statistics (shared/play-analytics.js listens; never the code itself).
+const paEmit = (name, props) => { try { if (typeof dispatchEvent === 'function') dispatchEvent(new CustomEvent('pa:track', { detail: { name, props } })); } catch {} };
 
 function readMeta(cfg) {
   if (!cfg.metaKey) return {};
@@ -19308,6 +19577,7 @@ function initProgressSync(cfg) {
     const res = await post('ensure', body);
     const hadCode = !!safeGet(CODE_KEY);
     rememberLogin(res);
+    if (res.code && !hadCode) paEmit('save_code_created', { demo: cfg.demo || undefined });
     if (res.code && !hadCode && !wrap?.classList.contains('open')) toast('已为你生成存档码，点「存档码」查看，并截图或抄下保存。');
     if (res.demo) {
       const r = metaAfterAttach(readMeta(cfg), res.demo, res.accountId, sent);
@@ -19455,6 +19725,7 @@ function initProgressSync(cfg) {
         }
         const res = await post('login', body);
         rememberLogin(res, parsed.kind === 'code' ? parsed.value : null);
+        paEmit('save_code_login', { demo: cfg.demo || undefined });
         wrap.querySelector('.ps-in').value = '';
         if (hasDemo && res.demo) {
           const r = metaAfterAttach(readMeta(cfg), res.demo, res.accountId, sent);
@@ -19471,6 +19742,7 @@ function initProgressSync(cfg) {
       return run(async () => {
         const res = await post('newcode', {});
         safeSet(CODE_KEY, res.code);
+        paEmit('save_code_created', { demo: cfg.demo || undefined });
         const acct = readAccount() || {};
         safeSet(ACCOUNT_KEY, JSON.stringify({ ...acct, unseen: true }));
       });
@@ -19571,7 +19843,7 @@ function progressSyncNow() {
 
 return {SYNC_MAX_BYTES,TOKEN_KEY,PREVIOUS_TOKEN_KEY,CODE_KEY,ACCOUNT_KEY,OPTOUT_KEY,progressKeys,collectBundle,applyBundle,bundleHash,bundleBytes,hasCoreProgress,normalizeSaveCodeInput,resolveSyncResponse,metaAfterAttach,agoText,deviceLabel,syncButtonHtml,initProgressSync,progressSyncNow};
 })();
-const module39=(()=>{
+const module40=(()=>{
 const { cardArtwork, opponentArtwork, artCredit } = module17;
 const { combatEvents } = module18;
 const { clearCombatFx, captureCombatStage, playCombatFx } = module22;
@@ -19587,17 +19859,19 @@ const { flyCardsFromPile, flyCardsToPile } = module25;
 const { soundToggleHtml } = module19;
 const { attachCardDetail, cardSheetOpen, openCardSheet, showDragHint, hideDragHint, touchLift, trackLayer } = module31;
 const { tapPlayMode, tapCardAction, allowCardDrag, watchTapPlay, enforceTextFloor } = module32;
-const { startCoach } = module35;
-const { changelogFor, LATEST_VERSION } = module36;
+const { startCoach } = module36;
+const { changelogFor, LATEST_VERSION } = module37;
 const { initErrorReport, recentErrorMessages, gameContext } = module33;
-const { feedbackButtonHtml, initFeedback } = module34;
-const { changelogButtonHtml, initChangelog } = module37;
-const { initProgressSync, syncButtonHtml, progressSyncNow } = module38;
+const { feedbackButtonHtml, initFeedback } = module35;
+const { changelogButtonHtml, initChangelog } = module38;
+const { initProgressSync, syncButtonHtml, progressSyncNow } = module39;
 // Cover update log: the Wa demo's own entries (Wa + PvP).
 const WA_LOG=changelogFor('wa');
 // Error reports + feedback carry only this coarse state (no account, no storage).
 function waErrorContext(){if(atHome||!state)return {screen:'home'};return {screen,phase:state.phase,mode:state.mode,region:state.region,act:state.act,floor:state.node,turn:state.phase==='combat'?state.battle?.turn:undefined,ascension:state.ascension||0};}
 initErrorReport({page:'wa',version:LATEST_VERSION,getContext:waErrorContext});
+const { initAnalytics, observeRun, abandonRun, track:paTrack } = module34;
+initAnalytics({page:'wa',version:LATEST_VERSION});
 const { waJuiceAction, waSlam } = module21;
 const { showResultSummary, resultWorthShowing } = module28;
 const { waAchieve, waHallHtml, bindWaHall, waAchResultHtml, waTitleHtml } = module30;
@@ -19625,6 +19899,7 @@ function recordUnlockProgress(s){
  if(!E(s)||!s.runId||!['intermission','result'].includes(s.phase))return;
  const at=`${s.act}:${s.phase}`;if(s.unlockNotice?.at===at)return;
  const r=awardRun(loadUnlocks(),s.region,s.runId,seasonXp(s));saveUnlocks(r.progress);
+ if(r.toTier>r.fromTier)paTrack('unlock_tier_up',{demo:'wa',team:s.region,tier:r.toTier});
  const plan=regionUnlockPlan(s.region,R3(s)),cards=[],gear=[];
  for(let t=r.fromTier;t<r.toTier;t++)cards.push(...plan.tiers[t]);
  for(let t=r.fromGear;t<r.toGear;t++)gear.push(...GEAR_UNLOCKS[t]);
@@ -20122,11 +20397,13 @@ function runEntry(s,outcome,t){
  const death=outcome==='loss'?(lf&&!lf.won?{name:lf.name,act:lf.act,floor:lf.floor,kind:lf.kind}:{name:'赛程事件',...at}):outcome==='abandon'?{name:'主动放弃',...at,abandon:true}:null;
  return {id:String(s.runId||s.seed),demo:'wa',outcome,score:computeScore(sum,WA_TERMS).total,summary:sum,startedAt:t?.startedAt||null,endedAt:now,durationMs:t?.startedAt?now-t.startedAt:null,seed:s.seed,team:REGIONS[s.region]?.name||s.region,teamId:s.region,ascension:sum.ascension,act:s.act,maxHp:s.maxHp,deck:s.deck.map(c=>({id:c.id,up:!!c.up})),gear:[...(s.skins||[])],supplies:[...(s.supplies||[])],death,fights:t?.fights||0};
 }
+// Anonymous play statistics (shared/play-analytics.js): coarse run facts only.
+function waRunSnap(s){const f=fightSnap(s),o=outcomeOf(s);return {key:String(s.runId||s.seed),team:s.region,asc:R(s)?s.ascension||0:0,act:s.act,floor:nodeOf(s)?.step??0,inCombat:s.phase==='combat'&&!!s.battle,hp:s.hp,turn:s.battle?.turn,fight:f?{enemy:f.enemy,kind:f.kind==='battle'?'normal':f.kind,act:f.act,floor:f.floor}:null,outcome:o==='loss'?'lose':o};}
 function trackRun(s){
  if(!s||s.mode!=='season')return;
  try{
   const t=trackStep(loadTracker(store,TRACK_KEY,s.seed),{seed:s.seed,phase:s.phase,hp:s.hp,inCombat:s.phase==='combat'&&!!s.battle,fight:fightSnap(s),outcome:outcomeOf(s)});
-  saveTracker(store,TRACK_KEY,t);markSeen(store,SEEN_KEY,seenIn(s));
+  saveTracker(store,TRACK_KEY,t);markSeen(store,SEEN_KEY,seenIn(s));observeRun('wa',waRunSnap(s));
   if(s.phase==='result')recordRun(store,HISTORY_KEY,runEntry(s,outcomeOf(s),t));
  }catch{}
 }
@@ -20134,6 +20411,7 @@ function trackRun(s){
 function recordAbandoned(s){
  if(!s||s.mode!=='season'||s.phase==='result')return;
  try{recordRun(store,HISTORY_KEY,runEntry({...s,outcome:'abandoned'},'abandon',loadTracker(store,TRACK_KEY,s.seed)));}catch{}
+ abandonRun('wa',waRunSnap(s));
 }
 function deathText(e){const d=e.death;if(!d)return e.outcome==='win'?'无（赛季夺冠）':'—';const where=d.floor!=null?`第 ${d.act} 幕第 ${d.floor} 层`:`第 ${d.act} 幕`;return d.abandon?`主动放弃 · ${where}`:`${d.name} · ${where}`;}
 function scoreTable(e){

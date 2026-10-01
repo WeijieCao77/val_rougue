@@ -4,27 +4,57 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>后台 · 报告与备份</title>
+<title>后台 · 玩家概况</title>
 <link rel="icon" type="image/svg+xml" href="/shared/pig-house.svg">
 <style>
-:root{--bg:#0d1419;--panel:#131d24;--line:#2a3a44;--ink:#e9eef0;--muted:#98a8ae;--accent:#7fd0c2;--warn:#ffb86b;--bad:#ff8a7a;--ok:#8fd694}
+:root{--bg:#0d1419;--panel:#131d24;--line:#2a3a44;--grid:#22313a;--ink:#e9eef0;--muted:#98a8ae;--accent:#7fd0c2;--warn:#ffb86b;--bad:#ff8a7a;--ok:#8fd694;
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,"Microsoft YaHei",sans-serif}
 header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#0d1419f2;z-index:5}
 header h1{margin:0;font-size:18px;letter-spacing:.06em}
+nav.jump{display:flex;gap:6px;overflow-x:auto;padding:8px 16px;border-bottom:1px solid var(--line);scrollbar-width:none}
+nav.jump a{color:var(--muted);text-decoration:none;font-size:13px;white-space:nowrap;padding:4px 10px;border:1px solid var(--line);border-radius:14px}
 main{max-width:1100px;margin:0 auto;padding:16px;display:grid;gap:16px}
 section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
-h2{margin:0 0 10px;font-size:16px;color:var(--accent)}
+h2{margin:0;font-size:17px;color:var(--accent)}
+h3{margin:16px 0 6px;font-size:15px}
+.help{margin:2px 0 12px;color:var(--muted);font-size:13px}
 button,select,input{font:inherit;color:inherit}
 button{min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:8px;background:#1b2831;cursor:pointer}
 button.primary{background:var(--accent);border-color:var(--accent);color:#06201c;font-weight:700}
-select,input[type=password]{min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:#0b1216}
+select,input[type=password],input[type=text],input:not([type]){min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:#0b1216}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .muted{color:var(--muted);font-size:13px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.stat{border:1px solid var(--line);border-radius:8px;padding:10px}
-.stat b{display:block;font-size:22px}
-.stat small{color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.card{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:grid;gap:2px;align-content:start}
+.card .k{color:var(--muted);font-size:13px}
+.card b{font-size:26px;line-height:1.2;font-variant-numeric:tabular-nums}
+.card small{color:var(--muted);font-size:12px;line-height:1.4}
+.card.live b{color:var(--ok)}
+.charts{display:grid;gap:18px 24px;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.charts>details{grid-column:1/-1}
+.chart-slot{min-width:0}
+.chart{position:relative}
+.chart h3{margin:0 0 4px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted);margin-bottom:4px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.chart svg{display:block;width:100%;height:auto;overflow:visible;touch-action:pan-y}
+.chart svg text{fill:var(--muted);font-size:11px}
+.tip{position:absolute;pointer-events:none;background:#0a1014;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;white-space:nowrap;display:none;z-index:2}
+.tip i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--grid);white-space:nowrap}
+th{color:var(--muted);font-weight:500}
+td.n,th.n{text-align:right}
+.scroll{overflow-x:auto}
+.bars{display:grid;gap:6px}
+.bar{display:grid;grid-template-columns:minmax(90px,9em) 1fr auto;gap:8px;align-items:center;font-size:13px}
+.bar .track{display:block;height:12px;background:#0b1216;border-radius:3px;overflow:hidden}
+.bar .fill{display:block;height:100%;background:var(--s1);border-radius:0 4px 4px 0;min-width:2px}
+.bar .v{font-variant-numeric:tabular-nums;min-width:5em;text-align:right}
+.empty{color:var(--muted);font-size:13px;padding:6px 0}
 .item{border-top:1px solid var(--line);padding:12px 0;display:grid;gap:6px}
 .item:first-child{border-top:0}
 .item .head{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
@@ -32,23 +62,24 @@ select,input[type=password]{min-height:44px;padding:0 10px;border:1px solid var(
 .tag.error{color:var(--warn);border-color:#ffb86b66}
 .tag.server-error{color:var(--bad);border-color:#ff8a7a66}
 .tag.feedback{color:var(--accent);border-color:#7fd0c266}
-.count{font-weight:700;color:var(--warn)}
 .msg{font-weight:600;word-break:break-word}
 .fb-text{white-space:pre-wrap;word-break:break-word}
 details summary{cursor:pointer;color:var(--muted);font-size:13px;min-height:32px;display:flex;align-items:center}
 pre{margin:6px 0 0;padding:8px;background:#0a1014;border-radius:6px;overflow:auto;font-size:12px;max-height:260px;white-space:pre-wrap;word-break:break-all}
 .resolved{opacity:.55}
-#login{max-width:420px;margin:12vh auto;display:grid;gap:12px}
+#login{max-width:420px;margin:12vh auto;display:grid;gap:12px;padding:0 16px}
 #login input{width:100%}
 .err{color:var(--bad)}
+.ok{color:var(--ok)}
 .hidden{display:none!important}
+@media (max-width:520px){header{position:static}main{padding:10px}section{padding:12px}.card b{font-size:22px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}header h1{font-size:16px}}
 </style>
 </head>
 <body>
 <div id="login" class="hidden">
   <section>
     <h2>管理员登录</h2>
-    <p class="muted">输入管理密码（服务器环境变量 ADMIN_TOKEN 的值）。只保存在本标签页，关闭即清除。连续输错 5 次会锁定 15 分钟。</p>
+    <p class="help">输入管理密码（服务器环境变量 ADMIN_TOKEN 的值）。只保存在本标签页，关闭即清除。连续输错 5 次会锁定 15 分钟。</p>
     <form id="login-form" class="row" autocomplete="off">
       <input id="token" type="password" placeholder="管理密码" aria-label="管理密码" autocomplete="current-password">
       <button class="primary" type="submit">进入</button>
@@ -58,23 +89,61 @@ pre{margin:6px 0 0;padding:8px;background:#0a1014;border-radius:6px;overflow:aut
 </div>
 <div id="app" class="hidden">
   <header>
-    <h1>报告与备份</h1>
+    <h1>后台 · 玩家概况</h1>
     <div class="row">
-      <select id="f-since" aria-label="时间范围"><option value="24h">最近 24 小时</option><option value="7d" selected>最近 7 天</option><option value="30d">最近 30 天</option><option value="90d">最近 90 天</option></select>
-      <select id="f-page" aria-label="页面"><option value="">全部页面</option><option value="wa">登峰赛季</option><option value="new">战术试炼</option><option value="pvp">好友 PvP</option><option value="landing">首页</option><option value="server">服务器</option></select>
+      <select id="f-days" aria-label="统计范围"><option value="7" selected>最近 7 天</option><option value="30">最近 30 天</option><option value="90">最近 90 天</option></select>
       <button id="refresh">刷新</button>
       <button id="logout">退出</button>
     </div>
   </header>
+  <nav class="jump" aria-label="跳转"><a href="#s-overview">概况</a><a href="#s-trend">每日趋势</a><a href="#s-retention">留存</a><a href="#s-funnel">走到哪一步</a><a href="#s-deaths">死在哪</a><a href="#s-pvp">好友 PvP</a><a href="#s-errors">出错情况</a><a href="#s-letters">来信</a><a href="#s-backup">备份</a><a href="#s-save">存档码</a></nav>
   <main>
-    <section><h2>概况</h2><div id="stats" class="grid"></div></section>
-    <section><h2>备份</h2><div id="backup"></div></section>
-    <section><h2>存档码（按账号 ID 查找）</h2>
-      <div class="row"><input id="sc-id" placeholder="16 位账号 ID（玩家在「存档码」面板底部可以看到）" aria-label="账号 ID" autocomplete="off" spellcheck="false" style="min-width:18em"><button id="sc-find">查找</button><button id="sc-replace">补发新存档码</button></div>
-      <div id="sc-out" class="muted">服务器只保存存档码的哈希，查不到原码；存档码泄露或遗失时可以补发新码，旧码立即失效，已登录的设备不受影响。</div>
+    <section id="s-overview"><h2>玩家概况</h2>
+      <p class="help">这是什么：有多少人在玩。「玩家」指打开过登峰赛季、战术试炼或好友 PvP 的人（按浏览器算，同一个人换手机或清空浏览器会算成新的人）。日期按北京时间。<span id="since-note"></span></p>
+      <div id="overview" class="cards"><p class="empty">加载中…</p></div>
     </section>
-    <section><h2>错误（按指纹分组）</h2><div id="errors"></div></section>
-    <section><h2>信箱（最新在前）</h2><div id="feedback"></div></section>
+    <section id="s-trend"><h2>每日趋势（最近 30 天）</h2>
+      <p class="help">这是什么：每天来了多少人、其中多少是第一次来、大家一共玩了多久。手指或鼠标放在图上可以看当天的数字。</p>
+      <div id="trend" class="charts"></div>
+    </section>
+    <section id="s-retention"><h2>留存</h2>
+      <p class="help">这是什么：第一天来玩的人，第二天还有多少回来、第七天还有多少回来。比例越高，说明游戏越留得住人。还没到那一天的格子显示「—」。</p>
+      <div id="retention" class="scroll"></div>
+    </section>
+    <section id="s-funnel"><h2>玩家走到哪一步</h2>
+      <p class="help">这是什么：所选时间范围内，打开游戏的人里有多少开始了一局、赢下第一场、打到第一幕决战、通关第一幕、通关三幕。人数会一步步变少，掉得最多的那一步就是大家最容易放弃的地方。</p>
+      <div id="funnel" class="two"></div>
+    </section>
+    <section id="s-deaths"><h2>玩家都死在哪</h2>
+      <p class="help">这是什么：输掉的对局最后是被谁打败的、停在第几幕第几层；以及大家选了哪个队伍／赛区、哪个难度，用手机还是电脑。</p>
+      <div id="deaths"></div>
+    </section>
+    <section id="s-pvp"><h2>好友 PvP</h2>
+      <p class="help">这是什么：好友对战打了多少局、多少人参与、一局平均几回合、打完之后点「再来一局」的次数。</p>
+      <div id="pvp" class="cards"></div>
+    </section>
+    <section id="s-errors"><h2>出错情况</h2>
+      <p class="help">这是什么：玩家页面或服务器出错时自动记下来。同一个问题（同样的报错、同一个位置）合成一条，显示一共出了几次、大约几位玩家遇到。修好后点「标记已处理」；如果之后又出现，会自动重新打开。</p>
+      <div class="row" style="margin-bottom:8px">
+        <select id="f-since" aria-label="时间范围"><option value="24h">最近 24 小时</option><option value="7d" selected>最近 7 天</option><option value="30d">最近 30 天</option><option value="90d">最近 90 天</option></select>
+        <select id="f-page" aria-label="页面"><option value="">全部页面</option><option value="wa">登峰赛季</option><option value="new">战术试炼</option><option value="pvp">好友 PvP</option><option value="landing">首页</option><option value="server">服务器</option></select>
+      </div>
+      <div id="err-summary" class="muted"></div>
+      <div id="errors"></div>
+    </section>
+    <section id="s-letters"><h2>来信</h2>
+      <p class="help">这是什么：玩家在「信箱」里写给你的信，最新的在最上面。标记后，玩家在「我寄出的信」里能看到状态（已读／已采纳／已修复）。</p>
+      <div id="feedback"></div>
+    </section>
+    <section id="s-backup"><h2>备份</h2>
+      <p class="help">这是什么：服务器每天自动把全部数据（账号、构筑、存档码、来信等）存一份快照，保留最近 7 天和 4 个星期日。可以随时下载最新一份到电脑上。</p>
+      <div id="backup"></div>
+    </section>
+    <section id="s-save"><h2>存档码（按账号 ID 查找）</h2>
+      <p class="help">什么时候用：玩家说存档码丢了或泄露了，并把「存档码」面板底部的账号 ID 发给你时，在这里查找并补发新码。</p>
+      <div class="row"><input id="sc-id" placeholder="16 位账号 ID" aria-label="账号 ID" autocomplete="off" spellcheck="false" style="min-width:14em;flex:1"><button id="sc-find">查找</button><button id="sc-replace">补发新存档码</button></div>
+      <div id="sc-out" class="muted" style="margin-top:8px">服务器只保存存档码的哈希，查不到原码；补发后旧码立即失效，已登录的设备不受影响。</div>
+    </section>
   </main>
 </div>
 <script>
@@ -83,9 +152,13 @@ pre{margin:6px 0 0;padding:8px;background:#0a1014;border-radius:6px;overflow:aut
   const $ = s => document.querySelector(s);
   const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fmt = t => t ? new Date(t).toLocaleString('zh-CN', { hour12: false }) : '—';
-  const PAGES = { wa: '登峰赛季', new: '战术试炼', pvp: '好友 PvP', landing: '首页', server: '服务器', unknown: '未知' };
-  const KINDS = { error: '客户端错误', 'server-error': '服务器错误', feedback: '来信' };
+  const n = v => (v == null ? '—' : Number(v).toLocaleString('zh-CN'));
+  const PAGES = { wa: '登峰赛季', new: '战术试炼', pvp: '好友 PvP', landing: '首页', server: '服务器', unknown: '未知页面', admin: '后台' };
+  const KINDS = { error: '页面出错', 'server-error': '服务器出错', feedback: '来信' };
   const LETTER = { new: '未读', read: '已读', adopted: '采纳', fixed: '已修复', ignored: '忽略' };
+  const DEVICES = { phone: '手机', tablet: '平板', desktop: '电脑', unknown: '未知' };
+  const BROWSERS = { chrome: 'Chrome', safari: 'Safari', firefox: 'Firefox', edge: 'Edge', wechat: '微信内置', qq: 'QQ 浏览器', samsung: '三星浏览器', other: '其他' };
+  const TABLES = { accounts: '账号', archives: '构筑', checkpoints: '构筑核验记录', rooms: 'PvP 房间', room_requests: 'PvP 房间请求', sync_links: '云端进度', sync_codes: '旧同步码', save_codes: '存档码', account_tokens: '已登录设备', account_sync: '账号与进度对应', meta: '系统设置', reports: '错误与来信', events: '玩家统计事件', daily_visitors: '每日玩家汇总', visitors: '访客' };
   let token = '';
   try { token = sessionStorage.getItem(KEY) || ''; } catch {}
 
@@ -103,21 +176,169 @@ pre{margin:6px 0 0;padding:8px;background:#0a1014;border-radius:6px;overflow:aut
     $('#login-err').textContent = msg;
   }
   const ctxText = c => c ? Object.entries(c).map(([k, v]) => `${k}: ${v}`).join('\n') : '';
+  const minutesText = m => m == null ? '—' : m >= 60 ? `${Math.floor(m / 60)} 小时 ${Math.round(m % 60)} 分` : `${Math.round(m * 10) / 10} 分钟`;
 
-  function statCards(s) {
-    const card = (label, w) => {
-      const k = w.byKind, total = (k.error || 0) + (k['server-error'] || 0);
-      const pages = Object.entries(w.byPage).map(([p, n]) => `${PAGES[p] || p} ${n}`).join(' · ') || '无';
-      return `<div class="stat"><small>${label} 错误</small><b>${total}</b><small>客户端 ${k.error || 0} · 服务器 ${k['server-error'] || 0}</small></div>
-        <div class="stat"><small>${label} 来信</small><b>${k.feedback || 0}</b><small>${esc(pages)}</small></div>`;
+  // ------------------------------------------------------------ 概况
+  function renderOverview(a) {
+    const o = a.overview, rt = o.runsToday;
+    const card = (k, v, note, cls = '') => `<div class="card ${cls}"><span class="k">${k}</span><b>${v}</b><small>${note}</small></div>`;
+    $('#since-note').textContent = ` 统计从 ${a.since} 开始，之前的日子没有数据。`;
+    const b = a.backfill || {};
+    $('#overview').innerHTML = [
+      card('现在在线', n(o.online), `最近 2 分钟内在页面上的人${o.online !== o.onlinePlaying ? `（其中 ${n(o.onlinePlaying)} 人在游戏里）` : ''}`, 'live'),
+      card('今日玩家', n(o.today), `今天打开过游戏的人；算上只看了首页的共 ${n(o.todayVisitors)} 人`),
+      card('昨日玩家', n(o.yesterday), '昨天打开过游戏的人'),
+      card('近 7 天玩家', n(o.d7), '最近 7 天里来过的不同的人'),
+      card('近 30 天玩家', n(o.d30), '最近 30 天里来过的不同的人'),
+      card('今日新玩家', n(o.newToday), '今天第一次来的人'),
+      card('累计玩家', n(o.total), `统计从 ${esc(a.since)} 开始的所有来访者`),
+      card('存档码账号', n(o.saveCodes), `已经有存档码的账号；账号总数 ${n(o.accounts)}${b.accountsBefore ? `，其中 ${n(b.accountsBefore)} 个建于统计开始前` : ''}`),
+      card('平均每人每天玩', minutesText(o.avgMinutes), '最近 7 天，每位玩家在玩的那天平均停留多久（页面开着且在前台才算）'),
+      card('今日局数 · 登峰赛季', `${n(rt.wa.started)} / ${n(rt.wa.ended)}`, `开始 / 结束（其中通关 ${n(rt.wa.won)}）`),
+      card('今日局数 · 战术试炼', `${n(rt.new.started)} / ${n(rt.new.ended)}`, `开始 / 结束（其中通关 ${n(rt.new.won)}）`),
+    ].join('');
+  }
+
+  // ------------------------------------------------------------ charts (inline SVG, one axis each)
+  // Drawn at the container's real pixel width so axis text stays readable on phones.
+  function lineChart(title, unit, days, series, width = 640) {
+    const W = Math.max(260, Math.round(width)), H = W < 520 ? 170 : 210, L = 36, R = 10, T = 10, B = 24;
+    const max = Math.max(1, ...series.flatMap(s => s.values));
+    const nice = (() => { const p = Math.pow(10, Math.floor(Math.log10(max))); for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= max) return m * p; return 10 * p; })();
+    const x = i => L + (days.length < 2 ? 0 : (i * (W - L - R)) / (days.length - 1));
+    const y = v => T + (H - T - B) * (1 - v / nice);
+    const grid = [0, 0.5, 1].map(f => `<line x1="${L}" x2="${W - R}" y1="${y(nice * f)}" y2="${y(nice * f)}" stroke="var(--grid)" stroke-width="1"/><text x="${L - 6}" y="${y(nice * f) + 4}" text-anchor="end">${Math.round(nice * f * 10) / 10}</text>`).join('');
+    const step = Math.ceil(days.length / 6);
+    const xl = days.map((d, i) => (i % step === 0 || i === days.length - 1) && (i === days.length - 1 || days.length - 1 - i >= step / 2) ? `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
+    const lines = series.map(s => `<polyline fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${s.values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')}"/>`).join('');
+    const last = days.length - 1;
+    const dots = series.map(s => `<circle cx="${x(last)}" cy="${y(s.values[last])}" r="4" fill="${s.color}" stroke="var(--panel)" stroke-width="2"/>`).join('');
+    const legend = series.length > 1 ? `<div class="legend">${series.map(s => `<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')}</div>` : '';
+    const id = 'c' + Math.random().toString(36).slice(2, 8);
+    const html = `<div class="chart" id="${id}"><h3>${esc(title)}<span class="muted">（${esc(unit)}）</span></h3>${legend}
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}">${grid}${xl}${lines}${dots}<line class="cross" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="var(--muted)" stroke-width="1" opacity="0"/><rect x="${L}" y="0" width="${W - L - R}" height="${H}" fill="transparent"/></svg><div class="tip"></div></div>`;
+    const bind = () => {
+      const root = document.getElementById(id), svg = root.querySelector('svg'), tip = root.querySelector('.tip'), cross = svg.querySelector('.cross');
+      const move = e => {
+        const r = svg.getBoundingClientRect();
+        const px = ((e.clientX - r.left) / r.width) * W;
+        const i = Math.max(0, Math.min(last, Math.round(((px - L) / (W - L - R)) * last)));
+        cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('opacity', '.6');
+        tip.innerHTML = `<b>${days[i]}</b>` + series.map(s => `<div><i style="background:${s.color}"></i>${esc(s.name)}：${n(s.values[i])}</div>`).join('');
+        tip.style.display = 'block';
+        const left = (x(i) / W) * r.width + svg.offsetLeft;
+        tip.style.left = Math.max(0, Math.min(left + 12, root.clientWidth - tip.offsetWidth)) + 'px';
+        tip.style.top = (svg.offsetTop + 10) + 'px';
+      };
+      svg.addEventListener('pointermove', move);
+      svg.addEventListener('pointerdown', move);
+      svg.addEventListener('pointerleave', () => { tip.style.display = 'none'; cross.setAttribute('opacity', '0'); });
     };
-    $('#stats').innerHTML = card('24 小时', s.last24h) + card('7 天', s.last7d) + `<div class="stat"><small>7 天内未处理的错误组</small><b>${s.unresolvedGroups7d}</b></div><div class="stat"><small>未读来信</small><b>${(s.letters && s.letters.new) || 0}</b><small>${Object.entries(s.letters || {}).map(([k, n]) => `${LETTER[k] || k} ${n}`).join(' · ') || '暂无来信'}</small></div>`;
+    return { html, bind };
+  }
+
+  function renderTrend(a) {
+    // Days before statistics began would only draw a misleading zero line: start at
+    // the first counted day (but show at least a week).
+    const counted = a.daily.slice(-30).filter(x => x.day >= a.since).length;
+    const d = a.daily.slice(-Math.max(7, counted)), days = d.map(x => x.day);
+    const specs = [
+      ['每日玩家', '人', [{ name: '玩家', color: 'var(--s1)', values: d.map(x => x.players) }, { name: '新玩家', color: 'var(--s2)', values: d.map(x => x.newPlayers) }]],
+      ['每日游玩时长（所有人加起来）', '分钟', [{ name: '游玩时长', color: 'var(--s3)', values: d.map(x => x.minutes) }]],
+      ['各版本的玩家', '人', [{ name: '登峰赛季', color: 'var(--s1)', values: d.map(x => x.pages.wa) }, { name: '战术试炼', color: 'var(--s2)', values: d.map(x => x.pages.new) }, { name: '好友 PvP', color: 'var(--s3)', values: d.map(x => x.pages.pvp) }]],
+    ];
+    lastTrend = a;
+    const table = `<details><summary>按天的数字（表格）</summary><div class="scroll"><table><thead><tr><th>日期</th><th class="n">玩家</th><th class="n">新玩家</th><th class="n">时长（分）</th><th class="n">登峰赛季</th><th class="n">战术试炼</th><th class="n">好友 PvP</th><th class="n">只看首页等</th><th class="n">开局</th><th class="n">新账号</th></tr></thead><tbody>${a.daily.slice(-30).reverse().map(x => `<tr><td>${x.day}${x.day < a.since ? ' <span class="muted">（统计前）</span>' : ''}</td><td class="n">${x.players}</td><td class="n">${x.newPlayers}</td><td class="n">${x.minutes}</td><td class="n">${x.pages.wa}</td><td class="n">${x.pages.new}</td><td class="n">${x.pages.pvp}</td><td class="n">${Math.max(0, x.visitors - x.players)}</td><td class="n">${x.runs}</td><td class="n">${x.accounts}</td></tr>`).join('')}</tbody></table></div><p class="muted">「新账号」来自账号表（好友 PvP 或存档码建号），统计开始之前的日子也有；其余列从 ${esc(a.since)} 开始。</p></details>`;
+    $('#trend').innerHTML = specs.map(() => '<div class="chart-slot"></div>').join('') + table;
+    $('#trend').querySelectorAll('.chart-slot').forEach((slot, i) => {
+      const c = lineChart(specs[i][0], specs[i][1], days, specs[i][2], slot.clientWidth);
+      slot.innerHTML = c.html;
+      c.bind();
+    });
+  }
+  let lastTrend = null, lastWidth = innerWidth;
+  addEventListener('resize', () => { if (lastTrend && Math.abs(innerWidth - lastWidth) > 40) { lastWidth = innerWidth; renderTrend(lastTrend); } });
+
+  function renderRetention(a) {
+    const cell = (v, p) => v == null ? '<td class="n muted">—</td>' : `<td class="n">${v}${p != null ? ` <span class="muted">(${p}%)</span>` : ''}</td>`;
+    const rows = a.retention.slice().reverse();
+    $('#retention').innerHTML = `<table><thead><tr><th>第一天来的日期</th><th class="n">当天新来的人</th><th class="n">第二天回来</th><th class="n">第七天回来</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.day}</td><td class="n">${r.cohort}</td>${r.cohort ? cell(r.d1, r.d1Pct) + cell(r.d7, r.d7Pct) : '<td class="n muted">—</td><td class="n muted">—</td>'}</tr>`).join('')}</tbody></table>`;
+  }
+
+  const barList = (items, { label, value, note = () => '', color = 'var(--s1)' }) => {
+    if (!items.length) return '<p class="empty">这段时间还没有数据。</p>';
+    const max = Math.max(1, ...items.map(value));
+    return `<div class="bars">${items.map(it => `<div class="bar"><span>${esc(label(it))}</span><span class="track"><span class="fill" style="width:${(value(it) / max) * 100}%;background:${color}"></span></span><span class="v">${n(value(it))}${note(it)}</span></div>`).join('')}</div>`;
+  };
+
+  function renderFunnel(a) {
+    const part = demo => {
+      const r = a.runs[demo];
+      return `<div><h3>${PAGES[demo]}</h3>${barList(a.funnels[demo], { label: s => s.label, value: s => s.count, note: s => s.pct != null ? ` <span class="muted">${s.pct}%</span>` : '' })}
+        <p class="muted">共开局 ${n(r.started)} 次，结束 ${n(r.ended)} 次（通关 ${n(r.won)}，主动放弃 ${n(r.abandoned)}）${r.avgMinutes != null ? `，一局平均 ${minutesText(r.avgMinutes)}` : ''}。</p></div>`;
+    };
+    $('#funnel').innerHTML = part('wa') + part('new');
+  }
+
+  function renderDeaths(a) {
+    const word = demo => (demo === 'wa' ? '赛区' : '队伍');
+    const part = demo => {
+      const d = a.deaths[demo], c = a.choices[demo];
+      return `<div><h3>${PAGES[demo]} · 被谁打败</h3>${barList(d.enemies, { label: e => e.name, value: e => e.count, color: 'var(--s2)' })}
+        <h3>${PAGES[demo]} · 输在第几层</h3>${barList(d.floors, { label: f => `第 ${f.act} 幕第 ${f.floor} 层`, value: f => f.count, color: 'var(--s2)' })}
+        <h3>${PAGES[demo]} · 选了哪个${word(demo)}</h3>${barList(c.teams, { label: t => t.name, value: t => t.count })}
+        <h3>${PAGES[demo]} · 选了哪个难度</h3>${barList(c.asc, { label: t => `难度 ${t.level}`, value: t => t.count })}
+        ${d.fights.length ? `<details><summary>各对手的战斗与失败次数</summary><div class="scroll"><table><thead><tr><th>对手</th><th class="n">打过</th><th class="n">输掉</th></tr></thead><tbody>${d.fights.map(f => `<tr><td>${esc(f.name)}</td><td class="n">${f.fights}</td><td class="n">${f.lost}</td></tr>`).join('')}</tbody></table></div></details>` : ''}</div>`;
+    };
+    const other = a.other || {};
+    const o = k => n(other[k]?.count || 0);
+    $('#deaths').innerHTML = `<div class="two">${part('wa')}${part('new')}</div>
+      <div class="two"><div><h3>手机还是电脑</h3>${barList(a.devices, { label: d => DEVICES[d.device] || d.device, value: d => d.count, note: () => ' 人' })}</div>
+      <div><h3>用什么浏览器</h3>${barList(a.browsers, { label: d => BROWSERS[d.browser] || d.browser, value: d => d.count, note: () => ' 人' })}</div></div>
+      <p class="muted">同一时间范围内：解锁成就 ${o('achievement')} 次，解锁新一批卡牌 ${o('unlock_tier_up')} 次，新建存档码 ${o('save_code_created')} 个，用存档码登录 ${o('save_code_login')} 次，寄出来信 ${o('mailbox_sent')} 封。</p>`;
+  }
+
+  function renderPvp(a) {
+    const p = a.pvp;
+    const card = (k, v, note) => `<div class="card"><span class="k">${k}</span><b>${v}</b><small>${note}</small></div>`;
+    $('#pvp').innerHTML = [
+      card('对局数', n(p.matches), `所选时间内开始的对局（两边各算一次）；打完 ${n(p.finished)} 局`),
+      card('参与玩家', n(p.players), '打过至少一局的人'),
+      card('平均回合数', p.avgTurns == null ? '—' : p.avgTurns, '打完的对局平均几回合结束'),
+      card('再来一局', n(p.rematches), '打完后双方同意再来一局的次数'),
+    ].join('');
+  }
+
+  // ------------------------------------------------------------ 出错情况 / 来信 / 备份
+  function renderErrors(list) {
+    const open = list.filter(g => !g.resolved);
+    $('#err-summary').textContent = list.length ? `这段时间共 ${list.length} 个问题，其中 ${open.length} 个还没处理。` : '';
+    $('#errors').innerHTML = list.length ? list.map(g => {
+      const who = g.kind === 'server-error' ? '服务器出错（不针对某位玩家）' : g.players ? `约 ${g.players} 位玩家遇到` : '';
+      return `<div class="item ${g.resolved ? 'resolved' : ''}">
+      <div class="head"><span class="tag ${esc(g.kind)}">${KINDS[g.kind] || esc(g.kind)}</span><span class="tag">${esc(PAGES[g.page] || g.page)}</span>${g.resolved ? '<span class="tag">已处理</span>' : ''}</div>
+      <div><b>${esc(PAGES[g.page] || g.page)}</b>出错 <b>${g.count}</b> 次${who ? '，' + who : ''}。第一次 ${fmt(g.firstAt)}，最近一次 ${fmt(g.lastAt)}。出现的版本：${g.versions.map(esc).join('、') || '未知'}。</div>
+      <div class="msg muted">${esc(g.message)}</div>
+      <details><summary>技术详情</summary>${g.sample.path ? `<pre>页面路径：${esc(g.sample.path)}${g.sample.viewport ? '\n屏幕：' + esc(g.sample.viewport) : ''}</pre>` : ''}<pre>${esc(g.sample.stack || '（无堆栈）')}</pre>${g.sample.context ? `<pre>${esc(ctxText(g.sample.context))}</pre>` : ''}${g.sample.ua ? `<pre>${esc(g.sample.ua)}</pre>` : ''}</details>
+      <div class="row"><button data-resolve="${esc(g.fingerprint)}" data-val="${g.resolved ? '0' : '1'}">${g.resolved ? '重新打开' : '标记已处理'}</button></div>
+    </div>`;
+    }).join('') : '<p class="empty">这段时间没有出错，很好。</p>';
+  }
+  function renderFeedback(list) {
+    $('#feedback').innerHTML = list.length ? list.map(f => `<div class="item ${['adopted', 'fixed', 'ignored'].includes(f.status) ? 'resolved' : ''}">
+      <div class="head"><span class="tag ${f.status === 'new' ? 'error' : ''}">${LETTER[f.status] || '未读'}</span><span class="tag feedback">${esc(f.category || '未分类')}</span><span class="tag">${esc(PAGES[f.page] || f.page)}</span><span class="muted">${fmt(f.at)} · ${esc(f.version || '')}${f.viewport ? ' · ' + esc(f.viewport) : ''}</span></div>
+      ${f.subject ? `<div class="msg">${esc(f.subject)}</div>` : ''}<div class="fb-text">${esc(f.text)}</div>
+      ${f.context ? `<details><summary>附带的游戏状态</summary><pre>${esc(ctxText(f.context))}</pre></details>` : '<span class="muted">未附带游戏状态</span>'}
+      <div class="row">${['read', 'adopted', 'fixed', 'ignored'].map(k => `<button data-letter="${f.id}" data-status="${k}" ${f.status === k ? 'aria-pressed="true" style="border-color:var(--accent);color:var(--accent)"' : ''}>${LETTER[k]}</button>`).join('')}</div>
+    </div>`).join('') : '<p class="empty">这段时间没有来信。</p>';
+  }
+  function renderBackup(s) {
     const b = s.backup;
     const age = b ? (Date.now() - Date.parse(b.time)) / 3600e3 : null;
-    $('#backup').innerHTML = b ? `<p>最新：<b>${esc(b.file)}</b>（${(b.bytes / 1024).toFixed(1)} KB，${fmt(Date.parse(b.time))}，${age < 26 ? '<span style="color:var(--ok)">正常</span>' : '<span class="err">超过 26 小时未备份</span>'}，完整性检查 ${esc(b.check)}）</p>
-      <p class="muted">行数：${Object.entries(b.tables || {}).map(([t, n]) => `${esc(t)} ${n}`).join(' · ')}</p>
-      <p class="muted">磁盘上的快照（${s.backups.length}）：${s.backups.map(esc).join('、')}</p>
-      <div class="row"><button class="primary" id="dl">下载最新备份</button><button id="run-backup">立即备份</button><span id="dl-status" class="muted"></span></div>`
+    const size = bytes => bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + ' MB' : (bytes / 1024).toFixed(1) + ' KB';
+    $('#backup').innerHTML = b ? `<p>最新备份：<b>${fmt(Date.parse(b.time))}</b> · ${size(b.bytes)} · ${age < 26 && b.check === 'ok' ? '<span class="ok">正常</span>' : age >= 26 ? '<span class="err">超过 26 小时没有新备份，请查看服务器日志</span>' : '<span class="err">完整性检查没通过</span>'}</p>
+      <div class="row"><button class="primary" id="dl">下载最新备份</button><button id="run-backup">立即备份</button><span id="dl-status" class="muted"></span></div>
+      <details><summary>技术详情</summary><p class="muted">文件：${esc(b.file)} · 完整性检查：${esc(b.check)}</p><div class="scroll"><table><thead><tr><th>内容</th><th class="n">条数</th></tr></thead><tbody>${Object.entries(b.tables || {}).map(([t, c]) => `<tr><td>${esc(TABLES[t] || t)} <span class="muted">${esc(t)}</span></td><td class="n">${n(c)}</td></tr>`).join('')}</tbody></table></div><p class="muted">服务器上的快照（${s.backups.length} 份）：${s.backups.map(esc).join('、')}</p></details>`
       : `<p class="muted">还没有备份（服务器启动约 2 分钟后自动生成）。</p><div class="row"><button id="run-backup">立即备份</button><span id="dl-status" class="muted"></span></div>`;
     $('#dl')?.addEventListener('click', download);
     $('#run-backup')?.addEventListener('click', runBackup);
@@ -140,7 +361,7 @@ pre{margin:6px 0 0;padding:8px;background:#0a1014;border-radius:6px;overflow:aut
   async function runBackup() {
     const st = $('#dl-status');
     st.textContent = '备份中…';
-    try { await api('/api/admin/backup/run', { method: 'POST' }); st.textContent = '完成'; load(); } catch (e) { st.textContent = e.message; }
+    try { await api('/api/admin/backup/run', { method: 'POST' }); st.textContent = '完成'; loadStats(); } catch (e) { st.textContent = e.message; }
   }
 
   async function saveLookup() {
@@ -162,46 +383,32 @@ pre{margin:6px 0 0;padding:8px;background:#0a1014;border-radius:6px;overflow:aut
   $('#sc-find').addEventListener('click', saveLookup);
   $('#sc-replace').addEventListener('click', saveReplace);
 
-  function renderErrors(list) {
-    $('#errors').innerHTML = list.length ? list.map(g => `<div class="item ${g.resolved ? 'resolved' : ''}">
-      <div class="head"><span class="tag ${esc(g.kind)}">${KINDS[g.kind] || esc(g.kind)}</span><span class="tag">${esc(PAGES[g.page] || g.page)}</span><span class="count">×${g.count}</span><span class="muted">首次 ${fmt(g.firstAt)} · 最近 ${fmt(g.lastAt)}</span></div>
-      <div class="msg">${esc(g.message)}</div>
-      <div class="muted">版本：${g.versions.map(esc).join('、') || '—'}${g.sample.path ? ' · ' + esc(g.sample.path) : ''}${g.sample.viewport ? ' · ' + esc(g.sample.viewport) : ''}</div>
-      <details><summary>示例：堆栈与状态</summary><pre>${esc(g.sample.stack || '（无堆栈）')}</pre>${g.sample.context ? `<pre>${esc(ctxText(g.sample.context))}</pre>` : ''}${g.sample.ua ? `<pre>${esc(g.sample.ua)}</pre>` : ''}</details>
-      <div class="row"><button data-resolve="${esc(g.fingerprint)}" data-val="${g.resolved ? '0' : '1'}">${g.resolved ? '重新打开' : '标记已处理'}</button></div>
-    </div>`).join('') : '<p class="muted">这段时间没有错误。</p>';
+  async function loadAnalytics() {
+    try {
+      const a = await (await api('/api/admin/analytics?days=' + $('#f-days').value)).json();
+      renderOverview(a); renderTrend(a); renderRetention(a); renderFunnel(a); renderDeaths(a); renderPvp(a);
+    } catch (e) { if (token) $('#overview').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
   }
-  function renderFeedback(list) {
-    $('#feedback').innerHTML = list.length ? list.map(f => `<div class="item ${['adopted', 'fixed', 'ignored'].includes(f.status) ? 'resolved' : ''}">
-      <div class="head"><span class="tag ${f.status === 'new' ? 'error' : ''}">${LETTER[f.status] || '未读'}</span><span class="tag feedback">${esc(f.category || '未分类')}</span><span class="tag">${esc(PAGES[f.page] || f.page)}</span><span class="muted">${fmt(f.at)} · ${esc(f.version || '')}${f.viewport ? ' · ' + esc(f.viewport) : ''}</span></div>
-      ${f.subject ? `<div class="msg">${esc(f.subject)}</div>` : ''}<div class="fb-text">${esc(f.text)}</div>
-      ${f.context ? `<details><summary>附带的游戏状态</summary><pre>${esc(ctxText(f.context))}</pre></details>` : '<span class="muted">未附带游戏状态</span>'}
-      <div class="row">${['read', 'adopted', 'fixed', 'ignored'].map(k => `<button data-letter="${f.id}" data-status="${k}" ${f.status === k ? 'aria-pressed="true" style="border-color:var(--accent);color:var(--accent)"' : ''}>${LETTER[k]}</button>`).join('')}</div>
-    </div>`).join('') : '<p class="muted">这段时间没有来信。</p>';
-  }
-
-  async function load() {
+  async function loadReports() {
     const params = new URLSearchParams({ since: $('#f-since').value });
     if ($('#f-page').value) params.set('page', $('#f-page').value);
     try {
-      const [stats, reports] = await Promise.all([
-        api('/api/admin/stats').then(r => r.json()),
-        api('/api/admin/reports?' + params).then(r => r.json()),
-      ]);
-      statCards(stats);
+      const reports = await (await api('/api/admin/reports?' + params)).json();
       renderErrors(reports.errors);
       renderFeedback(reports.feedback);
-    } catch (e) {
-      if (token) $('#stats').innerHTML = `<p class="err">${esc(e.message)}</p>`;
-    }
+    } catch (e) { if (token) $('#errors').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
   }
+  async function loadStats() {
+    try { renderBackup(await (await api('/api/admin/stats')).json()); } catch (e) { if (token) $('#backup').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+  }
+  const load = () => Promise.all([loadAnalytics(), loadReports(), loadStats()]);
 
   document.addEventListener('click', async e => {
     const b = e.target.closest('[data-resolve],[data-letter]');
     if (!b) return;
     const body = b.dataset.letter ? { id: Number(b.dataset.letter), status: b.dataset.status } : { fingerprint: b.dataset.resolve, resolved: b.dataset.val === '1' };
     b.disabled = true;
-    try { await api('/api/admin/reports', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); load(); } catch { b.disabled = false; }
+    try { await api('/api/admin/reports', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); loadReports(); } catch { b.disabled = false; }
   });
   $('#login-form').addEventListener('submit', async e => {
     e.preventDefault();
@@ -216,8 +423,9 @@ pre{margin:6px 0 0;padding:8px;background:#0a1014;border-radius:6px;overflow:aut
   });
   $('#refresh').addEventListener('click', load);
   $('#logout').addEventListener('click', () => logout());
-  $('#f-since').addEventListener('change', load);
-  $('#f-page').addEventListener('change', load);
+  $('#f-days').addEventListener('change', loadAnalytics);
+  $('#f-since').addEventListener('change', loadReports);
+  $('#f-page').addEventListener('change', loadReports);
   function start() { $('#login').classList.add('hidden'); $('#app').classList.remove('hidden'); load(); }
   if (token) start(); else logout();
 })();

@@ -18,6 +18,17 @@ function ndErrorContext() {
   return { screen: 'game', phase: state.phase, team: state.team, act: state.act, floor: step, turn: state.phase === 'combat' ? state.battle?.turn : undefined, ascension: state.ascension || 0 };
 }
 initErrorReport({ page: 'new', version: LATEST_VERSION, getContext: ndErrorContext });
+import { initAnalytics, observeRun, abandonRun } from '/shared/play-analytics.js';
+initAnalytics({ page: 'new', version: LATEST_VERSION });
+// Anonymous play statistics: coarse run facts only (team code, act / floor, enemy id).
+function ndRunSnap(s) {
+  if (!s || !s.seed) return null;
+  const node = s.map?.nodes?.find(n => n.key === s.currentNode);
+  const inCombat = s.phase === 'combat' && !!s.battle;
+  const first = inCombat ? battleEnemies(s.battle)[0] : null;
+  const kind = node?.kind === 'elite' || node?.kind === 'boss' ? node.kind : 'normal';
+  return { key: String(s.seed), team: s.team, asc: s.ascension || 0, act: s.act, floor: node?.step ?? 0, inCombat, hp: s.hp, turn: s.battle?.turn, fight: inCombat ? { enemy: first?.id || '', kind, act: s.act, floor: node?.step ?? 0 } : null, outcome: s.phase === 'result' ? (s.result === 'win' ? 'win' : 'lose') : null };
+}
 import { showResultSummary, resultWorthShowing } from '/shared/result-summary.js';
 import { ACTS } from './season-map.js';
 import { cardArt, combatArt, relicArt } from './art.js';
@@ -76,6 +87,7 @@ function saveState() {
     console.error('Save failed', e);
   }
   trackNewRun(state);
+  observeRun('new', ndRunSnap(state));
   // Upload soon at act / run boundaries (auto-sync otherwise runs at most every 30 s).
   const mark = `${state?.act}:${state?.phase === 'result'}`;
   if (syncMark && mark !== syncMark) progressSyncNow();
@@ -340,6 +352,7 @@ function renderHome() {
       if (!confirmOverwrite) return;
       recordNewAbandon(loadState());
       recordAbandonedRun(loadState());
+      abandonRun('new', ndRunSnap(loadState()));
     }
     try {
       const seed = crypto.randomUUID();
@@ -605,6 +618,7 @@ function renderGame() {
     clearCombatPresentation();
     const entry = recordNewAbandon(state);
     recordAbandonedRun(state);
+    abandonRun('new', ndRunSnap(state));
     clearState();
     state = null;
     if (entry) renderEntryPage(entry); else renderHome();

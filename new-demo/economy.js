@@ -4,6 +4,7 @@ import { INVESTMENTS, SKIP_GOLD, RELIC_UNLOCKS, teamUnlockPlan, rerollPrice, inv
 import { CARDS, TEAMS, RELICS } from './content.js';
 import { UNLOCK_TIERS, tierOfXp, runXp, normalizeProgress, progressTier, progressGearTier, awardRun } from '../shared-unlock.js';
 import { statusIcon } from '/shared/status-icons.js';
+import { track } from '/shared/play-analytics.js';
 
 const KEY = 'new-demo-unlocks-v1';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -40,6 +41,7 @@ export function recordUnlockProgress(state) {
   if (state.unlockNotice?.at === at) return;
   const r = awardRun(loadUnlocks(), state.team, state.seed, runXpOf(state));
   saveUnlocks(r.progress);
+  if (r.toTier > r.fromTier) track('unlock_tier_up', { demo: 'new', team: state.team, tier: r.toTier });
   const plan = teamUnlockPlan(state.team), cards = [], gear = [];
   for (let t = r.fromTier; t < r.toTier; t++) cards.push(...plan.tiers[t]);
   for (let t = r.fromGear; t < r.toGear; t++) gear.push(...RELIC_UNLOCKS[t]);

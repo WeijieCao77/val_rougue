@@ -24,6 +24,8 @@ const WA_LOG=changelogFor('wa');
 // Error reports + feedback carry only this coarse state (no account, no storage).
 function waErrorContext(){if(atHome||!state)return {screen:'home'};return {screen,phase:state.phase,mode:state.mode,region:state.region,act:state.act,floor:state.node,turn:state.phase==='combat'?state.battle?.turn:undefined,ascension:state.ascension||0};}
 initErrorReport({page:'wa',version:LATEST_VERSION,getContext:waErrorContext});
+import {initAnalytics,observeRun,abandonRun,track as paTrack} from './shared/play-analytics.js';
+initAnalytics({page:'wa',version:LATEST_VERSION});
 import {waJuiceAction,waSlam} from './wa-juice.js';
 import {showResultSummary,resultWorthShowing} from './shared/result-summary.js';
 import {waAchieve,waHallHtml,bindWaHall,waAchResultHtml,waTitleHtml} from './wa-achievements.js';
@@ -51,6 +53,7 @@ function recordUnlockProgress(s){
  if(!E(s)||!s.runId||!['intermission','result'].includes(s.phase))return;
  const at=`${s.act}:${s.phase}`;if(s.unlockNotice?.at===at)return;
  const r=awardRun(loadUnlocks(),s.region,s.runId,seasonXp(s));saveUnlocks(r.progress);
+ if(r.toTier>r.fromTier)paTrack('unlock_tier_up',{demo:'wa',team:s.region,tier:r.toTier});
  const plan=regionUnlockPlan(s.region,R3(s)),cards=[],gear=[];
  for(let t=r.fromTier;t<r.toTier;t++)cards.push(...plan.tiers[t]);
  for(let t=r.fromGear;t<r.toGear;t++)gear.push(...GEAR_UNLOCKS[t]);
@@ -548,11 +551,13 @@ function runEntry(s,outcome,t){
  const death=outcome==='loss'?(lf&&!lf.won?{name:lf.name,act:lf.act,floor:lf.floor,kind:lf.kind}:{name:'赛程事件',...at}):outcome==='abandon'?{name:'主动放弃',...at,abandon:true}:null;
  return {id:String(s.runId||s.seed),demo:'wa',outcome,score:computeScore(sum,WA_TERMS).total,summary:sum,startedAt:t?.startedAt||null,endedAt:now,durationMs:t?.startedAt?now-t.startedAt:null,seed:s.seed,team:REGIONS[s.region]?.name||s.region,teamId:s.region,ascension:sum.ascension,act:s.act,maxHp:s.maxHp,deck:s.deck.map(c=>({id:c.id,up:!!c.up})),gear:[...(s.skins||[])],supplies:[...(s.supplies||[])],death,fights:t?.fights||0};
 }
+// Anonymous play statistics (shared/play-analytics.js): coarse run facts only.
+function waRunSnap(s){const f=fightSnap(s),o=outcomeOf(s);return {key:String(s.runId||s.seed),team:s.region,asc:R(s)?s.ascension||0:0,act:s.act,floor:nodeOf(s)?.step??0,inCombat:s.phase==='combat'&&!!s.battle,hp:s.hp,turn:s.battle?.turn,fight:f?{enemy:f.enemy,kind:f.kind==='battle'?'normal':f.kind,act:f.act,floor:f.floor}:null,outcome:o==='loss'?'lose':o};}
 function trackRun(s){
  if(!s||s.mode!=='season')return;
  try{
   const t=trackStep(loadTracker(store,TRACK_KEY,s.seed),{seed:s.seed,phase:s.phase,hp:s.hp,inCombat:s.phase==='combat'&&!!s.battle,fight:fightSnap(s),outcome:outcomeOf(s)});
-  saveTracker(store,TRACK_KEY,t);markSeen(store,SEEN_KEY,seenIn(s));
+  saveTracker(store,TRACK_KEY,t);markSeen(store,SEEN_KEY,seenIn(s));observeRun('wa',waRunSnap(s));
   if(s.phase==='result')recordRun(store,HISTORY_KEY,runEntry(s,outcomeOf(s),t));
  }catch{}
 }
@@ -560,6 +565,7 @@ function trackRun(s){
 function recordAbandoned(s){
  if(!s||s.mode!=='season'||s.phase==='result')return;
  try{recordRun(store,HISTORY_KEY,runEntry({...s,outcome:'abandoned'},'abandon',loadTracker(store,TRACK_KEY,s.seed)));}catch{}
+ abandonRun('wa',waRunSnap(s));
 }
 function deathText(e){const d=e.death;if(!d)return e.outcome==='win'?'无（赛季夺冠）':'—';const where=d.floor!=null?`第 ${d.act} 幕第 ${d.floor} 层`:`第 ${d.act} 幕`;return d.abandon?`主动放弃 · ${where}`:`${d.name} · ${where}`;}
 function scoreTable(e){
