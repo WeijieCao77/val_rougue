@@ -729,7 +729,9 @@ const aim=document.createElementNS('http://www.w3.org/2000/svg','svg');
 aim.classList.add('aim-guide');aim.innerHTML='<path/><circle r="7"/>';aim.setAttribute('hidden','');document.body.append(aim);
 let tipAnchor=null,tipTimer=null;
 const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
-function hideCardTip(){clearTimeout(tipTimer);cardTip.classList.remove("has-upgrade");if(tipAnchor)tipAnchor.removeAttribute('aria-describedby');tipAnchor=null;if(cardTip.matches(':popover-open'))cardTip.hidePopover();cardTip.hidden=true;}
+// Older mobile browsers don't know :popover-open (matches() throws there).
+function popoverOpen(el){if(!el.hidePopover)return false;try{return el.matches(":popover-open");}catch{return false;}}
+function hideCardTip(){clearTimeout(tipTimer);cardTip.classList.remove("has-upgrade");if(tipAnchor)tipAnchor.removeAttribute('aria-describedby');tipAnchor=null;if(popoverOpen(cardTip))cardTip.hidePopover();cardTip.hidden=true;}
 function showCardTip(el){
  clearTimeout(tipTimer);if(!el||!el.isConnected||dragging)return;
  // Phones: no floating tip (it covered the arena and nothing dismissed it);
